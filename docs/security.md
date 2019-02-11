@@ -33,6 +33,6 @@ Kubernetes API permissions are limited by the following roles:
 
 ## Report a Security Vulnerability
 
-If you find a vulnerability or any misconfiguration in Jenkins, please report it in the [issues](https://github.com/VirtusLab/jenkins-operator/issues). 
+If you find a vulnerability or any misconfiguration in Jenkins, please report it in the [issues](https://github.com/jenkinsci/kubernetes-operator/issues). 
 
 

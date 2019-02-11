@@ -14,9 +14,9 @@ This document explains how to setup your development environment.
 ## Clone repository and download dependencies
 
 ```bash
-mkdir -p $GOPATH/src/github.com/VirtusLab
-cd $GOPATH/src/github.com/VirtusLab/
-git clone git@github.com:VirtusLab/jenkins-operator.git
+mkdir -p $GOPATH/src/github.com/jenkinsci
+cd $GOPATH/src/github.com/jenkinsci/
+git clone git@github.com:jenkinsci/kubernetes-operator.git
 cd jenkins-operator
 make go-dependencies
 ```

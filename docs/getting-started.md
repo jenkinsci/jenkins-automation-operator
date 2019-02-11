@@ -33,7 +33,7 @@ spec:
     targets: "cicd/jobs/*.jenkins"
     description: "Jenkins Operator repository"
     repositoryBranch: master
-    repositoryUrl: https://github.com/VirtusLab/jenkins-operator.git
+    repositoryUrl: https://github.com/jenkinsci/kubernetes-operator.git
 ```
 
 Watch Jenkins instance being created:
@@ -95,7 +95,7 @@ pipelineJob('build-jenkins-operator') {
             scm {
                 git {
                     remote {
-                        url('https://github.com/VirtusLab/jenkins-operator.git')
+                        url('https://github.com/jenkinsci/kubernetes-operator.git')
                         credentials('jenkins-operator')
                     }
                     branches('*/master')
@@ -115,7 +115,7 @@ pipelineJob('build-jenkins-operator') {
 def label = "build-jenkins-operator-${UUID.randomUUID().toString()}"
 def home = "/home/jenkins"
 def workspace = "${home}/workspace/build-jenkins-operator"
-def workdir = "${workspace}/src/github.com/VirtusLab/jenkins-operator/"
+def workdir = "${workspace}/src/github.com/jenkinsci/kubernetes-operator/"
 
 podTemplate(label: label,
         containers: [
@@ -161,7 +161,7 @@ spec:
     targets: "cicd/jobs/*.jenkins"
     description: "Jenkins Operator repository"
     repositoryBranch: master
-    repositoryUrl: https://github.com/VirtusLab/jenkins-operator.git
+    repositoryUrl: https://github.com/jenkinsci/kubernetes-operator.git
 ```
 
 If your GitHub repository is **private** you have to configure corresponding **privateKey** and Kubernetes Secret:
@@ -179,7 +179,7 @@ spec:
     targets: "cicd/jobs/*.jenkins"
     description: "Jenkins Operator repository"
     repositoryBranch: master
-    repositoryUrl: git@github.com:VirtusLab/jenkins-operator.git
+    repositoryUrl: git@github.com:jenkinsci/kubernetes-operator.git
     privateKey:
       secretKeyRef:
         name: deploy-keys
