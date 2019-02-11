@@ -42,7 +42,7 @@ Some of the problems we want to solve:
 
 ## Contribution
 
-Feel free to file [issues](https://github.com/jenkinsci/kubernetes-operator/issues) or [pull requests](https://github.com/VirtusLab/jenkins-operator/pulls).    
+`Feel free to file [issues](https://github.com/jenkinsci/kubernetes-operator/issues) or [pull requests](https://github.com/jenkinsci/kubernetes-operator/pulls).    
 
 ## About the authors
 

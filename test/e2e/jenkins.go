@@ -115,7 +115,7 @@ func createJenkinsCRWithSeedJob(t *testing.T, namespace string) *virtuslabv1alph
 					Targets:          "cicd/jobs/*.jenkins",
 					Description:      "Jenkins Operator repository",
 					RepositoryBranch: "master",
-					RepositoryURL:    "https://github.com/VirtusLab/jenkins-operator.git",
+					RepositoryURL:    "https://github.com/jenkinsci/kubernetes-operator.git",
 				},
 			},
 		},
