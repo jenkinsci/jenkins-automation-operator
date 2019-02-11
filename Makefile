@@ -96,6 +96,9 @@ ifndef HAS_DEP
 endif
 	dep ensure -v
 
+.PHONY: dep
+dep: go-dependencies ## Ensure build dependencies
+
 .PHONY: build
 build: $(NAME) ## Builds a dynamic executable or package
 	@echo "+ $@"
@@ -103,7 +106,7 @@ build: $(NAME) ## Builds a dynamic executable or package
 .PHONY: $(NAME)
 $(NAME): $(wildcard *.go) $(wildcard */*.go) VERSION.txt
 	@echo "+ $@"
-	CGO_ENABLED=0 go build -tags "$(BUILDTAGS)" ${GO_LDFLAGS} -o build/_output/bin/$(NAME) $(BUILD_PATH)
+	CGO_ENABLED=0 go build -tags "$(BUILDTAGS)" ${GO_LDFLAGS} -o build/_output/bin/jenkins-operator $(BUILD_PATH)
 
 .PHONY: static
 static: ## Builds a static executable

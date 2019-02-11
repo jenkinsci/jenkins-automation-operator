@@ -17,8 +17,8 @@ This document explains how to setup your development environment.
 mkdir -p $GOPATH/src/github.com/jenkinsci
 cd $GOPATH/src/github.com/jenkinsci/
 git clone git@github.com:jenkinsci/kubernetes-operator.git
-cd jenkins-operator
-make go-dependencies
+cd kubernetes-operator
+make dep
 ```
 
 ## Build and run
