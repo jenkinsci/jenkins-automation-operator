@@ -8,9 +8,9 @@ import (
 	"os"
 	"testing"
 
-	virtuslabv1alpha1 "github.com/VirtusLab/jenkins-operator/pkg/apis/virtuslab/v1alpha1"
-	"github.com/VirtusLab/jenkins-operator/pkg/controller/jenkins/configuration/base/resources"
-	"github.com/VirtusLab/jenkins-operator/pkg/controller/jenkins/constants"
+	virtuslabv1alpha1 "github.com/jenkinsci/kubernetes-operator/pkg/apis/virtuslab/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"

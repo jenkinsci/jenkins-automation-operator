@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/VirtusLab/jenkins-operator/pkg/log"
+	"github.com/jenkinsci/kubernetes-operator/pkg/log"
 )
 
 // Plugin represents jenkins plugin

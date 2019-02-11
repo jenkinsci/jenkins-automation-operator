@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	virtuslabv1alpha1 "github.com/VirtusLab/jenkins-operator/pkg/apis/virtuslab/v1alpha1"
-	"github.com/VirtusLab/jenkins-operator/pkg/controller/jenkins/constants"
+	virtuslabv1alpha1 "github.com/jenkinsci/kubernetes-operator/pkg/apis/virtuslab/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
 
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"

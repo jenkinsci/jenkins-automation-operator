@@ -5,8 +5,8 @@ import (
 	"reflect"
 	"testing"
 
-	virtuslabv1alpha1 "github.com/VirtusLab/jenkins-operator/pkg/apis/virtuslab/v1alpha1"
-	"github.com/VirtusLab/jenkins-operator/pkg/controller/jenkins/plugins"
+	virtuslabv1alpha1 "github.com/jenkinsci/kubernetes-operator/pkg/apis/virtuslab/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/plugins"
 
 	"github.com/bndr/gojenkins"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"

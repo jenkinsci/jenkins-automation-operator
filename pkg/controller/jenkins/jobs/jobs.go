@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	virtuslabv1alpha1 "github.com/VirtusLab/jenkins-operator/pkg/apis/virtuslab/v1alpha1"
-	"github.com/VirtusLab/jenkins-operator/pkg/controller/jenkins/client"
-	"github.com/VirtusLab/jenkins-operator/pkg/log"
+	virtuslabv1alpha1 "github.com/jenkinsci/kubernetes-operator/pkg/apis/virtuslab/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
+	"github.com/jenkinsci/kubernetes-operator/pkg/log"
 
 	"github.com/go-logr/logr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

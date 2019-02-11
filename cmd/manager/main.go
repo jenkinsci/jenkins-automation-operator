@@ -7,11 +7,11 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/VirtusLab/jenkins-operator/pkg/apis"
-	"github.com/VirtusLab/jenkins-operator/pkg/controller/jenkins"
-	"github.com/VirtusLab/jenkins-operator/pkg/event"
-	"github.com/VirtusLab/jenkins-operator/pkg/log"
-	"github.com/VirtusLab/jenkins-operator/version"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins"
+	"github.com/jenkinsci/kubernetes-operator/pkg/event"
+	"github.com/jenkinsci/kubernetes-operator/pkg/log"
+	"github.com/jenkinsci/kubernetes-operator/version"
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/leader"

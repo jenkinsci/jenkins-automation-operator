@@ -2,7 +2,7 @@ package plugins
 
 import (
 	"fmt"
-	"github.com/VirtusLab/jenkins-operator/pkg/log"
+	"github.com/jenkinsci/kubernetes-operator/pkg/log"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

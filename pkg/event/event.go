@@ -3,7 +3,7 @@ package event
 import (
 	"fmt"
 
-	"github.com/VirtusLab/jenkins-operator/pkg/controller/jenkins/constants"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
 
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"

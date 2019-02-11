@@ -4,9 +4,9 @@ import (
 	"flag"
 	"testing"
 
-	"github.com/VirtusLab/jenkins-operator/pkg/apis"
-	virtuslabv1alpha1 "github.com/VirtusLab/jenkins-operator/pkg/apis/virtuslab/v1alpha1"
-	"github.com/VirtusLab/jenkins-operator/pkg/controller/jenkins/constants"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis"
+	virtuslabv1alpha1 "github.com/jenkinsci/kubernetes-operator/pkg/apis/virtuslab/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
 
 	f "github.com/operator-framework/operator-sdk/pkg/test"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"

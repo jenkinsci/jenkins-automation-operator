@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	virtuslabv1alpha1 "github.com/VirtusLab/jenkins-operator/pkg/apis/virtuslab/v1alpha1"
-	"github.com/VirtusLab/jenkins-operator/pkg/controller/jenkins/configuration/base/resources"
-	"github.com/VirtusLab/jenkins-operator/pkg/controller/jenkins/constants"
-	"github.com/VirtusLab/jenkins-operator/pkg/controller/jenkins/plugins"
-	"github.com/VirtusLab/jenkins-operator/pkg/log"
+	virtuslabv1alpha1 "github.com/jenkinsci/kubernetes-operator/pkg/apis/virtuslab/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/plugins"
+	"github.com/jenkinsci/kubernetes-operator/pkg/log"
 
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"

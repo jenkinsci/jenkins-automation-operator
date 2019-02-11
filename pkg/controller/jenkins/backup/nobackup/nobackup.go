@@ -1,8 +1,8 @@
 package nobackup
 
 import (
-	virtuslabv1alpha1 "github.com/VirtusLab/jenkins-operator/pkg/apis/virtuslab/v1alpha1"
-	"github.com/VirtusLab/jenkins-operator/pkg/controller/jenkins/plugins"
+	virtuslabv1alpha1 "github.com/jenkinsci/kubernetes-operator/pkg/apis/virtuslab/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/plugins"
 
 	"github.com/go-logr/logr"
 	k8s "sigs.k8s.io/controller-runtime/pkg/client"

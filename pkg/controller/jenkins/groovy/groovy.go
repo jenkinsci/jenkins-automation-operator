@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"sort"
 
-	virtuslabv1alpha1 "github.com/VirtusLab/jenkins-operator/pkg/apis/virtuslab/v1alpha1"
-	jenkinsclient "github.com/VirtusLab/jenkins-operator/pkg/controller/jenkins/client"
-	"github.com/VirtusLab/jenkins-operator/pkg/controller/jenkins/jobs"
+	virtuslabv1alpha1 "github.com/jenkinsci/kubernetes-operator/pkg/apis/virtuslab/v1alpha1"
+	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/jobs"
 
 	"github.com/go-logr/logr"
 	k8s "sigs.k8s.io/controller-runtime/pkg/client"

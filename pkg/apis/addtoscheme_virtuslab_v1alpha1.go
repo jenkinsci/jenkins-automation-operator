@@ -1,7 +1,7 @@
 package apis
 
 import (
-	"github.com/VirtusLab/jenkins-operator/pkg/apis/virtuslab/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/virtuslab/v1alpha1"
 )
 
 func init() {

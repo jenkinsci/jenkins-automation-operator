@@ -6,11 +6,11 @@ import (
 	"encoding/base64"
 	"fmt"
 
-	virtuslabv1alpha1 "github.com/VirtusLab/jenkins-operator/pkg/apis/virtuslab/v1alpha1"
-	jenkinsclient "github.com/VirtusLab/jenkins-operator/pkg/controller/jenkins/client"
-	"github.com/VirtusLab/jenkins-operator/pkg/controller/jenkins/constants"
-	"github.com/VirtusLab/jenkins-operator/pkg/controller/jenkins/jobs"
-	"github.com/VirtusLab/jenkins-operator/pkg/log"
+	virtuslabv1alpha1 "github.com/jenkinsci/kubernetes-operator/pkg/apis/virtuslab/v1alpha1"
+	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/jobs"
+	"github.com/jenkinsci/kubernetes-operator/pkg/log"
 
 	"github.com/go-logr/logr"
 	"k8s.io/api/core/v1"

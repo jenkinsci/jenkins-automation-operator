@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"testing"
 
-	virtuslabv1alpha1 "github.com/VirtusLab/jenkins-operator/pkg/apis/virtuslab/v1alpha1"
-	jenkinsclient "github.com/VirtusLab/jenkins-operator/pkg/controller/jenkins/client"
-	"github.com/VirtusLab/jenkins-operator/pkg/controller/jenkins/configuration/base/resources"
+	virtuslabv1alpha1 "github.com/jenkinsci/kubernetes-operator/pkg/apis/virtuslab/v1alpha1"
+	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 
 	"github.com/bndr/gojenkins"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"

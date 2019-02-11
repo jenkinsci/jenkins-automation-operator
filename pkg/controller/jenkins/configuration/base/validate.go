@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"regexp"
 
-	virtuslabv1alpha1 "github.com/VirtusLab/jenkins-operator/pkg/apis/virtuslab/v1alpha1"
-	"github.com/VirtusLab/jenkins-operator/pkg/controller/jenkins/backup"
-	"github.com/VirtusLab/jenkins-operator/pkg/controller/jenkins/configuration/base/resources"
-	"github.com/VirtusLab/jenkins-operator/pkg/controller/jenkins/plugins"
-	"github.com/VirtusLab/jenkins-operator/pkg/log"
+	virtuslabv1alpha1 "github.com/jenkinsci/kubernetes-operator/pkg/apis/virtuslab/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/backup"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/plugins"
+	"github.com/jenkinsci/kubernetes-operator/pkg/log"
 
 	docker "github.com/docker/distribution/reference"
 	corev1 "k8s.io/api/core/v1"
