@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"text/template"
 
-	virtuslabv1alpha1 "github.com/jenkinsci/kubernetes-operator/pkg/apis/virtuslab/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
 
 	corev1 "k8s.io/api/core/v1"
@@ -358,12 +358,12 @@ func buildInitBashScript(pluginsToInstall map[string][]string) (*string, error) 
 	return &output, nil
 }
 
-func getScriptsConfigMapName(jenkins *virtuslabv1alpha1.Jenkins) string {
+func getScriptsConfigMapName(jenkins *v1alpha1.Jenkins) string {
 	return fmt.Sprintf("%s-scripts-%s", constants.OperatorName, jenkins.ObjectMeta.Name)
 }
 
 // NewScriptsConfigMap builds Kubernetes config map used to store scripts
-func NewScriptsConfigMap(meta metav1.ObjectMeta, jenkins *virtuslabv1alpha1.Jenkins) (*corev1.ConfigMap, error) {
+func NewScriptsConfigMap(meta metav1.ObjectMeta, jenkins *v1alpha1.Jenkins) (*corev1.ConfigMap, error) {
 	meta.Name = getScriptsConfigMapName(jenkins)
 
 	initBashScript, err := buildInitBashScript(jenkins.Spec.Master.Plugins)

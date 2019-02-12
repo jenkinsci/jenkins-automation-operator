@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	virtuslabv1alpha1 "github.com/jenkinsci/kubernetes-operator/pkg/apis/virtuslab/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
 
 	"github.com/stretchr/testify/assert"
@@ -17,14 +17,14 @@ import (
 func TestAmazonS3Backup_IsConfigurationValidForBasePhase(t *testing.T) {
 	tests := []struct {
 		name    string
-		jenkins virtuslabv1alpha1.Jenkins
+		jenkins v1alpha1.Jenkins
 		want    bool
 	}{
 		{
 			name: "happy",
-			jenkins: virtuslabv1alpha1.Jenkins{
-				Spec: virtuslabv1alpha1.JenkinsSpec{
-					BackupAmazonS3: virtuslabv1alpha1.JenkinsBackupAmazonS3{
+			jenkins: v1alpha1.Jenkins{
+				Spec: v1alpha1.JenkinsSpec{
+					BackupAmazonS3: v1alpha1.JenkinsBackupAmazonS3{
 						BucketName: "some-value",
 						BucketPath: "some-value",
 						Region:     "some-value",
@@ -35,9 +35,9 @@ func TestAmazonS3Backup_IsConfigurationValidForBasePhase(t *testing.T) {
 		},
 		{
 			name: "fail, no bucket name",
-			jenkins: virtuslabv1alpha1.Jenkins{
-				Spec: virtuslabv1alpha1.JenkinsSpec{
-					BackupAmazonS3: virtuslabv1alpha1.JenkinsBackupAmazonS3{
+			jenkins: v1alpha1.Jenkins{
+				Spec: v1alpha1.JenkinsSpec{
+					BackupAmazonS3: v1alpha1.JenkinsBackupAmazonS3{
 						BucketName: "",
 						BucketPath: "some-value",
 						Region:     "some-value",
@@ -48,9 +48,9 @@ func TestAmazonS3Backup_IsConfigurationValidForBasePhase(t *testing.T) {
 		},
 		{
 			name: "fail, no bucket path",
-			jenkins: virtuslabv1alpha1.Jenkins{
-				Spec: virtuslabv1alpha1.JenkinsSpec{
-					BackupAmazonS3: virtuslabv1alpha1.JenkinsBackupAmazonS3{
+			jenkins: v1alpha1.Jenkins{
+				Spec: v1alpha1.JenkinsSpec{
+					BackupAmazonS3: v1alpha1.JenkinsBackupAmazonS3{
 						BucketName: "some-value",
 						BucketPath: "",
 						Region:     "some-value",
@@ -61,9 +61,9 @@ func TestAmazonS3Backup_IsConfigurationValidForBasePhase(t *testing.T) {
 		},
 		{
 			name: "fail, no region",
-			jenkins: virtuslabv1alpha1.Jenkins{
-				Spec: virtuslabv1alpha1.JenkinsSpec{
-					BackupAmazonS3: virtuslabv1alpha1.JenkinsBackupAmazonS3{
+			jenkins: v1alpha1.Jenkins{
+				Spec: v1alpha1.JenkinsSpec{
+					BackupAmazonS3: v1alpha1.JenkinsBackupAmazonS3{
 						BucketName: "some-value",
 						BucketPath: "some-value",
 						Region:     "",
@@ -85,14 +85,14 @@ func TestAmazonS3Backup_IsConfigurationValidForBasePhase(t *testing.T) {
 func TestAmazonS3Backup_IsConfigurationValidForUserPhase(t *testing.T) {
 	tests := []struct {
 		name    string
-		jenkins *virtuslabv1alpha1.Jenkins
+		jenkins *v1alpha1.Jenkins
 		secret  *corev1.Secret
 		want    bool
 		wantErr bool
 	}{
 		{
 			name: "happy",
-			jenkins: &virtuslabv1alpha1.Jenkins{
+			jenkins: &v1alpha1.Jenkins{
 				ObjectMeta: metav1.ObjectMeta{Namespace: "namespace-name", Name: "jenkins-cr-name"},
 			},
 			secret: &corev1.Secret{
@@ -107,7 +107,7 @@ func TestAmazonS3Backup_IsConfigurationValidForUserPhase(t *testing.T) {
 		},
 		{
 			name: "fail, no secret",
-			jenkins: &virtuslabv1alpha1.Jenkins{
+			jenkins: &v1alpha1.Jenkins{
 				ObjectMeta: metav1.ObjectMeta{Namespace: "namespace-name", Name: "jenkins-cr-name"},
 			},
 			want:    false,
@@ -115,7 +115,7 @@ func TestAmazonS3Backup_IsConfigurationValidForUserPhase(t *testing.T) {
 		},
 		{
 			name: "fail, no secret key in secret",
-			jenkins: &virtuslabv1alpha1.Jenkins{
+			jenkins: &v1alpha1.Jenkins{
 				ObjectMeta: metav1.ObjectMeta{Namespace: "namespace-name", Name: "jenkins-cr-name"},
 			},
 			secret: &corev1.Secret{
@@ -130,7 +130,7 @@ func TestAmazonS3Backup_IsConfigurationValidForUserPhase(t *testing.T) {
 		},
 		{
 			name: "fail, no access key in secret",
-			jenkins: &virtuslabv1alpha1.Jenkins{
+			jenkins: &v1alpha1.Jenkins{
 				ObjectMeta: metav1.ObjectMeta{Namespace: "namespace-name", Name: "jenkins-cr-name"},
 			},
 			secret: &corev1.Secret{

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	virtuslabv1alpha1 "github.com/jenkinsci/kubernetes-operator/pkg/apis/virtuslab/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/backup/aws"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/backup/nobackup"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
@@ -26,23 +26,23 @@ const (
 
 // Provider defines API of backup providers
 type Provider interface {
-	GetRestoreJobXML(jenkins virtuslabv1alpha1.Jenkins) (string, error)
-	GetBackupJobXML(jenkins virtuslabv1alpha1.Jenkins) (string, error)
-	IsConfigurationValidForBasePhase(jenkins virtuslabv1alpha1.Jenkins, logger logr.Logger) bool
-	IsConfigurationValidForUserPhase(k8sClient k8s.Client, jenkins virtuslabv1alpha1.Jenkins, logger logr.Logger) (bool, error)
+	GetRestoreJobXML(jenkins v1alpha1.Jenkins) (string, error)
+	GetBackupJobXML(jenkins v1alpha1.Jenkins) (string, error)
+	IsConfigurationValidForBasePhase(jenkins v1alpha1.Jenkins, logger logr.Logger) bool
+	IsConfigurationValidForUserPhase(k8sClient k8s.Client, jenkins v1alpha1.Jenkins, logger logr.Logger) (bool, error)
 	GetRequiredPlugins() map[string][]plugins.Plugin
 }
 
 // Backup defines backup manager which is responsible of backup of jobs history
 type Backup struct {
-	jenkins       *virtuslabv1alpha1.Jenkins
+	jenkins       *v1alpha1.Jenkins
 	k8sClient     k8s.Client
 	logger        logr.Logger
 	jenkinsClient jenkinsclient.Jenkins
 }
 
 // New returns instance of backup manager
-func New(jenkins *virtuslabv1alpha1.Jenkins, k8sClient k8s.Client, logger logr.Logger, jenkinsClient jenkinsclient.Jenkins) *Backup {
+func New(jenkins *v1alpha1.Jenkins, k8sClient k8s.Client, logger logr.Logger, jenkinsClient jenkinsclient.Jenkins) *Backup {
 	return &Backup{jenkins: jenkins, k8sClient: k8sClient, logger: logger, jenkinsClient: jenkinsClient}
 }
 
@@ -127,11 +127,11 @@ func (b *Backup) EnsureBackupJob() error {
 }
 
 // GetBackupProvider returns backup provider by type
-func GetBackupProvider(backupType virtuslabv1alpha1.JenkinsBackup) (Provider, error) {
+func GetBackupProvider(backupType v1alpha1.JenkinsBackup) (Provider, error) {
 	switch backupType {
-	case virtuslabv1alpha1.JenkinsBackupTypeNoBackup:
+	case v1alpha1.JenkinsBackupTypeNoBackup:
 		return &nobackup.NoBackup{}, nil
-	case virtuslabv1alpha1.JenkinsBackupTypeAmazonS3:
+	case v1alpha1.JenkinsBackupTypeAmazonS3:
 		return &aws.AmazonS3Backup{}, nil
 	default:
 		return nil, errors.Errorf("Invalid BackupManager type '%s'", backupType)

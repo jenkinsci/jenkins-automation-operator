@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"time"
 
-	virtuslabv1alpha1 "github.com/jenkinsci/kubernetes-operator/pkg/apis/virtuslab/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/backup"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
@@ -36,13 +36,13 @@ type ReconcileJenkinsBaseConfiguration struct {
 	k8sClient       client.Client
 	scheme          *runtime.Scheme
 	logger          logr.Logger
-	jenkins         *virtuslabv1alpha1.Jenkins
+	jenkins         *v1alpha1.Jenkins
 	local, minikube bool
 }
 
 // New create structure which takes care of base configuration
 func New(client client.Client, scheme *runtime.Scheme, logger logr.Logger,
-	jenkins *virtuslabv1alpha1.Jenkins, local, minikube bool) *ReconcileJenkinsBaseConfiguration {
+	jenkins *v1alpha1.Jenkins, local, minikube bool) *ReconcileJenkinsBaseConfiguration {
 	return &ReconcileJenkinsBaseConfiguration{
 		k8sClient: client,
 		scheme:    scheme,
@@ -305,7 +305,7 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsMasterPod(meta metav1.O
 		if err != nil {
 			return reconcile.Result{}, err
 		}
-		r.jenkins.Status = virtuslabv1alpha1.JenkinsStatus{}
+		r.jenkins.Status = v1alpha1.JenkinsStatus{}
 		err = r.updateResource(r.jenkins)
 		if err != nil {
 			return reconcile.Result{}, err

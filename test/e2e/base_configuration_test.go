@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	virtuslabv1alpha1 "github.com/jenkinsci/kubernetes-operator/pkg/apis/virtuslab/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/plugins"
 
 	"github.com/bndr/gojenkins"
@@ -59,7 +59,7 @@ func createDefaultLimitsForContainersInNamespace(t *testing.T, namespace string)
 	}
 }
 
-func verifyJenkinsMasterPodAttributes(t *testing.T, jenkins *virtuslabv1alpha1.Jenkins) {
+func verifyJenkinsMasterPodAttributes(t *testing.T, jenkins *v1alpha1.Jenkins) {
 	jenkinsPod := getJenkinsMasterPod(t, jenkins)
 	jenkins = getJenkins(t, jenkins.Namespace, jenkins.Name)
 

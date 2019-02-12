@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"sort"
 
-	virtuslabv1alpha1 "github.com/jenkinsci/kubernetes-operator/pkg/apis/virtuslab/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/jobs"
 
@@ -51,7 +51,7 @@ func (g *Groovy) ConfigureGroovyJob() error {
 }
 
 // EnsureGroovyJob executes groovy script and verifies jenkins job status according to reconciliation loop lifecycle
-func (g *Groovy) EnsureGroovyJob(secretOrConfigMapData map[string]string, jenkins *virtuslabv1alpha1.Jenkins) (bool, error) {
+func (g *Groovy) EnsureGroovyJob(secretOrConfigMapData map[string]string, jenkins *v1alpha1.Jenkins) (bool, error) {
 	jobsClient := jobs.New(g.jenkinsClient, g.k8sClient, g.logger)
 
 	hash := g.calculateHash(secretOrConfigMapData)

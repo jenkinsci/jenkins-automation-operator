@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"testing"
 
-	virtuslabv1alpha1 "github.com/jenkinsci/kubernetes-operator/pkg/apis/virtuslab/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 
@@ -18,8 +18,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-func getJenkins(t *testing.T, namespace, name string) *virtuslabv1alpha1.Jenkins {
-	jenkins := &virtuslabv1alpha1.Jenkins{}
+func getJenkins(t *testing.T, namespace, name string) *v1alpha1.Jenkins {
+	jenkins := &v1alpha1.Jenkins{}
 	namespaceName := types.NamespacedName{Namespace: namespace, Name: name}
 	if err := framework.Global.Client.Get(context.TODO(), namespaceName, jenkins); err != nil {
 		t.Fatal(err)
@@ -28,7 +28,7 @@ func getJenkins(t *testing.T, namespace, name string) *virtuslabv1alpha1.Jenkins
 	return jenkins
 }
 
-func getJenkinsMasterPod(t *testing.T, jenkins *virtuslabv1alpha1.Jenkins) *v1.Pod {
+func getJenkinsMasterPod(t *testing.T, jenkins *v1alpha1.Jenkins) *v1.Pod {
 	lo := metav1.ListOptions{
 		LabelSelector: labels.SelectorFromSet(resources.BuildResourceLabels(jenkins)).String(),
 	}
@@ -42,7 +42,7 @@ func getJenkinsMasterPod(t *testing.T, jenkins *virtuslabv1alpha1.Jenkins) *v1.P
 	return &podList.Items[0]
 }
 
-func createJenkinsAPIClient(jenkins *virtuslabv1alpha1.Jenkins) (*gojenkins.Jenkins, error) {
+func createJenkinsAPIClient(jenkins *v1alpha1.Jenkins) (*gojenkins.Jenkins, error) {
 	adminSecret := &v1.Secret{}
 	namespaceName := types.NamespacedName{Namespace: jenkins.Namespace, Name: resources.GetOperatorCredentialsSecretName(jenkins)}
 	if err := framework.Global.Client.Get(context.TODO(), namespaceName, adminSecret); err != nil {
@@ -75,14 +75,14 @@ func createJenkinsAPIClient(jenkins *virtuslabv1alpha1.Jenkins) (*gojenkins.Jenk
 	return jenkinsClient, nil
 }
 
-func createJenkinsCR(t *testing.T, namespace string) *virtuslabv1alpha1.Jenkins {
-	jenkins := &virtuslabv1alpha1.Jenkins{
+func createJenkinsCR(t *testing.T, namespace string) *v1alpha1.Jenkins {
+	jenkins := &v1alpha1.Jenkins{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "e2e",
 			Namespace: namespace,
 		},
-		Spec: virtuslabv1alpha1.JenkinsSpec{
-			Master: virtuslabv1alpha1.JenkinsMaster{
+		Spec: v1alpha1.JenkinsSpec{
+			Master: v1alpha1.JenkinsMaster{
 				Image:       "jenkins/jenkins",
 				Annotations: map[string]string{"test": "label"},
 			},
@@ -97,19 +97,19 @@ func createJenkinsCR(t *testing.T, namespace string) *virtuslabv1alpha1.Jenkins 
 	return jenkins
 }
 
-func createJenkinsCRWithSeedJob(t *testing.T, namespace string) *virtuslabv1alpha1.Jenkins {
-	jenkins := &virtuslabv1alpha1.Jenkins{
+func createJenkinsCRWithSeedJob(t *testing.T, namespace string) *v1alpha1.Jenkins {
+	jenkins := &v1alpha1.Jenkins{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "e2e",
 			Namespace: namespace,
 		},
-		Spec: virtuslabv1alpha1.JenkinsSpec{
-			Master: virtuslabv1alpha1.JenkinsMaster{
+		Spec: v1alpha1.JenkinsSpec{
+			Master: v1alpha1.JenkinsMaster{
 				Image:       "jenkins/jenkins",
 				Annotations: map[string]string{"test": "label"},
 			},
 			//TODO(bantoniak) add seed job with private key
-			SeedJobs: []virtuslabv1alpha1.SeedJob{
+			SeedJobs: []v1alpha1.SeedJob{
 				{
 					ID:               "jenkins-operator",
 					Targets:          "cicd/jobs/*.jenkins",
@@ -129,7 +129,7 @@ func createJenkinsCRWithSeedJob(t *testing.T, namespace string) *virtuslabv1alph
 	return jenkins
 }
 
-func verifyJenkinsAPIConnection(t *testing.T, jenkins *virtuslabv1alpha1.Jenkins) *gojenkins.Jenkins {
+func verifyJenkinsAPIConnection(t *testing.T, jenkins *v1alpha1.Jenkins) *gojenkins.Jenkins {
 	client, err := createJenkinsAPIClient(jenkins)
 	if err != nil {
 		t.Fatal(err)
@@ -139,7 +139,7 @@ func verifyJenkinsAPIConnection(t *testing.T, jenkins *virtuslabv1alpha1.Jenkins
 	return client
 }
 
-func restartJenkinsMasterPod(t *testing.T, jenkins *virtuslabv1alpha1.Jenkins) {
+func restartJenkinsMasterPod(t *testing.T, jenkins *v1alpha1.Jenkins) {
 	t.Log("Restarting Jenkins master pod")
 	jenkinsPod := getJenkinsMasterPod(t, jenkins)
 	err := framework.Global.Client.Delete(context.TODO(), jenkinsPod)

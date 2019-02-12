@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	virtuslabv1alpha1 "github.com/jenkinsci/kubernetes-operator/pkg/apis/virtuslab/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 
 	"github.com/bndr/gojenkins"
@@ -29,7 +29,7 @@ func TestEnsureSeedJobs(t *testing.T) {
 
 	jenkinsClient := client.NewMockJenkins(ctrl)
 	fakeClient := fake.NewFakeClient()
-	err := virtuslabv1alpha1.SchemeBuilder.AddToScheme(scheme.Scheme)
+	err := v1alpha1.SchemeBuilder.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
 
 	jenkins := jenkinsCustomResource()
@@ -76,7 +76,7 @@ func TestEnsureSeedJobs(t *testing.T) {
 				GetBuild(ConfigureSeedJobsName, gomock.Any()).
 				Return(&gojenkins.Build{
 					Raw: &gojenkins.BuildResponse{
-						Result: string(virtuslabv1alpha1.BuildSuccessStatus),
+						Result: string(v1alpha1.BuildSuccessStatus),
 					},
 				}, nil)
 		}
@@ -99,26 +99,26 @@ func TestEnsureSeedJobs(t *testing.T) {
 		// first run - should create job and schedule build
 		if reconcileAttempt == 1 {
 			assert.False(t, done)
-			assert.Equal(t, string(virtuslabv1alpha1.BuildRunningStatus), string(build.Status))
+			assert.Equal(t, string(v1alpha1.BuildRunningStatus), string(build.Status))
 		}
 
 		// second run - should update and finish job
 		if reconcileAttempt == 2 {
 			assert.True(t, done)
-			assert.Equal(t, string(virtuslabv1alpha1.BuildSuccessStatus), string(build.Status))
+			assert.Equal(t, string(v1alpha1.BuildSuccessStatus), string(build.Status))
 		}
 
 	}
 }
 
-func jenkinsCustomResource() *virtuslabv1alpha1.Jenkins {
-	return &virtuslabv1alpha1.Jenkins{
+func jenkinsCustomResource() *v1alpha1.Jenkins {
+	return &v1alpha1.Jenkins{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "jenkins",
 			Namespace: "default",
 		},
-		Spec: virtuslabv1alpha1.JenkinsSpec{
-			Master: virtuslabv1alpha1.JenkinsMaster{
+		Spec: v1alpha1.JenkinsSpec{
+			Master: v1alpha1.JenkinsMaster{
 				Image:       "jenkins/jenkins",
 				Annotations: map[string]string{"test": "label"},
 				Resources: corev1.ResourceRequirements{
@@ -132,13 +132,13 @@ func jenkinsCustomResource() *virtuslabv1alpha1.Jenkins {
 					},
 				},
 			},
-			SeedJobs: []virtuslabv1alpha1.SeedJob{
+			SeedJobs: []v1alpha1.SeedJob{
 				{
 					ID:               "jenkins-operator-e2e",
 					Targets:          "cicd/jobs/*.jenkins",
 					Description:      "Jenkins Operator e2e tests repository",
 					RepositoryBranch: "master",
-					RepositoryURL:    "https://github.com/VirtusLab/jenkins-operator-e2e.git",
+					RepositoryURL:    "https://github.com/jenkinsci/kubernetes-operator.git",
 				},
 			},
 		},

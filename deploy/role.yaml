@@ -5,7 +5,7 @@ metadata:
   name: jenkins-operator
 rules:
   - apiGroups:
-      - virtuslab.com
+      - jenkins.io
     resources:
       - '*'
     verbs:

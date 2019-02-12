@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	virtuslabv1alpha1 "github.com/jenkinsci/kubernetes-operator/pkg/apis/virtuslab/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
 
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
@@ -52,21 +52,21 @@ SwiLd8TWAvXkxdXm8fDOGAZbYK2alMV+M+9E2OpZsBUCxmb/3FAofF6JccKoJOH8
 func TestValidateSeedJobs(t *testing.T) {
 	data := []struct {
 		description    string
-		jenkins        *virtuslabv1alpha1.Jenkins
+		jenkins        *v1alpha1.Jenkins
 		secret         *corev1.Secret
 		expectedResult bool
 	}{
 		{
 			description: "Valid with public repository and without private key",
-			jenkins: &virtuslabv1alpha1.Jenkins{
-				Spec: virtuslabv1alpha1.JenkinsSpec{
-					SeedJobs: []virtuslabv1alpha1.SeedJob{
+			jenkins: &v1alpha1.Jenkins{
+				Spec: v1alpha1.JenkinsSpec{
+					SeedJobs: []v1alpha1.SeedJob{
 						{
 							ID:               "jenkins-operator-e2e",
 							Targets:          "cicd/jobs/*.jenkins",
 							Description:      "Jenkins Operator e2e tests repository",
 							RepositoryBranch: "master",
-							RepositoryURL:    "https://github.com/VirtusLab/jenkins-operator-e2e.git",
+							RepositoryURL:    "https://github.com/jenkinsci/kubernetes-operator.git",
 						},
 					},
 				},
@@ -75,14 +75,14 @@ func TestValidateSeedJobs(t *testing.T) {
 		},
 		{
 			description: "Invalid without id",
-			jenkins: &virtuslabv1alpha1.Jenkins{
-				Spec: virtuslabv1alpha1.JenkinsSpec{
-					SeedJobs: []virtuslabv1alpha1.SeedJob{
+			jenkins: &v1alpha1.Jenkins{
+				Spec: v1alpha1.JenkinsSpec{
+					SeedJobs: []v1alpha1.SeedJob{
 						{
 							Targets:          "cicd/jobs/*.jenkins",
 							Description:      "Jenkins Operator e2e tests repository",
 							RepositoryBranch: "master",
-							RepositoryURL:    "https://github.com/VirtusLab/jenkins-operator-e2e.git",
+							RepositoryURL:    "https://github.com/jenkinsci/kubernetes-operator.git",
 						},
 					},
 				},
@@ -91,16 +91,16 @@ func TestValidateSeedJobs(t *testing.T) {
 		},
 		{
 			description: "Valid with private key and secret",
-			jenkins: &virtuslabv1alpha1.Jenkins{
-				Spec: virtuslabv1alpha1.JenkinsSpec{
-					SeedJobs: []virtuslabv1alpha1.SeedJob{
+			jenkins: &v1alpha1.Jenkins{
+				Spec: v1alpha1.JenkinsSpec{
+					SeedJobs: []v1alpha1.SeedJob{
 						{
 							ID:               "jenkins-operator-e2e",
 							Targets:          "cicd/jobs/*.jenkins",
 							Description:      "Jenkins Operator e2e tests repository",
 							RepositoryBranch: "master",
-							RepositoryURL:    "https://github.com/VirtusLab/jenkins-operator-e2e.git",
-							PrivateKey: virtuslabv1alpha1.PrivateKey{
+							RepositoryURL:    "https://github.com/jenkinsci/kubernetes-operator.git",
+							PrivateKey: v1alpha1.PrivateKey{
 								SecretKeyRef: &corev1.SecretKeySelector{
 									LocalObjectReference: corev1.LocalObjectReference{
 										Name: "deploy-keys",
@@ -129,16 +129,16 @@ func TestValidateSeedJobs(t *testing.T) {
 		},
 		{
 			description: "Invalid private key in secret",
-			jenkins: &virtuslabv1alpha1.Jenkins{
-				Spec: virtuslabv1alpha1.JenkinsSpec{
-					SeedJobs: []virtuslabv1alpha1.SeedJob{
+			jenkins: &v1alpha1.Jenkins{
+				Spec: v1alpha1.JenkinsSpec{
+					SeedJobs: []v1alpha1.SeedJob{
 						{
 							ID:               "jenkins-operator-e2e",
 							Targets:          "cicd/jobs/*.jenkins",
 							Description:      "Jenkins Operator e2e tests repository",
 							RepositoryBranch: "master",
-							RepositoryURL:    "https://github.com/VirtusLab/jenkins-operator-e2e.git",
-							PrivateKey: virtuslabv1alpha1.PrivateKey{
+							RepositoryURL:    "https://github.com/jenkinsci/kubernetes-operator.git",
+							PrivateKey: v1alpha1.PrivateKey{
 								SecretKeyRef: &corev1.SecretKeySelector{
 									LocalObjectReference: corev1.LocalObjectReference{
 										Name: "deploy-keys",
@@ -167,16 +167,16 @@ func TestValidateSeedJobs(t *testing.T) {
 		},
 		{
 			description: "Invalid with PrivateKey and empty Secret data",
-			jenkins: &virtuslabv1alpha1.Jenkins{
-				Spec: virtuslabv1alpha1.JenkinsSpec{
-					SeedJobs: []virtuslabv1alpha1.SeedJob{
+			jenkins: &v1alpha1.Jenkins{
+				Spec: v1alpha1.JenkinsSpec{
+					SeedJobs: []v1alpha1.SeedJob{
 						{
 							ID:               "jenkins-operator-e2e",
 							Targets:          "cicd/jobs/*.jenkins",
 							Description:      "Jenkins Operator e2e tests repository",
 							RepositoryBranch: "master",
-							RepositoryURL:    "https://github.com/VirtusLab/jenkins-operator-e2e.git",
-							PrivateKey: virtuslabv1alpha1.PrivateKey{
+							RepositoryURL:    "https://github.com/jenkinsci/kubernetes-operator.git",
+							PrivateKey: v1alpha1.PrivateKey{
 								SecretKeyRef: &corev1.SecretKeySelector{
 									LocalObjectReference: corev1.LocalObjectReference{
 										Name: "deploy-keys",
@@ -205,15 +205,15 @@ func TestValidateSeedJobs(t *testing.T) {
 		},
 		{
 			description: "Invalid with ssh RepositoryURL and empty PrivateKey",
-			jenkins: &virtuslabv1alpha1.Jenkins{
-				Spec: virtuslabv1alpha1.JenkinsSpec{
-					SeedJobs: []virtuslabv1alpha1.SeedJob{
+			jenkins: &v1alpha1.Jenkins{
+				Spec: v1alpha1.JenkinsSpec{
+					SeedJobs: []v1alpha1.SeedJob{
 						{
 							ID:               "jenkins-operator-e2e",
 							Targets:          "cicd/jobs/*.jenkins",
 							Description:      "Jenkins Operator e2e tests repository",
 							RepositoryBranch: "master",
-							RepositoryURL:    "git@github.com:VirtusLab/jenkins-operator.git",
+							RepositoryURL:    "git@github.com:jenkinsci/kubernetes-operator.git",
 						},
 					},
 				},

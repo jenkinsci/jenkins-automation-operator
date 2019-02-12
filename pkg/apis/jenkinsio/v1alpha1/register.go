@@ -1,8 +1,8 @@
 // NOTE: Boilerplate only.  Ignore this file.
 
-// Package v1alpha1 contains API Schema definitions for the virtuslab v1alpha1 API group
+// Package v1alpha1 contains API Schema definitions for the jenkins.io v1alpha1 API group
 // +k8s:deepcopy-gen=package,register
-// +groupName=virtuslab.com
+// +groupName=jenkins.io
 package v1alpha1
 
 import (
@@ -17,7 +17,7 @@ const (
 
 var (
 	// SchemeGroupVersion is group version used to register these objects
-	SchemeGroupVersion = schema.GroupVersion{Group: "virtuslab.com", Version: "v1alpha1"}
+	SchemeGroupVersion = schema.GroupVersion{Group: "jenkins.io", Version: "v1alpha1"}
 
 	// SchemeBuilder is used to add go types to the GroupVersionKind scheme
 	SchemeBuilder = &scheme.Builder{GroupVersion: SchemeGroupVersion}

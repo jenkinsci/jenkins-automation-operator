@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"testing"
 
-	virtuslabv1alpha1 "github.com/jenkinsci/kubernetes-operator/pkg/apis/virtuslab/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 
 	"github.com/bndr/gojenkins"
@@ -37,7 +37,7 @@ func TestSuccessEnsureJob(t *testing.T) {
 	// when
 	jenkins := jenkinsCustomResource()
 	fakeClient := fake.NewFakeClient()
-	err := virtuslabv1alpha1.SchemeBuilder.AddToScheme(scheme.Scheme)
+	err := v1alpha1.SchemeBuilder.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
 	err = fakeClient.Create(ctx, jenkins)
 	assert.NoError(t, err)
@@ -67,7 +67,7 @@ func TestSuccessEnsureJob(t *testing.T) {
 			GetBuild(jobName, buildNumber).
 			Return(&gojenkins.Build{
 				Raw: &gojenkins.BuildResponse{
-					Result: string(virtuslabv1alpha1.BuildSuccessStatus),
+					Result: string(v1alpha1.BuildSuccessStatus),
 				},
 			}, nil).AnyTimes()
 
@@ -91,13 +91,13 @@ func TestSuccessEnsureJob(t *testing.T) {
 		// first run - build should be scheduled and status updated
 		if reconcileAttempt == 1 {
 			assert.False(t, done)
-			assert.Equal(t, build.Status, virtuslabv1alpha1.BuildRunningStatus)
+			assert.Equal(t, build.Status, v1alpha1.BuildRunningStatus)
 		}
 
 		// second run -job should be success and status updated
 		if reconcileAttempt == 2 {
 			assert.True(t, done)
-			assert.Equal(t, build.Status, virtuslabv1alpha1.BuildSuccessStatus)
+			assert.Equal(t, build.Status, v1alpha1.BuildSuccessStatus)
 		}
 	}
 }
@@ -149,7 +149,7 @@ func TestEnsureJobWithFailedBuild(t *testing.T) {
 				GetBuild(jobName, int64(1)).
 				Return(&gojenkins.Build{
 					Raw: &gojenkins.BuildResponse{
-						Result: string(virtuslabv1alpha1.BuildFailureStatus),
+						Result: string(v1alpha1.BuildFailureStatus),
 					},
 				}, nil)
 		}
@@ -178,7 +178,7 @@ func TestEnsureJobWithFailedBuild(t *testing.T) {
 				GetBuild(jobName, int64(2)).
 				Return(&gojenkins.Build{
 					Raw: &gojenkins.BuildResponse{
-						Result: string(virtuslabv1alpha1.BuildSuccessStatus),
+						Result: string(v1alpha1.BuildSuccessStatus),
 					},
 				}, nil)
 		}
@@ -204,7 +204,7 @@ func TestEnsureJobWithFailedBuild(t *testing.T) {
 			assert.NoError(t, errEnsureBuildJob)
 			assert.False(t, done)
 			assert.Equal(t, build.Number, int64(1))
-			assert.Equal(t, build.Status, virtuslabv1alpha1.BuildRunningStatus)
+			assert.Equal(t, build.Status, v1alpha1.BuildRunningStatus)
 		}
 
 		// second run - build should be failure and status updated
@@ -212,7 +212,7 @@ func TestEnsureJobWithFailedBuild(t *testing.T) {
 			assert.Error(t, errEnsureBuildJob)
 			assert.False(t, done)
 			assert.Equal(t, build.Number, int64(1))
-			assert.Equal(t, build.Status, virtuslabv1alpha1.BuildFailureStatus)
+			assert.Equal(t, build.Status, v1alpha1.BuildFailureStatus)
 		}
 
 		// third run - build should be rescheduled and status updated
@@ -220,7 +220,7 @@ func TestEnsureJobWithFailedBuild(t *testing.T) {
 			assert.NoError(t, errEnsureBuildJob)
 			assert.False(t, done)
 			assert.Equal(t, build.Number, int64(2))
-			assert.Equal(t, build.Status, virtuslabv1alpha1.BuildRunningStatus)
+			assert.Equal(t, build.Status, v1alpha1.BuildRunningStatus)
 		}
 
 		// fourth run - build should be success and status updated
@@ -228,7 +228,7 @@ func TestEnsureJobWithFailedBuild(t *testing.T) {
 			assert.NoError(t, errEnsureBuildJob)
 			assert.True(t, done)
 			assert.Equal(t, build.Number, int64(2))
-			assert.Equal(t, build.Status, virtuslabv1alpha1.BuildSuccessStatus)
+			assert.Equal(t, build.Status, v1alpha1.BuildSuccessStatus)
 		}
 	}
 }
@@ -281,7 +281,7 @@ func TestEnsureJobFailedWithMaxRetries(t *testing.T) {
 				GetBuild(buildName, int64(1)).
 				Return(&gojenkins.Build{
 					Raw: &gojenkins.BuildResponse{
-						Result: string(virtuslabv1alpha1.BuildFailureStatus),
+						Result: string(v1alpha1.BuildFailureStatus),
 					},
 				}, nil)
 		}
@@ -310,7 +310,7 @@ func TestEnsureJobFailedWithMaxRetries(t *testing.T) {
 				GetBuild(buildName, int64(2)).
 				Return(&gojenkins.Build{
 					Raw: &gojenkins.BuildResponse{
-						Result: string(virtuslabv1alpha1.BuildFailureStatus),
+						Result: string(v1alpha1.BuildFailureStatus),
 					},
 				}, nil)
 		}
@@ -337,7 +337,7 @@ func TestEnsureJobFailedWithMaxRetries(t *testing.T) {
 			assert.False(t, done)
 			assert.Equal(t, build.Number, int64(1))
 			assert.Equal(t, build.Retires, 0)
-			assert.Equal(t, build.Status, virtuslabv1alpha1.BuildRunningStatus)
+			assert.Equal(t, build.Status, v1alpha1.BuildRunningStatus)
 		}
 
 		// second run - build should be failure and status updated
@@ -346,7 +346,7 @@ func TestEnsureJobFailedWithMaxRetries(t *testing.T) {
 			assert.False(t, done)
 			assert.Equal(t, build.Number, int64(1))
 			assert.Equal(t, build.Retires, 0)
-			assert.Equal(t, build.Status, virtuslabv1alpha1.BuildFailureStatus)
+			assert.Equal(t, build.Status, v1alpha1.BuildFailureStatus)
 		}
 
 		// third run - build should be rescheduled and status updated
@@ -356,7 +356,7 @@ func TestEnsureJobFailedWithMaxRetries(t *testing.T) {
 			//assert.Equal(t, build.Retires, 1)
 			assert.Equal(t, build.Number, int64(2))
 			assert.Equal(t, build.Retires, 1)
-			assert.Equal(t, build.Status, virtuslabv1alpha1.BuildRunningStatus)
+			assert.Equal(t, build.Status, v1alpha1.BuildRunningStatus)
 		}
 
 		// fourth run - build should be failure and status updated
@@ -365,7 +365,7 @@ func TestEnsureJobFailedWithMaxRetries(t *testing.T) {
 			assert.False(t, done)
 			assert.Equal(t, build.Number, int64(2))
 			assert.Equal(t, build.Retires, 1)
-			assert.Equal(t, build.Status, virtuslabv1alpha1.BuildFailureStatus)
+			assert.Equal(t, build.Status, v1alpha1.BuildFailureStatus)
 		}
 
 		// fifth run - build should be unrecoverable failed and status updated
@@ -374,19 +374,19 @@ func TestEnsureJobFailedWithMaxRetries(t *testing.T) {
 			assert.False(t, done)
 			assert.Equal(t, build.Number, int64(2))
 			assert.Equal(t, build.Retires, 1)
-			assert.Equal(t, build.Status, virtuslabv1alpha1.BuildFailureStatus)
+			assert.Equal(t, build.Status, v1alpha1.BuildFailureStatus)
 		}
 	}
 }
 
-func jenkinsCustomResource() *virtuslabv1alpha1.Jenkins {
-	return &virtuslabv1alpha1.Jenkins{
+func jenkinsCustomResource() *v1alpha1.Jenkins {
+	return &v1alpha1.Jenkins{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "jenkins",
 			Namespace: "default",
 		},
-		Spec: virtuslabv1alpha1.JenkinsSpec{
-			Master: virtuslabv1alpha1.JenkinsMaster{
+		Spec: v1alpha1.JenkinsSpec{
+			Master: v1alpha1.JenkinsMaster{
 				Image:       "jenkins/jenkins",
 				Annotations: map[string]string{"test": "label"},
 				Resources: corev1.ResourceRequirements{
@@ -400,13 +400,13 @@ func jenkinsCustomResource() *virtuslabv1alpha1.Jenkins {
 					},
 				},
 			},
-			SeedJobs: []virtuslabv1alpha1.SeedJob{
+			SeedJobs: []v1alpha1.SeedJob{
 				{
 					ID:               "jenkins-operator-e2e",
 					Targets:          "cicd/jobs/*.jenkins",
 					Description:      "Jenkins Operator e2e tests repository",
 					RepositoryBranch: "master",
-					RepositoryURL:    "https://github.com/VirtusLab/jenkins-operator-e2e.git",
+					RepositoryURL:    "https://github.com/jenkinsci/kubernetes-operator.git",
 				},
 			},
 		},

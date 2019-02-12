@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"regexp"
 
-	virtuslabv1alpha1 "github.com/jenkinsci/kubernetes-operator/pkg/apis/virtuslab/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/backup"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/plugins"
@@ -22,7 +22,7 @@ var (
 )
 
 // Validate validates Jenkins CR Spec.master section
-func (r *ReconcileJenkinsBaseConfiguration) Validate(jenkins *virtuslabv1alpha1.Jenkins) (bool, error) {
+func (r *ReconcileJenkinsBaseConfiguration) Validate(jenkins *v1alpha1.Jenkins) (bool, error) {
 	if jenkins.Spec.Master.Image == "" {
 		r.logger.V(log.VWarn).Info("Image not set")
 		return false, nil
@@ -92,7 +92,7 @@ func (r *ReconcileJenkinsBaseConfiguration) verifyBackup() (bool, error) {
 	}
 
 	valid := false
-	for _, backupType := range virtuslabv1alpha1.AllowedJenkinsBackups {
+	for _, backupType := range v1alpha1.AllowedJenkinsBackups {
 		if r.jenkins.Spec.Backup == backupType {
 			valid = true
 		}
@@ -100,11 +100,11 @@ func (r *ReconcileJenkinsBaseConfiguration) verifyBackup() (bool, error) {
 
 	if !valid {
 		r.logger.V(log.VWarn).Info(fmt.Sprintf("Invalid backup strategy '%s'", r.jenkins.Spec.Backup))
-		r.logger.V(log.VWarn).Info(fmt.Sprintf("Allowed backups '%+v'", virtuslabv1alpha1.AllowedJenkinsBackups))
+		r.logger.V(log.VWarn).Info(fmt.Sprintf("Allowed backups '%+v'", v1alpha1.AllowedJenkinsBackups))
 		return false, nil
 	}
 
-	if r.jenkins.Spec.Backup == virtuslabv1alpha1.JenkinsBackupTypeNoBackup {
+	if r.jenkins.Spec.Backup == v1alpha1.JenkinsBackupTypeNoBackup {
 		return true, nil
 	}
 

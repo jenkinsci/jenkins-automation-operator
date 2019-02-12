@@ -1,7 +1,7 @@
 package nobackup
 
 import (
-	virtuslabv1alpha1 "github.com/jenkinsci/kubernetes-operator/pkg/apis/virtuslab/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/plugins"
 
 	"github.com/go-logr/logr"
@@ -27,22 +27,22 @@ var emptyJob = `<?xml version='1.1' encoding='UTF-8'?>
 `
 
 // GetRestoreJobXML returns Jenkins restore backup job config XML
-func (b *NoBackup) GetRestoreJobXML(jenkins virtuslabv1alpha1.Jenkins) (string, error) {
+func (b *NoBackup) GetRestoreJobXML(jenkins v1alpha1.Jenkins) (string, error) {
 	return emptyJob, nil
 }
 
 // GetBackupJobXML returns Jenkins backup job config XML
-func (b *NoBackup) GetBackupJobXML(jenkins virtuslabv1alpha1.Jenkins) (string, error) {
+func (b *NoBackup) GetBackupJobXML(jenkins v1alpha1.Jenkins) (string, error) {
 	return emptyJob, nil
 }
 
 // IsConfigurationValidForBasePhase validates if user provided valid configuration of backup for base phase
-func (b *NoBackup) IsConfigurationValidForBasePhase(jenkins virtuslabv1alpha1.Jenkins, logger logr.Logger) bool {
+func (b *NoBackup) IsConfigurationValidForBasePhase(jenkins v1alpha1.Jenkins, logger logr.Logger) bool {
 	return true
 }
 
 // IsConfigurationValidForUserPhase validates if user provided valid configuration of backup for user phase
-func (b *NoBackup) IsConfigurationValidForUserPhase(k8sClient k8s.Client, jenkins virtuslabv1alpha1.Jenkins, logger logr.Logger) (bool, error) {
+func (b *NoBackup) IsConfigurationValidForUserPhase(k8sClient k8s.Client, jenkins v1alpha1.Jenkins, logger logr.Logger) (bool, error) {
 	return true, nil
 }
 

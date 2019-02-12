@@ -1,4 +1,4 @@
-apiVersion: virtuslab.com/v1alpha1
+apiVersion: jenkins.io/v1alpha1
 kind: Jenkins
 metadata:
   name: example

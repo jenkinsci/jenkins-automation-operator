@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis"
-	virtuslabv1alpha1 "github.com/jenkinsci/kubernetes-operator/pkg/apis/virtuslab/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
 
 	f "github.com/operator-framework/operator-sdk/pkg/test"
@@ -35,10 +35,10 @@ func setupTest(t *testing.T) (string, *framework.TestCtx) {
 		t.Fatalf("could not initialize cluster resources: %v", err)
 	}
 
-	jenkinsServiceList := &virtuslabv1alpha1.JenkinsList{
+	jenkinsServiceList := &v1alpha1.JenkinsList{
 		TypeMeta: metav1.TypeMeta{
-			Kind:       virtuslabv1alpha1.Kind,
-			APIVersion: virtuslabv1alpha1.SchemeGroupVersion.String(),
+			Kind:       v1alpha1.Kind,
+			APIVersion: v1alpha1.SchemeGroupVersion.String(),
 		},
 	}
 	err = framework.AddToFrameworkScheme(apis.AddToScheme, jenkinsServiceList)

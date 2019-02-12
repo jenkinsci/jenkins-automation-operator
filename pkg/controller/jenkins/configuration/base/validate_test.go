@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	virtuslabv1alpha1 "github.com/jenkinsci/kubernetes-operator/pkg/apis/virtuslab/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
 
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
@@ -66,17 +66,17 @@ func TestValidatePlugins(t *testing.T) {
 func TestReconcileJenkinsBaseConfiguration_verifyBackup(t *testing.T) {
 	tests := []struct {
 		name    string
-		jenkins *virtuslabv1alpha1.Jenkins
+		jenkins *v1alpha1.Jenkins
 		secret  *corev1.Secret
 		want    bool
 		wantErr bool
 	}{
 		{
 			name: "happy, no backup",
-			jenkins: &virtuslabv1alpha1.Jenkins{
+			jenkins: &v1alpha1.Jenkins{
 				ObjectMeta: metav1.ObjectMeta{Namespace: "namespace-name", Name: "jenkins-cr-name"},
-				Spec: virtuslabv1alpha1.JenkinsSpec{
-					Backup: virtuslabv1alpha1.JenkinsBackupTypeNoBackup,
+				Spec: v1alpha1.JenkinsSpec{
+					Backup: v1alpha1.JenkinsBackupTypeNoBackup,
 				},
 			},
 			want:    true,
@@ -84,10 +84,10 @@ func TestReconcileJenkinsBaseConfiguration_verifyBackup(t *testing.T) {
 		},
 		{
 			name: "happy",
-			jenkins: &virtuslabv1alpha1.Jenkins{
+			jenkins: &v1alpha1.Jenkins{
 				ObjectMeta: metav1.ObjectMeta{Namespace: "namespace-name", Name: "jenkins-cr-name"},
-				Spec: virtuslabv1alpha1.JenkinsSpec{
-					Backup: virtuslabv1alpha1.JenkinsBackupTypeAmazonS3,
+				Spec: v1alpha1.JenkinsSpec{
+					Backup: v1alpha1.JenkinsBackupTypeAmazonS3,
 				},
 			},
 			secret: &corev1.Secret{
@@ -98,10 +98,10 @@ func TestReconcileJenkinsBaseConfiguration_verifyBackup(t *testing.T) {
 		},
 		{
 			name: "fail, no secret",
-			jenkins: &virtuslabv1alpha1.Jenkins{
+			jenkins: &v1alpha1.Jenkins{
 				ObjectMeta: metav1.ObjectMeta{Namespace: "namespace-name", Name: "jenkins-cr-name"},
-				Spec: virtuslabv1alpha1.JenkinsSpec{
-					Backup: virtuslabv1alpha1.JenkinsBackupTypeAmazonS3,
+				Spec: v1alpha1.JenkinsSpec{
+					Backup: v1alpha1.JenkinsBackupTypeAmazonS3,
 				},
 			},
 			want:    false,
@@ -109,9 +109,9 @@ func TestReconcileJenkinsBaseConfiguration_verifyBackup(t *testing.T) {
 		},
 		{
 			name: "fail, empty backup type",
-			jenkins: &virtuslabv1alpha1.Jenkins{
+			jenkins: &v1alpha1.Jenkins{
 				ObjectMeta: metav1.ObjectMeta{Namespace: "namespace-name", Name: "jenkins-cr-name"},
-				Spec: virtuslabv1alpha1.JenkinsSpec{
+				Spec: v1alpha1.JenkinsSpec{
 					Backup: "",
 				},
 			},

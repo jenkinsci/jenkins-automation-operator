@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	virtuslabv1alpha1 "github.com/jenkinsci/kubernetes-operator/pkg/apis/virtuslab/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/user"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
@@ -61,7 +61,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	// Watch for changes to primary resource Jenkins
-	err = c.Watch(&source.Kind{Type: &virtuslabv1alpha1.Jenkins{}}, &handler.EnqueueRequestForObject{})
+	err = c.Watch(&source.Kind{Type: &v1alpha1.Jenkins{}}, &handler.EnqueueRequestForObject{})
 	if err != nil {
 		return err
 	}
@@ -69,7 +69,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// Watch for changes to secondary resource Pods and requeue the owner Jenkins
 	err = c.Watch(&source.Kind{Type: &corev1.Pod{}}, &handler.EnqueueRequestForOwner{
 		IsController: true,
-		OwnerType:    &virtuslabv1alpha1.Jenkins{},
+		OwnerType:    &v1alpha1.Jenkins{},
 	})
 	if err != nil {
 		return err
@@ -117,7 +117,7 @@ func (r *ReconcileJenkins) Reconcile(request reconcile.Request) (reconcile.Resul
 
 func (r *ReconcileJenkins) reconcile(request reconcile.Request, logger logr.Logger) (reconcile.Result, error) {
 	// Fetch the Jenkins instance
-	jenkins := &virtuslabv1alpha1.Jenkins{}
+	jenkins := &v1alpha1.Jenkins{}
 	err := r.client.Get(context.TODO(), request.NamespacedName, jenkins)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -205,7 +205,7 @@ func (r *ReconcileJenkins) buildLogger(jenkinsName string) logr.Logger {
 	return log.Log.WithValues("cr", jenkinsName)
 }
 
-func (r *ReconcileJenkins) setDefaults(jenkins *virtuslabv1alpha1.Jenkins, logger logr.Logger) error {
+func (r *ReconcileJenkins) setDefaults(jenkins *v1alpha1.Jenkins, logger logr.Logger) error {
 	changed := false
 	if len(jenkins.Spec.Master.Image) == 0 {
 		logger.Info("Setting default Jenkins master image: " + constants.DefaultJenkinsMasterImage)
@@ -213,10 +213,10 @@ func (r *ReconcileJenkins) setDefaults(jenkins *virtuslabv1alpha1.Jenkins, logge
 		jenkins.Spec.Master.Image = constants.DefaultJenkinsMasterImage
 	}
 	if len(jenkins.Spec.Backup) == 0 {
-		logger.Info("Setting default backup strategy: " + virtuslabv1alpha1.JenkinsBackupTypeNoBackup)
+		logger.Info("Setting default backup strategy: " + v1alpha1.JenkinsBackupTypeNoBackup)
 		logger.V(log.VWarn).Info("Backup is disable !!! Please configure backup in '.spec.backup'")
 		changed = true
-		jenkins.Spec.Backup = virtuslabv1alpha1.JenkinsBackupTypeNoBackup
+		jenkins.Spec.Backup = v1alpha1.JenkinsBackupTypeNoBackup
 	}
 	if len(jenkins.Spec.Master.Plugins) == 0 {
 		logger.Info("Setting default base plugins")

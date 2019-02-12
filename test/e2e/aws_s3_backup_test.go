@@ -8,7 +8,7 @@ import (
 	"os"
 	"testing"
 
-	virtuslabv1alpha1 "github.com/jenkinsci/kubernetes-operator/pkg/apis/virtuslab/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
 
@@ -98,20 +98,20 @@ func verifyIfBackupAndRestoreWasSuccessfull(t *testing.T, jenkinsClient *gojenki
 	assert.True(t, latestBackupFound)
 }
 
-func createJenkinsCRWithAmazonS3Backup(t *testing.T, namespace string, backupConfig amazonS3BackupConfiguration) *virtuslabv1alpha1.Jenkins {
-	jenkins := &virtuslabv1alpha1.Jenkins{
+func createJenkinsCRWithAmazonS3Backup(t *testing.T, namespace string, backupConfig amazonS3BackupConfiguration) *v1alpha1.Jenkins {
+	jenkins := &v1alpha1.Jenkins{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "e2e",
 			Namespace: namespace,
 		},
-		Spec: virtuslabv1alpha1.JenkinsSpec{
-			Backup: virtuslabv1alpha1.JenkinsBackupTypeAmazonS3,
-			BackupAmazonS3: virtuslabv1alpha1.JenkinsBackupAmazonS3{
+		Spec: v1alpha1.JenkinsSpec{
+			Backup: v1alpha1.JenkinsBackupTypeAmazonS3,
+			BackupAmazonS3: v1alpha1.JenkinsBackupAmazonS3{
 				Region:     backupConfig.Region,
 				BucketPath: backupConfig.BucketPath,
 				BucketName: backupConfig.BucketName,
 			},
-			Master: virtuslabv1alpha1.JenkinsMaster{
+			Master: v1alpha1.JenkinsMaster{
 				Image: "jenkins/jenkins",
 			},
 		},

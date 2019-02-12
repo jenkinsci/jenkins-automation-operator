@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	virtuslabv1alpha1 "github.com/jenkinsci/kubernetes-operator/pkg/apis/virtuslab/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"k8s.io/apimachinery/pkg/types"
@@ -24,8 +24,8 @@ func TestJenkinsMasterPodRestart(t *testing.T) {
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
 }
 
-func checkBaseConfigurationCompleteTimeIsNotSet(t *testing.T, jenkins *virtuslabv1alpha1.Jenkins) {
-	jenkinsStatus := &virtuslabv1alpha1.Jenkins{}
+func checkBaseConfigurationCompleteTimeIsNotSet(t *testing.T, jenkins *v1alpha1.Jenkins) {
+	jenkinsStatus := &v1alpha1.Jenkins{}
 	namespaceName := types.NamespacedName{Namespace: jenkins.Namespace, Name: jenkins.Name}
 	err := framework.Global.Client.Get(context.TODO(), namespaceName, jenkinsStatus)
 	if err != nil {

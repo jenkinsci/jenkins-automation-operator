@@ -3,7 +3,7 @@ package resources
 import (
 	"fmt"
 
-	virtuslabv1alpha1 "github.com/jenkinsci/kubernetes-operator/pkg/apis/virtuslab/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
 
 	corev1 "k8s.io/api/core/v1"
@@ -162,12 +162,12 @@ jenkins.save()
 `
 
 // GetBaseConfigurationConfigMapName returns name of Kubernetes config map used to base configuration
-func GetBaseConfigurationConfigMapName(jenkins *virtuslabv1alpha1.Jenkins) string {
+func GetBaseConfigurationConfigMapName(jenkins *v1alpha1.Jenkins) string {
 	return fmt.Sprintf("%s-base-configuration-%s", constants.OperatorName, jenkins.ObjectMeta.Name)
 }
 
 // NewBaseConfigurationConfigMap builds Kubernetes config map used to base configuration
-func NewBaseConfigurationConfigMap(meta metav1.ObjectMeta, jenkins *virtuslabv1alpha1.Jenkins) (*corev1.ConfigMap, error) {
+func NewBaseConfigurationConfigMap(meta metav1.ObjectMeta, jenkins *v1alpha1.Jenkins) (*corev1.ConfigMap, error) {
 	meta.Name = GetBaseConfigurationConfigMapName(jenkins)
 
 	return &corev1.ConfigMap{

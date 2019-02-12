@@ -21,7 +21,7 @@ Once jenkins-operator is up and running let's deploy actual Jenkins instance.
 Let's use example below:
 
 ```bash
-apiVersion: virtuslab.com/v1alpha1
+apiVersion: jenkins.io/v1alpha1
 kind: Jenkins
 metadata:
   name: example
@@ -149,7 +149,7 @@ podTemplate(label: label,
 Jenkins Seed Jobs are configured using `Jenkins.spec.seedJobs` section from your custom resource manifest:
 
 ```
-apiVersion: virtuslab.com/v1alpha1
+apiVersion: jenkins.io/v1alpha1
 kind: Jenkins
 metadata:
   name: example
@@ -167,7 +167,7 @@ spec:
 If your GitHub repository is **private** you have to configure corresponding **privateKey** and Kubernetes Secret:
 
 ```
-apiVersion: virtuslab.com/v1alpha1
+apiVersion: jenkins.io/v1alpha1
 kind: Jenkins
 metadata:
   name: example

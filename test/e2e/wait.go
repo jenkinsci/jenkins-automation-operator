@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	virtuslabv1alpha1 "github.com/jenkinsci/kubernetes-operator/pkg/apis/virtuslab/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
@@ -22,11 +22,11 @@ var (
 )
 
 // checkConditionFunc is used to check if a condition for the jenkins CR is true
-type checkConditionFunc func(*virtuslabv1alpha1.Jenkins) bool
+type checkConditionFunc func(*v1alpha1.Jenkins) bool
 
-func waitForJenkinsBaseConfigurationToComplete(t *testing.T, jenkins *virtuslabv1alpha1.Jenkins) {
+func waitForJenkinsBaseConfigurationToComplete(t *testing.T, jenkins *v1alpha1.Jenkins) {
 	t.Log("Waiting for Jenkins base configuration to complete")
-	_, err := WaitUntilJenkinsConditionTrue(retryInterval, 150, jenkins, func(jenkins *virtuslabv1alpha1.Jenkins) bool {
+	_, err := WaitUntilJenkinsConditionTrue(retryInterval, 150, jenkins, func(jenkins *v1alpha1.Jenkins) bool {
 		t.Logf("Current Jenkins status '%+v'", jenkins.Status)
 		return jenkins.Status.BaseConfigurationCompletedTime != nil
 	})
@@ -36,7 +36,7 @@ func waitForJenkinsBaseConfigurationToComplete(t *testing.T, jenkins *virtuslabv
 	t.Log("Jenkins pod is running")
 }
 
-func waitForRecreateJenkinsMasterPod(t *testing.T, jenkins *virtuslabv1alpha1.Jenkins) {
+func waitForRecreateJenkinsMasterPod(t *testing.T, jenkins *v1alpha1.Jenkins) {
 	err := wait.Poll(retryInterval, 30*retryInterval, func() (bool, error) {
 		lo := metav1.ListOptions{
 			LabelSelector: labels.SelectorFromSet(resources.BuildResourceLabels(jenkins)).String(),
@@ -57,9 +57,9 @@ func waitForRecreateJenkinsMasterPod(t *testing.T, jenkins *virtuslabv1alpha1.Je
 	t.Log("Jenkins pod has been recreated")
 }
 
-func waitForJenkinsUserConfigurationToComplete(t *testing.T, jenkins *virtuslabv1alpha1.Jenkins) {
+func waitForJenkinsUserConfigurationToComplete(t *testing.T, jenkins *v1alpha1.Jenkins) {
 	t.Log("Waiting for Jenkins user configuration to complete")
-	_, err := WaitUntilJenkinsConditionTrue(retryInterval, 30, jenkins, func(jenkins *virtuslabv1alpha1.Jenkins) bool {
+	_, err := WaitUntilJenkinsConditionTrue(retryInterval, 30, jenkins, func(jenkins *v1alpha1.Jenkins) bool {
 		t.Logf("Current Jenkins status '%+v'", jenkins.Status)
 		return jenkins.Status.UserConfigurationCompletedTime != nil
 	})
@@ -70,8 +70,8 @@ func waitForJenkinsUserConfigurationToComplete(t *testing.T, jenkins *virtuslabv
 }
 
 // WaitUntilJenkinsConditionTrue retries until the specified condition check becomes true for the jenkins CR
-func WaitUntilJenkinsConditionTrue(retryInterval time.Duration, retries int, jenkins *virtuslabv1alpha1.Jenkins, checkCondition checkConditionFunc) (*virtuslabv1alpha1.Jenkins, error) {
-	jenkinsStatus := &virtuslabv1alpha1.Jenkins{}
+func WaitUntilJenkinsConditionTrue(retryInterval time.Duration, retries int, jenkins *v1alpha1.Jenkins, checkCondition checkConditionFunc) (*v1alpha1.Jenkins, error) {
+	jenkinsStatus := &v1alpha1.Jenkins{}
 	err := wait.Poll(retryInterval, time.Duration(retries)*retryInterval, func() (bool, error) {
 		namespacedName := types.NamespacedName{Namespace: jenkins.Namespace, Name: jenkins.Name}
 		err := framework.Global.Client.Get(goctx.TODO(), namespacedName, jenkinsStatus)

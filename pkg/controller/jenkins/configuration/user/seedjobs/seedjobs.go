@@ -6,7 +6,7 @@ import (
 	"encoding/base64"
 	"fmt"
 
-	virtuslabv1alpha1 "github.com/jenkinsci/kubernetes-operator/pkg/apis/virtuslab/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/jobs"
@@ -47,7 +47,7 @@ func New(jenkinsClient jenkinsclient.Jenkins, k8sClient k8s.Client, logger logr.
 }
 
 // EnsureSeedJobs configures seed job and runs it for every entry from Jenkins.Spec.SeedJobs
-func (s *SeedJobs) EnsureSeedJobs(jenkins *virtuslabv1alpha1.Jenkins) (done bool, err error) {
+func (s *SeedJobs) EnsureSeedJobs(jenkins *v1alpha1.Jenkins) (done bool, err error) {
 	err = s.createJob()
 	if err != nil {
 		s.logger.V(log.VWarn).Info("Couldn't create jenkins seed job")
@@ -74,7 +74,7 @@ func (s *SeedJobs) createJob() error {
 }
 
 // buildJobs is responsible for running jenkins builds which configures jenkins seed jobs and deploy keys
-func (s *SeedJobs) buildJobs(jenkins *virtuslabv1alpha1.Jenkins) (done bool, err error) {
+func (s *SeedJobs) buildJobs(jenkins *v1alpha1.Jenkins) (done bool, err error) {
 	allDone := true
 	seedJobs := jenkins.Spec.SeedJobs
 	for _, seedJob := range seedJobs {
@@ -113,7 +113,7 @@ func (s *SeedJobs) buildJobs(jenkins *virtuslabv1alpha1.Jenkins) (done bool, err
 }
 
 // privateKeyFromSecret it's utility function which extracts deploy key from the kubernetes secret
-func (s *SeedJobs) privateKeyFromSecret(namespace string, seedJob virtuslabv1alpha1.SeedJob) (string, error) {
+func (s *SeedJobs) privateKeyFromSecret(namespace string, seedJob v1alpha1.SeedJob) (string, error) {
 	if seedJob.PrivateKey.SecretKeyRef != nil {
 		deployKeySecret := &v1.Secret{}
 		namespaceName := types.NamespacedName{Namespace: namespace, Name: seedJob.PrivateKey.SecretKeyRef.Name}

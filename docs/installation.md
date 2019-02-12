@@ -14,7 +14,7 @@ To run **jenkins-operator**, you will need:
 Install Jenkins Custom Resource Definition:
 
 ```bash
-kubectl apply -f deploy/crds/virtuslab_v1alpha1_jenkins_crd.yaml
+kubectl apply -f deploy/crds/jenkinsio_v1alpha1_jenkins_crd.yaml
 ```
 
 ## Deploy jenkins-operator

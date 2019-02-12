@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"strings"
 
-	virtuslabv1alpha1 "github.com/jenkinsci/kubernetes-operator/pkg/apis/virtuslab/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/backup"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
 
@@ -18,7 +18,7 @@ import (
 )
 
 // Validate validates Jenkins CR Spec section
-func (r *ReconcileUserConfiguration) Validate(jenkins *virtuslabv1alpha1.Jenkins) (bool, error) {
+func (r *ReconcileUserConfiguration) Validate(jenkins *v1alpha1.Jenkins) (bool, error) {
 	valid, err := r.validateSeedJobs(jenkins)
 	if !valid || err != nil {
 		return valid, err
@@ -32,7 +32,7 @@ func (r *ReconcileUserConfiguration) Validate(jenkins *virtuslabv1alpha1.Jenkins
 	return backupProvider.IsConfigurationValidForUserPhase(r.k8sClient, *r.jenkins, r.logger)
 }
 
-func (r *ReconcileUserConfiguration) validateSeedJobs(jenkins *virtuslabv1alpha1.Jenkins) (bool, error) {
+func (r *ReconcileUserConfiguration) validateSeedJobs(jenkins *v1alpha1.Jenkins) (bool, error) {
 	valid := true
 	if jenkins.Spec.SeedJobs != nil {
 		for _, seedJob := range jenkins.Spec.SeedJobs {

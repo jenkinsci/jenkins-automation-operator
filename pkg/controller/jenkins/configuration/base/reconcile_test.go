@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	virtuslabv1alpha1 "github.com/jenkinsci/kubernetes-operator/pkg/apis/virtuslab/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/plugins"
 
 	"github.com/stretchr/testify/assert"
@@ -17,16 +17,16 @@ import (
 func TestReconcileJenkinsBaseConfiguration_ensurePluginsRequiredByAllBackupProviders(t *testing.T) {
 	tests := []struct {
 		name            string
-		jenkins         *virtuslabv1alpha1.Jenkins
+		jenkins         *v1alpha1.Jenkins
 		requiredPlugins map[string][]plugins.Plugin
 		want            reconcile.Result
 		wantErr         bool
 	}{
 		{
 			name: "happy, no required plugins",
-			jenkins: &virtuslabv1alpha1.Jenkins{
-				Spec: virtuslabv1alpha1.JenkinsSpec{
-					Master: virtuslabv1alpha1.JenkinsMaster{
+			jenkins: &v1alpha1.Jenkins{
+				Spec: v1alpha1.JenkinsSpec{
+					Master: v1alpha1.JenkinsMaster{
 						Plugins: map[string][]string{
 							"first-plugin:0.0.1": {"second-plugin:0.0.1"},
 						},
@@ -38,9 +38,9 @@ func TestReconcileJenkinsBaseConfiguration_ensurePluginsRequiredByAllBackupProvi
 		},
 		{
 			name: "happy, required plugins are set",
-			jenkins: &virtuslabv1alpha1.Jenkins{
-				Spec: virtuslabv1alpha1.JenkinsSpec{
-					Master: virtuslabv1alpha1.JenkinsMaster{
+			jenkins: &v1alpha1.Jenkins{
+				Spec: v1alpha1.JenkinsSpec{
+					Master: v1alpha1.JenkinsMaster{
 						Plugins: map[string][]string{
 							"first-plugin:0.0.1": {"second-plugin:0.0.1"},
 						},
@@ -55,9 +55,9 @@ func TestReconcileJenkinsBaseConfiguration_ensurePluginsRequiredByAllBackupProvi
 		},
 		{
 			name: "happy, jenkins CR must be updated",
-			jenkins: &virtuslabv1alpha1.Jenkins{
-				Spec: virtuslabv1alpha1.JenkinsSpec{
-					Master: virtuslabv1alpha1.JenkinsMaster{
+			jenkins: &v1alpha1.Jenkins{
+				Spec: v1alpha1.JenkinsSpec{
+					Master: v1alpha1.JenkinsMaster{
 						Plugins: map[string][]string{
 							"first-plugin:0.0.1": {"second-plugin:0.0.1"},
 						},
@@ -73,9 +73,9 @@ func TestReconcileJenkinsBaseConfiguration_ensurePluginsRequiredByAllBackupProvi
 		},
 		{
 			name: "happy, jenkins CR must be updated",
-			jenkins: &virtuslabv1alpha1.Jenkins{
-				Spec: virtuslabv1alpha1.JenkinsSpec{
-					Master: virtuslabv1alpha1.JenkinsMaster{
+			jenkins: &v1alpha1.Jenkins{
+				Spec: v1alpha1.JenkinsSpec{
+					Master: v1alpha1.JenkinsMaster{
 						Plugins: map[string][]string{
 							"first-plugin:0.0.1": {"second-plugin:0.0.1"},
 						},
@@ -92,7 +92,7 @@ func TestReconcileJenkinsBaseConfiguration_ensurePluginsRequiredByAllBackupProvi
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := virtuslabv1alpha1.SchemeBuilder.AddToScheme(scheme.Scheme)
+			err := v1alpha1.SchemeBuilder.AddToScheme(scheme.Scheme)
 			assert.NoError(t, err)
 			r := &ReconcileJenkinsBaseConfiguration{
 				k8sClient: fake.NewFakeClient(),

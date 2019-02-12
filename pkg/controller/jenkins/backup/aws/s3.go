@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	virtuslabv1alpha1 "github.com/jenkinsci/kubernetes-operator/pkg/apis/virtuslab/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/plugins"
@@ -21,7 +21,7 @@ import (
 type AmazonS3Backup struct{}
 
 // GetRestoreJobXML returns Jenkins restore backup job config XML
-func (b *AmazonS3Backup) GetRestoreJobXML(jenkins virtuslabv1alpha1.Jenkins) (string, error) {
+func (b *AmazonS3Backup) GetRestoreJobXML(jenkins v1alpha1.Jenkins) (string, error) {
 	return `<?xml version='1.1' encoding='UTF-8'?>
 <flow-definition plugin="workflow-job@2.31">
   <actions/>
@@ -106,7 +106,7 @@ node(&apos;master&apos;) {
 }
 
 // GetBackupJobXML returns Jenkins backup job config XML
-func (b *AmazonS3Backup) GetBackupJobXML(jenkins virtuslabv1alpha1.Jenkins) (string, error) {
+func (b *AmazonS3Backup) GetBackupJobXML(jenkins v1alpha1.Jenkins) (string, error) {
 	return `<?xml version='1.1' encoding='UTF-8'?>
 <flow-definition plugin="workflow-job@2.31">
   <actions/>
@@ -188,7 +188,7 @@ node(&apos;master&apos;) {
 }
 
 // IsConfigurationValidForBasePhase validates if user provided valid configuration of backup for base phase
-func (b *AmazonS3Backup) IsConfigurationValidForBasePhase(jenkins virtuslabv1alpha1.Jenkins, logger logr.Logger) bool {
+func (b *AmazonS3Backup) IsConfigurationValidForBasePhase(jenkins v1alpha1.Jenkins, logger logr.Logger) bool {
 	if len(jenkins.Spec.BackupAmazonS3.BucketName) == 0 {
 		logger.V(log.VWarn).Info("Bucket name not set in 'spec.backupAmazonS3.bucketName'")
 		return false
@@ -208,7 +208,7 @@ func (b *AmazonS3Backup) IsConfigurationValidForBasePhase(jenkins virtuslabv1alp
 }
 
 // IsConfigurationValidForUserPhase validates if user provided valid configuration of backup for user phase
-func (b *AmazonS3Backup) IsConfigurationValidForUserPhase(k8sClient k8s.Client, jenkins virtuslabv1alpha1.Jenkins, logger logr.Logger) (bool, error) {
+func (b *AmazonS3Backup) IsConfigurationValidForUserPhase(k8sClient k8s.Client, jenkins v1alpha1.Jenkins, logger logr.Logger) (bool, error) {
 	backupSecretName := resources.GetBackupCredentialsSecretName(&jenkins)
 	backupSecret := &corev1.Secret{}
 	err := k8sClient.Get(context.TODO(), types.NamespacedName{Namespace: jenkins.Namespace, Name: backupSecretName}, backupSecret)

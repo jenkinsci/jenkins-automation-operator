@@ -32,7 +32,7 @@ make build && make minikube-run EXTRA_ARGS='--minikube --local'
 Once minikube and **jenkins-operator** are up and running, apply Jenkins custom resource:
 
 ```bash
-kubectl apply -f deploy/crds/virtuslab_v1alpha1_jenkins_cr.yaml
+kubectl apply -f deploy/crds/jenkinsio_v1alpha1_jenkins_cr.yaml
 kubectl get jenkins -o yaml
 kubectl get po
 ```
@@ -63,7 +63,7 @@ To be able to work with the docker daemon on `minikube` machine run the followin
 eval $(minikube docker-env)
 ```
 
-### When `pkg/apis/virtuslab/v1alpha1/jenkins_types.go` has changed
+### When `pkg/apis/jenkinsio/v1alpha1/jenkins_types.go` has changed
 
 Run:
 

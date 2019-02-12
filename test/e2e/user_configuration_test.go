@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	virtuslabv1alpha1 "github.com/jenkinsci/kubernetes-operator/pkg/apis/virtuslab/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/user/seedjobs"
 
 	"github.com/bndr/gojenkins"
@@ -31,7 +31,7 @@ func TestUserConfiguration(t *testing.T) {
 	verifyJenkinsSeedJobs(t, client, jenkins)
 }
 
-func verifyJenkinsSeedJobs(t *testing.T, client *gojenkins.Jenkins, jenkins *virtuslabv1alpha1.Jenkins) {
+func verifyJenkinsSeedJobs(t *testing.T, client *gojenkins.Jenkins, jenkins *v1alpha1.Jenkins) {
 	t.Logf("Attempting to get configure seed job status '%v'", seedjobs.ConfigureSeedJobsName)
 
 	configureSeedJobs, err := client.GetJob(seedjobs.ConfigureSeedJobsName)
