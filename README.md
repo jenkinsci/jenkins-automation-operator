@@ -42,8 +42,14 @@ Some of the problems we want to solve:
 
 ## Contribution
 
-`Feel free to file [issues](https://github.com/jenkinsci/kubernetes-operator/issues) or [pull requests](https://github.com/jenkinsci/kubernetes-operator/pulls).    
+Feel free to file [issues](https://github.com/jenkinsci/kubernetes-operator/issues) or [pull requests](https://github.com/jenkinsci/kubernetes-operator/pulls).    
 
 ## About the authors
 
 This project was originally developed by [VirtusLab](https://virtuslab.com/) and the following [CONTRIBUTORS](https://github.com/VirtusLab/jenkins-operator/graphs/contributors).
+
+[installation]:docs/installation.md
+[getting_started]:docs/getting-started.md
+[how_it_works]:docs/how-it-works.md
+[security]:docs/security.md
+[developer_guide]:docs/developer-guide.md
