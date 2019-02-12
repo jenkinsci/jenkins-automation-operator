@@ -47,22 +47,3 @@ Some of the problems we want to solve:
 ## About the authors
 
 This project was originally developed by [VirtusLab](https://virtuslab.com/) and the following [CONTRIBUTORS](https://github.com/VirtusLab/jenkins-operator/graphs/contributors).
-
-## TODO
-
-Common:
-* simple API for generating Kubernetes events using one common format
-* code clean up and more tests
-
-Base configuration:
-* TLS/SSL configuration
-
-User configuration:
-* backup and restore for Jenkins jobs running as standalone job (AWS, GCP, Azure)
-* verify Jenkins configuration events
-
-[installation]:docs/installation.md
-[getting_started]:docs/getting-started.md
-[how_it_works]:docs/how-it-works.md
-[security]:docs/security.md
-[developer_guide]:docs/developer-guide.md
