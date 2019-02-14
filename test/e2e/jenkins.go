@@ -86,28 +86,6 @@ func createJenkinsCR(t *testing.T, namespace string) *v1alpha1.Jenkins {
 				Image:       "jenkins/jenkins",
 				Annotations: map[string]string{"test": "label"},
 			},
-		},
-	}
-
-	t.Logf("Jenkins CR %+v", *jenkins)
-	if err := framework.Global.Client.Create(context.TODO(), jenkins, nil); err != nil {
-		t.Fatal(err)
-	}
-
-	return jenkins
-}
-
-func createJenkinsCRWithSeedJob(t *testing.T, namespace string) *v1alpha1.Jenkins {
-	jenkins := &v1alpha1.Jenkins{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "e2e",
-			Namespace: namespace,
-		},
-		Spec: v1alpha1.JenkinsSpec{
-			Master: v1alpha1.JenkinsMaster{
-				Image:       "jenkins/jenkins",
-				Annotations: map[string]string{"test": "label"},
-			},
 			//TODO(bantoniak) add seed job with private key
 			SeedJobs: []v1alpha1.SeedJob{
 				{
