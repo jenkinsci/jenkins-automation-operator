@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
-	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/backup"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/user/seedjobs"
@@ -41,21 +40,8 @@ func New(k8sClient k8s.Client, jenkinsClient jenkinsclient.Jenkins, logger logr.
 
 // Reconcile it's a main reconciliation loop for user supplied configuration
 func (r *ReconcileUserConfiguration) Reconcile() (reconcile.Result, error) {
-	backupManager := backup.New(r.jenkins, r.k8sClient, r.logger, r.jenkinsClient)
-	if err := backupManager.EnsureRestoreJob(); err != nil {
-		return reconcile.Result{}, err
-	}
-
-	result, err := backupManager.RestoreBackup()
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-	if result.Requeue {
-		return result, nil
-	}
-
 	// reconcile seed jobs
-	result, err = r.ensureSeedJobs()
+	result, err := r.ensureSeedJobs()
 	if err != nil {
 		return reconcile.Result{}, err
 	}
@@ -69,11 +55,6 @@ func (r *ReconcileUserConfiguration) Reconcile() (reconcile.Result, error) {
 	}
 	if result.Requeue {
 		return result, nil
-	}
-
-	err = backupManager.EnsureBackupJob()
-	if err != nil {
-		return reconcile.Result{}, err
 	}
 
 	return reconcile.Result{}, nil

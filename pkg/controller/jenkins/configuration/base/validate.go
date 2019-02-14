@@ -1,20 +1,14 @@
 package base
 
 import (
-	"context"
 	"fmt"
 	"regexp"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
-	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/backup"
-	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/plugins"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
 
 	docker "github.com/docker/distribution/reference"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/types"
 )
 
 var (
@@ -35,20 +29,6 @@ func (r *ReconcileJenkinsBaseConfiguration) Validate(jenkins *v1alpha1.Jenkins) 
 	}
 
 	if !r.validatePlugins(jenkins.Spec.Master.Plugins) {
-		return false, nil
-	}
-
-	valid, err := r.verifyBackup()
-	if !valid || err != nil {
-		return valid, err
-	}
-
-	backupProvider, err := backup.GetBackupProvider(r.jenkins.Spec.Backup)
-	if err != nil {
-		return false, err
-	}
-
-	if !backupProvider.IsConfigurationValidForBasePhase(*r.jenkins, r.logger) {
 		return false, nil
 	}
 
@@ -83,40 +63,4 @@ func (r *ReconcileJenkinsBaseConfiguration) validatePlugins(pluginsWithVersions 
 	}
 
 	return valid
-}
-
-func (r *ReconcileJenkinsBaseConfiguration) verifyBackup() (bool, error) {
-	if r.jenkins.Spec.Backup == "" {
-		r.logger.V(log.VWarn).Info("Backup strategy not set in 'spec.backup'")
-		return false, nil
-	}
-
-	valid := false
-	for _, backupType := range v1alpha1.AllowedJenkinsBackups {
-		if r.jenkins.Spec.Backup == backupType {
-			valid = true
-		}
-	}
-
-	if !valid {
-		r.logger.V(log.VWarn).Info(fmt.Sprintf("Invalid backup strategy '%s'", r.jenkins.Spec.Backup))
-		r.logger.V(log.VWarn).Info(fmt.Sprintf("Allowed backups '%+v'", v1alpha1.AllowedJenkinsBackups))
-		return false, nil
-	}
-
-	if r.jenkins.Spec.Backup == v1alpha1.JenkinsBackupTypeNoBackup {
-		return true, nil
-	}
-
-	backupSecretName := resources.GetBackupCredentialsSecretName(r.jenkins)
-	backupSecret := &corev1.Secret{}
-	err := r.k8sClient.Get(context.TODO(), types.NamespacedName{Namespace: r.jenkins.Namespace, Name: backupSecretName}, backupSecret)
-	if err != nil && errors.IsNotFound(err) {
-		r.logger.V(log.VWarn).Info(fmt.Sprintf("Please create secret '%s' in namespace '%s'", backupSecretName, r.jenkins.Namespace))
-		return false, nil
-	} else if err != nil && !errors.IsNotFound(err) {
-		return false, err
-	}
-
-	return true, nil
 }

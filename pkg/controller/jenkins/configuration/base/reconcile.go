@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
-	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/backup"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
@@ -62,16 +61,7 @@ func (r *ReconcileJenkinsBaseConfiguration) Reconcile() (reconcile.Result, jenki
 		return reconcile.Result{}, nil, err
 	}
 
-	pluginsRequiredByAllBackupProviders := backup.GetPluginsRequiredByAllBackupProviders()
-	result, err := r.ensurePluginsRequiredByAllBackupProviders(pluginsRequiredByAllBackupProviders)
-	if err != nil {
-		return reconcile.Result{}, nil, err
-	}
-	if result.Requeue {
-		return result, nil, nil
-	}
-
-	result, err = r.ensureJenkinsMasterPod(metaObject)
+	result, err := r.ensureJenkinsMasterPod(metaObject)
 	if err != nil {
 		return reconcile.Result{}, nil, err
 	}
@@ -95,7 +85,7 @@ func (r *ReconcileJenkinsBaseConfiguration) Reconcile() (reconcile.Result, jenki
 	}
 	r.logger.V(log.VDebug).Info("Jenkins API client set")
 
-	ok, err := r.verifyPlugins(jenkinsClient, plugins.BasePluginsMap, pluginsRequiredByAllBackupProviders)
+	ok, err := r.verifyPlugins(jenkinsClient, plugins.BasePluginsMap)
 	if err != nil {
 		return reconcile.Result{}, nil, err
 	}
@@ -143,11 +133,6 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureResourcesRequiredForJenkinsPod
 		return err
 	}
 	r.logger.V(log.VDebug).Info("Service is present")
-
-	if err := r.createBackupCredentialsSecret(metaObject); err != nil {
-		return err
-	}
-	r.logger.V(log.VDebug).Info("Backup credentials secret is present")
 
 	return nil
 }
@@ -473,23 +458,6 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureBaseConfiguration(jenkinsClien
 	return reconcile.Result{}, nil
 }
 
-func (r *ReconcileJenkinsBaseConfiguration) createBackupCredentialsSecret(meta metav1.ObjectMeta) error {
-	currentSecret := &corev1.Secret{}
-	err := r.k8sClient.Get(context.TODO(), types.NamespacedName{Name: resources.GetBackupCredentialsSecretName(r.jenkins), Namespace: r.jenkins.Namespace}, currentSecret)
-	if err != nil && errors.IsNotFound(err) {
-		return r.k8sClient.Create(context.TODO(), resources.NewBackupCredentialsSecret(r.jenkins))
-	} else if err != nil {
-		return err
-	}
-	valid := r.verifyLabelsForWatchedResource(currentSecret)
-	if !valid {
-		currentSecret.ObjectMeta.Labels = resources.BuildLabelsForWatchedResources(r.jenkins)
-		return r.k8sClient.Update(context.TODO(), currentSecret)
-	}
-
-	return nil
-}
-
 func (r *ReconcileJenkinsBaseConfiguration) verifyLabelsForWatchedResource(object metav1.Object) bool {
 	requiredLabels := resources.BuildLabelsForWatchedResources(r.jenkins)
 	for key, value := range requiredLabels {
@@ -499,29 +467,4 @@ func (r *ReconcileJenkinsBaseConfiguration) verifyLabelsForWatchedResource(objec
 	}
 
 	return true
-}
-
-func (r *ReconcileJenkinsBaseConfiguration) ensurePluginsRequiredByAllBackupProviders(requiredPlugins map[string][]plugins.Plugin) (reconcile.Result, error) {
-	copiedPlugins := map[string][]string{}
-	for key, value := range r.jenkins.Spec.Master.Plugins {
-		copiedPlugins[key] = value
-	}
-	for key, value := range requiredPlugins {
-		copiedPlugins[key] = func() []string {
-			var pluginsWithVersion []string
-			for _, plugin := range value {
-				pluginsWithVersion = append(pluginsWithVersion, plugin.String())
-			}
-			return pluginsWithVersion
-		}()
-	}
-
-	if !reflect.DeepEqual(r.jenkins.Spec.Master.Plugins, copiedPlugins) {
-		r.logger.Info("Adding plugins required by backup providers to '.spec.master.plugins'")
-		r.jenkins.Spec.Master.Plugins = copiedPlugins
-		err := r.k8sClient.Update(context.TODO(), r.jenkins)
-		return reconcile.Result{Requeue: true}, err
-	}
-
-	return reconcile.Result{}, nil
 }

@@ -212,12 +212,6 @@ func (r *ReconcileJenkins) setDefaults(jenkins *v1alpha1.Jenkins, logger logr.Lo
 		changed = true
 		jenkins.Spec.Master.Image = constants.DefaultJenkinsMasterImage
 	}
-	if len(jenkins.Spec.Backup) == 0 {
-		logger.Info("Setting default backup strategy: " + v1alpha1.JenkinsBackupTypeNoBackup)
-		logger.V(log.VWarn).Info("Backup is disable !!! Please configure backup in '.spec.backup'")
-		changed = true
-		jenkins.Spec.Backup = v1alpha1.JenkinsBackupTypeNoBackup
-	}
 	if len(jenkins.Spec.Master.Plugins) == 0 {
 		logger.Info("Setting default base plugins")
 		changed = true

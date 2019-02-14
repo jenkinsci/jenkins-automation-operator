@@ -16,7 +16,6 @@ const (
 	jenkinsScriptsVolumeName = "scripts"
 	jenkinsScriptsVolumePath = "/var/jenkins/scripts"
 	initScriptName           = "init.sh"
-	backupScriptName         = "backup.sh"
 
 	jenkinsOperatorCredentialsVolumeName = "operator-credentials"
 	jenkinsOperatorCredentialsVolumePath = "/var/jenkins/operator-credentials"
@@ -33,11 +32,6 @@ const (
 	// JenkinsUserConfigurationVolumePath is a path where are groovy scripts used to configure Jenkins
 	// this scripts are provided by user
 	JenkinsUserConfigurationVolumePath = "/var/jenkins/user-configuration"
-
-	jenkinsBackupCredentialsVolumeName = "backup-credentials"
-	// JenkinsBackupCredentialsVolumePath is a path where are credentials used for backup/restore
-	// credentials are provided by user
-	JenkinsBackupCredentialsVolumePath = "/var/jenkins/backup-credentials"
 
 	httpPortName  = "http"
 	slavePortName = "slavelistener"
@@ -83,16 +77,6 @@ func NewJenkinsMasterPod(objectMeta metav1.ObjectMeta, jenkins *v1alpha1.Jenkins
 					Command: []string{
 						"bash",
 						fmt.Sprintf("%s/%s", jenkinsScriptsVolumePath, initScriptName),
-					},
-					Lifecycle: &corev1.Lifecycle{
-						PreStop: &corev1.Handler{
-							Exec: &corev1.ExecAction{
-								Command: []string{
-									"bash",
-									fmt.Sprintf("%s/%s", jenkinsScriptsVolumePath, backupScriptName),
-								},
-							},
-						},
 					},
 					LivenessProbe: &corev1.Probe{
 						Handler: corev1.Handler{
@@ -168,11 +152,6 @@ func NewJenkinsMasterPod(objectMeta metav1.ObjectMeta, jenkins *v1alpha1.Jenkins
 							MountPath: jenkinsOperatorCredentialsVolumePath,
 							ReadOnly:  true,
 						},
-						{
-							Name:      jenkinsBackupCredentialsVolumeName,
-							MountPath: JenkinsBackupCredentialsVolumePath,
-							ReadOnly:  true,
-						},
 					},
 				},
 			},
@@ -228,14 +207,6 @@ func NewJenkinsMasterPod(objectMeta metav1.ObjectMeta, jenkins *v1alpha1.Jenkins
 					VolumeSource: corev1.VolumeSource{
 						Secret: &corev1.SecretVolumeSource{
 							SecretName: GetOperatorCredentialsSecretName(jenkins),
-						},
-					},
-				},
-				{
-					Name: jenkinsBackupCredentialsVolumeName,
-					VolumeSource: corev1.VolumeSource{
-						Secret: &corev1.SecretVolumeSource{
-							SecretName: GetBackupCredentialsSecretName(jenkins),
 						},
 					},
 				},

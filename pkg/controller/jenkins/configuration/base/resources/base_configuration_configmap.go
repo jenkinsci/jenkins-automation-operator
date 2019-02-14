@@ -16,7 +16,7 @@ import jenkins.model.JenkinsLocationConfiguration
 import hudson.model.Node.Mode
 
 def jenkins = Jenkins.instance
-//Number of jobs that run simultaneously on master, currently only backup and SeedJob.
+//Number of jobs that run simultaneously on master, currently only SeedJob.
 jenkins.setNumExecutors(%d)
 //Jobs must specify that they want to run on master
 jenkins.setMode(Mode.EXCLUSIVE)

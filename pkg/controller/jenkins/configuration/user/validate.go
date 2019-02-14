@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
-	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/backup"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
 
 	"k8s.io/api/core/v1"
@@ -24,12 +23,7 @@ func (r *ReconcileUserConfiguration) Validate(jenkins *v1alpha1.Jenkins) (bool, 
 		return valid, err
 	}
 
-	backupProvider, err := backup.GetBackupProvider(r.jenkins.Spec.Backup)
-	if err != nil {
-		return false, err
-	}
-
-	return backupProvider.IsConfigurationValidForUserPhase(r.k8sClient, *r.jenkins, r.logger)
+	return true, nil
 }
 
 func (r *ReconcileUserConfiguration) validateSeedJobs(jenkins *v1alpha1.Jenkins) (bool, error) {
