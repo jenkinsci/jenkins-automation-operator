@@ -9,8 +9,7 @@ import (
 )
 
 func TestVerifyDependencies(t *testing.T) {
-	debug := false
-	log.SetupLogger(&debug)
+	log.SetupLogger(false)
 
 	t.Run("happy, single root plugin with one dependent plugin", func(t *testing.T) {
 		basePlugins := map[Plugin][]Plugin{

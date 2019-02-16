@@ -13,6 +13,7 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/jobs"
 
 	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	k8s "sigs.k8s.io/controller-runtime/pkg/client"
@@ -73,7 +74,7 @@ func (r *ReconcileUserConfiguration) ensureSeedJobs() (reconcile.Result, error) 
 			return reconcile.Result{}, nil
 		}
 		// unexpected error - requeue reconciliation loop
-		return reconcile.Result{}, err
+		return reconcile.Result{}, errors.WithStack(err)
 	}
 	// build not finished yet - requeue reconciliation loop with timeout
 	if !done {
@@ -94,7 +95,7 @@ func (r *ReconcileUserConfiguration) ensureUserConfiguration(jenkinsClient jenki
 	namespaceName := types.NamespacedName{Namespace: r.jenkins.Namespace, Name: resources.GetUserConfigurationConfigMapName(r.jenkins)}
 	err = r.k8sClient.Get(context.TODO(), namespaceName, configuration)
 	if err != nil {
-		return reconcile.Result{}, err
+		return reconcile.Result{}, errors.WithStack(err)
 	}
 
 	done, err := groovyClient.EnsureGroovyJob(configuration.Data, r.jenkins)

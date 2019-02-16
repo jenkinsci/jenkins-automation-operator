@@ -3,8 +3,7 @@ package event
 import (
 	"fmt"
 
-	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
-
+	"github.com/pkg/errors"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
@@ -38,8 +37,8 @@ type recorder struct {
 }
 
 // New returns recorder used to emit events
-func New(config *rest.Config) (Recorder, error) {
-	eventRecorder, err := initializeEventRecorder(config)
+func New(config *rest.Config, component string) (Recorder, error) {
+	eventRecorder, err := initializeEventRecorder(config, component)
 	if err != nil {
 		return nil, err
 	}
@@ -49,10 +48,10 @@ func New(config *rest.Config) (Recorder, error) {
 	}, nil
 }
 
-func initializeEventRecorder(config *rest.Config) (record.EventRecorder, error) {
+func initializeEventRecorder(config *rest.Config, component string) (record.EventRecorder, error) {
 	client, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	eventBroadcaster := record.NewBroadcaster()
 	//eventBroadcaster.StartLogging(glog.Infof) TODO integrate with proper logger
@@ -61,8 +60,8 @@ func initializeEventRecorder(config *rest.Config) (record.EventRecorder, error) 
 			Interface: client.CoreV1().Events("")})
 	eventRecorder := eventBroadcaster.NewRecorder(
 		scheme.Scheme,
-		v1.EventSource{
-			Component: constants.OperatorName})
+		v1.EventSource{Component: component},
+	)
 	return eventRecorder, nil
 }
 

@@ -2,7 +2,6 @@ package jobs
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -11,21 +10,22 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
 
 	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8s "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var (
 	// ErrorUnexpectedBuildStatus - this is custom error returned when jenkins build has unexpected status
-	ErrorUnexpectedBuildStatus = errors.New("unexpected build status")
+	ErrorUnexpectedBuildStatus = fmt.Errorf("unexpected build status")
 	// ErrorBuildFailed - this is custom error returned when jenkins build has failed
-	ErrorBuildFailed = errors.New("build failed")
+	ErrorBuildFailed = fmt.Errorf("build failed")
 	// ErrorAbortBuildFailed - this is custom error returned when jenkins build couldn't be aborted
-	ErrorAbortBuildFailed = errors.New("build abort failed")
+	ErrorAbortBuildFailed = fmt.Errorf("build abort failed")
 	// ErrorUnrecoverableBuildFailed - this is custom error returned when jenkins build has failed and cannot be recovered
-	ErrorUnrecoverableBuildFailed = errors.New("build failed and cannot be recovered")
+	ErrorUnrecoverableBuildFailed = fmt.Errorf("build failed and cannot be recovered")
 	// ErrorNotFound - this is error returned when jenkins build couldn't be found
-	ErrorNotFound = errors.New("404")
+	ErrorNotFound = fmt.Errorf("404")
 	// BuildRetires - determines max amount of retires for failed build
 	BuildRetires = 3
 )
@@ -54,11 +54,7 @@ func New(jenkinsClient client.Jenkins, k8sClient k8s.Client, logger logr.Logger)
 func (jobs *Jobs) EnsureBuildJob(jobName, hash string, parameters map[string]string, jenkins *v1alpha1.Jenkins, preserveStatus bool) (done bool, err error) {
 	jobs.logger.V(log.VDebug).Info(fmt.Sprintf("Ensuring build, name:'%s' hash:'%s'", jobName, hash))
 
-	build, err := jobs.getBuildFromStatus(jobName, hash, jenkins)
-	if err != nil {
-		return false, err
-	}
-
+	build := jobs.getBuildFromStatus(jobName, hash, jenkins)
 	if build != nil {
 		jobs.logger.V(log.VDebug).Info(fmt.Sprintf("Build exists in status, %+v", build))
 		switch build.Status {
@@ -86,16 +82,16 @@ func (jobs *Jobs) EnsureBuildJob(jobName, hash string, parameters map[string]str
 	return jobs.buildJob(newBuild, parameters, jenkins)
 }
 
-func (jobs *Jobs) getBuildFromStatus(jobName string, hash string, jenkins *v1alpha1.Jenkins) (*v1alpha1.Build, error) {
+func (jobs *Jobs) getBuildFromStatus(jobName string, hash string, jenkins *v1alpha1.Jenkins) *v1alpha1.Build {
 	if jenkins != nil {
 		builds := jenkins.Status.Builds
 		for _, build := range builds {
 			if build.JobName == jobName && build.Hash == hash {
-				return &build, nil
+				return &build
 			}
 		}
 	}
-	return nil, nil
+	return nil
 }
 
 func (jobs *Jobs) ensureSuccessBuild(build v1alpha1.Build, jenkins *v1alpha1.Jenkins, preserveStatus bool) (bool, error) {
@@ -103,7 +99,6 @@ func (jobs *Jobs) ensureSuccessBuild(build v1alpha1.Build, jenkins *v1alpha1.Jen
 
 	if !preserveStatus {
 		err := jobs.removeBuildFromStatus(build, jenkins)
-		jobs.logger.V(log.VDebug).Info(fmt.Sprintf("Removing build from status, %+v", build))
 		if err != nil {
 			jobs.logger.V(log.VWarn).Info(fmt.Sprintf("Couldn't remove build from status, %+v", build))
 			return false, err
@@ -122,7 +117,7 @@ func (jobs *Jobs) ensureRunningBuild(build v1alpha1.Build, jenkins *v1alpha1.Jen
 		return false, nil
 	} else if err != nil {
 		jobs.logger.V(log.VWarn).Info(fmt.Sprintf("Couldn't get jenkins build, %+v", build))
-		return false, err
+		return false, errors.WithStack(err)
 	}
 
 	if jenkinsBuild.GetResult() != "" {
@@ -166,7 +161,6 @@ func (jobs *Jobs) ensureFailedBuild(build v1alpha1.Build, jenkins *v1alpha1.Jenk
 	jobs.logger.V(log.VWarn).Info(fmt.Sprintf("The retries limit was reached , %+v", build))
 
 	if !preserveStatus {
-		jobs.logger.V(log.VDebug).Info(fmt.Sprintf("Removing build from status, %+v", build))
 		err := jobs.removeBuildFromStatus(build, jenkins)
 		if err != nil {
 			jobs.logger.V(log.VWarn).Info(fmt.Sprintf("Couldn't remove build from status, %+v", build))
@@ -181,17 +175,17 @@ func (jobs *Jobs) ensureExpiredBuild(build v1alpha1.Build, jenkins *v1alpha1.Jen
 
 	jenkinsBuild, err := jobs.jenkinsClient.GetBuild(build.JobName, build.Number)
 	if err != nil {
-		return false, err
+		return false, errors.WithStack(err)
 	}
 
 	_, err = jenkinsBuild.Stop()
 	if err != nil {
-		return false, err
+		return false, errors.WithStack(err)
 	}
 
 	jenkinsBuild, err = jobs.jenkinsClient.GetBuild(build.JobName, build.Number)
 	if err != nil {
-		return false, err
+		return false, errors.WithStack(err)
 	}
 
 	if v1alpha1.BuildStatus(jenkinsBuild.GetResult()) != v1alpha1.BuildAbortedStatus {
@@ -206,7 +200,6 @@ func (jobs *Jobs) ensureExpiredBuild(build v1alpha1.Build, jenkins *v1alpha1.Jen
 	// TODO(antoniaklja) clean up k8s resources
 
 	if !preserveStatus {
-		jobs.logger.V(log.VDebug).Info(fmt.Sprintf("Removing build from status, %+v", build))
 		err = jobs.removeBuildFromStatus(build, jenkins)
 		if err != nil {
 			jobs.logger.V(log.VWarn).Info(fmt.Sprintf("Couldn't remove build from status, %+v", build))
@@ -218,6 +211,7 @@ func (jobs *Jobs) ensureExpiredBuild(build v1alpha1.Build, jenkins *v1alpha1.Jen
 }
 
 func (jobs *Jobs) removeBuildFromStatus(build v1alpha1.Build, jenkins *v1alpha1.Jenkins) error {
+	jobs.logger.V(log.VDebug).Info(fmt.Sprintf("Removing build from status, %+v", build))
 	builds := make([]v1alpha1.Build, len(jenkins.Status.Builds))
 	for _, existingBuild := range jenkins.Status.Builds {
 		if existingBuild.JobName != build.JobName && existingBuild.Hash != build.Hash {
@@ -227,7 +221,7 @@ func (jobs *Jobs) removeBuildFromStatus(build v1alpha1.Build, jenkins *v1alpha1.
 	jenkins.Status.Builds = builds
 	err := jobs.k8sClient.Update(context.TODO(), jenkins)
 	if err != nil {
-		return err
+		return err // don't wrap because apierrors.IsConflict(err) won't work in jenkins_controller
 	}
 
 	return nil
@@ -238,7 +232,7 @@ func (jobs *Jobs) buildJob(build v1alpha1.Build, parameters map[string]string, j
 	job, err := jobs.jenkinsClient.GetJob(build.JobName)
 	if err != nil {
 		jobs.logger.V(log.VWarn).Info(fmt.Sprintf("Couldn't find jenkins job, %+v", build))
-		return false, err
+		return false, errors.WithStack(err)
 	}
 	nextBuildNumber := job.GetDetails().NextBuildNumber
 
@@ -246,7 +240,7 @@ func (jobs *Jobs) buildJob(build v1alpha1.Build, parameters map[string]string, j
 	_, err = jobs.jenkinsClient.BuildJob(build.JobName, parameters)
 	if err != nil {
 		jobs.logger.V(log.VWarn).Info(fmt.Sprintf("Couldn't run build, %+v", build))
-		return false, err
+		return false, errors.WithStack(err)
 	}
 
 	build.Status = v1alpha1.BuildRunningStatus
@@ -281,7 +275,7 @@ func (jobs *Jobs) updateBuildStatus(build v1alpha1.Build, jenkins *v1alpha1.Jenk
 	}
 	err := jobs.k8sClient.Update(context.TODO(), jenkins)
 	if err != nil {
-		return err
+		return err // don't wrap because apierrors.IsConflict(err) won't work in jenkins_controller
 	}
 
 	return nil

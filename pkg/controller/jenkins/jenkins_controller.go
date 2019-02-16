@@ -13,6 +13,7 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
 
 	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -57,13 +58,13 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// Create a new controller
 	c, err := controller.New("jenkins-controller", mgr, controller.Options{Reconciler: r})
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	// Watch for changes to primary resource Jenkins
 	err = c.Watch(&source.Kind{Type: &v1alpha1.Jenkins{}}, &handler.EnqueueRequestForObject{})
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	// Watch for changes to secondary resource Pods and requeue the owner Jenkins
@@ -72,18 +73,18 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		OwnerType:    &v1alpha1.Jenkins{},
 	})
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	jenkinsHandler := &enqueueRequestForJenkins{}
 	err = c.Watch(&source.Kind{Type: &corev1.Secret{}}, jenkinsHandler)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	err = c.Watch(&source.Kind{Type: &corev1.ConfigMap{}}, jenkinsHandler)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	return nil
@@ -109,7 +110,11 @@ func (r *ReconcileJenkins) Reconcile(request reconcile.Request) (reconcile.Resul
 		logger.V(log.VWarn).Info(err.Error())
 		return reconcile.Result{Requeue: true}, nil
 	} else if err != nil {
-		logger.V(log.VWarn).Info(fmt.Sprintf("Reconcile loop failed: %+v", err))
+		if log.Debug {
+			logger.V(log.VWarn).Info(fmt.Sprintf("Reconcile loop failed: %+v", err))
+		} else {
+			logger.V(log.VWarn).Info(fmt.Sprintf("Reconcile loop failed: %s", err))
+		}
 		return reconcile.Result{Requeue: true}, nil
 	}
 	return result, nil
@@ -127,7 +132,7 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request, logger logr.Logg
 			return reconcile.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
-		return reconcile.Result{}, err
+		return reconcile.Result{}, errors.WithStack(err)
 	}
 
 	err = r.setDefaults(jenkins, logger)
@@ -161,7 +166,7 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request, logger logr.Logg
 		jenkins.Status.BaseConfigurationCompletedTime = &now
 		err = r.client.Update(context.TODO(), jenkins)
 		if err != nil {
-			return reconcile.Result{}, err
+			return reconcile.Result{}, errors.WithStack(err)
 		}
 		logger.Info("Base configuration phase is complete")
 		r.events.Emit(jenkins, event.TypeNormal, reasonBaseConfigurationSuccess, "Base configuration completed")
@@ -192,7 +197,7 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request, logger logr.Logg
 		jenkins.Status.UserConfigurationCompletedTime = &now
 		err = r.client.Update(context.TODO(), jenkins)
 		if err != nil {
-			return reconcile.Result{}, err
+			return reconcile.Result{}, errors.WithStack(err)
 		}
 		logger.Info("User configuration phase is complete")
 		r.events.Emit(jenkins, event.TypeNormal, reasonUserConfigurationSuccess, "User configuration completed")
@@ -241,7 +246,7 @@ func (r *ReconcileJenkins) setDefaults(jenkins *v1alpha1.Jenkins, logger logr.Lo
 	}
 
 	if changed {
-		return r.client.Update(context.TODO(), jenkins)
+		return errors.WithStack(r.client.Update(context.TODO(), jenkins))
 	}
 	return nil
 }

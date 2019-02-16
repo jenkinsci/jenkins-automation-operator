@@ -4,13 +4,13 @@ import (
 	"context"
 	"crypto/x509"
 	"encoding/pem"
-	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
 
+	stackerr "github.com/pkg/errors"
 	"k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -55,7 +55,7 @@ func (r *ReconcileUserConfiguration) validateSeedJobs(jenkins *v1alpha1.Jenkins)
 					logger.Info("secret not found")
 					valid = false
 				} else if err != nil {
-					return false, err
+					return false, stackerr.WithStack(err)
 				}
 
 				privateKey := string(deployKeySecret.Data[seedJob.PrivateKey.SecretKeyRef.Key])
@@ -77,17 +77,17 @@ func (r *ReconcileUserConfiguration) validateSeedJobs(jenkins *v1alpha1.Jenkins)
 func validatePrivateKey(privateKey string) error {
 	block, _ := pem.Decode([]byte(privateKey))
 	if block == nil {
-		return errors.New("failed to decode PEM block")
+		return stackerr.New("failed to decode PEM block")
 	}
 
 	priv, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
-		return err
+		return stackerr.WithStack(err)
 	}
 
 	err = priv.Validate()
 	if err != nil {
-		return err
+		return stackerr.WithStack(err)
 	}
 
 	return nil

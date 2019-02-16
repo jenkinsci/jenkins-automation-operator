@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
+
+	"github.com/pkg/errors"
 )
 
 // Plugin represents jenkins plugin
@@ -22,7 +24,7 @@ func (p Plugin) String() string {
 func New(nameWithVersion string) (*Plugin, error) {
 	val := strings.SplitN(nameWithVersion, ":", 2)
 	if val == nil || len(val) != 2 {
-		return nil, fmt.Errorf("invalid plugin format '%s'", nameWithVersion)
+		return nil, errors.Errorf("invalid plugin format '%s'", nameWithVersion)
 	}
 	return &Plugin{
 		Name:    val[0],

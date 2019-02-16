@@ -64,20 +64,13 @@ func (jenkins *jenkins) CreateOrUpdateJob(config, jobName string) (job *gojenkin
 	if isNotFoundError(err) {
 		job, err = jenkins.CreateJob(config, jobName)
 		created = true
-		return
+		return job, true, errors.WithStack(err)
 	} else if err != nil {
-		return
+		return job, false, errors.WithStack(err)
 	}
 
 	err = job.UpdateConfig(config)
-	return
-}
-
-func isNotFoundError(err error) bool {
-	if err != nil {
-		return err.Error() == errorNotFound.Error()
-	}
-	return false
+	return job, false, errors.WithStack(err)
 }
 
 // BuildJenkinsAPIUrl returns Jenkins API URL
@@ -89,7 +82,7 @@ func BuildJenkinsAPIUrl(namespace, serviceName string, portNumber int, local, mi
 		cmd.Stdout = &out
 		err := cmd.Run()
 		if err != nil {
-			return "", err
+			return "", errors.WithStack(err)
 		}
 		lines := strings.Split(out.String(), "\n")
 		// First is for http, the second one is for Jenkins slaves communication
@@ -134,4 +127,11 @@ func New(url, user, passwordOrToken string) (Jenkins, error) {
 	}
 
 	return jenkinsClient, nil
+}
+
+func isNotFoundError(err error) bool {
+	if err != nil {
+		return err.Error() == errorNotFound.Error()
+	}
+	return false
 }

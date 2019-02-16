@@ -167,7 +167,7 @@ func GetBaseConfigurationConfigMapName(jenkins *v1alpha1.Jenkins) string {
 }
 
 // NewBaseConfigurationConfigMap builds Kubernetes config map used to base configuration
-func NewBaseConfigurationConfigMap(meta metav1.ObjectMeta, jenkins *v1alpha1.Jenkins) (*corev1.ConfigMap, error) {
+func NewBaseConfigurationConfigMap(meta metav1.ObjectMeta, jenkins *v1alpha1.Jenkins) *corev1.ConfigMap {
 	meta.Name = GetBaseConfigurationConfigMapName(jenkins)
 
 	return &corev1.ConfigMap{
@@ -183,5 +183,5 @@ func NewBaseConfigurationConfigMap(meta metav1.ObjectMeta, jenkins *v1alpha1.Jen
 				jenkins.ObjectMeta.Namespace, GetResourceName(jenkins), HTTPPortInt),
 			"7-configure-views.groovy": configureViews,
 		},
-	}, nil
+	}
 }
