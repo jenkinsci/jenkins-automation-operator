@@ -212,10 +212,14 @@ func (r *ReconcileJenkins) setDefaults(jenkins *v1alpha1.Jenkins, logger logr.Lo
 		changed = true
 		jenkins.Spec.Master.Image = constants.DefaultJenkinsMasterImage
 	}
-	if len(jenkins.Spec.Master.Plugins) == 0 {
+	if len(jenkins.Spec.Master.OperatorPlugins) == 0 {
 		logger.Info("Setting default base plugins")
 		changed = true
-		jenkins.Spec.Master.Plugins = plugins.BasePlugins()
+		jenkins.Spec.Master.OperatorPlugins = plugins.BasePlugins()
+	}
+	if len(jenkins.Spec.Master.Plugins) == 0 {
+		changed = true
+		jenkins.Spec.Master.Plugins = map[string][]string{"simple-theme-plugin:0.5.1": {}}
 	}
 	_, requestCPUSet := jenkins.Spec.Master.Resources.Requests[corev1.ResourceCPU]
 	_, requestMemporySet := jenkins.Spec.Master.Resources.Requests[corev1.ResourceMemory]

@@ -85,6 +85,10 @@ func createJenkinsCR(t *testing.T, namespace string) *v1alpha1.Jenkins {
 			Master: v1alpha1.JenkinsMaster{
 				Image:       "jenkins/jenkins",
 				Annotations: map[string]string{"test": "label"},
+				Plugins: map[string][]string{
+					"audit-trail:2.4":           {},
+					"simple-theme-plugin:0.5.1": {},
+				},
 			},
 			//TODO(bantoniak) add seed job with private key
 			SeedJobs: []v1alpha1.SeedJob{

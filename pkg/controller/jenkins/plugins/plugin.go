@@ -40,26 +40,22 @@ func Must(plugin *Plugin, err error) Plugin {
 }
 
 // VerifyDependencies checks if all plugins have compatible versions
-func VerifyDependencies(values ...map[string][]Plugin) bool {
+func VerifyDependencies(values ...map[Plugin][]Plugin) bool {
 	// key - plugin name, value array of versions
 	allPlugins := make(map[string][]Plugin)
 	valid := true
 
 	for _, value := range values {
-		for rootPluginNameAndVersion, plugins := range value {
-			if rootPlugin, err := New(rootPluginNameAndVersion); err != nil {
-				valid = false
-			} else {
-				allPlugins[rootPlugin.Name] = append(allPlugins[rootPlugin.Name], Plugin{
-					Name:                     rootPlugin.Name,
-					Version:                  rootPlugin.Version,
-					rootPluginNameAndVersion: rootPluginNameAndVersion})
-			}
+		for rootPlugin, plugins := range value {
+			allPlugins[rootPlugin.Name] = append(allPlugins[rootPlugin.Name], Plugin{
+				Name:                     rootPlugin.Name,
+				Version:                  rootPlugin.Version,
+				rootPluginNameAndVersion: rootPlugin.String()})
 			for _, plugin := range plugins {
 				allPlugins[plugin.Name] = append(allPlugins[plugin.Name], Plugin{
 					Name:                     plugin.Name,
 					Version:                  plugin.Version,
-					rootPluginNameAndVersion: rootPluginNameAndVersion})
+					rootPluginNameAndVersion: rootPlugin.String()})
 			}
 		}
 	}

@@ -28,34 +28,39 @@ func (r *ReconcileJenkinsBaseConfiguration) Validate(jenkins *v1alpha1.Jenkins) 
 
 	}
 
-	if !r.validatePlugins(jenkins.Spec.Master.Plugins) {
+	if !r.validatePlugins(jenkins.Spec.Master.OperatorPlugins, jenkins.Spec.Master.Plugins) {
 		return false, nil
 	}
 
 	return true, nil
 }
 
-func (r *ReconcileJenkinsBaseConfiguration) validatePlugins(pluginsWithVersions map[string][]string) bool {
+func (r *ReconcileJenkinsBaseConfiguration) validatePlugins(pluginsWithVersionSlice ...map[string][]string) bool {
 	valid := true
-	allPlugins := map[string][]plugins.Plugin{}
+	allPlugins := map[plugins.Plugin][]plugins.Plugin{}
 
-	for rootPluginName, dependentPluginNames := range pluginsWithVersions {
-		if _, err := plugins.New(rootPluginName); err != nil {
-			r.logger.V(log.VWarn).Info(fmt.Sprintf("Invalid root plugin name '%s'", rootPluginName))
-			valid = false
-		}
-
-		dependentPlugins := []plugins.Plugin{}
-		for _, pluginName := range dependentPluginNames {
-			if p, err := plugins.New(pluginName); err != nil {
-				r.logger.V(log.VWarn).Info(fmt.Sprintf("Invalid dependent plugin name '%s' in root plugin '%s'", pluginName, rootPluginName))
+	for _, pluginsWithVersions := range pluginsWithVersionSlice {
+		for rootPluginName, dependentPluginNames := range pluginsWithVersions {
+			rootPlugin, err := plugins.New(rootPluginName)
+			if err != nil {
+				r.logger.V(log.VWarn).Info(fmt.Sprintf("Invalid root plugin name '%s'", rootPluginName))
 				valid = false
-			} else {
-				dependentPlugins = append(dependentPlugins, *p)
+			}
+
+			var dependentPlugins []plugins.Plugin
+			for _, pluginName := range dependentPluginNames {
+				if p, err := plugins.New(pluginName); err != nil {
+					r.logger.V(log.VWarn).Info(fmt.Sprintf("Invalid dependent plugin name '%s' in root plugin '%s'", pluginName, rootPluginName))
+					valid = false
+				} else {
+					dependentPlugins = append(dependentPlugins, *p)
+				}
+			}
+
+			if rootPlugin != nil {
+				allPlugins[*rootPlugin] = dependentPlugins
 			}
 		}
-
-		allPlugins[rootPluginName] = dependentPlugins
 	}
 
 	if valid {

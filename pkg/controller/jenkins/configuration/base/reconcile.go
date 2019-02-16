@@ -85,12 +85,13 @@ func (r *ReconcileJenkinsBaseConfiguration) Reconcile() (reconcile.Result, jenki
 	}
 	r.logger.V(log.VDebug).Info("Jenkins API client set")
 
-	ok, err := r.verifyPlugins(jenkinsClient, plugins.BasePluginsMap)
+	ok, err := r.verifyPlugins(jenkinsClient)
 	if err != nil {
 		return reconcile.Result{}, nil, err
 	}
 	if !ok {
-		r.logger.V(log.VWarn).Info("Please correct Jenkins CR (spec.master.plugins)")
+		r.logger.V(log.VWarn).Info("Please correct Jenkins CR(spec.master.OperatorPlugins or spec.master.plugins)")
+		// TODO inform user via Admin Monitor and don't restart Jenkins
 		return reconcile.Result{Requeue: true}, nil, r.restartJenkinsMasterPod(metaObject)
 	}
 
@@ -137,7 +138,7 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureResourcesRequiredForJenkinsPod
 	return nil
 }
 
-func (r *ReconcileJenkinsBaseConfiguration) verifyPlugins(jenkinsClient jenkinsclient.Jenkins, allRequiredPlugins ...map[string][]plugins.Plugin) (bool, error) {
+func (r *ReconcileJenkinsBaseConfiguration) verifyPlugins(jenkinsClient jenkinsclient.Jenkins) (bool, error) {
 	allPluginsInJenkins, err := jenkinsClient.GetPlugins(fetchAllPlugins)
 	if err != nil {
 		return false, err
@@ -151,7 +152,21 @@ func (r *ReconcileJenkinsBaseConfiguration) verifyPlugins(jenkinsClient jenkinsc
 	}
 	r.logger.V(log.VDebug).Info(fmt.Sprintf("Installed plugins '%+v'", installedPlugins))
 
+	userPlugins := map[string][]plugins.Plugin{}
+	for rootPlugin, dependentPluginNames := range r.jenkins.Spec.Master.Plugins {
+		var dependentPlugins []plugins.Plugin
+		for _, pluginNameWithVersion := range dependentPluginNames {
+			plugin, err := plugins.New(pluginNameWithVersion)
+			if err != nil {
+				return false, err
+			}
+			dependentPlugins = append(dependentPlugins, *plugin)
+		}
+		userPlugins[rootPlugin] = dependentPlugins
+	}
+
 	status := true
+	allRequiredPlugins := []map[string][]plugins.Plugin{plugins.BasePluginsMap, userPlugins}
 	for _, requiredPlugins := range allRequiredPlugins {
 		for rootPluginName, p := range requiredPlugins {
 			rootPlugin, _ := plugins.New(rootPluginName)

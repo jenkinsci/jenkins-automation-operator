@@ -22,7 +22,10 @@ type JenkinsMaster struct {
 	Image       string                      `json:"image,omitempty"`
 	Annotations map[string]string           `json:"masterAnnotations,omitempty"`
 	Resources   corev1.ResourceRequirements `json:"resources,omitempty"`
-	Plugins     map[string][]string         `json:"plugins,omitempty"`
+	// OperatorPlugins contains plugins required by operator
+	OperatorPlugins map[string][]string `json:"basePlugins,omitempty"`
+	// Plugins contains plugins required by user
+	Plugins map[string][]string `json:"plugins,omitempty"`
 }
 
 // JenkinsStatus defines the observed state of Jenkins

@@ -6,9 +6,8 @@ This document describes a getting started guide for **jenkins-operator** and an 
 2. [Deploy Jenkins](#deploy-jenkins)
 3. [Configure Seed Jobs and Pipelines](#configure-seed-jobs-and-pipelines)
 4. [Install Plugins](#install-plugins)
-5. [Configure Authorization](#configure-authorization)
-6. [Configure Backup & Restore](#configure-backup-&-restore)
-7. [Debugging](#debugging)
+5. [Configure Backup & Restore](#configure-backup-&-restore)
+6. [Debugging](#debugging)
 
 ## First Steps
 
@@ -256,6 +255,27 @@ When **jenkins-operator-user-configuration-example** ConfigMap is updated Jenkin
 
 ## Install Plugins
 
+### Via CR
+
+Edit CR under `spec.master.plugins`:
+
+```
+apiVersion: jenkins.io/v1alpha1
+kind: Jenkins
+metadata:
+  name: example
+spec:
+  master:
+   image: jenkins/jenkins:lts
+   plugins:
+     configuration-as-code:1.4:
+     - configuration-as-code-support:1.4
+```
+
+Then **jenkins-operator** will automatically install plugins after Jenkins master pod restart.
+
+### Via groovy script
+
 To install a plugin please add **2-install-slack-plugin.groovy** script to the **jenkins-operator-user-configuration-example** ConfigMap:
 
 ```
@@ -318,7 +338,7 @@ data:
 
 Then **jenkins-operator** will automatically trigger **jenkins-operator-user-configuration** Jenkins Job again.
 
-## Configure Backup & Restore (work in progress)
+## Configure Backup & Restore
 
 Not implemented yet.
 

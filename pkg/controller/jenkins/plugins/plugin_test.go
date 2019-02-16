@@ -1,90 +1,88 @@
 package plugins
 
 import (
-	"fmt"
-	"github.com/jenkinsci/kubernetes-operator/pkg/log"
 	"testing"
+
+	"github.com/jenkinsci/kubernetes-operator/pkg/log"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestVerifyDependencies(t *testing.T) {
-	data := []struct {
-		basePlugins    map[string][]Plugin
-		extraPlugins   map[string][]Plugin
-		expectedResult bool
-	}{
-		{
-			basePlugins: map[string][]Plugin{
-				"first-root-plugin:1.0.0": {
-					Must(New("first-plugin:0.0.1")),
-				},
-			},
-			expectedResult: true,
-		},
-		{
-			basePlugins: map[string][]Plugin{
-				"first-root-plugin:1.0.0": {
-					Must(New("first-plugin:0.0.1")),
-				},
-				"second-root-plugin:1.0.0": {
-					Must(New("first-plugin:0.0.1")),
-				},
-			},
-			expectedResult: true,
-		},
-		{
-			basePlugins: map[string][]Plugin{
-				"first-root-plugin:1.0.0": {
-					Must(New("first-plugin:0.0.1")),
-				},
-			},
-			extraPlugins: map[string][]Plugin{
-				"second-root-plugin:2.0.0": {
-					Must(New("first-plugin:0.0.1")),
-				},
-			},
-			expectedResult: true,
-		},
-		{
-			basePlugins: map[string][]Plugin{
-				"first-root-plugin:1.0.0": {
-					Must(New("first-plugin:0.0.1")),
-				},
-				"first-root-plugin:2.0.0": {
-					Must(New("first-plugin:0.0.2")),
-				},
-			},
-			expectedResult: false,
-		},
-		{
-			basePlugins: map[string][]Plugin{
-				"first-root-plugin:1.0.0": {
-					Must(New("first-plugin:0.0.1")),
-				},
-			},
-			extraPlugins: map[string][]Plugin{
-				"first-root-plugin:2.0.0": {
-					Must(New("first-plugin:0.0.2")),
-				},
-			},
-			expectedResult: false,
-		},
-		{
-			basePlugins: map[string][]Plugin{
-				"invalid-plugin-name": {},
-			},
-			expectedResult: false,
-		},
-	}
-
 	debug := false
 	log.SetupLogger(&debug)
 
-	for index, testingData := range data {
-		t.Run(fmt.Sprintf("Testing %d data", index), func(t *testing.T) {
-			result := VerifyDependencies(testingData.basePlugins, testingData.extraPlugins)
-			assert.Equal(t, testingData.expectedResult, result)
-		})
-	}
+	t.Run("happy, single root plugin with one dependent plugin", func(t *testing.T) {
+		basePlugins := map[Plugin][]Plugin{
+			Must(New("first-root-plugin:1.0.0")): {
+				Must(New("first-plugin:0.0.1")),
+			},
+		}
+		got := VerifyDependencies(basePlugins)
+		assert.Equal(t, true, got)
+	})
+	t.Run("happy, two root plugins with one depended plugin with the same version", func(t *testing.T) {
+		basePlugins := map[Plugin][]Plugin{
+			Must(New("first-root-plugin:1.0.0")): {
+				Must(New("first-plugin:0.0.1")),
+			},
+			Must(New("second-root-plugin:1.0.0")): {
+				Must(New("first-plugin:0.0.1")),
+			},
+		}
+		got := VerifyDependencies(basePlugins)
+		assert.Equal(t, true, got)
+	})
+	t.Run("fail, two root plugins have different versions", func(t *testing.T) {
+		basePlugins := map[Plugin][]Plugin{
+			Must(New("first-root-plugin:1.0.0")): {
+				Must(New("first-plugin:0.0.1")),
+			},
+			Must(New("first-root-plugin:2.0.0")): {
+				Must(New("first-plugin:0.0.1")),
+			},
+		}
+		got := VerifyDependencies(basePlugins)
+		assert.Equal(t, false, got)
+	})
+	t.Run("happy, no version collision with two sperate plugins lists", func(t *testing.T) {
+		basePlugins := map[Plugin][]Plugin{
+			Must(New("first-root-plugin:1.0.0")): {
+				Must(New("first-plugin:0.0.1")),
+			},
+		}
+		extraPlugins := map[Plugin][]Plugin{
+			Must(New("second-root-plugin:2.0.0")): {
+				Must(New("first-plugin:0.0.1")),
+			},
+		}
+		got := VerifyDependencies(basePlugins, extraPlugins)
+		assert.Equal(t, true, got)
+	})
+	t.Run("fail, dependent plugins have different versions", func(t *testing.T) {
+		basePlugins := map[Plugin][]Plugin{
+			Must(New("first-root-plugin:1.0.0")): {
+				Must(New("first-plugin:0.0.1")),
+			},
+			Must(New("first-root-plugin:2.0.0")): {
+				Must(New("first-plugin:0.0.2")),
+			},
+		}
+		got := VerifyDependencies(basePlugins)
+		assert.Equal(t, false, got)
+	})
+	t.Run("fail, root and dependent plugins have different versions", func(t *testing.T) {
+		basePlugins := map[Plugin][]Plugin{
+			Must(New("first-root-plugin:1.0.0")): {
+				Must(New("first-plugin:0.0.1")),
+			},
+		}
+		extraPlugins := map[Plugin][]Plugin{
+			Must(New("first-root-plugin:2.0.0")): {
+				Must(New("first-plugin:0.0.2")),
+			},
+		}
+		got := VerifyDependencies(basePlugins, extraPlugins)
+		assert.Equal(t, false, got)
+	})
 }

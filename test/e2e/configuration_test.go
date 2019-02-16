@@ -33,7 +33,7 @@ func TestConfiguration(t *testing.T) {
 
 	verifyJenkinsMasterPodAttributes(t, jenkins)
 	client := verifyJenkinsAPIConnection(t, jenkins)
-	verifyBasePlugins(t, client)
+	verifyPlugins(t, client, jenkins)
 
 	// user
 	waitForJenkinsUserConfigurationToComplete(t, jenkins)
@@ -90,28 +90,48 @@ func verifyJenkinsMasterPodAttributes(t *testing.T, jenkins *v1alpha1.Jenkins) {
 	t.Log("Jenkins pod attributes are valid")
 }
 
-func verifyBasePlugins(t *testing.T, jenkinsClient *gojenkins.Jenkins) {
+func verifyPlugins(t *testing.T, jenkinsClient *gojenkins.Jenkins, jenkins *v1alpha1.Jenkins) {
 	installedPlugins, err := jenkinsClient.GetPlugins(1)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	for rootPluginName, p := range plugins.BasePluginsMap {
-		rootPlugin, err := plugins.New(rootPluginName)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if found, ok := isPluginValid(installedPlugins, *rootPlugin); !ok {
-			t.Fatalf("Invalid plugin '%s', actual '%+v'", rootPlugin, found)
-		}
-		for _, requiredPlugin := range p {
-			if found, ok := isPluginValid(installedPlugins, requiredPlugin); !ok {
-				t.Fatalf("Invalid plugin '%s', actual '%+v'", requiredPlugin, found)
+	requiredPlugins := []map[string][]string{plugins.BasePlugins(), jenkins.Spec.Master.Plugins}
+	for _, p := range requiredPlugins {
+		for rootPluginName, dependentPlugins := range p {
+			rootPlugin, err := plugins.New(rootPluginName)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if found, ok := isPluginValid(installedPlugins, *rootPlugin); !ok {
+				t.Fatalf("Invalid plugin '%s', actual '%+v'", rootPlugin, found)
+			}
+			for _, pluginName := range dependentPlugins {
+				plugin, err := plugins.New(pluginName)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if found, ok := isPluginValid(installedPlugins, *plugin); !ok {
+					t.Fatalf("Invalid plugin '%s', actual '%+v'", rootPlugin, found)
+				}
 			}
 		}
 	}
 
-	t.Log("Base plugins have been installed")
+	t.Log("All plugins have been installed")
+}
+
+func isPluginValid(plugins *gojenkins.Plugins, requiredPlugin plugins.Plugin) (*gojenkins.Plugin, bool) {
+	p := plugins.Contains(requiredPlugin.Name)
+	if p == nil {
+		return p, false
+	}
+
+	if !p.Active || !p.Enabled || p.Deleted {
+		return p, false
+	}
+
+	return p, requiredPlugin.Version == p.Version
 }
 
 func verifyJenkinsSeedJobs(t *testing.T, client *gojenkins.Jenkins, jenkins *v1alpha1.Jenkins) {
@@ -149,17 +169,4 @@ func verifyJenkinsSeedJobs(t *testing.T, client *gojenkins.Jenkins, jenkins *v1a
 		return true, nil
 	})
 	assert.NoError(t, err)
-}
-
-func isPluginValid(plugins *gojenkins.Plugins, requiredPlugin plugins.Plugin) (*gojenkins.Plugin, bool) {
-	p := plugins.Contains(requiredPlugin.Name)
-	if p == nil {
-		return p, false
-	}
-
-	if !p.Active || !p.Enabled || p.Deleted {
-		return p, false
-	}
-
-	return p, requiredPlugin.Version == p.Version
 }

@@ -254,12 +254,19 @@ chmod +x {{ .JenkinsHomePath }}/scripts/*.sh
 {{- $jenkinsHomePath := .JenkinsHomePath }}
 {{- $installPluginsCommand := .InstallPluginsCommand }}
 
-echo "Installing plugins - begin"
-{{- range $rootPluginName, $plugins := .Plugins }}
+echo "Installing plugins required by Operator - begin"
+{{- range $rootPluginName, $plugins := .OperatorPlugins }}
 echo "Installing required plugins for '{{ $rootPluginName }}'"
 {{ $jenkinsHomePath }}/scripts/{{ $installPluginsCommand }} {{ $rootPluginName }} {{ range $index, $plugin := $plugins }}{{ . }} {{ end }}
 {{- end }}
-echo "Installing plugins - end"
+echo "Installing plugins required by Operator - end"
+
+echo "Installing plugins required by user - begin"
+{{- range $rootPluginName, $plugins := .UserPlugins }}
+echo "Installing required plugins for '{{ $rootPluginName }}'"
+{{ $jenkinsHomePath }}/scripts/{{ $installPluginsCommand }} {{ $rootPluginName }} {{ range $index, $plugin := $plugins }}{{ . }} {{ end }}
+{{- end }}
+echo "Installing plugins required by user - end"
 
 /sbin/tini -s -- /usr/local/bin/jenkins.sh
 `))
@@ -271,17 +278,19 @@ func buildConfigMapTypeMeta() metav1.TypeMeta {
 	}
 }
 
-func buildInitBashScript(pluginsToInstall map[string][]string) (*string, error) {
+func buildInitBashScript(jenkins *v1alpha1.Jenkins) (*string, error) {
 	data := struct {
 		JenkinsHomePath          string
 		InitConfigurationPath    string
 		InstallPluginsCommand    string
 		JenkinsScriptsVolumePath string
-		Plugins                  map[string][]string
+		OperatorPlugins          map[string][]string
+		UserPlugins              map[string][]string
 	}{
 		JenkinsHomePath:          jenkinsHomePath,
 		InitConfigurationPath:    jenkinsInitConfigurationVolumePath,
-		Plugins:                  pluginsToInstall,
+		OperatorPlugins:          jenkins.Spec.Master.OperatorPlugins,
+		UserPlugins:              jenkins.Spec.Master.Plugins,
 		InstallPluginsCommand:    installPluginsCommand,
 		JenkinsScriptsVolumePath: jenkinsScriptsVolumePath,
 	}
@@ -302,7 +311,7 @@ func getScriptsConfigMapName(jenkins *v1alpha1.Jenkins) string {
 func NewScriptsConfigMap(meta metav1.ObjectMeta, jenkins *v1alpha1.Jenkins) (*corev1.ConfigMap, error) {
 	meta.Name = getScriptsConfigMapName(jenkins)
 
-	initBashScript, err := buildInitBashScript(jenkins.Spec.Master.Plugins)
+	initBashScript, err := buildInitBashScript(jenkins)
 	if err != nil {
 		return nil, err
 	}

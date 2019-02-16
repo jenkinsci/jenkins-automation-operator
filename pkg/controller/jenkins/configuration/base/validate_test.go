@@ -1,7 +1,6 @@
 package base
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,50 +8,60 @@ import (
 )
 
 func TestValidatePlugins(t *testing.T) {
-	data := []struct {
-		plugins        map[string][]string
-		expectedResult bool
-	}{
-		{
-			plugins: map[string][]string{
-				"valid-plugin-name:1.0": {
-					"valid-plugin-name:1.0",
-				},
-			},
-			expectedResult: true,
-		},
-		{
-			plugins: map[string][]string{
-				"invalid-plugin-name": {
-					"invalid-plugin-name",
-				},
-			},
-			expectedResult: false,
-		},
-		{
-			plugins: map[string][]string{
-				"valid-plugin-name:1.0": {
-					"valid-plugin-name:1.0",
-					"valid-plugin-name2:1.0",
-				},
-			},
-			expectedResult: true,
-		},
-		{
-			plugins: map[string][]string{
-				"valid-plugin-name:1.0": {},
-			},
-			expectedResult: true,
-		},
-	}
-
 	baseReconcileLoop := New(nil, nil, logf.ZapLogger(false),
 		nil, false, false)
+	t.Run("happy", func(t *testing.T) {
+		plugins := map[string][]string{
+			"valid-plugin-name:1.0": {
+				"valid-plugin-name:1.0",
+			},
+		}
+		got := baseReconcileLoop.validatePlugins(plugins)
+		assert.Equal(t, true, got)
+	})
+	t.Run("fail, no version in plugin name", func(t *testing.T) {
+		plugins := map[string][]string{
+			"invalid-plugin-name": {
+				"invalid-plugin-name",
+			},
+		}
+		got := baseReconcileLoop.validatePlugins(plugins)
+		assert.Equal(t, false, got)
+	})
+	t.Run("fail, no version in root plugin name", func(t *testing.T) {
+		plugins := map[string][]string{
+			"invalid-plugin-name": {
+				"invalid-plugin-name:1.0",
+			},
+		}
+		got := baseReconcileLoop.validatePlugins(plugins)
+		assert.Equal(t, false, got)
+	})
+	t.Run("fail, no version in plugin name", func(t *testing.T) {
+		plugins := map[string][]string{
+			"invalid-plugin-name:1.0": {
+				"invalid-plugin-name",
+			},
+		}
+		got := baseReconcileLoop.validatePlugins(plugins)
+		assert.Equal(t, false, got)
+	})
+	t.Run("happy", func(t *testing.T) {
+		plugins := map[string][]string{
+			"valid-plugin-name:1.0": {
+				"valid-plugin-name:1.0",
+				"valid-plugin-name2:1.0",
+			},
+		}
+		got := baseReconcileLoop.validatePlugins(plugins)
+		assert.Equal(t, true, got)
+	})
+	t.Run("hapy", func(t *testing.T) {
+		plugins := map[string][]string{
+			"valid-plugin-name:1.0": {},
+		}
+		got := baseReconcileLoop.validatePlugins(plugins)
+		assert.Equal(t, true, got)
+	})
 
-	for index, testingData := range data {
-		t.Run(fmt.Sprintf("Testing %d plugins set", index), func(t *testing.T) {
-			result := baseReconcileLoop.validatePlugins(testingData.plugins)
-			assert.Equal(t, testingData.expectedResult, result)
-		})
-	}
 }
