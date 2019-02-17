@@ -147,12 +147,12 @@ test: ## Runs the go tests
 CURRENT_DIRECTORY := $(shell pwd)
 e2e: build docker-build ## Runs e2e tests, you can use EXTRA_ARGS
 	@echo "+ $@"
-	@echo "Docker image: $(REPO):$(GITCOMMIT)"
+	@echo "Docker image: $(DOCKER_REGISTRY):$(GITCOMMIT)"
 	cp deploy/service_account.yaml deploy/namespace-init.yaml
 	cat deploy/role.yaml >> deploy/namespace-init.yaml
 	cat deploy/role_binding.yaml >> deploy/namespace-init.yaml
 	cat deploy/operator.yaml >> deploy/namespace-init.yaml
-	sed -i 's|\(image:\).*|\1 $(REPO):$(GITCOMMIT)|g' deploy/namespace-init.yaml
+	sed -i 's|\(image:\).*|\1 $(DOCKER_REGISTRY):$(GITCOMMIT)|g' deploy/namespace-init.yaml
 ifeq ($(ENVIRONMENT),minikube)
 	sed -i 's|\(imagePullPolicy\): IfNotPresent|\1: Never|g' deploy/namespace-init.yaml
 	sed -i 's|\(args:\).*|\1\ ["--minikube"\]|' deploy/namespace-init.yaml
@@ -255,9 +255,9 @@ docker-login: ## Log in into the Docker repository
 	@echo "+ $@"
 
 .PHONY: docker-build
-docker-build: check-env ## Build the container
+docker-build: check-env build ## Build the container
 	@echo "+ $@"
-	docker build . -t $(REPO):$(GITCOMMIT) --file build/Dockerfile
+	docker build . -t $(DOCKER_REGISTRY):$(GITCOMMIT) --file build/Dockerfile
 
 .PHONY: docker-images
 docker-images: ## List all local containers
@@ -267,20 +267,20 @@ docker-images: ## List all local containers
 .PHONY: docker-push
 docker-push: ## Push the container
 	@echo "+ $@"
-	docker tag $(REPO):$(GITCOMMIT) $(DOCKER_REGISTRY)/$(REPO):$(BUILD_TAG)
-	docker push $(DOCKER_REGISTRY)/$(REPO):$(BUILD_TAG)
+	docker tag $(DOCKER_REGISTRY):$(GITCOMMIT) $(DOCKER_ORGANIZATION)/$(DOCKER_REGISTRY):$(BUILD_TAG)
+	docker push $(DOCKER_ORGANIZATION)/$(DOCKER_REGISTRY):$(BUILD_TAG)
 
 .PHONY: docker-release-version
 docker-release-version: ## Release image with version tag (in addition to build tag)
 	@echo "+ $@"
-	docker tag $(REPO):$(GITCOMMIT) $(DOCKER_REGISTRY)/$(REPO):$(VERSION_TAG)
-	docker push $(DOCKER_REGISTRY)/$(REPO):$(VERSION_TAG)
+	docker tag $(DOCKER_REGISTRY):$(GITCOMMIT) $(DOCKER_ORGANIZATION)/$(DOCKER_REGISTRY):$(VERSION_TAG)
+	docker push $(DOCKER_ORGANIZATION)/$(DOCKER_REGISTRY):$(VERSION_TAG)
 
 .PHONY: docker-release-latest
 docker-release-latest: ## Release image with latest tags (in addition to build tag)
 	@echo "+ $@"
-	docker tag $(REPO):$(GITCOMMIT) $(DOCKER_REGISTRY)/$(REPO):$(LATEST_TAG)
-	docker push $(DOCKER_REGISTRY)/$(REPO):$(LATEST_TAG)
+	docker tag $(DOCKER_REGISTRY):$(GITCOMMIT) $(DOCKER_ORGANIZATION)/$(DOCKER_REGISTRY):$(LATEST_TAG)
+	docker push $(DOCKER_ORGANIZATION)/$(DOCKER_REGISTRY):$(LATEST_TAG)
 
 .PHONY: docker-release
 docker-release: docker-release-version docker-release-latest ## Release image with version and latest tags (in addition to build tag)
@@ -299,7 +299,7 @@ docker-run: ## Run the container in docker, you can use EXTRA_ARGS
 	@echo "+ $@"
 	docker run --rm -i $(DOCKER_FLAGS) \
 		--volume $(HOME)/.kube/config:/home/jenkins-operator/.kube/config \
-		$(REPO):$(GITCOMMIT) $(ARGS)
+		$(DOCKER_REGISTRY):$(GITCOMMIT) $(ARGS)
 
 .PHONY: minikube-run
 minikube-run: export WATCH_NAMESPACE = $(NAMESPACE)
