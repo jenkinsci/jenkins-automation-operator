@@ -168,7 +168,8 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request, logger logr.Logg
 		if err != nil {
 			return reconcile.Result{}, errors.WithStack(err)
 		}
-		logger.Info("Base configuration phase is complete")
+		logger.Info(fmt.Sprintf("Base configuration phase is complete, took %s",
+			jenkins.Status.BaseConfigurationCompletedTime.Sub(jenkins.Status.ProvisionStartTime.Time)))
 		r.events.Emit(jenkins, event.TypeNormal, reasonBaseConfigurationSuccess, "Base configuration completed")
 	}
 	// Reconcile user configuration
@@ -199,7 +200,8 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request, logger logr.Logg
 		if err != nil {
 			return reconcile.Result{}, errors.WithStack(err)
 		}
-		logger.Info("User configuration phase is complete")
+		logger.Info(fmt.Sprintf("User configuration phase is complete, took %s",
+			jenkins.Status.UserConfigurationCompletedTime.Sub(jenkins.Status.ProvisionStartTime.Time)))
 		r.events.Emit(jenkins, event.TypeNormal, reasonUserConfigurationSuccess, "User configuration completed")
 	}
 

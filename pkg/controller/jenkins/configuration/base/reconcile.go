@@ -303,7 +303,10 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsMasterPod(meta metav1.O
 		if err != nil {
 			return reconcile.Result{}, stackerr.WithStack(err)
 		}
-		r.jenkins.Status = v1alpha1.JenkinsStatus{}
+		now := metav1.Now()
+		r.jenkins.Status = v1alpha1.JenkinsStatus{
+			ProvisionStartTime: &now,
+		}
 		err = r.updateResource(r.jenkins)
 		if err != nil {
 			return reconcile.Result{}, err // don't wrap error
