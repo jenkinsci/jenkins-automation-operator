@@ -603,3 +603,18 @@ func (mr *MockJenkinsMockRecorder) Poll() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Poll", reflect.TypeOf((*MockJenkins)(nil).Poll))
 }
+
+// ExecuteScript mocks base method
+func (m *MockJenkins) ExecuteScript(groovyScript string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ExecuteScript", groovyScript)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ExecuteScript indicates an expected call of ExecuteScript
+func (mr *MockJenkinsMockRecorder) ExecuteScript(groovyScript interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteScript", reflect.TypeOf((*MockJenkins)(nil).ExecuteScript), groovyScript)
+}
