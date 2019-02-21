@@ -94,10 +94,6 @@ def remove = { list ->
 remove(jenkins.getExtensionList(RootAction.class))
 remove(jenkins.actions)
 
-println("Disable CLI completely...")
-CLI.get().setEnabled(false)
-println("CLI disabled")
-
 jenkins.save()
 `
 
