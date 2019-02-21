@@ -32,15 +32,20 @@ decorator.save();
 jenkins.save()
 `
 
-// GetUserConfigurationConfigMapName returns name of Kubernetes config map used to user configuration
-func GetUserConfigurationConfigMapName(jenkins *v1alpha1.Jenkins) string {
+// GetUserConfigurationConfigMapNameFromJenkins returns name of Kubernetes config map used to user configuration
+func GetUserConfigurationConfigMapNameFromJenkins(jenkins *v1alpha1.Jenkins) string {
 	return fmt.Sprintf("%s-user-configuration-%s", constants.OperatorName, jenkins.ObjectMeta.Name)
+}
+
+// GetUserConfigurationConfigMapName returns name of Kubernetes config map used to user configuration
+func GetUserConfigurationConfigMapName(jenkinsCRName string) string {
+	return fmt.Sprintf("%s-user-configuration-%s", constants.OperatorName, jenkinsCRName)
 }
 
 // NewUserConfigurationConfigMap builds Kubernetes config map used to user configuration
 func NewUserConfigurationConfigMap(jenkins *v1alpha1.Jenkins) *corev1.ConfigMap {
 	meta := metav1.ObjectMeta{
-		Name:      GetUserConfigurationConfigMapName(jenkins),
+		Name:      GetUserConfigurationConfigMapNameFromJenkins(jenkins),
 		Namespace: jenkins.ObjectMeta.Namespace,
 		Labels:    BuildLabelsForWatchedResources(jenkins),
 	}

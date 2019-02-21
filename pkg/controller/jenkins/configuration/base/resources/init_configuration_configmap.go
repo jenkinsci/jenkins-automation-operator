@@ -17,28 +17,35 @@ var createOperatorUserGroovyFmtTemplate = template.Must(template.New(createOpera
 import hudson.security.*
 
 def jenkins = jenkins.model.Jenkins.getInstance()
+def operatorUserCreatedFile = new File('{{ .OperatorUserCreatedFilePath }}')
 
-def hudsonRealm = new HudsonPrivateSecurityRealm(false)
-hudsonRealm.createAccount(
-	new File('{{ .OperatorCredentialsPath }}/{{ .OperatorUserNameFile }}').text,
-	new File('{{ .OperatorCredentialsPath }}/{{ .OperatorPasswordFile }}').text)
-jenkins.setSecurityRealm(hudsonRealm)
+if (!operatorUserCreatedFile.exists()) {
+	def hudsonRealm = new HudsonPrivateSecurityRealm(false)
+	hudsonRealm.createAccount(
+		new File('{{ .OperatorCredentialsPath }}/{{ .OperatorUserNameFile }}').text,
+		new File('{{ .OperatorCredentialsPath }}/{{ .OperatorPasswordFile }}').text)
+	jenkins.setSecurityRealm(hudsonRealm)
 
-def strategy = new FullControlOnceLoggedInAuthorizationStrategy()
-strategy.setAllowAnonymousRead(false)
-jenkins.setAuthorizationStrategy(strategy)
-jenkins.save()
+	def strategy = new FullControlOnceLoggedInAuthorizationStrategy()
+	strategy.setAllowAnonymousRead(false)
+	jenkins.setAuthorizationStrategy(strategy)
+	jenkins.save()
+
+	operatorUserCreatedFile.createNewFile()
+}
 `))
 
 func buildCreateJenkinsOperatorUserGroovyScript() (*string, error) {
 	data := struct {
-		OperatorCredentialsPath string
-		OperatorUserNameFile    string
-		OperatorPasswordFile    string
+		OperatorCredentialsPath     string
+		OperatorUserNameFile        string
+		OperatorPasswordFile        string
+		OperatorUserCreatedFilePath string
 	}{
-		OperatorCredentialsPath: jenkinsOperatorCredentialsVolumePath,
-		OperatorUserNameFile:    OperatorCredentialsSecretUserNameKey,
-		OperatorPasswordFile:    OperatorCredentialsSecretPasswordKey,
+		OperatorCredentialsPath:     jenkinsOperatorCredentialsVolumePath,
+		OperatorUserNameFile:        OperatorCredentialsSecretUserNameKey,
+		OperatorPasswordFile:        OperatorCredentialsSecretPasswordKey,
+		OperatorUserCreatedFilePath: jenkinsHomePath + "/operatorUserCreated",
 	}
 
 	output, err := render(createOperatorUserGroovyFmtTemplate, data)

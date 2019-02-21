@@ -51,7 +51,7 @@ type Jenkins interface {
 	GetAllViews() ([]*gojenkins.View, error)
 	CreateView(name string, viewType string) (*gojenkins.View, error)
 	Poll() (int, error)
-	ExecuteScript(groovyScript string) (output string, err error)
+	ExecuteScript(groovyScript string) (logs string, err error)
 }
 
 type jenkins struct {

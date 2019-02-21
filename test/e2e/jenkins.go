@@ -2,15 +2,12 @@ package e2e
 
 import (
 	"context"
-	"fmt"
-	"net/http"
 	"testing"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 
-	"github.com/bndr/gojenkins"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -42,7 +39,7 @@ func getJenkinsMasterPod(t *testing.T, jenkins *v1alpha1.Jenkins) *v1.Pod {
 	return &podList.Items[0]
 }
 
-func createJenkinsAPIClient(jenkins *v1alpha1.Jenkins) (*gojenkins.Jenkins, error) {
+func createJenkinsAPIClient(jenkins *v1alpha1.Jenkins) (jenkinsclient.Jenkins, error) {
 	adminSecret := &v1.Secret{}
 	namespaceName := types.NamespacedName{Namespace: jenkins.Namespace, Name: resources.GetOperatorCredentialsSecretName(jenkins)}
 	if err := framework.Global.Client.Get(context.TODO(), namespaceName, adminSecret); err != nil {
@@ -54,31 +51,17 @@ func createJenkinsAPIClient(jenkins *v1alpha1.Jenkins) (*gojenkins.Jenkins, erro
 		return nil, err
 	}
 
-	jenkinsClient := gojenkins.CreateJenkins(
-		nil,
+	return jenkinsclient.New(
 		jenkinsAPIURL,
 		string(adminSecret.Data[resources.OperatorCredentialsSecretUserNameKey]),
 		string(adminSecret.Data[resources.OperatorCredentialsSecretTokenKey]),
 	)
-	if _, err := jenkinsClient.Init(); err != nil {
-		return nil, err
-	}
-
-	status, err := jenkinsClient.Poll()
-	if err != nil {
-		return nil, err
-	}
-	if status != http.StatusOK {
-		return nil, fmt.Errorf("invalid status code returned: %d", status)
-	}
-
-	return jenkinsClient, nil
 }
 
-func createJenkinsCR(t *testing.T, namespace string) *v1alpha1.Jenkins {
+func createJenkinsCR(t *testing.T, name, namespace string) *v1alpha1.Jenkins {
 	jenkins := &v1alpha1.Jenkins{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "e2e",
+			Name:      name,
 			Namespace: namespace,
 		},
 		Spec: v1alpha1.JenkinsSpec{
@@ -111,7 +94,7 @@ func createJenkinsCR(t *testing.T, namespace string) *v1alpha1.Jenkins {
 	return jenkins
 }
 
-func verifyJenkinsAPIConnection(t *testing.T, jenkins *v1alpha1.Jenkins) *gojenkins.Jenkins {
+func verifyJenkinsAPIConnection(t *testing.T, jenkins *v1alpha1.Jenkins) jenkinsclient.Jenkins {
 	client, err := createJenkinsAPIClient(jenkins)
 	if err != nil {
 		t.Fatal(err)

@@ -3,13 +3,18 @@ package e2e
 import (
 	goctx "context"
 	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
+	"github.com/jenkinsci/kubernetes-operator/internal/try"
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
+	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
+	"github.com/pkg/errors"
+	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
@@ -67,6 +72,20 @@ func waitForJenkinsUserConfigurationToComplete(t *testing.T, jenkins *v1alpha1.J
 		t.Fatal(err)
 	}
 	t.Log("Jenkins pod is running")
+}
+
+func waitForJenkinsSafeRestart(t *testing.T, jenkinsClient jenkinsclient.Jenkins) {
+	err := try.Until(func() (end bool, err error) {
+		status, err := jenkinsClient.Poll()
+		if err != nil {
+			return false, err
+		}
+		if status != http.StatusOK {
+			return false, errors.Wrap(err, "couldn't poll data from Jenkins API")
+		}
+		return true, nil
+	}, time.Second, time.Second*70)
+	require.NoError(t, err)
 }
 
 // WaitUntilJenkinsConditionTrue retries until the specified condition check becomes true for the jenkins CR

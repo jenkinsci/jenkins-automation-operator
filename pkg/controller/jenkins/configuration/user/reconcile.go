@@ -92,7 +92,7 @@ func (r *ReconcileUserConfiguration) ensureUserConfiguration(jenkinsClient jenki
 	}
 
 	configuration := &corev1.ConfigMap{}
-	namespaceName := types.NamespacedName{Namespace: r.jenkins.Namespace, Name: resources.GetUserConfigurationConfigMapName(r.jenkins)}
+	namespaceName := types.NamespacedName{Namespace: r.jenkins.Namespace, Name: resources.GetUserConfigurationConfigMapNameFromJenkins(r.jenkins)}
 	err = r.k8sClient.Get(context.TODO(), namespaceName, configuration)
 	if err != nil {
 		return reconcile.Result{}, errors.WithStack(err)

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
+	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/user/seedjobs"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/plugins"
 
@@ -27,7 +28,7 @@ func TestConfiguration(t *testing.T) {
 	defer ctx.Cleanup()
 
 	// base
-	jenkins := createJenkinsCR(t, namespace)
+	jenkins := createJenkinsCR(t, "e2e", namespace)
 	createDefaultLimitsForContainersInNamespace(t, namespace)
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
 
@@ -90,7 +91,7 @@ func verifyJenkinsMasterPodAttributes(t *testing.T, jenkins *v1alpha1.Jenkins) {
 	t.Log("Jenkins pod attributes are valid")
 }
 
-func verifyPlugins(t *testing.T, jenkinsClient *gojenkins.Jenkins, jenkins *v1alpha1.Jenkins) {
+func verifyPlugins(t *testing.T, jenkinsClient jenkinsclient.Jenkins, jenkins *v1alpha1.Jenkins) {
 	installedPlugins, err := jenkinsClient.GetPlugins(1)
 	if err != nil {
 		t.Fatal(err)
@@ -134,7 +135,7 @@ func isPluginValid(plugins *gojenkins.Plugins, requiredPlugin plugins.Plugin) (*
 	return p, requiredPlugin.Version == p.Version
 }
 
-func verifyJenkinsSeedJobs(t *testing.T, client *gojenkins.Jenkins, jenkins *v1alpha1.Jenkins) {
+func verifyJenkinsSeedJobs(t *testing.T, client jenkinsclient.Jenkins, jenkins *v1alpha1.Jenkins) {
 	t.Logf("Attempting to get configure seed job status '%v'", seedjobs.ConfigureSeedJobsName)
 
 	configureSeedJobs, err := client.GetJob(seedjobs.ConfigureSeedJobsName)

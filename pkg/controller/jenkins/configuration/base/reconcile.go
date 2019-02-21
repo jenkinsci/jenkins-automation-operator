@@ -237,7 +237,7 @@ func (r *ReconcileJenkinsBaseConfiguration) createBaseConfigurationConfigMap(met
 
 func (r *ReconcileJenkinsBaseConfiguration) createUserConfigurationConfigMap(meta metav1.ObjectMeta) error {
 	currentConfigMap := &corev1.ConfigMap{}
-	err := r.k8sClient.Get(context.TODO(), types.NamespacedName{Name: resources.GetUserConfigurationConfigMapName(r.jenkins), Namespace: r.jenkins.Namespace}, currentConfigMap)
+	err := r.k8sClient.Get(context.TODO(), types.NamespacedName{Name: resources.GetUserConfigurationConfigMapNameFromJenkins(r.jenkins), Namespace: r.jenkins.Namespace}, currentConfigMap)
 	if err != nil && errors.IsNotFound(err) {
 		return stackerr.WithStack(r.k8sClient.Create(context.TODO(), resources.NewUserConfigurationConfigMap(r.jenkins)))
 	} else if err != nil {

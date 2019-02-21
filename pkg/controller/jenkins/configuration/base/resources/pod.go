@@ -2,6 +2,7 @@ package resources
 
 import (
 	"fmt"
+
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
 
 	corev1 "k8s.io/api/core/v1"
@@ -11,27 +12,28 @@ import (
 
 const (
 	jenkinsHomeVolumeName = "home"
-	jenkinsHomePath       = "/var/jenkins/home"
+	jenkinsPath           = "/var/jenkins"
+	jenkinsHomePath       = jenkinsPath + "/home"
 
 	jenkinsScriptsVolumeName = "scripts"
-	jenkinsScriptsVolumePath = "/var/jenkins/scripts"
+	jenkinsScriptsVolumePath = jenkinsPath + "/scripts"
 	initScriptName           = "init.sh"
 
 	jenkinsOperatorCredentialsVolumeName = "operator-credentials"
-	jenkinsOperatorCredentialsVolumePath = "/var/jenkins/operator-credentials"
+	jenkinsOperatorCredentialsVolumePath = jenkinsPath + "/operator-credentials"
 
 	jenkinsInitConfigurationVolumeName = "init-configuration"
-	jenkinsInitConfigurationVolumePath = "/var/jenkins/init-configuration"
+	jenkinsInitConfigurationVolumePath = jenkinsPath + "/init-configuration"
 
 	jenkinsBaseConfigurationVolumeName = "base-configuration"
 	// JenkinsBaseConfigurationVolumePath is a path where are groovy scripts used to configure Jenkins
 	// this scripts are provided by jenkins-operator
-	JenkinsBaseConfigurationVolumePath = "/var/jenkins/base-configuration"
+	JenkinsBaseConfigurationVolumePath = jenkinsPath + "/base-configuration"
 
 	jenkinsUserConfigurationVolumeName = "user-configuration"
 	// JenkinsUserConfigurationVolumePath is a path where are groovy scripts used to configure Jenkins
 	// this scripts are provided by user
-	JenkinsUserConfigurationVolumePath = "/var/jenkins/user-configuration"
+	JenkinsUserConfigurationVolumePath = jenkinsPath + "/user-configuration"
 
 	httpPortName  = "http"
 	slavePortName = "slavelistener"
@@ -197,7 +199,7 @@ func NewJenkinsMasterPod(objectMeta metav1.ObjectMeta, jenkins *v1alpha1.Jenkins
 					VolumeSource: corev1.VolumeSource{
 						ConfigMap: &corev1.ConfigMapVolumeSource{
 							LocalObjectReference: corev1.LocalObjectReference{
-								Name: GetUserConfigurationConfigMapName(jenkins),
+								Name: GetUserConfigurationConfigMapNameFromJenkins(jenkins),
 							},
 						},
 					},
