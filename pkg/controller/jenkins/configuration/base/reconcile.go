@@ -451,7 +451,7 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsClient(meta metav1.Obje
 func (r *ReconcileJenkinsBaseConfiguration) ensureBaseConfiguration(jenkinsClient jenkinsclient.Jenkins) (reconcile.Result, error) {
 	groovyClient := groovy.New(jenkinsClient, r.k8sClient, r.logger, fmt.Sprintf("%s-base-configuration", constants.OperatorName), resources.JenkinsBaseConfigurationVolumePath)
 
-	err := groovyClient.ConfigureGroovyJob()
+	err := groovyClient.ConfigureJob()
 	if err != nil {
 		return reconcile.Result{}, err
 	}
@@ -463,7 +463,7 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureBaseConfiguration(jenkinsClien
 		return reconcile.Result{}, stackerr.WithStack(err)
 	}
 
-	done, err := groovyClient.EnsureGroovyJob(configuration.Data, r.jenkins)
+	done, err := groovyClient.Ensure(configuration.Data, r.jenkins)
 	if err != nil {
 		return reconcile.Result{}, err
 	}

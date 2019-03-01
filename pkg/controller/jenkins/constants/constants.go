@@ -11,4 +11,6 @@ const (
 	DefaultJenkinsMasterImage = "jenkins/jenkins:lts"
 	// UserConfigurationJobName is the Jenkins job name used to configure Jenkins by groovy scripts provided by user
 	UserConfigurationJobName = OperatorName + "-user-configuration"
+	// UserConfigurationCASCJobName is the Jenkins job name used to configure Jenkins by Configuration as code yaml configs provided by user
+	UserConfigurationCASCJobName = OperatorName + "-user-configuration-casc"
 )

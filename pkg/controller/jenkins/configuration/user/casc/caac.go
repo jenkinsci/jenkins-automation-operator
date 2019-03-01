@@ -1,4 +1,4 @@
-package groovy
+package casc
 
 import (
 	"crypto/sha256"
@@ -19,29 +19,29 @@ const (
 	jobHashParameterName = "hash"
 )
 
-// Groovy defines API for groovy scripts execution via jenkins job
-type Groovy struct {
+// ConfigurationAsCode defines API which configures Jenkins with help Configuration as a code plugin
+type ConfigurationAsCode struct {
 	jenkinsClient jenkinsclient.Jenkins
 	k8sClient     k8s.Client
 	logger        logr.Logger
 	jobName       string
-	scriptsPath   string
+	configsPath   string
 }
 
-// New creates new instance of Groovy
-func New(jenkinsClient jenkinsclient.Jenkins, k8sClient k8s.Client, logger logr.Logger, jobName, scriptsPath string) *Groovy {
-	return &Groovy{
+// New creates new instance of ConfigurationAsCode
+func New(jenkinsClient jenkinsclient.Jenkins, k8sClient k8s.Client, logger logr.Logger, jobName, configsPath string) *ConfigurationAsCode {
+	return &ConfigurationAsCode{
 		jenkinsClient: jenkinsClient,
 		k8sClient:     k8sClient,
 		logger:        logger,
 		jobName:       jobName,
-		scriptsPath:   scriptsPath,
+		configsPath:   configsPath,
 	}
 }
 
-// ConfigureJob configures jenkins job for executing groovy scripts
-func (g *Groovy) ConfigureJob() error {
-	_, created, err := g.jenkinsClient.CreateOrUpdateJob(fmt.Sprintf(configurationJobXMLFmt, g.scriptsPath), g.jobName)
+// ConfigureJob configures jenkins job which configures Jenkins with help Configuration as a code plugin
+func (g *ConfigurationAsCode) ConfigureJob() error {
+	_, created, err := g.jenkinsClient.CreateOrUpdateJob(fmt.Sprintf(configurationJobXMLFmt, g.configsPath), g.jobName)
 	if err != nil {
 		return err
 	}
@@ -51,8 +51,8 @@ func (g *Groovy) ConfigureJob() error {
 	return nil
 }
 
-// Ensure executes groovy script and verifies jenkins job status according to reconciliation loop lifecycle
-func (g *Groovy) Ensure(secretOrConfigMapData map[string]string, jenkins *v1alpha1.Jenkins) (bool, error) {
+// Ensure configures Jenkins with help Configuration as a code plugin
+func (g *ConfigurationAsCode) Ensure(secretOrConfigMapData map[string]string, jenkins *v1alpha1.Jenkins) (bool, error) {
 	jobsClient := jobs.New(g.jenkinsClient, g.k8sClient, g.logger)
 
 	hash := g.calculateHash(secretOrConfigMapData)
@@ -63,7 +63,7 @@ func (g *Groovy) Ensure(secretOrConfigMapData map[string]string, jenkins *v1alph
 	return done, nil
 }
 
-func (g *Groovy) calculateHash(secretOrConfigMapData map[string]string) string {
+func (g *ConfigurationAsCode) calculateHash(secretOrConfigMapData map[string]string) string {
 	hash := sha256.New()
 
 	var keys []string
@@ -72,7 +72,7 @@ func (g *Groovy) calculateHash(secretOrConfigMapData map[string]string) string {
 	}
 	sort.Strings(keys)
 	for _, key := range keys {
-		if strings.HasSuffix(key, ".groovy") {
+		if strings.HasSuffix(key, ".yaml") {
 			hash.Write([]byte(key))
 			hash.Write([]byte(secretOrConfigMapData[key]))
 		}
@@ -98,19 +98,21 @@ const configurationJobXMLFmt = `<?xml version='1.1' encoding='UTF-8'?>
       </parameterDefinitions>
     </hudson.model.ParametersDefinitionProperty>
   </properties>
-  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.61">
-    <script>def scriptsPath = &apos;%s&apos;
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.61.1">
+    <script>import io.jenkins.plugins.casc.yaml.YamlSource;
+
+def configsPath = &apos;%s&apos;
 def expectedHash = params.hash
 
 node(&apos;master&apos;) {
-    def scriptsText = sh(script: &quot;ls ${scriptsPath} | grep .groovy | sort&quot;, returnStdout: true).trim()
-    def scripts = []
-    scripts.addAll(scriptsText.tokenize(&apos;\n&apos;))
+    def configsText = sh(script: &quot;ls ${configsPath} | grep .yaml | sort&quot;, returnStdout: true).trim()
+    def configs = []
+    configs.addAll(configsText.tokenize(&apos;\n&apos;))
     
     stage(&apos;Synchronizing files&apos;) {
         def complete = false
         for(int i = 1; i &lt;= 10; i++) {
-            def actualHash = calculateHash((String[])scripts, scriptsPath)
+            def actualHash = calculateHash((String[])configs, configsPath)
             println &quot;Expected hash &apos;${expectedHash}&apos;, actual hash &apos;${actualHash}&apos;&quot;
             if(expectedHash == actualHash) {
                 complete = true
@@ -123,19 +125,21 @@ node(&apos;master&apos;) {
         }
     }
     
-    for(script in scripts) {
-        stage(script) {
-            load &quot;${scriptsPath}/${script}&quot;
+    for(config in configs) {
+        stage(config) {
+            def path = java.nio.file.Paths.get(&quot;${configsPath}/${config}&quot;)
+            def source = new YamlSource(path, YamlSource.READ_FROM_PATH)
+            io.jenkins.plugins.casc.ConfigurationAsCode.get().configureWith(source)
         }
     }
 }
 
 @NonCPS
-def calculateHash(String[] scripts, String scriptsPath) {
+def calculateHash(String[] configs, String configsPath) {
     def hash = java.security.MessageDigest.getInstance(&quot;SHA-256&quot;)
-    for(script in scripts) {
-        hash.update(script.getBytes())
-        def fileLocation = java.nio.file.Paths.get(&quot;${scriptsPath}/${script}&quot;)
+    for(config in configs) {
+        hash.update(config.getBytes())
+        def fileLocation = java.nio.file.Paths.get(&quot;${configsPath}/${config}&quot;)
         def fileData = java.nio.file.Files.readAllBytes(fileLocation)
         hash.update(fileData)
     }

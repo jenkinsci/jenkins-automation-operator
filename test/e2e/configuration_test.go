@@ -2,12 +2,14 @@ package e2e
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 	"testing"
 	"time"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/user/seedjobs"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/plugins"
 
@@ -27,8 +29,13 @@ func TestConfiguration(t *testing.T) {
 	// Deletes test namespace
 	defer ctx.Cleanup()
 
+	jenkinsCRName := "e2e"
+	numberOfExecutors := 6
+	systemMessage := "Configuration as Code integration works!!!"
+
 	// base
-	jenkins := createJenkinsCR(t, "e2e", namespace)
+	createUserConfigurationConfigMap(t, jenkinsCRName, namespace, numberOfExecutors, systemMessage)
+	jenkins := createJenkinsCR(t, jenkinsCRName, namespace)
 	createDefaultLimitsForContainersInNamespace(t, namespace)
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
 
@@ -39,6 +46,31 @@ func TestConfiguration(t *testing.T) {
 	// user
 	waitForJenkinsUserConfigurationToComplete(t, jenkins)
 	verifyJenkinsSeedJobs(t, client, jenkins)
+	verifyUserConfiguration(t, client, numberOfExecutors, systemMessage)
+}
+
+func createUserConfigurationConfigMap(t *testing.T, jenkinsCRName string, namespace string, numberOfExecutors int, systemMessage string) {
+	userConfiguration := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      resources.GetUserConfigurationConfigMapName(jenkinsCRName),
+			Namespace: namespace,
+		},
+		Data: map[string]string{
+			"1-set-executors.groovy": fmt.Sprintf(`
+import jenkins.model.Jenkins
+
+Jenkins.instance.setNumExecutors(%d)
+Jenkins.instance.save()`, numberOfExecutors),
+			"1-casc.yaml": fmt.Sprintf(`
+jenkins:
+  systemMessage: "%s"`, systemMessage),
+		},
+	}
+
+	t.Logf("User configuration %+v", *userConfiguration)
+	if err := framework.Global.Client.Create(context.TODO(), userConfiguration, nil); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func createDefaultLimitsForContainersInNamespace(t *testing.T, namespace string) {
@@ -170,4 +202,20 @@ func verifyJenkinsSeedJobs(t *testing.T, client jenkinsclient.Jenkins, jenkins *
 		return true, nil
 	})
 	assert.NoError(t, err)
+}
+
+func verifyUserConfiguration(t *testing.T, jenkinsClient jenkinsclient.Jenkins, amountOfExecutors int, systemMessage string) {
+	checkConfigurationViaGroovyScript := fmt.Sprintf(`
+if (!new Integer(%d).equals(Jenkins.instance.numExecutors)) {
+	throw new Exception("Configuration via groovy scripts failed")
+}`, amountOfExecutors)
+	logs, err := jenkinsClient.ExecuteScript(checkConfigurationViaGroovyScript)
+	assert.NoError(t, err, logs)
+
+	checkConfigurationAsCode := fmt.Sprintf(`
+if (!"%s".equals(Jenkins.instance.systemMessage)) {
+	throw new Exception("Configuration as code failed")
+}`, systemMessage)
+	logs, err = jenkinsClient.ExecuteScript(checkConfigurationAsCode)
+	assert.NoError(t, err, logs)
 }

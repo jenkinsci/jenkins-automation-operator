@@ -221,7 +221,6 @@ kubectl get configmap jenkins-operator-user-configuration-example -o yaml
 apiVersion: v1
 data:
   1-configure-theme.groovy: |2
-
     import jenkins.*
     import jenkins.model.*
     import hudson.*
@@ -241,6 +240,9 @@ data:
     decorator.save();
 
     jenkins.save()
+  1-system-message.yaml: |2
+    jenkins:
+      systemMessage: "Configuration as Code integration works!!!"
 kind: ConfigMap
 metadata:
   labels:
@@ -251,7 +253,9 @@ metadata:
   namespace: default
 ``` 
 
-When **jenkins-operator-user-configuration-example** ConfigMap is updated Jenkins automatically runs the **jenkins-operator-user-configuration** Jenkins Job which executes all scripts.
+When **jenkins-operator-user-configuration-example** ConfigMap is updated Jenkins automatically 
+runs the **jenkins-operator-user-configuration** Jenkins Job which executes all scripts then
+runs the **jenkins-operator-user-configuration-casc** Jenkins Job which applies Configuration as Code configuration.
 
 ## Install Plugins
 
