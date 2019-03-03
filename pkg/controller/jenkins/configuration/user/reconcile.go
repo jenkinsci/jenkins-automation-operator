@@ -105,12 +105,12 @@ func (r *ReconcileUserConfiguration) ensureUserConfiguration(jenkinsClient jenki
 		return reconcile.Result{Requeue: true, RequeueAfter: time.Second * 10}, nil
 	}
 
-	configurationAsCodeClient := casc.New(jenkinsClient, r.k8sClient, r.logger, constants.UserConfigurationCASCJobName, resources.JenkinsUserConfigurationVolumePath)
+	configurationAsCodeClient := casc.New(jenkinsClient, r.k8sClient, r.logger, constants.UserConfigurationCASCJobName)
 	err = configurationAsCodeClient.ConfigureJob()
 	if err != nil {
 		return reconcile.Result{}, err
 	}
-	done, err = configurationAsCodeClient.Ensure(configuration.Data, r.jenkins)
+	done, err = configurationAsCodeClient.Ensure(r.jenkins)
 	if err != nil {
 		return reconcile.Result{}, err
 	}

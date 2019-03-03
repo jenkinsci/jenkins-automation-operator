@@ -32,9 +32,11 @@ func TestConfiguration(t *testing.T) {
 	jenkinsCRName := "e2e"
 	numberOfExecutors := 6
 	systemMessage := "Configuration as Code integration works!!!"
+	systemMessageEnvName := "SYSTEM_MESSAGE"
 
 	// base
-	createUserConfigurationConfigMap(t, jenkinsCRName, namespace, numberOfExecutors, systemMessage)
+	createUserConfigurationSecret(t, jenkinsCRName, namespace, systemMessageEnvName, systemMessage)
+	createUserConfigurationConfigMap(t, jenkinsCRName, namespace, numberOfExecutors, fmt.Sprintf("${%s}", systemMessageEnvName))
 	jenkins := createJenkinsCR(t, jenkinsCRName, namespace)
 	createDefaultLimitsForContainersInNamespace(t, namespace)
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
@@ -47,6 +49,23 @@ func TestConfiguration(t *testing.T) {
 	waitForJenkinsUserConfigurationToComplete(t, jenkins)
 	verifyJenkinsSeedJobs(t, client, jenkins)
 	verifyUserConfiguration(t, client, numberOfExecutors, systemMessage)
+}
+
+func createUserConfigurationSecret(t *testing.T, jenkinsCRName string, namespace string, systemMessageEnvName, systemMessage string) {
+	userConfiguration := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      resources.GetUserConfigurationSecretName(jenkinsCRName),
+			Namespace: namespace,
+		},
+		StringData: map[string]string{
+			systemMessageEnvName: systemMessage,
+		},
+	}
+
+	t.Logf("User configuration secret %+v", *userConfiguration)
+	if err := framework.Global.Client.Create(context.TODO(), userConfiguration, nil); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func createUserConfigurationConfigMap(t *testing.T, jenkinsCRName string, namespace string, numberOfExecutors int, systemMessage string) {

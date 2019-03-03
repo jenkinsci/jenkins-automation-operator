@@ -44,15 +44,13 @@ func GetUserConfigurationConfigMapName(jenkinsCRName string) string {
 
 // NewUserConfigurationConfigMap builds Kubernetes config map used to user configuration
 func NewUserConfigurationConfigMap(jenkins *v1alpha1.Jenkins) *corev1.ConfigMap {
-	meta := metav1.ObjectMeta{
-		Name:      GetUserConfigurationConfigMapNameFromJenkins(jenkins),
-		Namespace: jenkins.ObjectMeta.Namespace,
-		Labels:    BuildLabelsForWatchedResources(jenkins),
-	}
-
 	return &corev1.ConfigMap{
-		TypeMeta:   buildConfigMapTypeMeta(),
-		ObjectMeta: meta,
+		TypeMeta: buildConfigMapTypeMeta(),
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      GetUserConfigurationConfigMapNameFromJenkins(jenkins),
+			Namespace: jenkins.ObjectMeta.Namespace,
+			Labels:    BuildLabelsForWatchedResources(jenkins),
+		},
 		Data: map[string]string{
 			"1-configure-theme.groovy": configureTheme,
 		},

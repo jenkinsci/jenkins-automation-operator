@@ -213,7 +213,30 @@ You can verify if your pipelines were successfully configured in Jenkins Seed Jo
 ## Jenkins Customisation
 
 Jenkins can be customized using groovy scripts or configuration as code plugin. All custom configuration is stored in
-the **jenkins-operator-user-configuration-example** ConfigMap which is automatically created by **jenkins-operator**. 
+the **jenkins-operator-user-configuration-example** ConfigMap which is automatically created by **jenkins-operator**.
+
+**jenkins-operator** creates **jenkins-operator-user-configuration-example** secret where user can store sensitive 
+information used for custom configuration. If you have entry in secret named `PASSWORD` then you can use it in 
+Configuration as Plugin as `adminAddress: "${PASSWORD}"`.
+
+```
+kubectl get secret jenkins-operator-user-configuration-example -o yaml
+
+apiVersion: v1
+data:
+  SECRET_JENKINS_ADMIN_ADDRESS: YXNkZgo=
+kind: Secret
+metadata:
+  creationTimestamp: 2019-03-03T11:54:36Z
+  labels:
+    app: jenkins-operator
+    jenkins-cr: example
+    watch: "true"
+  name: jenkins-operator-user-configuration-example
+  namespace: default
+type: Opaque
+
+```
 
 ```
 kubectl get configmap jenkins-operator-user-configuration-example -o yaml
@@ -243,6 +266,7 @@ data:
   1-system-message.yaml: |2
     jenkins:
       systemMessage: "Configuration as Code integration works!!!"
+      adminAddress: "${SECRET_JENKINS_ADMIN_ADDRESS}"
 kind: ConfigMap
 metadata:
   labels:

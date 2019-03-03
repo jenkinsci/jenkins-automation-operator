@@ -1,6 +1,7 @@
 package casc
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
@@ -9,14 +10,19 @@ import (
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/jobs"
 
 	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
 	k8s "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
-	jobHashParameterName = "hash"
+	userConfigurationHashParameterName       = "userConfigurationHash"
+	userConfigurationSecretHashParameterName = "userConfigurationSecretHash"
 )
 
 // ConfigurationAsCode defines API which configures Jenkins with help Configuration as a code plugin
@@ -25,23 +31,23 @@ type ConfigurationAsCode struct {
 	k8sClient     k8s.Client
 	logger        logr.Logger
 	jobName       string
-	configsPath   string
 }
 
 // New creates new instance of ConfigurationAsCode
-func New(jenkinsClient jenkinsclient.Jenkins, k8sClient k8s.Client, logger logr.Logger, jobName, configsPath string) *ConfigurationAsCode {
+func New(jenkinsClient jenkinsclient.Jenkins, k8sClient k8s.Client, logger logr.Logger, jobName string) *ConfigurationAsCode {
 	return &ConfigurationAsCode{
 		jenkinsClient: jenkinsClient,
 		k8sClient:     k8sClient,
 		logger:        logger,
 		jobName:       jobName,
-		configsPath:   configsPath,
 	}
 }
 
 // ConfigureJob configures jenkins job which configures Jenkins with help Configuration as a code plugin
 func (g *ConfigurationAsCode) ConfigureJob() error {
-	_, created, err := g.jenkinsClient.CreateOrUpdateJob(fmt.Sprintf(configurationJobXMLFmt, g.configsPath), g.jobName)
+	_, created, err := g.jenkinsClient.CreateOrUpdateJob(
+		fmt.Sprintf(configurationJobXMLFmt, resources.UserConfigurationSecretVolumePath, resources.JenkinsUserConfigurationVolumePath),
+		g.jobName)
 	if err != nil {
 		return err
 	}
@@ -52,29 +58,67 @@ func (g *ConfigurationAsCode) ConfigureJob() error {
 }
 
 // Ensure configures Jenkins with help Configuration as a code plugin
-func (g *ConfigurationAsCode) Ensure(secretOrConfigMapData map[string]string, jenkins *v1alpha1.Jenkins) (bool, error) {
+func (g *ConfigurationAsCode) Ensure(jenkins *v1alpha1.Jenkins) (bool, error) {
 	jobsClient := jobs.New(g.jenkinsClient, g.k8sClient, g.logger)
 
-	hash := g.calculateHash(secretOrConfigMapData)
-	done, err := jobsClient.EnsureBuildJob(g.jobName, hash, map[string]string{jobHashParameterName: hash}, jenkins, true)
+	configuration := &corev1.ConfigMap{}
+	namespaceName := types.NamespacedName{Namespace: jenkins.Namespace, Name: resources.GetUserConfigurationConfigMapNameFromJenkins(jenkins)}
+	err := g.k8sClient.Get(context.TODO(), namespaceName, configuration)
+	if err != nil {
+		return false, errors.WithStack(err)
+	}
+
+	secret := &corev1.Secret{}
+	namespaceName = types.NamespacedName{Namespace: jenkins.Namespace, Name: resources.GetUserConfigurationSecretNameFromJenkins(jenkins)}
+	err = g.k8sClient.Get(context.TODO(), namespaceName, configuration)
+	if err != nil {
+		return false, errors.WithStack(err)
+	}
+
+	userConfigurationSecretHash := g.calculateUserConfigurationSecretHash(secret)
+	userConfigurationHash := g.calculateUserConfigurationHash(configuration)
+	done, err := jobsClient.EnsureBuildJob(
+		g.jobName,
+		userConfigurationSecretHash+userConfigurationHash,
+		map[string]string{
+			userConfigurationHashParameterName:       userConfigurationHash,
+			userConfigurationSecretHashParameterName: userConfigurationSecretHash,
+		},
+		jenkins,
+		true)
 	if err != nil {
 		return false, err
 	}
 	return done, nil
 }
 
-func (g *ConfigurationAsCode) calculateHash(secretOrConfigMapData map[string]string) string {
+func (g *ConfigurationAsCode) calculateUserConfigurationSecretHash(userConfigurationSecret *corev1.Secret) string {
 	hash := sha256.New()
 
 	var keys []string
-	for key := range secretOrConfigMapData {
+	for key := range userConfigurationSecret.Data {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		hash.Write([]byte(key))
+		hash.Write([]byte(userConfigurationSecret.Data[key]))
+	}
+	return base64.StdEncoding.EncodeToString(hash.Sum(nil))
+}
+
+func (g *ConfigurationAsCode) calculateUserConfigurationHash(userConfiguration *corev1.ConfigMap) string {
+	hash := sha256.New()
+
+	var keys []string
+	for key := range userConfiguration.Data {
 		keys = append(keys, key)
 	}
 	sort.Strings(keys)
 	for _, key := range keys {
 		if strings.HasSuffix(key, ".yaml") {
 			hash.Write([]byte(key))
-			hash.Write([]byte(secretOrConfigMapData[key]))
+			hash.Write([]byte(userConfiguration.Data[key]))
 		}
 	}
 	return base64.StdEncoding.EncodeToString(hash.Sum(nil))
@@ -90,9 +134,15 @@ const configurationJobXMLFmt = `<?xml version='1.1' encoding='UTF-8'?>
     <hudson.model.ParametersDefinitionProperty>
       <parameterDefinitions>
         <hudson.model.StringParameterDefinition>
-          <name>` + jobHashParameterName + `</name>
-          <description></description>
-          <defaultValue></defaultValue>
+          <name>` + userConfigurationSecretHashParameterName + `</name>
+          <description/>
+          <defaultValue/>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>` + userConfigurationHashParameterName + `</name>
+          <description/>
+          <defaultValue/>
           <trim>false</trim>
         </hudson.model.StringParameterDefinition>
       </parameterDefinitions>
@@ -101,28 +151,23 @@ const configurationJobXMLFmt = `<?xml version='1.1' encoding='UTF-8'?>
   <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.61.1">
     <script>import io.jenkins.plugins.casc.yaml.YamlSource;
 
+def secretsPath = &apos;%s&apos;
 def configsPath = &apos;%s&apos;
-def expectedHash = params.hash
+def userConfigurationSecretExpectedHash = params.` + userConfigurationSecretHashParameterName + `
+def userConfigurationExpectedHash = params.` + userConfigurationHashParameterName + `
 
 node(&apos;master&apos;) {
+    def secretsText = sh(script: &quot;ls ${secretsPath} | grep .yaml | sort&quot;, returnStdout: true).trim()
+    def secrets = []
+    secrets.addAll(secretsText.tokenize(&apos;\n&apos;))
+
     def configsText = sh(script: &quot;ls ${configsPath} | grep .yaml | sort&quot;, returnStdout: true).trim()
     def configs = []
     configs.addAll(configsText.tokenize(&apos;\n&apos;))
     
     stage(&apos;Synchronizing files&apos;) {
-        def complete = false
-        for(int i = 1; i &lt;= 10; i++) {
-            def actualHash = calculateHash((String[])configs, configsPath)
-            println &quot;Expected hash &apos;${expectedHash}&apos;, actual hash &apos;${actualHash}&apos;&quot;
-            if(expectedHash == actualHash) {
-                complete = true
-                break
-            }
-            sleep 2
-        }
-        if(!complete) {
-            error(&quot;Timeout while synchronizing files&quot;)
-        }
+		synchronizeFiles(secretsPath, (String[])secrets, userConfigurationSecretExpectedHash)
+		synchronizeFiles(configsPath, (String[])configs, userConfigurationExpectedHash)
     }
     
     for(config in configs) {
@@ -133,6 +178,23 @@ node(&apos;master&apos;) {
         }
     }
 }
+
+def synchronizeFiles(String path, String[] files, String hash) {
+    def complete = false
+    for(int i = 1; i &lt;= 10; i++) {
+        def actualHash = calculateHash(files, path)
+        println &quot;Expected hash &apos;${hash}&apos;, actual hash &apos;${actualHash}&apos;, path &apos;${path}&apos;&quot;
+        if(hash == actualHash) {
+            complete = true
+            break
+        }
+        sleep 2
+    }
+    if(!complete) {
+        error(&quot;Timeout while synchronizing files&quot;)
+    }
+}
+
 
 @NonCPS
 def calculateHash(String[] configs, String configsPath) {

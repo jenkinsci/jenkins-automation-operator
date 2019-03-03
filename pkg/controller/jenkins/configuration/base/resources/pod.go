@@ -31,9 +31,13 @@ const (
 	JenkinsBaseConfigurationVolumePath = jenkinsPath + "/base-configuration"
 
 	jenkinsUserConfigurationVolumeName = "user-configuration"
-	// JenkinsUserConfigurationVolumePath is a path where are groovy scripts used to configure Jenkins
-	// this scripts are provided by user
+	// JenkinsUserConfigurationVolumePath is a path where are groovy scripts and CasC configs used to configure Jenkins
+	// this script is provided by user
 	JenkinsUserConfigurationVolumePath = jenkinsPath + "/user-configuration"
+
+	userConfigurationSecretVolumeName = "user-configuration-secrets"
+	// UserConfigurationSecretVolumePath is a path where are secrets used for groovy scripts and CasC configs
+	UserConfigurationSecretVolumePath = jenkinsPath + "/user-configuration-secrets"
 
 	httpPortName  = "http"
 	slavePortName = "slavelistener"
@@ -121,6 +125,10 @@ func NewJenkinsMasterPod(objectMeta metav1.ObjectMeta, jenkins *v1alpha1.Jenkins
 							Name:  "JAVA_OPTS",
 							Value: "-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:MaxRAMFraction=1 -Djenkins.install.runSetupWizard=false -Djava.awt.headless=true",
 						},
+						{
+							Name:  "SECRETS", // https://github.com/jenkinsci/configuration-as-code-plugin/blob/master/demos/kubernetes-secrets/README.md
+							Value: UserConfigurationSecretVolumePath,
+						},
 					},
 					Resources: jenkins.Spec.Master.Resources,
 					VolumeMounts: []corev1.VolumeMount{
@@ -152,6 +160,11 @@ func NewJenkinsMasterPod(objectMeta metav1.ObjectMeta, jenkins *v1alpha1.Jenkins
 						{
 							Name:      jenkinsOperatorCredentialsVolumeName,
 							MountPath: jenkinsOperatorCredentialsVolumePath,
+							ReadOnly:  true,
+						},
+						{
+							Name:      userConfigurationSecretVolumeName,
+							MountPath: UserConfigurationSecretVolumePath,
 							ReadOnly:  true,
 						},
 					},
@@ -209,6 +222,14 @@ func NewJenkinsMasterPod(objectMeta metav1.ObjectMeta, jenkins *v1alpha1.Jenkins
 					VolumeSource: corev1.VolumeSource{
 						Secret: &corev1.SecretVolumeSource{
 							SecretName: GetOperatorCredentialsSecretName(jenkins),
+						},
+					},
+				},
+				{
+					Name: userConfigurationSecretVolumeName,
+					VolumeSource: corev1.VolumeSource{
+						Secret: &corev1.SecretVolumeSource{
+							SecretName: GetUserConfigurationSecretNameFromJenkins(jenkins),
 						},
 					},
 				},

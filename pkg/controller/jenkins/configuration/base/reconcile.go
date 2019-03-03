@@ -126,6 +126,11 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureResourcesRequiredForJenkinsPod
 	}
 	r.logger.V(log.VDebug).Info("User configuration config map is present")
 
+	if err := r.createUserConfigurationSecret(metaObject); err != nil {
+		return err
+	}
+	r.logger.V(log.VDebug).Info("User configuration secret is present")
+
 	if err := r.createRBAC(metaObject); err != nil {
 		return err
 	}
@@ -247,6 +252,23 @@ func (r *ReconcileJenkinsBaseConfiguration) createUserConfigurationConfigMap(met
 	if !valid {
 		currentConfigMap.ObjectMeta.Labels = resources.BuildLabelsForWatchedResources(r.jenkins)
 		return stackerr.WithStack(r.k8sClient.Update(context.TODO(), currentConfigMap))
+	}
+
+	return nil
+}
+
+func (r *ReconcileJenkinsBaseConfiguration) createUserConfigurationSecret(meta metav1.ObjectMeta) error {
+	currentSecret := &corev1.Secret{}
+	err := r.k8sClient.Get(context.TODO(), types.NamespacedName{Name: resources.GetUserConfigurationSecretNameFromJenkins(r.jenkins), Namespace: r.jenkins.Namespace}, currentSecret)
+	if err != nil && errors.IsNotFound(err) {
+		return stackerr.WithStack(r.k8sClient.Create(context.TODO(), resources.NewUserConfigurationSecret(r.jenkins)))
+	} else if err != nil {
+		return stackerr.WithStack(err)
+	}
+	valid := r.verifyLabelsForWatchedResource(currentSecret)
+	if !valid {
+		currentSecret.ObjectMeta.Labels = resources.BuildLabelsForWatchedResources(r.jenkins)
+		return stackerr.WithStack(r.k8sClient.Update(context.TODO(), currentSecret))
 	}
 
 	return nil
