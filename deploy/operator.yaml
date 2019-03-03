@@ -16,7 +16,7 @@ spec:
       serviceAccountName: jenkins-operator
       containers:
         - name: jenkins-operator
-          image: virtuslab/jenkins-operator:v0.0.5
+          image: virtuslab/jenkins-operator:v0.0.6
           ports:
           - containerPort: 60000
             name: metrics
