@@ -338,40 +338,54 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsMasterPod(meta metav1.O
 		return reconcile.Result{}, stackerr.WithStack(err)
 	}
 
-	// Recreate pod
+	if currentJenkinsMasterPod != nil && isPodTerminating(*currentJenkinsMasterPod) {
+		return reconcile.Result{Requeue: true}, nil
+	}
+	if currentJenkinsMasterPod != nil && r.isRecreatePodNeeded(*currentJenkinsMasterPod) {
+		return reconcile.Result{Requeue: true}, r.restartJenkinsMasterPod(meta)
+	}
+
+	return reconcile.Result{}, nil
+}
+
+func isPodTerminating(pod corev1.Pod) bool {
+	return pod.ObjectMeta.DeletionTimestamp != nil
+}
+
+func (r *ReconcileJenkinsBaseConfiguration) isRecreatePodNeeded(currentJenkinsMasterPod corev1.Pod) bool {
 	recreatePod := false
-	if currentJenkinsMasterPod != nil &&
-		(currentJenkinsMasterPod.Status.Phase == corev1.PodFailed ||
-			currentJenkinsMasterPod.Status.Phase == corev1.PodSucceeded ||
-			currentJenkinsMasterPod.Status.Phase == corev1.PodUnknown) {
-		r.logger.Info(fmt.Sprintf("Invalid Jenkins pod phase '%+v', recreating pod", currentJenkinsMasterPod.Status.Phase))
+
+	if currentJenkinsMasterPod.Status.Phase == corev1.PodFailed ||
+		currentJenkinsMasterPod.Status.Phase == corev1.PodSucceeded ||
+		currentJenkinsMasterPod.Status.Phase == corev1.PodUnknown {
+		r.logger.Info(fmt.Sprintf("Invalid Jenkins pod phase '%+v', recreating pod", currentJenkinsMasterPod.Status))
 		recreatePod = true
 	}
 
-	if currentJenkinsMasterPod != nil &&
-		r.jenkins.Spec.Master.Image != currentJenkinsMasterPod.Spec.Containers[0].Image {
+	if r.jenkins.Spec.Master.Image != currentJenkinsMasterPod.Spec.Containers[0].Image {
 		r.logger.Info(fmt.Sprintf("Jenkins image has changed to '%+v', recreating pod", r.jenkins.Spec.Master.Image))
 		recreatePod = true
 	}
 
-	if currentJenkinsMasterPod != nil && len(r.jenkins.Spec.Master.Annotations) > 0 &&
+	if len(r.jenkins.Spec.Master.Annotations) > 0 &&
 		!reflect.DeepEqual(r.jenkins.Spec.Master.Annotations, currentJenkinsMasterPod.ObjectMeta.Annotations) {
 		r.logger.Info(fmt.Sprintf("Jenkins pod annotations have changed to '%+v', recreating pod", r.jenkins.Spec.Master.Annotations))
 		recreatePod = true
 	}
 
-	if currentJenkinsMasterPod != nil &&
-		!reflect.DeepEqual(r.jenkins.Spec.Master.Resources, currentJenkinsMasterPod.Spec.Containers[0].Resources) {
+	if !reflect.DeepEqual(r.jenkins.Spec.Master.Resources, currentJenkinsMasterPod.Spec.Containers[0].Resources) {
 		r.logger.Info(fmt.Sprintf("Jenkins pod resources have changed, actual '%+v' required '%+v' - recreating pod",
 			currentJenkinsMasterPod.Spec.Containers[0].Resources, r.jenkins.Spec.Master.Resources))
 		recreatePod = true
 	}
 
-	if currentJenkinsMasterPod != nil && recreatePod && currentJenkinsMasterPod.ObjectMeta.DeletionTimestamp == nil {
-		return reconcile.Result{Requeue: true}, r.restartJenkinsMasterPod(meta)
+	if !reflect.DeepEqual(r.jenkins.Spec.Master.NodeSelector, currentJenkinsMasterPod.Spec.NodeSelector) {
+		r.logger.Info(fmt.Sprintf("Jenkins pod node selector has changed, actual '%+v' required '%+v' - recreating pod",
+			r.jenkins.Spec.Master.NodeSelector, currentJenkinsMasterPod.Spec.NodeSelector))
+		recreatePod = true
 	}
 
-	return reconcile.Result{}, nil
+	return recreatePod
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) restartJenkinsMasterPod(meta metav1.ObjectMeta) error {

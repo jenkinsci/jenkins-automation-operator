@@ -19,9 +19,10 @@ type JenkinsSpec struct {
 // JenkinsMaster defines the Jenkins master pod attributes and plugins,
 // every single change requires Jenkins master pod restart
 type JenkinsMaster struct {
-	Image       string                      `json:"image,omitempty"`
-	Annotations map[string]string           `json:"masterAnnotations,omitempty"`
-	Resources   corev1.ResourceRequirements `json:"resources,omitempty"`
+	Image        string                      `json:"image,omitempty"`
+	NodeSelector map[string]string           `json:"nodeSelector,omitempty"`
+	Annotations  map[string]string           `json:"masterAnnotations,omitempty"`
+	Resources    corev1.ResourceRequirements `json:"resources,omitempty"`
 	// OperatorPlugins contains plugins required by operator
 	OperatorPlugins map[string][]string `json:"basePlugins,omitempty"`
 	// Plugins contains plugins required by user

@@ -76,6 +76,7 @@ func NewJenkinsMasterPod(objectMeta metav1.ObjectMeta, jenkins *v1alpha1.Jenkins
 				RunAsUser:  &runAsUser,
 				RunAsGroup: &runAsUser,
 			},
+			NodeSelector: jenkins.Spec.Master.NodeSelector,
 			Containers: []corev1.Container{
 				{
 					Name:  "jenkins-master",
