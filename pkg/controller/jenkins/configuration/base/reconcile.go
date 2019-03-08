@@ -136,10 +136,14 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureResourcesRequiredForJenkinsPod
 	}
 	r.logger.V(log.VDebug).Info("Service account, role and role binding are present")
 
-	if err := r.createService(metaObject); err != nil {
+	if err := r.createService(metaObject, resources.GetJenkinsHTTPServiceName(r.jenkins), r.jenkins.Spec.Service); err != nil {
 		return err
 	}
-	r.logger.V(log.VDebug).Info("Service is present")
+	r.logger.V(log.VDebug).Info("Jenkins HTTP Service is present")
+	if err := r.createService(metaObject, resources.GetJenkinsSlavesServiceName(r.jenkins), r.jenkins.Spec.SlaveService); err != nil {
+		return err
+	}
+	r.logger.V(log.VDebug).Info("Jenkins slave Service is present")
 
 	return nil
 }
@@ -296,13 +300,29 @@ func (r *ReconcileJenkinsBaseConfiguration) createRBAC(meta metav1.ObjectMeta) e
 	return nil
 }
 
-func (r *ReconcileJenkinsBaseConfiguration) createService(meta metav1.ObjectMeta) error {
-	err := r.createResource(resources.NewService(meta, r.minikube))
-	if err != nil && !apierrors.IsAlreadyExists(err) {
+func (r *ReconcileJenkinsBaseConfiguration) createService(meta metav1.ObjectMeta, name string, config v1alpha1.Service) error {
+	service := corev1.Service{}
+	err := r.k8sClient.Get(context.TODO(), types.NamespacedName{Name: name, Namespace: meta.Namespace}, &service)
+	if err != nil && errors.IsNotFound(err) {
+		service = resources.UpdateService(corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      name,
+				Namespace: meta.Namespace,
+				Labels:    meta.Labels,
+			},
+			Spec: corev1.ServiceSpec{
+				Selector: meta.Labels,
+			},
+		}, config)
+		if err = r.createResource(&service); err != nil {
+			return stackerr.WithStack(err)
+		}
+	} else if err != nil {
 		return stackerr.WithStack(err)
 	}
 
-	return nil
+	service = resources.UpdateService(service, config)
+	return stackerr.WithStack(r.updateResource(&service))
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) getJenkinsMasterPod(meta metav1.ObjectMeta) (*corev1.Pod, error) {
@@ -425,7 +445,7 @@ func (r *ReconcileJenkinsBaseConfiguration) waitForJenkins(meta metav1.ObjectMet
 
 func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsClient(meta metav1.ObjectMeta) (jenkinsclient.Jenkins, error) {
 	jenkinsURL, err := jenkinsclient.BuildJenkinsAPIUrl(
-		r.jenkins.ObjectMeta.Namespace, meta.Name, resources.HTTPPortInt, r.local, r.minikube)
+		r.jenkins.ObjectMeta.Namespace, resources.GetJenkinsHTTPServiceName(r.jenkins), r.jenkins.Spec.Service.Port, r.local, r.minikube)
 	if err != nil {
 		return nil, err
 	}

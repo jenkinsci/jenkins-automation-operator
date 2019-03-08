@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -42,10 +43,7 @@ const (
 	httpPortName  = "http"
 	slavePortName = "slavelistener"
 	// HTTPPortInt defines Jenkins master HTTP port
-	HTTPPortInt    = 8080
-	slavePortInt   = 50000
-	httpPortInt32  = int32(8080)
-	slavePortInt32 = int32(50000)
+	HTTPPortInt = 8080
 
 	jenkinsUserUID = int64(1000) // build in Docker image jenkins user UID
 )
@@ -109,12 +107,12 @@ func NewJenkinsMasterPod(objectMeta metav1.ObjectMeta, jenkins *v1alpha1.Jenkins
 					},
 					Ports: []corev1.ContainerPort{
 						{
-							Name:          slavePortName,
-							ContainerPort: slavePortInt32,
+							Name:          httpPortName,
+							ContainerPort: constants.DefaultHTTPPortInt32,
 						},
 						{
-							Name:          httpPortName,
-							ContainerPort: httpPortInt32,
+							Name:          slavePortName,
+							ContainerPort: constants.DefaultSlavePortInt32,
 						},
 					},
 					Env: []corev1.EnvVar{

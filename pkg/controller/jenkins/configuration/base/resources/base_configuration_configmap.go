@@ -115,13 +115,21 @@ ServiceAccountCredential serviceAccountCredential = new ServiceAccountCredential
 )
 SystemCredentialsProvider.getInstance().getStore().addCredentials(Domain.global(), serviceAccountCredential)
 
-KubernetesCloud kubernetes = new KubernetesCloud("kubernetes")
+def kubernetes = Jenkins.instance.clouds.getByName("kubernetes")
+def add = false
+if (kubernetes == null) {
+    add = true
+	kubernetes = new KubernetesCloud("kubernetes")
+}
 kubernetes.setServerUrl("https://kubernetes.default")
 kubernetes.setNamespace("%s")
 kubernetes.setCredentialsId(kubernetesCredentialsId)
-kubernetes.setJenkinsUrl("http://%s:%d")
+kubernetes.setJenkinsUrl("%s")
+kubernetes.setJenkinsTunnel("%s")
 kubernetes.setRetentionTimeout(15)
-jenkins.clouds.add(kubernetes)
+if (add) {
+	jenkins.clouds.add(kubernetes)
+}
 
 jenkins.save()
 `
@@ -176,7 +184,10 @@ func NewBaseConfigurationConfigMap(meta metav1.ObjectMeta, jenkins *v1alpha1.Jen
 			"4-enable-master-access-control.groovy": enableMasterAccessControl,
 			"5-disable-insecure-features.groovy":    disableInsecureFeatures,
 			"6-configure-kubernetes-plugin.groovy": fmt.Sprintf(configureKubernetesPluginFmt,
-				jenkins.ObjectMeta.Namespace, GetResourceName(jenkins), HTTPPortInt),
+				jenkins.ObjectMeta.Namespace,
+				fmt.Sprintf("http://%s.%s:%d", GetJenkinsHTTPServiceName(jenkins), jenkins.ObjectMeta.Namespace, jenkins.Spec.Service.Port),
+				fmt.Sprintf("%s.%s:%d", GetJenkinsSlavesServiceName(jenkins), jenkins.ObjectMeta.Namespace, jenkins.Spec.SlaveService.Port),
+			),
 			"7-configure-views.groovy": configureViews,
 		},
 	}

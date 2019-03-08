@@ -3,6 +3,7 @@ package jenkins
 import (
 	"context"
 	"fmt"
+	"reflect"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base"
@@ -244,6 +245,30 @@ func (r *ReconcileJenkins) setDefaults(jenkins *v1alpha1.Jenkins, logger logr.Lo
 				corev1.ResourceCPU:    resource.MustParse("1500m"),
 				corev1.ResourceMemory: resource.MustParse("3Gi"),
 			},
+		}
+	}
+	if reflect.DeepEqual(jenkins.Spec.Service, v1alpha1.Service{}) {
+		logger.Info("Setting default Jenkins master service")
+		changed = true
+		var serviceType corev1.ServiceType
+		if r.minikube {
+			// When running locally with minikube cluster Jenkins Service have to be exposed via node port
+			// to allow communication operator -> Jenkins API
+			serviceType = corev1.ServiceTypeNodePort
+		} else {
+			serviceType = corev1.ServiceTypeClusterIP
+		}
+		jenkins.Spec.Service = v1alpha1.Service{
+			Type: serviceType,
+			Port: constants.DefaultHTTPPortInt32,
+		}
+	}
+	if reflect.DeepEqual(jenkins.Spec.SlaveService, v1alpha1.Service{}) {
+		logger.Info("Setting default Jenkins slave service")
+		changed = true
+		jenkins.Spec.SlaveService = v1alpha1.Service{
+			Type: corev1.ServiceTypeClusterIP,
+			Port: constants.DefaultSlavePortInt32,
 		}
 	}
 

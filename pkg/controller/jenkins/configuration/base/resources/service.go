@@ -1,9 +1,13 @@
 package resources
 
 import (
+	"fmt"
+
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 func buildServiceTypeMeta() metav1.TypeMeta {
@@ -13,37 +17,32 @@ func buildServiceTypeMeta() metav1.TypeMeta {
 	}
 }
 
-// NewService builds the Kubernetes service resource
-func NewService(meta metav1.ObjectMeta, minikube bool) *corev1.Service {
-	service := &corev1.Service{
-		TypeMeta:   buildServiceTypeMeta(),
-		ObjectMeta: meta,
-		Spec: corev1.ServiceSpec{
-			Selector: meta.Labels,
-			// The first port have to be Jenkins http port because when run with minikube
-			// command 'minikube service' returns endpoints in the same sequence
-			Ports: []corev1.ServicePort{
-				{
-					Name:       httpPortName,
-					Port:       httpPortInt32,
-					TargetPort: intstr.FromInt(HTTPPortInt),
-				},
-				{
-					Name:       slavePortName,
-					Port:       slavePortInt32,
-					TargetPort: intstr.FromInt(slavePortInt),
-				},
-			},
-		},
+// UpdateService returns new service with override fields from config
+func UpdateService(actual corev1.Service, config v1alpha1.Service) corev1.Service {
+	actual.ObjectMeta.Annotations = config.Annotations
+	for key, value := range config.Labels {
+		actual.ObjectMeta.Labels[key] = value
+	}
+	actual.Spec.Type = config.Type
+	actual.Spec.LoadBalancerIP = config.LoadBalancerIP
+	actual.Spec.LoadBalancerSourceRanges = config.LoadBalancerSourceRanges
+	if len(actual.Spec.Ports) == 0 {
+		actual.Spec.Ports = []corev1.ServicePort{{}}
+	}
+	actual.Spec.Ports[0].Port = config.Port
+	if config.NodePort != 0 {
+		actual.Spec.Ports[0].NodePort = config.NodePort
 	}
 
-	if minikube {
-		// When running locally with minikube cluster Jenkins Service have to be exposed via node port
-		// to allow communication operator -> Jenkins API
-		service.Spec.Type = corev1.ServiceTypeNodePort
-	} else {
-		service.Spec.Type = corev1.ServiceTypeClusterIP
-	}
+	return actual
+}
 
-	return service
+// GetJenkinsHTTPServiceName returns Kubernetes service name used for expose Jenkins HTTP endpoint
+func GetJenkinsHTTPServiceName(jenkins *v1alpha1.Jenkins) string {
+	return fmt.Sprintf("%s-http-%s", constants.OperatorName, jenkins.ObjectMeta.Name)
+}
+
+// GetJenkinsSlavesServiceName returns Kubernetes service name used for expose Jenkins slave endpoint
+func GetJenkinsSlavesServiceName(jenkins *v1alpha1.Jenkins) string {
+	return fmt.Sprintf("%s-slave-%s", constants.OperatorName, jenkins.ObjectMeta.Name)
 }

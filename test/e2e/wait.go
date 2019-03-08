@@ -14,6 +14,7 @@ import (
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -35,10 +36,13 @@ func waitForJenkinsBaseConfigurationToComplete(t *testing.T, jenkins *v1alpha1.J
 		t.Logf("Current Jenkins status '%+v'", jenkins.Status)
 		return jenkins.Status.BaseConfigurationCompletedTime != nil
 	})
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
 	t.Log("Jenkins pod is running")
+
+	// update jenkins CR because Operator sets default values
+	namespacedName := types.NamespacedName{Namespace: jenkins.Namespace, Name: jenkins.Name}
+	err = framework.Global.Client.Get(goctx.TODO(), namespacedName, jenkins)
+	assert.NoError(t, err)
 }
 
 func waitForRecreateJenkinsMasterPod(t *testing.T, jenkins *v1alpha1.Jenkins) {

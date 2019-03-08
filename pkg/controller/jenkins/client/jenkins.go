@@ -75,7 +75,7 @@ func (jenkins *jenkins) CreateOrUpdateJob(config, jobName string) (job *gojenkin
 }
 
 // BuildJenkinsAPIUrl returns Jenkins API URL
-func BuildJenkinsAPIUrl(namespace, serviceName string, portNumber int, local, minikube bool) (string, error) {
+func BuildJenkinsAPIUrl(namespace, serviceName string, portNumber int32, local, minikube bool) (string, error) {
 	// Get Jenkins URL from minikube command
 	if local && minikube {
 		cmd := exec.Command("minikube", "service", "--url", "-n", namespace, serviceName)

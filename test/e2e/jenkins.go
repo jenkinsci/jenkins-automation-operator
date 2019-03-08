@@ -46,7 +46,7 @@ func createJenkinsAPIClient(jenkins *v1alpha1.Jenkins) (jenkinsclient.Jenkins, e
 		return nil, err
 	}
 
-	jenkinsAPIURL, err := jenkinsclient.BuildJenkinsAPIUrl(jenkins.ObjectMeta.Namespace, resources.GetResourceName(jenkins), resources.HTTPPortInt, true, true)
+	jenkinsAPIURL, err := jenkinsclient.BuildJenkinsAPIUrl(jenkins.ObjectMeta.Namespace, resources.GetJenkinsHTTPServiceName(jenkins), resources.HTTPPortInt, true, true)
 	if err != nil {
 		return nil, err
 	}

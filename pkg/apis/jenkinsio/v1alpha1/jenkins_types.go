@@ -12,8 +12,10 @@ import (
 type JenkinsSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
-	Master   JenkinsMaster `json:"master,omitempty"`
-	SeedJobs []SeedJob     `json:"seedJobs,omitempty"`
+	Master       JenkinsMaster `json:"master,omitempty"`
+	SeedJobs     []SeedJob     `json:"seedJobs,omitempty"`
+	Service      Service       `json:"service,omitempty"`
+	SlaveService Service       `json:"slaveService,omitempty"`
 }
 
 // JenkinsMaster defines the Jenkins master pod attributes and plugins,
@@ -27,6 +29,17 @@ type JenkinsMaster struct {
 	OperatorPlugins map[string][]string `json:"basePlugins,omitempty"`
 	// Plugins contains plugins required by user
 	Plugins map[string][]string `json:"plugins,omitempty"`
+}
+
+// Service defines Kubernetes service attributes which Operator will manage
+type Service struct {
+	Annotations              map[string]string  `json:"annotations,omitempty"`
+	Labels                   map[string]string  `json:"labels,omitempty"`
+	Type                     corev1.ServiceType `json:"type,omitempty"`
+	Port                     int32              `json:"port,omitempty"`
+	NodePort                 int32              `json:"nodePort,omitempty"`
+	LoadBalancerSourceRanges []string           `json:"loadBalancerSourceRanges,omitempty"`
+	LoadBalancerIP           string             `json:"loadBalancerIP,omitempty"`
 }
 
 // JenkinsStatus defines the observed state of Jenkins
