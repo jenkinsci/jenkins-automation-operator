@@ -44,6 +44,9 @@ GOOSARCHES = linux/amd64
 PACKAGES = $(shell go list -f '{{.ImportPath}}/' ./... | grep -v vendor)
 PACKAGES_FOR_UNIT_TESTS = $(shell go list -f '{{.ImportPath}}/' ./... | grep -v vendor | grep -v e2e)
 
+# Run all the e2e tests by default
+E2E_TEST_SELECTOR ?= .*
+
 ARGS ?= /usr/bin/jenkins-operator --local --namespace=$(NAMESPACE) $(EXTRA_ARGS)
 
 .DEFAULT_GOAL := help
@@ -158,7 +161,7 @@ ifeq ($(ENVIRONMENT),minikube)
 	sed -i 's|\(args:\).*|\1\ ["--minikube"\]|' deploy/namespace-init.yaml
 endif
 
-	@RUNNING_TESTS=1 go test -parallel=1 "./test/e2e/" -tags "$(BUILDTAGS) cgo" -v -timeout 30m \
+	@RUNNING_TESTS=1 go test -parallel=1 "./test/e2e/" -tags "$(BUILDTAGS) cgo" -v -timeout 30m -run "$(E2E_TEST_SELECTOR)" \
 		-root=$(CURRENT_DIRECTORY) -kubeconfig=$(HOME)/.kube/config -globalMan deploy/crds/jenkinsio_v1alpha1_jenkins_crd.yaml -namespacedMan deploy/namespace-init.yaml $(EXTRA_ARGS)
 
 .PHONY: vet
