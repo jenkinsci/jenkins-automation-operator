@@ -151,6 +151,7 @@ CURRENT_DIRECTORY := $(shell pwd)
 e2e: build docker-build ## Runs e2e tests, you can use EXTRA_ARGS
 	@echo "+ $@"
 	@echo "Docker image: $(DOCKER_REGISTRY):$(GITCOMMIT)"
+	kubectl config use-context $(ENVIRONMENT)
 	cp deploy/service_account.yaml deploy/namespace-init.yaml
 	cat deploy/role.yaml >> deploy/namespace-init.yaml
 	cat deploy/role_binding.yaml >> deploy/namespace-init.yaml
