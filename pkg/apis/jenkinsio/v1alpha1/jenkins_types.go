@@ -25,6 +25,7 @@ type JenkinsMaster struct {
 	NodeSelector map[string]string           `json:"nodeSelector,omitempty"`
 	Annotations  map[string]string           `json:"masterAnnotations,omitempty"`
 	Resources    corev1.ResourceRequirements `json:"resources,omitempty"`
+	Env          []corev1.EnvVar             `json:"env,omitempty"`
 	// OperatorPlugins contains plugins required by operator
 	OperatorPlugins map[string][]string `json:"basePlugins,omitempty"`
 	// Plugins contains plugins required by user

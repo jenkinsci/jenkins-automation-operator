@@ -5,6 +5,7 @@ import (
 	"regexp"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/plugins"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
 
@@ -32,7 +33,29 @@ func (r *ReconcileJenkinsBaseConfiguration) Validate(jenkins *v1alpha1.Jenkins) 
 		return false, nil
 	}
 
+	if !r.validateJenkinsMasterPodEnvs() {
+		return false, nil
+	}
+
 	return true, nil
+}
+
+func (r *ReconcileJenkinsBaseConfiguration) validateJenkinsMasterPodEnvs() bool {
+	baseEnvs := resources.GetJenkinsMasterPodBaseEnvs()
+	baseEnvNames := map[string]string{}
+	for _, env := range baseEnvs {
+		baseEnvNames[env.Name] = env.Value
+	}
+
+	valid := true
+	for _, userEnv := range r.jenkins.Spec.Master.Env {
+		if _, overriding := baseEnvNames[userEnv.Name]; overriding {
+			r.logger.V(log.VWarn).Info(fmt.Sprintf("Jenkins Master pod env '%s' cannot be overridden", userEnv.Name))
+			valid = false
+		}
+	}
+
+	return valid
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) validatePlugins(pluginsWithVersionSlice ...map[string][]string) bool {

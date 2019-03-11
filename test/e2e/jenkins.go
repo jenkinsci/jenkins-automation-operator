@@ -73,6 +73,12 @@ func createJenkinsCR(t *testing.T, name, namespace string) *v1alpha1.Jenkins {
 					"simple-theme-plugin:0.5.1": {},
 				},
 				NodeSelector: map[string]string{"kubernetes.io/hostname": "minikube"},
+				Env: []v1.EnvVar{
+					{
+						Name:  "TEST_ENV",
+						Value: "test_env_value",
+					},
+				},
 			},
 			//TODO(bantoniak) add seed job with private key
 			SeedJobs: []v1alpha1.SeedJob{

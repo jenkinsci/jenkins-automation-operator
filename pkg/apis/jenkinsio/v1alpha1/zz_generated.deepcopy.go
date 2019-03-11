@@ -128,6 +128,13 @@ func (in *JenkinsMaster) DeepCopyInto(out *JenkinsMaster) {
 		}
 	}
 	in.Resources.DeepCopyInto(&out.Resources)
+	if in.Env != nil {
+		in, out := &in.Env, &out.Env
+		*out = make([]v1.EnvVar, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
 	if in.OperatorPlugins != nil {
 		in, out := &in.OperatorPlugins, &out.OperatorPlugins
 		*out = make(map[string][]string, len(*in))

@@ -55,6 +55,24 @@ func buildPodTypeMeta() metav1.TypeMeta {
 	}
 }
 
+// GetJenkinsMasterPodBaseEnvs returns Jenkins master pod envs required by operator
+func GetJenkinsMasterPodBaseEnvs() []corev1.EnvVar {
+	return []corev1.EnvVar{
+		{
+			Name:  "JENKINS_HOME",
+			Value: jenkinsHomePath,
+		},
+		{
+			Name:  "JAVA_OPTS",
+			Value: "-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:MaxRAMFraction=1 -Djenkins.install.runSetupWizard=false -Djava.awt.headless=true",
+		},
+		{
+			Name:  "SECRETS", // https://github.com/jenkinsci/configuration-as-code-plugin/blob/master/demos/kubernetes-secrets/README.md
+			Value: UserConfigurationSecretVolumePath,
+		},
+	}
+}
+
 // NewJenkinsMasterPod builds Jenkins Master Kubernetes Pod resource
 func NewJenkinsMasterPod(objectMeta metav1.ObjectMeta, jenkins *v1alpha1.Jenkins) *corev1.Pod {
 	initialDelaySeconds := int32(30)
@@ -63,6 +81,8 @@ func NewJenkinsMasterPod(objectMeta metav1.ObjectMeta, jenkins *v1alpha1.Jenkins
 	runAsUser := jenkinsUserUID
 
 	objectMeta.Annotations = jenkins.Spec.Master.Annotations
+	envs := GetJenkinsMasterPodBaseEnvs()
+	envs = append(envs, jenkins.Spec.Master.Env...)
 
 	return &corev1.Pod{
 		TypeMeta:   buildPodTypeMeta(),
@@ -115,20 +135,7 @@ func NewJenkinsMasterPod(objectMeta metav1.ObjectMeta, jenkins *v1alpha1.Jenkins
 							ContainerPort: constants.DefaultSlavePortInt32,
 						},
 					},
-					Env: []corev1.EnvVar{
-						{
-							Name:  "JENKINS_HOME",
-							Value: jenkinsHomePath,
-						},
-						{
-							Name:  "JAVA_OPTS",
-							Value: "-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:MaxRAMFraction=1 -Djenkins.install.runSetupWizard=false -Djava.awt.headless=true",
-						},
-						{
-							Name:  "SECRETS", // https://github.com/jenkinsci/configuration-as-code-plugin/blob/master/demos/kubernetes-secrets/README.md
-							Value: UserConfigurationSecretVolumePath,
-						},
-					},
+					Env:       envs,
 					Resources: jenkins.Spec.Master.Resources,
 					VolumeMounts: []corev1.VolumeMount{
 						{

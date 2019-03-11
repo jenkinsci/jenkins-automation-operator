@@ -143,6 +143,12 @@ func verifyJenkinsMasterPodAttributes(t *testing.T, jenkins *v1alpha1.Jenkins) {
 		t.Fatalf("Invalid jenkins pod node selector expected '%+v', actual '%+v'", jenkins.Spec.Master.NodeSelector, jenkinsPod.Spec.NodeSelector)
 	}
 
+	requiredEnvs := resources.GetJenkinsMasterPodBaseEnvs()
+	requiredEnvs = append(requiredEnvs, jenkins.Spec.Master.Env...)
+	if !reflect.DeepEqual(jenkinsPod.Spec.Containers[0].Env, requiredEnvs) {
+		t.Fatalf("Invalid jenkins pod continer resources expected '%+v', actual '%+v'", requiredEnvs, jenkinsPod.Spec.Containers[0].Env)
+	}
+
 	t.Log("Jenkins pod attributes are valid")
 }
 

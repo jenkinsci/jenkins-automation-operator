@@ -3,7 +3,10 @@ package base
 import (
 	"testing"
 
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
+
 	"github.com/stretchr/testify/assert"
+	"k8s.io/api/core/v1"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
@@ -64,4 +67,43 @@ func TestValidatePlugins(t *testing.T) {
 		assert.Equal(t, true, got)
 	})
 
+}
+
+func TestValidateJenkinsMasterPodEnvs(t *testing.T) {
+	t.Run("happy", func(t *testing.T) {
+		jenkins := v1alpha1.Jenkins{
+			Spec: v1alpha1.JenkinsSpec{
+				Master: v1alpha1.JenkinsMaster{
+					Env: []v1.EnvVar{
+						{
+							Name:  "SOME_VALUE",
+							Value: "",
+						},
+					},
+				},
+			},
+		}
+		baseReconcileLoop := New(nil, nil, logf.ZapLogger(false),
+			&jenkins, false, false)
+		got := baseReconcileLoop.validateJenkinsMasterPodEnvs()
+		assert.Equal(t, true, got)
+	})
+	t.Run("override JENKINS_HOME env", func(t *testing.T) {
+		jenkins := v1alpha1.Jenkins{
+			Spec: v1alpha1.JenkinsSpec{
+				Master: v1alpha1.JenkinsMaster{
+					Env: []v1.EnvVar{
+						{
+							Name:  "JENKINS_HOME",
+							Value: "",
+						},
+					},
+				},
+			},
+		}
+		baseReconcileLoop := New(nil, nil, logf.ZapLogger(false),
+			&jenkins, false, false)
+		got := baseReconcileLoop.validateJenkinsMasterPodEnvs()
+		assert.Equal(t, false, got)
+	})
 }

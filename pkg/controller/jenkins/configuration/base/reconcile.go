@@ -401,7 +401,15 @@ func (r *ReconcileJenkinsBaseConfiguration) isRecreatePodNeeded(currentJenkinsMa
 
 	if !reflect.DeepEqual(r.jenkins.Spec.Master.NodeSelector, currentJenkinsMasterPod.Spec.NodeSelector) {
 		r.logger.Info(fmt.Sprintf("Jenkins pod node selector has changed, actual '%+v' required '%+v' - recreating pod",
-			r.jenkins.Spec.Master.NodeSelector, currentJenkinsMasterPod.Spec.NodeSelector))
+			currentJenkinsMasterPod.Spec.NodeSelector, r.jenkins.Spec.Master.NodeSelector))
+		recreatePod = true
+	}
+
+	requiredEnvs := resources.GetJenkinsMasterPodBaseEnvs()
+	requiredEnvs = append(requiredEnvs, r.jenkins.Spec.Master.Env...)
+	if !reflect.DeepEqual(requiredEnvs, currentJenkinsMasterPod.Spec.Containers[0].Env) {
+		r.logger.Info(fmt.Sprintf("Jenkins env have changed, actual '%+v' required '%+v' - recreating pod",
+			currentJenkinsMasterPod.Spec.Containers[0].Env, requiredEnvs))
 		recreatePod = true
 	}
 
