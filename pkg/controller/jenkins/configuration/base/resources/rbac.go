@@ -44,7 +44,11 @@ func NewRole(meta metav1.ObjectMeta) *v1.Role {
 				Resources: []string{"pods/log"},
 				Verbs:     []string{getVerb, listVerb, watchVerb},
 			},
-			//TODO get secrets ???
+			{
+				APIGroups: []string{""},
+				Resources: []string{"secrets"},
+				Verbs:     []string{getVerb, listVerb, watchVerb},
+			},
 		},
 	}
 }

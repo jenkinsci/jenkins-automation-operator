@@ -121,6 +121,11 @@ var BasePluginsMap = map[string][]Plugin{
 	Must(New("configuration-as-code:1.7")).String(): {
 		Must(New("configuration-as-code-support:1.7")),
 	},
+	Must(New("kubernetes-credentials-provider:0.12.1")).String(): {
+		Must(New(credentialsPlugin)),
+		Must(New(structsPlugin)),
+		Must(New(variantPlugin)),
+	},
 }
 
 // BasePlugins returns map of plugins to install by operator

@@ -33,12 +33,14 @@ func TestConfiguration(t *testing.T) {
 	numberOfExecutors := 6
 	systemMessage := "Configuration as Code integration works!!!"
 	systemMessageEnvName := "SYSTEM_MESSAGE"
+	jenkinsCredentialName := "kubernetes-credentials-provider-plugin"
 
 	// base
 	createUserConfigurationSecret(t, jenkinsCRName, namespace, systemMessageEnvName, systemMessage)
 	createUserConfigurationConfigMap(t, jenkinsCRName, namespace, numberOfExecutors, fmt.Sprintf("${%s}", systemMessageEnvName))
 	jenkins := createJenkinsCR(t, jenkinsCRName, namespace)
 	createDefaultLimitsForContainersInNamespace(t, namespace)
+	createKubernetesCredentialsProviderSecret(t, namespace, jenkinsCredentialName)
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
 
 	verifyJenkinsMasterPodAttributes(t, jenkins)
@@ -49,6 +51,7 @@ func TestConfiguration(t *testing.T) {
 	waitForJenkinsUserConfigurationToComplete(t, jenkins)
 	verifyJenkinsSeedJobs(t, client, jenkins)
 	verifyUserConfiguration(t, client, numberOfExecutors, systemMessage)
+	verifyIfJenkinsCredentialExists(t, client, jenkinsCredentialName)
 }
 
 func createUserConfigurationSecret(t *testing.T, jenkinsCRName string, namespace string, systemMessageEnvName, systemMessage string) {
@@ -64,6 +67,30 @@ func createUserConfigurationSecret(t *testing.T, jenkinsCRName string, namespace
 
 	t.Logf("User configuration secret %+v", *userConfiguration)
 	if err := framework.Global.Client.Create(context.TODO(), userConfiguration, nil); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func createKubernetesCredentialsProviderSecret(t *testing.T, namespace, name string) {
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+			Annotations: map[string]string{
+				"jenkins.io/credentials-description": "credentials from Kubernetes",
+			},
+			Labels: map[string]string{
+				"jenkins.io/credentials-type": "usernamePassword",
+			},
+		},
+		StringData: map[string]string{
+			"username": "user",
+			"password": "pass",
+		},
+	}
+
+	t.Logf("Secret for Kubernetes credentials provider plugin %+v", *secret)
+	if err := framework.Global.Client.Create(context.TODO(), secret, nil); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -246,5 +273,34 @@ if (!"%s".equals(Jenkins.instance.systemMessage)) {
 	throw new Exception("Configuration as code failed")
 }`, systemMessage)
 	logs, err = jenkinsClient.ExecuteScript(checkConfigurationAsCode)
+	assert.NoError(t, err, logs)
+}
+
+func verifyIfJenkinsCredentialExists(t *testing.T, jenkinsClient jenkinsclient.Jenkins, credentialName string) {
+	groovyScriptFmt := `import com.cloudbees.plugins.credentials.Credentials
+
+Set<Credentials> allCredentials = new HashSet<Credentials>();
+
+def creds = com.cloudbees.plugins.credentials.CredentialsProvider.lookupCredentials(
+	com.cloudbees.plugins.credentials.Credentials.class
+);
+
+allCredentials.addAll(creds)
+
+Jenkins.instance.getAllItems(com.cloudbees.hudson.plugins.folder.Folder.class).each{ f ->
+	creds = com.cloudbees.plugins.credentials.CredentialsProvider.lookupCredentials(
+      	com.cloudbees.plugins.credentials.Credentials.class, f)
+	allCredentials.addAll(creds)
+}
+
+def found = false
+for (c in allCredentials) {
+	if("%s".equals(c.id)) found = true
+}
+if(!found) {
+	throw new Exception("Expected credential not found")
+}`
+	groovyScript := fmt.Sprintf(groovyScriptFmt, credentialName)
+	logs, err := jenkinsClient.ExecuteScript(groovyScript)
 	assert.NoError(t, err, logs)
 }
