@@ -12,6 +12,7 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/plugins"
 	"github.com/jenkinsci/kubernetes-operator/pkg/event"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
+	"github.com/jenkinsci/kubernetes-operator/version"
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
@@ -230,6 +231,16 @@ func (r *ReconcileJenkins) setDefaults(jenkins *v1alpha1.Jenkins, logger logr.Lo
 		logger.Info("Setting default operator plugins")
 		changed = true
 		jenkins.Spec.Master.OperatorPlugins = plugins.BasePlugins()
+	}
+	if len(jenkins.Status.OperatorVersion) > 0 && version.Version != jenkins.Status.OperatorVersion {
+		logger.Info("Setting default operator plugins after Operator version change")
+		changed = true
+		jenkins.Spec.Master.OperatorPlugins = plugins.BasePlugins()
+	}
+	if len(jenkins.Status.OperatorVersion) == 0 {
+		logger.Info("Setting operator version")
+		changed = true
+		jenkins.Status.OperatorVersion = version.Version
 	}
 	if len(jenkins.Spec.Master.Plugins) == 0 {
 		changed = true

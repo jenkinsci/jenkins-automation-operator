@@ -48,6 +48,7 @@ type Service struct {
 type JenkinsStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
+	OperatorVersion                string       `json:"operatorVersion,omitempty"`
 	ProvisionStartTime             *metav1.Time `json:"provisionStartTime,omitempty"`
 	BaseConfigurationCompletedTime *metav1.Time `json:"baseConfigurationCompletedTime,omitempty"`
 	UserConfigurationCompletedTime *metav1.Time `json:"userConfigurationCompletedTime,omitempty"`

@@ -13,6 +13,7 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/groovy"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/plugins"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
+	"github.com/jenkinsci/kubernetes-operator/version"
 
 	"github.com/bndr/gojenkins"
 	"github.com/go-logr/logr"
@@ -373,6 +374,12 @@ func isPodTerminating(pod corev1.Pod) bool {
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) isRecreatePodNeeded(currentJenkinsMasterPod corev1.Pod) bool {
+	if version.Version != r.jenkins.Status.OperatorVersion {
+		r.logger.Info(fmt.Sprintf("Jenkins Operator version has changed, actual '%+v' new '%+v' - recreating pod",
+			r.jenkins.Status.OperatorVersion, version.Version))
+		return true
+	}
+
 	if currentJenkinsMasterPod.Status.Phase == corev1.PodFailed ||
 		currentJenkinsMasterPod.Status.Phase == corev1.PodSucceeded ||
 		currentJenkinsMasterPod.Status.Phase == corev1.PodUnknown {
