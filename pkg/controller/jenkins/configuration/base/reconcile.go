@@ -373,36 +373,39 @@ func isPodTerminating(pod corev1.Pod) bool {
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) isRecreatePodNeeded(currentJenkinsMasterPod corev1.Pod) bool {
-	recreatePod := false
-
 	if currentJenkinsMasterPod.Status.Phase == corev1.PodFailed ||
 		currentJenkinsMasterPod.Status.Phase == corev1.PodSucceeded ||
 		currentJenkinsMasterPod.Status.Phase == corev1.PodUnknown {
 		r.logger.Info(fmt.Sprintf("Invalid Jenkins pod phase '%+v', recreating pod", currentJenkinsMasterPod.Status))
-		recreatePod = true
+		return true
 	}
 
 	if r.jenkins.Spec.Master.Image != currentJenkinsMasterPod.Spec.Containers[0].Image {
 		r.logger.Info(fmt.Sprintf("Jenkins image has changed to '%+v', recreating pod", r.jenkins.Spec.Master.Image))
-		recreatePod = true
+		return true
+	}
+
+	if r.jenkins.Spec.Master.ImagePullPolicy != currentJenkinsMasterPod.Spec.Containers[0].ImagePullPolicy {
+		r.logger.Info(fmt.Sprintf("Jenkins image pull policy has changed to '%+v', recreating pod", r.jenkins.Spec.Master.ImagePullPolicy))
+		return true
 	}
 
 	if len(r.jenkins.Spec.Master.Annotations) > 0 &&
 		!reflect.DeepEqual(r.jenkins.Spec.Master.Annotations, currentJenkinsMasterPod.ObjectMeta.Annotations) {
 		r.logger.Info(fmt.Sprintf("Jenkins pod annotations have changed to '%+v', recreating pod", r.jenkins.Spec.Master.Annotations))
-		recreatePod = true
+		return true
 	}
 
 	if !reflect.DeepEqual(r.jenkins.Spec.Master.Resources, currentJenkinsMasterPod.Spec.Containers[0].Resources) {
 		r.logger.Info(fmt.Sprintf("Jenkins pod resources have changed, actual '%+v' required '%+v' - recreating pod",
 			currentJenkinsMasterPod.Spec.Containers[0].Resources, r.jenkins.Spec.Master.Resources))
-		recreatePod = true
+		return true
 	}
 
 	if !reflect.DeepEqual(r.jenkins.Spec.Master.NodeSelector, currentJenkinsMasterPod.Spec.NodeSelector) {
 		r.logger.Info(fmt.Sprintf("Jenkins pod node selector has changed, actual '%+v' required '%+v' - recreating pod",
 			currentJenkinsMasterPod.Spec.NodeSelector, r.jenkins.Spec.Master.NodeSelector))
-		recreatePod = true
+		return true
 	}
 
 	requiredEnvs := resources.GetJenkinsMasterPodBaseEnvs()
@@ -410,10 +413,10 @@ func (r *ReconcileJenkinsBaseConfiguration) isRecreatePodNeeded(currentJenkinsMa
 	if !reflect.DeepEqual(requiredEnvs, currentJenkinsMasterPod.Spec.Containers[0].Env) {
 		r.logger.Info(fmt.Sprintf("Jenkins env have changed, actual '%+v' required '%+v' - recreating pod",
 			currentJenkinsMasterPod.Spec.Containers[0].Env, requiredEnvs))
-		recreatePod = true
+		return true
 	}
 
-	return recreatePod
+	return false
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) restartJenkinsMasterPod(meta metav1.ObjectMeta) error {

@@ -219,9 +219,15 @@ func (r *ReconcileJenkins) setDefaults(jenkins *v1alpha1.Jenkins, logger logr.Lo
 		logger.Info("Setting default Jenkins master image: " + constants.DefaultJenkinsMasterImage)
 		changed = true
 		jenkins.Spec.Master.Image = constants.DefaultJenkinsMasterImage
+		jenkins.Spec.Master.ImagePullPolicy = corev1.PullAlways
+	}
+	if len(jenkins.Spec.Master.ImagePullPolicy) == 0 {
+		logger.Info(fmt.Sprintf("Setting default Jenkins master image pull policy: %s", corev1.PullAlways))
+		changed = true
+		jenkins.Spec.Master.ImagePullPolicy = corev1.PullAlways
 	}
 	if len(jenkins.Spec.Master.OperatorPlugins) == 0 {
-		logger.Info("Setting default base plugins")
+		logger.Info("Setting default operator plugins")
 		changed = true
 		jenkins.Spec.Master.OperatorPlugins = plugins.BasePlugins()
 	}
