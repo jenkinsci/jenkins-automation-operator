@@ -5,27 +5,28 @@ const (
 	jackson2ADIPlugin            = "jackson2-api:2.9.8"
 	credentialsPlugin            = "credentials:2.1.18"
 	cloudBeesFolderPlugin        = "cloudbees-folder:6.7"
-	durableTaskPlugin            = "durable-task:1.28"
+	durableTaskPlugin            = "durable-task:1.29"
 	plainCredentialsPlugin       = "plain-credentials:1.5"
 	structsPlugin                = "structs:1.17"
-	workflowStepAPIPlugin        = "workflow-step-api:2.17"
+	workflowStepAPIPlugin        = "workflow-step-api:2.19"
 	scmAPIPlugin                 = "scm-api:2.3.0"
 	workflowAPIPlugin            = "workflow-api:2.33"
-	workflowSupportPlugin        = "workflow-support:3.0"
+	workflowSupportPlugin        = "workflow-support:3.2"
 	displayURLAPIPlugin          = "display-url-api:2.3.0"
 	gitClientPlugin              = "git-client:2.7.6"
 	jschPlugin                   = "jsch:0.1.55"
-	junitPlugin                  = "junit:1.26.1"
+	junitPlugin                  = "junit:1.27"
 	mailerPlugin                 = "mailer:1.23"
-	matrixProjectPlugin          = "matrix-project:1.13"
-	scriptSecurityPlugin         = "script-security:1.50"
-	sshCredentialsPlugin         = "ssh-credentials:1.14"
+	matrixProjectPlugin          = "matrix-project:1.14"
+	scriptSecurityPlugin         = "script-security:1.54"
+	sshCredentialsPlugin         = "ssh-credentials:1.15"
 	workflowSCMStepPlugin        = "workflow-scm-step:2.7"
+	variantPlugin                = "variant:1.2"
 )
 
 // BasePluginsMap contains plugins to install by operator
 var BasePluginsMap = map[string][]Plugin{
-	Must(New("kubernetes:1.13.8")).String(): {
+	Must(New("kubernetes:1.14.8")).String(): {
 		Must(New(apacheComponentsClientPlugin)),
 		Must(New(cloudBeesFolderPlugin)),
 		Must(New(credentialsPlugin)),
@@ -34,10 +35,10 @@ var BasePluginsMap = map[string][]Plugin{
 		Must(New("kubernetes-credentials:0.4.0")),
 		Must(New(plainCredentialsPlugin)),
 		Must(New(structsPlugin)),
-		Must(New("variant:1.1")),
+		Must(New(variantPlugin)),
 		Must(New(workflowStepAPIPlugin)),
 	},
-	Must(New("workflow-job:2.31")).String(): {
+	Must(New("workflow-job:2.32")).String(): {
 		Must(New(scmAPIPlugin)),
 		Must(New(scriptSecurityPlugin)),
 		Must(New(structsPlugin)),
@@ -51,7 +52,7 @@ var BasePluginsMap = map[string][]Plugin{
 		Must(New("authentication-tokens:1.3")),
 		Must(New("branch-api:2.1.2")),
 		Must(New(cloudBeesFolderPlugin)),
-		Must(New("credentials-binding:1.17")),
+		Must(New("credentials-binding:1.18")),
 		Must(New(credentialsPlugin)),
 		Must(New(displayURLAPIPlugin)),
 		Must(New("docker-commons:1.13")),
@@ -64,7 +65,7 @@ var BasePluginsMap = map[string][]Plugin{
 		Must(New("jquery-detached:1.2.1")),
 		Must(New(jschPlugin)),
 		Must(New(junitPlugin)),
-		Must(New("lockable-resources:2.3")),
+		Must(New("lockable-resources:2.4")),
 		Must(New(mailerPlugin)),
 		Must(New(matrixProjectPlugin)),
 		Must(New("momentjs:1.1.1")),
@@ -72,13 +73,13 @@ var BasePluginsMap = map[string][]Plugin{
 		Must(New("pipeline-graph-analysis:1.9")),
 		Must(New("pipeline-input-step:2.9")),
 		Must(New("pipeline-milestone-step:1.3.1")),
-		Must(New("pipeline-model-api:1.3.4.1")),
+		Must(New("pipeline-model-api:1.3.6")),
 		Must(New("pipeline-model-declarative-agent:1.1.1")),
-		Must(New("pipeline-model-definition:1.3.4.1")),
-		Must(New("pipeline-model-extensions:1.3.4.1")),
+		Must(New("pipeline-model-definition:1.3.6")),
+		Must(New("pipeline-model-extensions:1.3.6")),
 		Must(New("pipeline-rest-api:2.10")),
 		Must(New("pipeline-stage-step:2.3")),
-		Must(New("pipeline-stage-tags-metadata:1.3.4.1")),
+		Must(New("pipeline-stage-tags-metadata:1.3.6")),
 		Must(New("pipeline-stage-view:2.10")),
 		Must(New(plainCredentialsPlugin)),
 		Must(New(scmAPIPlugin)),
@@ -86,17 +87,17 @@ var BasePluginsMap = map[string][]Plugin{
 		Must(New(sshCredentialsPlugin)),
 		Must(New(structsPlugin)),
 		Must(New(workflowAPIPlugin)),
-		Must(New("workflow-basic-steps:2.13")),
-		Must(New("workflow-cps-global-lib:2.12")),
-		Must(New("workflow-cps:2.61.1")),
-		Must(New("workflow-durable-task-step:2.27")),
-		Must(New("workflow-job:2.31")),
-		Must(New("workflow-multibranch:2.20")),
+		Must(New("workflow-basic-steps:2.14")),
+		Must(New("workflow-cps-global-lib:2.13")),
+		Must(New("workflow-cps:2.64")),
+		Must(New("workflow-durable-task-step:2.29")),
+		Must(New("workflow-job:2.32")),
+		Must(New("workflow-multibranch:2.21")),
 		Must(New(workflowSCMStepPlugin)),
 		Must(New(workflowStepAPIPlugin)),
 		Must(New(workflowSupportPlugin)),
 	},
-	Must(New("git:3.9.1")).String(): {
+	Must(New("git:3.9.3")).String(): {
 		Must(New(apacheComponentsClientPlugin)),
 		Must(New(credentialsPlugin)),
 		Must(New(displayURLAPIPlugin)),
@@ -113,12 +114,12 @@ var BasePluginsMap = map[string][]Plugin{
 		Must(New(workflowSCMStepPlugin)),
 		Must(New(workflowStepAPIPlugin)),
 	},
-	Must(New("job-dsl:1.71")).String(): {
+	Must(New("job-dsl:1.72")).String(): {
 		Must(New(scriptSecurityPlugin)),
 		Must(New(structsPlugin)),
 	},
-	Must(New("configuration-as-code:1.4")).String(): {
-		Must(New("configuration-as-code-support:1.4")),
+	Must(New("configuration-as-code:1.7")).String(): {
+		Must(New("configuration-as-code-support:1.7")),
 	},
 }
 
