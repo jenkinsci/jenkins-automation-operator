@@ -103,17 +103,8 @@ import com.cloudbees.plugins.credentials.SystemCredentialsProvider
 import com.cloudbees.plugins.credentials.domains.Domain
 import jenkins.model.Jenkins
 import org.csanchez.jenkins.plugins.kubernetes.KubernetesCloud
-import org.csanchez.jenkins.plugins.kubernetes.ServiceAccountCredential
 
-def kubernetesCredentialsId = 'kubernetes-namespace-token'
 def jenkins = Jenkins.getInstance()
-
-ServiceAccountCredential serviceAccountCredential = new ServiceAccountCredential(
-        CredentialsScope.GLOBAL,
-        kubernetesCredentialsId,
-        "Kubernetes Namespace Token"
-)
-SystemCredentialsProvider.getInstance().getStore().addCredentials(Domain.global(), serviceAccountCredential)
 
 def kubernetes = Jenkins.instance.clouds.getByName("kubernetes")
 def add = false
@@ -123,7 +114,6 @@ if (kubernetes == null) {
 }
 kubernetes.setServerUrl("https://kubernetes.default")
 kubernetes.setNamespace("%s")
-kubernetes.setCredentialsId(kubernetesCredentialsId)
 kubernetes.setJenkinsUrl("%s")
 kubernetes.setJenkinsTunnel("%s")
 kubernetes.setRetentionTimeout(15)
