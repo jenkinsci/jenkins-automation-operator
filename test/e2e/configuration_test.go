@@ -5,12 +5,10 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
-	"time"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
-	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/user/seedjobs"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/plugins"
 
 	"github.com/bndr/gojenkins"
@@ -19,8 +17,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 func TestConfiguration(t *testing.T) {
@@ -33,14 +29,24 @@ func TestConfiguration(t *testing.T) {
 	numberOfExecutors := 6
 	systemMessage := "Configuration as Code integration works!!!"
 	systemMessageEnvName := "SYSTEM_MESSAGE"
-	jenkinsCredentialName := "kubernetes-credentials-provider-plugin"
+	mySeedJob := seedJobConfig{
+		SeedJob: v1alpha1.SeedJob{
+			ID:                    "jenkins-operator",
+			CredentialID:          "jenkins-operator",
+			JenkinsCredentialType: v1alpha1.NoJenkinsCredentialCredentialType,
+			Targets:               "cicd/jobs/*.jenkins",
+			Description:           "Jenkins Operator repository",
+			RepositoryBranch:      "master",
+			RepositoryURL:         "https://github.com/jenkinsci/kubernetes-operator.git",
+		},
+	}
 
 	// base
 	createUserConfigurationSecret(t, jenkinsCRName, namespace, systemMessageEnvName, systemMessage)
 	createUserConfigurationConfigMap(t, jenkinsCRName, namespace, numberOfExecutors, fmt.Sprintf("${%s}", systemMessageEnvName))
-	jenkins := createJenkinsCR(t, jenkinsCRName, namespace)
+	jenkins := createJenkinsCR(t, jenkinsCRName, namespace, &[]v1alpha1.SeedJob{mySeedJob.SeedJob})
 	createDefaultLimitsForContainersInNamespace(t, namespace)
-	createKubernetesCredentialsProviderSecret(t, namespace, jenkinsCredentialName)
+	createKubernetesCredentialsProviderSecret(t, namespace, mySeedJob)
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
 
 	verifyJenkinsMasterPodAttributes(t, jenkins)
@@ -49,9 +55,8 @@ func TestConfiguration(t *testing.T) {
 
 	// user
 	waitForJenkinsUserConfigurationToComplete(t, jenkins)
-	verifyJenkinsSeedJobs(t, client, jenkins)
 	verifyUserConfiguration(t, client, numberOfExecutors, systemMessage)
-	verifyIfJenkinsCredentialExists(t, client, jenkinsCredentialName)
+	verifyJenkinsSeedJobs(t, client, []seedJobConfig{mySeedJob})
 }
 
 func createUserConfigurationSecret(t *testing.T, jenkinsCRName string, namespace string, systemMessageEnvName, systemMessage string) {
@@ -67,30 +72,6 @@ func createUserConfigurationSecret(t *testing.T, jenkinsCRName string, namespace
 
 	t.Logf("User configuration secret %+v", *userConfiguration)
 	if err := framework.Global.Client.Create(context.TODO(), userConfiguration, nil); err != nil {
-		t.Fatal(err)
-	}
-}
-
-func createKubernetesCredentialsProviderSecret(t *testing.T, namespace, name string) {
-	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-			Annotations: map[string]string{
-				"jenkins.io/credentials-description": "credentials from Kubernetes",
-			},
-			Labels: map[string]string{
-				"jenkins.io/credentials-type": "usernamePassword",
-			},
-		},
-		StringData: map[string]string{
-			"username": "user",
-			"password": "pass",
-		},
-	}
-
-	t.Logf("Secret for Kubernetes credentials provider plugin %+v", *secret)
-	if err := framework.Global.Client.Create(context.TODO(), secret, nil); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -223,43 +204,6 @@ func isPluginValid(plugins *gojenkins.Plugins, requiredPlugin plugins.Plugin) (*
 	return p, requiredPlugin.Version == p.Version
 }
 
-func verifyJenkinsSeedJobs(t *testing.T, client jenkinsclient.Jenkins, jenkins *v1alpha1.Jenkins) {
-	t.Logf("Attempting to get configure seed job status '%v'", seedjobs.ConfigureSeedJobsName)
-
-	configureSeedJobs, err := client.GetJob(seedjobs.ConfigureSeedJobsName)
-	assert.NoError(t, err)
-	assert.NotNil(t, configureSeedJobs)
-	build, err := configureSeedJobs.GetLastSuccessfulBuild()
-	assert.NoError(t, err)
-	assert.NotNil(t, build)
-
-	seedJobName := "jenkins-operator-configure-seed-job"
-	t.Logf("Attempting to verify if seed job has been created '%v'", seedJobName)
-	seedJob, err := client.GetJob(seedJobName)
-	assert.NoError(t, err)
-	assert.NotNil(t, seedJob)
-
-	build, err = seedJob.GetLastSuccessfulBuild()
-	assert.NoError(t, err)
-	assert.NotNil(t, build)
-
-	err = framework.Global.Client.Get(context.TODO(), types.NamespacedName{Namespace: jenkins.Namespace, Name: jenkins.Name}, jenkins)
-	assert.NoError(t, err, "couldn't get jenkins custom resource")
-	assert.NotNil(t, jenkins.Status.Builds)
-	assert.NotEmpty(t, jenkins.Status.Builds)
-
-	jobCreatedByDSLPluginName := "build-jenkins-operator"
-	err = wait.Poll(time.Second*10, time.Minute*2, func() (bool, error) {
-		t.Logf("Attempting to verify if job '%s' has been created ", jobCreatedByDSLPluginName)
-		seedJob, err := client.GetJob(jobCreatedByDSLPluginName)
-		if err != nil || seedJob == nil {
-			return false, nil
-		}
-		return true, nil
-	})
-	assert.NoError(t, err)
-}
-
 func verifyUserConfiguration(t *testing.T, jenkinsClient jenkinsclient.Jenkins, amountOfExecutors int, systemMessage string) {
 	checkConfigurationViaGroovyScript := fmt.Sprintf(`
 if (!new Integer(%d).equals(Jenkins.instance.numExecutors)) {
@@ -273,34 +217,5 @@ if (!"%s".equals(Jenkins.instance.systemMessage)) {
 	throw new Exception("Configuration as code failed")
 }`, systemMessage)
 	logs, err = jenkinsClient.ExecuteScript(checkConfigurationAsCode)
-	assert.NoError(t, err, logs)
-}
-
-func verifyIfJenkinsCredentialExists(t *testing.T, jenkinsClient jenkinsclient.Jenkins, credentialName string) {
-	groovyScriptFmt := `import com.cloudbees.plugins.credentials.Credentials
-
-Set<Credentials> allCredentials = new HashSet<Credentials>();
-
-def creds = com.cloudbees.plugins.credentials.CredentialsProvider.lookupCredentials(
-	com.cloudbees.plugins.credentials.Credentials.class
-);
-
-allCredentials.addAll(creds)
-
-Jenkins.instance.getAllItems(com.cloudbees.hudson.plugins.folder.Folder.class).each{ f ->
-	creds = com.cloudbees.plugins.credentials.CredentialsProvider.lookupCredentials(
-      	com.cloudbees.plugins.credentials.Credentials.class, f)
-	allCredentials.addAll(creds)
-}
-
-def found = false
-for (c in allCredentials) {
-	if("%s".equals(c.id)) found = true
-}
-if(!found) {
-	throw new Exception("Expected credential not found")
-}`
-	groovyScript := fmt.Sprintf(groovyScriptFmt, credentialName)
-	logs, err := jenkinsClient.ExecuteScript(groovyScript)
 	assert.NoError(t, err, logs)
 }

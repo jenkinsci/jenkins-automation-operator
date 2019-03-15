@@ -27,7 +27,7 @@ func NewUserConfigurationSecret(jenkins *v1alpha1.Jenkins) *corev1.Secret {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      GetUserConfigurationSecretNameFromJenkins(jenkins),
 			Namespace: jenkins.ObjectMeta.Namespace,
-			Labels:    BuildLabelsForWatchedResources(jenkins),
+			Labels:    BuildLabelsForWatchedResources(*jenkins),
 		},
 	}
 }

@@ -2,10 +2,10 @@ package user
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/user/seedjobs"
 
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
@@ -40,8 +40,7 @@ JjihnIfoDu9MfU24GWDw49wGPTn+eI7GQC+8yxGg7fd24kohHSaCowoW16pbYVco
 6iLr5rkCgYBt0bcYJ3AOTH0UXS8kvJvnyce/RBIAMoUABwvdkZt9r5B4UzsoLq5e
 WrrU6fSRsE6lSsBd83pOAQ46tv+vntQ+0EihD9/0INhkQM99lBw1TFdFTgGSAs1e
 ns4JGP6f5uIuwqu/nbqPqMyDovjkGbX2znuGBcvki90Pi97XL7MMWw==
------END RSA PRIVATE KEY-----
-`
+-----END RSA PRIVATE KEY-----`
 
 var fakeInvalidPrivateKey = `-----BEGIN RSA PRIVATE KEY-----
 MIIEpAIBAAKCAQEArK4ld6i2iqW6L3jaTZaKD/v7PjDn+Ik9MXp+kvLcUw/+wEGm
@@ -50,189 +49,398 @@ SwiLd8TWAvXkxdXm8fDOGAZbYK2alMV+M+9E2OpZsBUCxmb/3FAofF6JccKoJOH8
 `
 
 func TestValidateSeedJobs(t *testing.T) {
-	data := []struct {
-		description    string
-		jenkins        *v1alpha1.Jenkins
-		secret         *corev1.Secret
-		expectedResult bool
-	}{
-		{
-			description: "Valid with public repository and without private key",
-			jenkins: &v1alpha1.Jenkins{
-				Spec: v1alpha1.JenkinsSpec{
-					SeedJobs: []v1alpha1.SeedJob{
-						{
-							ID:               "jenkins-operator-e2e",
-							Targets:          "cicd/jobs/*.jenkins",
-							Description:      "Jenkins Operator e2e tests repository",
-							RepositoryBranch: "master",
-							RepositoryURL:    "https://github.com/jenkinsci/kubernetes-operator.git",
-						},
-					},
-				},
-			},
-			expectedResult: true,
-		},
-		{
-			description: "Invalid without id",
-			jenkins: &v1alpha1.Jenkins{
-				Spec: v1alpha1.JenkinsSpec{
-					SeedJobs: []v1alpha1.SeedJob{
-						{
-							Targets:          "cicd/jobs/*.jenkins",
-							Description:      "Jenkins Operator e2e tests repository",
-							RepositoryBranch: "master",
-							RepositoryURL:    "https://github.com/jenkinsci/kubernetes-operator.git",
-						},
-					},
-				},
-			},
-			expectedResult: false,
-		},
-		{
-			description: "Valid with private key and secret",
-			jenkins: &v1alpha1.Jenkins{
-				Spec: v1alpha1.JenkinsSpec{
-					SeedJobs: []v1alpha1.SeedJob{
-						{
-							ID:               "jenkins-operator-e2e",
-							Targets:          "cicd/jobs/*.jenkins",
-							Description:      "Jenkins Operator e2e tests repository",
-							RepositoryBranch: "master",
-							RepositoryURL:    "https://github.com/jenkinsci/kubernetes-operator.git",
-							PrivateKey: v1alpha1.PrivateKey{
-								SecretKeyRef: &corev1.SecretKeySelector{
-									LocalObjectReference: corev1.LocalObjectReference{
-										Name: "deploy-keys",
-									},
-									Key: "jenkins-operator-e2e",
-								},
-							},
-						},
-					},
-				},
-			},
-			secret: &corev1.Secret{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "Secret",
-					APIVersion: "v1",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "deploy-keys",
-					Namespace: "default",
-				},
-				Data: map[string][]byte{
-					"jenkins-operator-e2e": []byte(fakePrivateKey),
-				},
-			},
-			expectedResult: true,
-		},
-		{
-			description: "Invalid private key in secret",
-			jenkins: &v1alpha1.Jenkins{
-				Spec: v1alpha1.JenkinsSpec{
-					SeedJobs: []v1alpha1.SeedJob{
-						{
-							ID:               "jenkins-operator-e2e",
-							Targets:          "cicd/jobs/*.jenkins",
-							Description:      "Jenkins Operator e2e tests repository",
-							RepositoryBranch: "master",
-							RepositoryURL:    "https://github.com/jenkinsci/kubernetes-operator.git",
-							PrivateKey: v1alpha1.PrivateKey{
-								SecretKeyRef: &corev1.SecretKeySelector{
-									LocalObjectReference: corev1.LocalObjectReference{
-										Name: "deploy-keys",
-									},
-									Key: "jenkins-operator-e2e",
-								},
-							},
-						},
-					},
-				},
-			},
-			secret: &corev1.Secret{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "Secret",
-					APIVersion: "v1",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "deploy-keys",
-					Namespace: "default",
-				},
-				Data: map[string][]byte{
-					"jenkins-operator-e2e": []byte(fakeInvalidPrivateKey),
-				},
-			},
-			expectedResult: false,
-		},
-		{
-			description: "Invalid with PrivateKey and empty Secret data",
-			jenkins: &v1alpha1.Jenkins{
-				Spec: v1alpha1.JenkinsSpec{
-					SeedJobs: []v1alpha1.SeedJob{
-						{
-							ID:               "jenkins-operator-e2e",
-							Targets:          "cicd/jobs/*.jenkins",
-							Description:      "Jenkins Operator e2e tests repository",
-							RepositoryBranch: "master",
-							RepositoryURL:    "https://github.com/jenkinsci/kubernetes-operator.git",
-							PrivateKey: v1alpha1.PrivateKey{
-								SecretKeyRef: &corev1.SecretKeySelector{
-									LocalObjectReference: corev1.LocalObjectReference{
-										Name: "deploy-keys",
-									},
-									Key: "jenkins-operator-e2e",
-								},
-							},
-						},
-					},
-				},
-			},
-			secret: &corev1.Secret{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "Secret",
-					APIVersion: "v1",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "deploy-keys",
-					Namespace: "default",
-				},
-				Data: map[string][]byte{
-					"jenkins-operator-e2e": []byte(""),
-				},
-			},
-			expectedResult: false,
-		},
-		{
-			description: "Invalid with ssh RepositoryURL and empty PrivateKey",
-			jenkins: &v1alpha1.Jenkins{
-				Spec: v1alpha1.JenkinsSpec{
-					SeedJobs: []v1alpha1.SeedJob{
-						{
-							ID:               "jenkins-operator-e2e",
-							Targets:          "cicd/jobs/*.jenkins",
-							Description:      "Jenkins Operator e2e tests repository",
-							RepositoryBranch: "master",
-							RepositoryURL:    "git@github.com:jenkinsci/kubernetes-operator.git",
-						},
-					},
-				},
-			},
-			expectedResult: false,
-		},
+	secretTypeMeta := metav1.TypeMeta{
+		Kind:       "Secret",
+		APIVersion: "v1",
 	}
+	secretObjectMeta := metav1.ObjectMeta{
+		Name:      "deploy-keys",
+		Namespace: "default",
+	}
+	t.Run("Valid with public repository and without private key", func(t *testing.T) {
+		jenkins := &v1alpha1.Jenkins{
+			Spec: v1alpha1.JenkinsSpec{
+				SeedJobs: []v1alpha1.SeedJob{
+					{
+						ID:                    "example",
+						CredentialID:          "jenkins-operator-e2e",
+						JenkinsCredentialType: v1alpha1.NoJenkinsCredentialCredentialType,
+						Targets:               "cicd/jobs/*.jenkins",
+						RepositoryBranch:      "master",
+						RepositoryURL:         "https://github.com/jenkinsci/kubernetes-operator.git",
+					},
+				},
+			},
+		}
 
-	for _, testingData := range data {
-		t.Run(fmt.Sprintf("Testing '%s'", testingData.description), func(t *testing.T) {
-			fakeClient := fake.NewFakeClient()
-			if testingData.secret != nil {
-				err := fakeClient.Create(context.TODO(), testingData.secret)
-				assert.NoError(t, err)
-			}
-			userReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false), nil)
-			result, err := userReconcileLoop.validateSeedJobs(testingData.jenkins)
-			assert.NoError(t, err)
-			assert.Equal(t, testingData.expectedResult, result)
-		})
-	}
+		userReconcileLoop := New(fake.NewFakeClient(), nil, logf.ZapLogger(false), nil)
+		result, err := userReconcileLoop.validateSeedJobs(jenkins)
+
+		assert.NoError(t, err)
+		assert.Equal(t, true, result)
+	})
+	t.Run("Invalid without id", func(t *testing.T) {
+		jenkins := &v1alpha1.Jenkins{
+			Spec: v1alpha1.JenkinsSpec{
+				SeedJobs: []v1alpha1.SeedJob{
+					{
+						JenkinsCredentialType: v1alpha1.NoJenkinsCredentialCredentialType,
+						Targets:               "cicd/jobs/*.jenkins",
+						RepositoryBranch:      "master",
+						RepositoryURL:         "https://github.com/jenkinsci/kubernetes-operator.git",
+					},
+				},
+			},
+		}
+
+		userReconcileLoop := New(fake.NewFakeClient(), nil, logf.ZapLogger(false), nil)
+		result, err := userReconcileLoop.validateSeedJobs(jenkins)
+
+		assert.NoError(t, err)
+		assert.Equal(t, false, result)
+	})
+	t.Run("Valid with private key and secret", func(t *testing.T) {
+		jenkins := &v1alpha1.Jenkins{
+			Spec: v1alpha1.JenkinsSpec{
+				SeedJobs: []v1alpha1.SeedJob{
+					{
+						ID:                    "example",
+						CredentialID:          "deploy-keys",
+						JenkinsCredentialType: v1alpha1.BasicSSHCredentialType,
+						Targets:               "cicd/jobs/*.jenkins",
+						RepositoryBranch:      "master",
+						RepositoryURL:         "https://github.com/jenkinsci/kubernetes-operator.git",
+					},
+				},
+			},
+		}
+		secret := &corev1.Secret{
+			TypeMeta:   secretTypeMeta,
+			ObjectMeta: secretObjectMeta,
+			Data: map[string][]byte{
+				seedjobs.UsernameSecretKey:   []byte("username"),
+				seedjobs.PrivateKeySecretKey: []byte(fakePrivateKey),
+			},
+		}
+		fakeClient := fake.NewFakeClient()
+		err := fakeClient.Create(context.TODO(), secret)
+		assert.NoError(t, err)
+
+		userReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false), nil)
+		result, err := userReconcileLoop.validateSeedJobs(jenkins)
+
+		assert.NoError(t, err)
+		assert.Equal(t, true, result)
+	})
+	t.Run("Invalid private key in secret", func(t *testing.T) {
+		jenkins := &v1alpha1.Jenkins{
+			Spec: v1alpha1.JenkinsSpec{
+				SeedJobs: []v1alpha1.SeedJob{
+					{
+						ID:                    "example",
+						CredentialID:          "deploy-keys",
+						JenkinsCredentialType: v1alpha1.BasicSSHCredentialType,
+						Targets:               "cicd/jobs/*.jenkins",
+						RepositoryBranch:      "master",
+						RepositoryURL:         "https://github.com/jenkinsci/kubernetes-operator.git",
+					},
+				},
+			},
+		}
+		secret := &corev1.Secret{
+			TypeMeta:   secretTypeMeta,
+			ObjectMeta: secretObjectMeta,
+			Data: map[string][]byte{
+				seedjobs.UsernameSecretKey:   []byte("username"),
+				seedjobs.PrivateKeySecretKey: []byte(fakeInvalidPrivateKey),
+			},
+		}
+		fakeClient := fake.NewFakeClient()
+		err := fakeClient.Create(context.TODO(), secret)
+		assert.NoError(t, err)
+
+		userReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false), nil)
+		result, err := userReconcileLoop.validateSeedJobs(jenkins)
+
+		assert.NoError(t, err)
+		assert.Equal(t, false, result)
+	})
+	t.Run("Invalid with PrivateKey and empty Secret data", func(t *testing.T) {
+		jenkins := &v1alpha1.Jenkins{
+			Spec: v1alpha1.JenkinsSpec{
+				SeedJobs: []v1alpha1.SeedJob{
+					{
+						ID:                    "example",
+						CredentialID:          "deploy-keys",
+						JenkinsCredentialType: v1alpha1.BasicSSHCredentialType,
+						Targets:               "cicd/jobs/*.jenkins",
+						RepositoryBranch:      "master",
+						RepositoryURL:         "https://github.com/jenkinsci/kubernetes-operator.git",
+					},
+				},
+			},
+		}
+		secret := &corev1.Secret{
+			TypeMeta:   secretTypeMeta,
+			ObjectMeta: secretObjectMeta,
+			Data: map[string][]byte{
+				seedjobs.UsernameSecretKey:   []byte("username"),
+				seedjobs.PrivateKeySecretKey: []byte(""),
+			},
+		}
+		fakeClient := fake.NewFakeClient()
+		err := fakeClient.Create(context.TODO(), secret)
+		assert.NoError(t, err)
+
+		userReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false), nil)
+		result, err := userReconcileLoop.validateSeedJobs(jenkins)
+
+		assert.NoError(t, err)
+		assert.Equal(t, false, result)
+	})
+	t.Run("Invalid with ssh RepositoryURL and empty PrivateKey", func(t *testing.T) {
+		jenkins := &v1alpha1.Jenkins{
+			Spec: v1alpha1.JenkinsSpec{
+				SeedJobs: []v1alpha1.SeedJob{
+					{
+						ID:                    "example",
+						CredentialID:          "jenkins-operator-e2e",
+						JenkinsCredentialType: v1alpha1.BasicSSHCredentialType,
+						Targets:               "cicd/jobs/*.jenkins",
+						RepositoryBranch:      "master",
+						RepositoryURL:         "git@github.com:jenkinsci/kubernetes-operator.git",
+					},
+				},
+			},
+		}
+
+		userReconcileLoop := New(fake.NewFakeClient(), nil, logf.ZapLogger(false), nil)
+		result, err := userReconcileLoop.validateSeedJobs(jenkins)
+
+		assert.NoError(t, err)
+		assert.Equal(t, false, result)
+	})
+	t.Run("Invalid without targets", func(t *testing.T) {
+		jenkins := &v1alpha1.Jenkins{
+			Spec: v1alpha1.JenkinsSpec{
+				SeedJobs: []v1alpha1.SeedJob{
+					{
+						ID: "example",
+						JenkinsCredentialType: v1alpha1.NoJenkinsCredentialCredentialType,
+						RepositoryBranch:      "master",
+						RepositoryURL:         "https://github.com/jenkinsci/kubernetes-operator.git",
+					},
+				},
+			},
+		}
+
+		userReconcileLoop := New(fake.NewFakeClient(), nil, logf.ZapLogger(false), nil)
+		result, err := userReconcileLoop.validateSeedJobs(jenkins)
+
+		assert.NoError(t, err)
+		assert.Equal(t, false, result)
+	})
+	t.Run("Invalid without repository URL", func(t *testing.T) {
+		jenkins := &v1alpha1.Jenkins{
+			Spec: v1alpha1.JenkinsSpec{
+				SeedJobs: []v1alpha1.SeedJob{
+					{
+						ID: "example",
+						JenkinsCredentialType: v1alpha1.NoJenkinsCredentialCredentialType,
+						Targets:               "cicd/jobs/*.jenkins",
+						RepositoryBranch:      "master",
+					},
+				},
+			},
+		}
+
+		userReconcileLoop := New(fake.NewFakeClient(), nil, logf.ZapLogger(false), nil)
+		result, err := userReconcileLoop.validateSeedJobs(jenkins)
+
+		assert.NoError(t, err)
+		assert.Equal(t, false, result)
+	})
+	t.Run("Invalid without repository branch", func(t *testing.T) {
+		jenkins := &v1alpha1.Jenkins{
+			Spec: v1alpha1.JenkinsSpec{
+				SeedJobs: []v1alpha1.SeedJob{
+					{
+						ID: "example",
+						JenkinsCredentialType: v1alpha1.NoJenkinsCredentialCredentialType,
+						Targets:               "cicd/jobs/*.jenkins",
+						RepositoryURL:         "https://github.com/jenkinsci/kubernetes-operator.git",
+					},
+				},
+			},
+		}
+
+		userReconcileLoop := New(fake.NewFakeClient(), nil, logf.ZapLogger(false), nil)
+		result, err := userReconcileLoop.validateSeedJobs(jenkins)
+
+		assert.NoError(t, err)
+		assert.Equal(t, false, result)
+	})
+	t.Run("Valid with username and password", func(t *testing.T) {
+		jenkins := &v1alpha1.Jenkins{
+			Spec: v1alpha1.JenkinsSpec{
+				SeedJobs: []v1alpha1.SeedJob{
+					{
+						ID:                    "example",
+						CredentialID:          "deploy-keys",
+						JenkinsCredentialType: v1alpha1.UsernamePasswordCredentialType,
+						Targets:               "cicd/jobs/*.jenkins",
+						RepositoryBranch:      "master",
+						RepositoryURL:         "https://github.com/jenkinsci/kubernetes-operator.git",
+					},
+				},
+			},
+		}
+		secret := &corev1.Secret{
+			TypeMeta:   secretTypeMeta,
+			ObjectMeta: secretObjectMeta,
+			Data: map[string][]byte{
+				seedjobs.UsernameSecretKey: []byte("some-username"),
+				seedjobs.PasswordSecretKey: []byte("some-password"),
+			},
+		}
+		fakeClient := fake.NewFakeClient()
+		err := fakeClient.Create(context.TODO(), secret)
+		assert.NoError(t, err)
+
+		userReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false), nil)
+		result, err := userReconcileLoop.validateSeedJobs(jenkins)
+
+		assert.NoError(t, err)
+		assert.Equal(t, true, result)
+	})
+	t.Run("Invalid with empty username", func(t *testing.T) {
+		jenkins := &v1alpha1.Jenkins{
+			Spec: v1alpha1.JenkinsSpec{
+				SeedJobs: []v1alpha1.SeedJob{
+					{
+						ID:                    "example",
+						CredentialID:          "deploy-keys",
+						JenkinsCredentialType: v1alpha1.UsernamePasswordCredentialType,
+						Targets:               "cicd/jobs/*.jenkins",
+						RepositoryBranch:      "master",
+						RepositoryURL:         "https://github.com/jenkinsci/kubernetes-operator.git",
+					},
+				},
+			},
+		}
+		secret := &corev1.Secret{
+			TypeMeta:   secretTypeMeta,
+			ObjectMeta: secretObjectMeta,
+			Data: map[string][]byte{
+				seedjobs.UsernameSecretKey: []byte(""),
+				seedjobs.PasswordSecretKey: []byte("some-password"),
+			},
+		}
+		fakeClient := fake.NewFakeClient()
+		err := fakeClient.Create(context.TODO(), secret)
+		assert.NoError(t, err)
+
+		userReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false), nil)
+		result, err := userReconcileLoop.validateSeedJobs(jenkins)
+
+		assert.NoError(t, err)
+		assert.Equal(t, false, result)
+	})
+	t.Run("Invalid with empty password", func(t *testing.T) {
+		jenkins := &v1alpha1.Jenkins{
+			Spec: v1alpha1.JenkinsSpec{
+				SeedJobs: []v1alpha1.SeedJob{
+					{
+						ID:                    "example",
+						CredentialID:          "deploy-keys",
+						JenkinsCredentialType: v1alpha1.UsernamePasswordCredentialType,
+						Targets:               "cicd/jobs/*.jenkins",
+						RepositoryBranch:      "master",
+						RepositoryURL:         "https://github.com/jenkinsci/kubernetes-operator.git",
+					},
+				},
+			},
+		}
+		secret := &corev1.Secret{
+			TypeMeta:   secretTypeMeta,
+			ObjectMeta: secretObjectMeta,
+			Data: map[string][]byte{
+				seedjobs.UsernameSecretKey: []byte("some-username"),
+				seedjobs.PasswordSecretKey: []byte(""),
+			},
+		}
+		fakeClient := fake.NewFakeClient()
+		err := fakeClient.Create(context.TODO(), secret)
+		assert.NoError(t, err)
+
+		userReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false), nil)
+		result, err := userReconcileLoop.validateSeedJobs(jenkins)
+
+		assert.NoError(t, err)
+		assert.Equal(t, false, result)
+	})
+	t.Run("Invalid without username", func(t *testing.T) {
+		jenkins := &v1alpha1.Jenkins{
+			Spec: v1alpha1.JenkinsSpec{
+				SeedJobs: []v1alpha1.SeedJob{
+					{
+						ID:                    "example",
+						CredentialID:          "deploy-keys",
+						JenkinsCredentialType: v1alpha1.UsernamePasswordCredentialType,
+						Targets:               "cicd/jobs/*.jenkins",
+						RepositoryBranch:      "master",
+						RepositoryURL:         "https://github.com/jenkinsci/kubernetes-operator.git",
+					},
+				},
+			},
+		}
+		secret := &corev1.Secret{
+			TypeMeta:   secretTypeMeta,
+			ObjectMeta: secretObjectMeta,
+			Data: map[string][]byte{
+				seedjobs.PasswordSecretKey: []byte("some-password"),
+			},
+		}
+		fakeClient := fake.NewFakeClient()
+		err := fakeClient.Create(context.TODO(), secret)
+		assert.NoError(t, err)
+
+		userReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false), nil)
+		result, err := userReconcileLoop.validateSeedJobs(jenkins)
+
+		assert.NoError(t, err)
+		assert.Equal(t, false, result)
+	})
+	t.Run("Invalid without password", func(t *testing.T) {
+		jenkins := &v1alpha1.Jenkins{
+			Spec: v1alpha1.JenkinsSpec{
+				SeedJobs: []v1alpha1.SeedJob{
+					{
+						ID:                    "example",
+						CredentialID:          "deploy-keys",
+						JenkinsCredentialType: v1alpha1.UsernamePasswordCredentialType,
+						Targets:               "cicd/jobs/*.jenkins",
+						RepositoryBranch:      "master",
+						RepositoryURL:         "https://github.com/jenkinsci/kubernetes-operator.git",
+					},
+				},
+			},
+		}
+		secret := &corev1.Secret{
+			TypeMeta:   secretTypeMeta,
+			ObjectMeta: secretObjectMeta,
+			Data: map[string][]byte{
+				seedjobs.UsernameSecretKey: []byte("some-username"),
+			},
+		}
+		fakeClient := fake.NewFakeClient()
+		err := fakeClient.Create(context.TODO(), secret)
+		assert.NoError(t, err)
+
+		userReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false), nil)
+		result, err := userReconcileLoop.validateSeedJobs(jenkins)
+
+		assert.NoError(t, err)
+		assert.Equal(t, false, result)
+	})
 }

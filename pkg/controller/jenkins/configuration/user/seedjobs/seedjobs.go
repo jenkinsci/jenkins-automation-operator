@@ -8,12 +8,14 @@ import (
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/jobs"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
 
 	"github.com/go-logr/logr"
-	"k8s.io/api/core/v1"
+	stackerr "github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	k8s "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -22,12 +24,23 @@ const (
 	// ConfigureSeedJobsName this is the fixed seed job name
 	ConfigureSeedJobsName = constants.OperatorName + "-configure-seed-job"
 
-	deployKeyIDParameterName      = "DEPLOY_KEY_ID"
-	privateKeyParameterName       = "PRIVATE_KEY"
+	idParameterName               = "ID"
+	credentialIDParameterName     = "CREDENTIAL_ID"
 	repositoryURLParameterName    = "REPOSITORY_URL"
 	repositoryBranchParameterName = "REPOSITORY_BRANCH"
 	targetsParameterName          = "TARGETS"
 	displayNameParameterName      = "SEED_JOB_DISPLAY_NAME"
+
+	// UsernameSecretKey is username data key in Kubernetes secret used to create Jenkins username/password credential
+	UsernameSecretKey = "username"
+	// PasswordSecretKey is password data key in Kubernetes secret used to create Jenkins username/password credential
+	PasswordSecretKey = "password"
+	// PrivateKeySecretKey is private key data key in Kubernetes secret used to create Jenkins SSH credential
+	PrivateKeySecretKey = "privateKey"
+
+	// JenkinsCredentialTypeLabelName is label for kubernetes-credentials-provider-plugin which determine Jenkins
+	// credential type
+	JenkinsCredentialTypeLabelName = "jenkins.io/credentials-type"
 )
 
 // SeedJobs defines API for configuring and ensuring Jenkins Seed Jobs and Deploy Keys
@@ -48,11 +61,15 @@ func New(jenkinsClient jenkinsclient.Jenkins, k8sClient k8s.Client, logger logr.
 
 // EnsureSeedJobs configures seed job and runs it for every entry from Jenkins.Spec.SeedJobs
 func (s *SeedJobs) EnsureSeedJobs(jenkins *v1alpha1.Jenkins) (done bool, err error) {
-	err = s.createJob()
-	if err != nil {
+	if err = s.createJob(); err != nil {
 		s.logger.V(log.VWarn).Info("Couldn't create jenkins seed job")
 		return false, err
 	}
+
+	if err = s.ensureLabelsForSecrets(*jenkins); err != nil {
+		return false, err
+	}
+
 	done, err = s.buildJobs(jenkins)
 	if err != nil {
 		s.logger.V(log.VWarn).Info("Couldn't build jenkins seed job")
@@ -73,18 +90,46 @@ func (s *SeedJobs) createJob() error {
 	return nil
 }
 
+// ensureLabelsForSecrets adds labels to Kubernetes secrets where are Jenkins credentials used for seed jobs,
+// thanks to them kubernetes-credentials-provider-plugin will create Jenkins credentials in Jenkins and
+// Operator will able to watch any changes made to them
+func (s *SeedJobs) ensureLabelsForSecrets(jenkins v1alpha1.Jenkins) error {
+	for _, seedJob := range jenkins.Spec.SeedJobs {
+		if seedJob.JenkinsCredentialType == v1alpha1.BasicSSHCredentialType || seedJob.JenkinsCredentialType == v1alpha1.UsernamePasswordCredentialType {
+			requiredLabels := resources.BuildLabelsForWatchedResources(jenkins)
+			requiredLabels[JenkinsCredentialTypeLabelName] = string(seedJob.JenkinsCredentialType)
+
+			secret := &corev1.Secret{}
+			namespaceName := types.NamespacedName{Namespace: jenkins.ObjectMeta.Namespace, Name: seedJob.CredentialID}
+			err := s.k8sClient.Get(context.TODO(), namespaceName, secret)
+			if err != nil {
+				return stackerr.WithStack(err)
+			}
+
+			if !resources.VerifyIfLabelsAreSet(secret, requiredLabels) {
+				secret.ObjectMeta.Labels = requiredLabels
+				err = stackerr.WithStack(s.k8sClient.Update(context.TODO(), secret))
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
 // buildJobs is responsible for running jenkins builds which configures jenkins seed jobs and deploy keys
 func (s *SeedJobs) buildJobs(jenkins *v1alpha1.Jenkins) (done bool, err error) {
 	allDone := true
-	seedJobs := jenkins.Spec.SeedJobs
-	for _, seedJob := range seedJobs {
-		privateKey, err := s.privateKeyFromSecret(jenkins.Namespace, seedJob)
+	for _, seedJob := range jenkins.Spec.SeedJobs {
+		credentialValue, err := s.credentialValue(jenkins.Namespace, seedJob)
 		if err != nil {
 			return false, err
 		}
 		parameters := map[string]string{
-			deployKeyIDParameterName:      seedJob.ID,
-			privateKeyParameterName:       privateKey,
+			idParameterName:               seedJob.ID,
+			credentialIDParameterName:     seedJob.CredentialID,
 			repositoryURLParameterName:    seedJob.RepositoryURL,
 			repositoryBranchParameterName: seedJob.RepositoryBranch,
 			targetsParameterName:          seedJob.Targets,
@@ -92,8 +137,9 @@ func (s *SeedJobs) buildJobs(jenkins *v1alpha1.Jenkins) (done bool, err error) {
 		}
 
 		hash := sha256.New()
-		hash.Write([]byte(parameters[deployKeyIDParameterName]))
-		hash.Write([]byte(parameters[privateKeyParameterName]))
+		hash.Write([]byte(parameters[idParameterName]))
+		hash.Write([]byte(parameters[credentialIDParameterName]))
+		hash.Write([]byte(credentialValue))
 		hash.Write([]byte(parameters[repositoryURLParameterName]))
 		hash.Write([]byte(parameters[repositoryBranchParameterName]))
 		hash.Write([]byte(parameters[targetsParameterName]))
@@ -112,21 +158,23 @@ func (s *SeedJobs) buildJobs(jenkins *v1alpha1.Jenkins) (done bool, err error) {
 	return allDone, nil
 }
 
-// privateKeyFromSecret it's utility function which extracts deploy key from the kubernetes secret
-func (s *SeedJobs) privateKeyFromSecret(namespace string, seedJob v1alpha1.SeedJob) (string, error) {
-	if seedJob.PrivateKey.SecretKeyRef != nil {
-		deployKeySecret := &v1.Secret{}
-		namespaceName := types.NamespacedName{Namespace: namespace, Name: seedJob.PrivateKey.SecretKeyRef.Name}
-		err := s.k8sClient.Get(context.TODO(), namespaceName, deployKeySecret)
+func (s *SeedJobs) credentialValue(namespace string, seedJob v1alpha1.SeedJob) (string, error) {
+	if seedJob.JenkinsCredentialType == v1alpha1.BasicSSHCredentialType || seedJob.JenkinsCredentialType == v1alpha1.UsernamePasswordCredentialType {
+		secret := &corev1.Secret{}
+		namespaceName := types.NamespacedName{Namespace: namespace, Name: seedJob.CredentialID}
+		err := s.k8sClient.Get(context.TODO(), namespaceName, secret)
 		if err != nil {
 			return "", err
 		}
-		return string(deployKeySecret.Data[seedJob.PrivateKey.SecretKeyRef.Key]), nil
+
+		if seedJob.JenkinsCredentialType == v1alpha1.BasicSSHCredentialType {
+			return string(secret.Data[PrivateKeySecretKey]), nil
+		}
+		return string(secret.Data[UsernameSecretKey]) + string(secret.Data[PasswordSecretKey]), nil
 	}
 	return "", nil
 }
 
-// FIXME(antoniaklja) use mask-password plugin for params.PRIVATE_KEY
 // seedJobConfigXML this is the XML representation of seed job
 var seedJobConfigXML = `
 <flow-definition plugin="workflow-job@2.30">
@@ -137,15 +185,16 @@ var seedJobConfigXML = `
     <hudson.model.ParametersDefinitionProperty>
       <parameterDefinitions>
         <hudson.model.StringParameterDefinition>
-          <name>` + deployKeyIDParameterName + `</name>
+          <name>` + idParameterName + `</name>
           <description></description>
           <defaultValue></defaultValue>
           <trim>false</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
-          <name>` + privateKeyParameterName + `</name>
+          <name>` + credentialIDParameterName + `</name>
           <description></description>
           <defaultValue></defaultValue>
+          <trim>false</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
           <name>` + repositoryURLParameterName + `</name>
@@ -175,11 +224,7 @@ var seedJobConfigXML = `
     </hudson.model.ParametersDefinitionProperty>
   </properties>
   <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.61">
-    <script>import com.cloudbees.jenkins.plugins.sshcredentials.impl.BasicSSHUserPrivateKey
-import com.cloudbees.jenkins.plugins.sshcredentials.impl.BasicSSHUserPrivateKey.DirectEntryPrivateKeySource
-import com.cloudbees.plugins.credentials.CredentialsScope
-import com.cloudbees.plugins.credentials.SystemCredentialsProvider
-import com.cloudbees.plugins.credentials.domains.Domain
+    <script>
 import hudson.model.FreeStyleProject
 import hudson.model.labels.LabelAtom
 import hudson.plugins.git.BranchSpec
@@ -190,36 +235,19 @@ import javaposse.jobdsl.plugin.ExecuteDslScripts
 import javaposse.jobdsl.plugin.LookupStrategy
 import javaposse.jobdsl.plugin.RemovedJobAction
 import javaposse.jobdsl.plugin.RemovedViewAction
-import jenkins.model.Jenkins
-import javaposse.jobdsl.plugin.GlobalJobDslSecurityConfiguration
-import jenkins.model.GlobalConfiguration
 
 import static com.google.common.collect.Lists.newArrayList
 
-// https://javadoc.jenkins.io/plugin/ssh-credentials/com/cloudbees/jenkins/plugins/sshcredentials/impl/BasicSSHUserPrivateKey.html
-BasicSSHUserPrivateKey deployKeyPrivate = new BasicSSHUserPrivateKey(
-        CredentialsScope.GLOBAL,
-        &quot;${params.DEPLOY_KEY_ID}&quot;,
-        &quot;git&quot;,
-        new DirectEntryPrivateKeySource(&quot;${params.PRIVATE_KEY}&quot;),
-        &quot;&quot;,
-        &quot;${params.DEPLOY_KEY_ID}&quot;
-)
-
-// https://javadoc.jenkins.io/plugin/credentials/index.html?com/cloudbees/plugins/credentials/SystemCredentialsProvider.html
-SystemCredentialsProvider.getInstance().getStore().addCredentials(Domain.global(), deployKeyPrivate)
-
 Jenkins jenkins = Jenkins.instance
 
-def jobDslSeedName = &quot;${params.DEPLOY_KEY_ID}-` + constants.SeedJobSuffix + `&quot;
-def jobDslDeployKeyName = &quot;${params.DEPLOY_KEY_ID}&quot;
+def jobDslSeedName = &quot;${params.` + idParameterName + `}-` + constants.SeedJobSuffix + `&quot;
 def jobRef = jenkins.getItem(jobDslSeedName)
 
-def repoList = GitSCM.createRepoList(&quot;${params.REPOSITORY_URL}&quot;, jobDslDeployKeyName)
+def repoList = GitSCM.createRepoList(&quot;${params.` + repositoryURLParameterName + `}&quot;, &quot;${params.` + credentialIDParameterName + `}&quot;)
 def gitExtensions = [new CloneOption(true, true, &quot;&quot;, 10)]
 def scm = new GitSCM(
         repoList,
-        newArrayList(new BranchSpec(&quot;${params.REPOSITORY_BRANCH}&quot;)),
+        newArrayList(new BranchSpec(&quot;${params.` + repositoryBranchParameterName + `}&quot;)),
         false,
         Collections.&lt;SubmoduleConfig&gt; emptyList(),
         null,
@@ -228,7 +256,7 @@ def scm = new GitSCM(
 )
 
 def executeDslScripts = new ExecuteDslScripts()
-executeDslScripts.setTargets(&quot;${params.TARGETS}&quot;)
+executeDslScripts.setTargets(&quot;${params.` + targetsParameterName + `}&quot;)
 executeDslScripts.setSandbox(false)
 executeDslScripts.setRemovedJobAction(RemovedJobAction.DELETE)
 executeDslScripts.setRemovedViewAction(RemovedViewAction.DELETE)
@@ -240,13 +268,11 @@ if (jobRef == null) {
 }
 jobRef.getBuildersList().clear()
 jobRef.getBuildersList().add(executeDslScripts)
-jobRef.setDisplayName(&quot;${params.SEED_JOB_DISPLAY_NAME}&quot;)
+jobRef.setDisplayName(&quot;${params.` + displayNameParameterName + `}&quot;)
 jobRef.setScm(scm)
+// TODO don't use master executors
 jobRef.setAssignedLabel(new LabelAtom(&quot;master&quot;))
 
-// disable Job DSL script approval
-GlobalConfiguration.all().get(GlobalJobDslSecurityConfiguration.class).useScriptSecurity=false
-GlobalConfiguration.all().get(GlobalJobDslSecurityConfiguration.class).save()
 jenkins.getQueue().schedule(jobRef)
 </script>
     <sandbox>false</sandbox>

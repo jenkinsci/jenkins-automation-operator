@@ -58,7 +58,12 @@ func createJenkinsAPIClient(jenkins *v1alpha1.Jenkins) (jenkinsclient.Jenkins, e
 	)
 }
 
-func createJenkinsCR(t *testing.T, name, namespace string) *v1alpha1.Jenkins {
+func createJenkinsCR(t *testing.T, name, namespace string, seedJob *[]v1alpha1.SeedJob) *v1alpha1.Jenkins {
+	var seedJobs []v1alpha1.SeedJob
+	if seedJob != nil {
+		seedJobs = append(seedJobs, *seedJob...)
+	}
+
 	jenkins := &v1alpha1.Jenkins{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -80,16 +85,7 @@ func createJenkinsCR(t *testing.T, name, namespace string) *v1alpha1.Jenkins {
 					},
 				},
 			},
-			//TODO(bantoniak) add seed job with private key
-			SeedJobs: []v1alpha1.SeedJob{
-				{
-					ID:               "jenkins-operator",
-					Targets:          "cicd/jobs/*.jenkins",
-					Description:      "Jenkins Operator repository",
-					RepositoryBranch: "master",
-					RepositoryURL:    "https://github.com/jenkinsci/kubernetes-operator.git",
-				},
-			},
+			SeedJobs: seedJobs,
 		},
 	}
 

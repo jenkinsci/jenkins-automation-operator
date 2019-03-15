@@ -49,7 +49,7 @@ func NewUserConfigurationConfigMap(jenkins *v1alpha1.Jenkins) *corev1.ConfigMap 
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      GetUserConfigurationConfigMapNameFromJenkins(jenkins),
 			Namespace: jenkins.ObjectMeta.Namespace,
-			Labels:    BuildLabelsForWatchedResources(jenkins),
+			Labels:    BuildLabelsForWatchedResources(*jenkins),
 		},
 		Data: map[string]string{
 			"1-configure-theme.groovy": configureTheme,

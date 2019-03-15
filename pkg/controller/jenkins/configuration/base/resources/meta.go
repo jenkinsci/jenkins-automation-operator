@@ -29,7 +29,7 @@ func BuildResourceLabels(jenkins *v1alpha1.Jenkins) map[string]string {
 // BuildLabelsForWatchedResources returns labels for Kubernetes resources which operator want to watch
 // resources with that labels should not be deleted after Jenkins CR deletion, to prevent this situation don't set
 // any owner
-func BuildLabelsForWatchedResources(jenkins *v1alpha1.Jenkins) map[string]string {
+func BuildLabelsForWatchedResources(jenkins v1alpha1.Jenkins) map[string]string {
 	return map[string]string{
 		constants.LabelAppKey:       constants.LabelAppValue,
 		constants.LabelJenkinsCRKey: jenkins.Name,
@@ -40,4 +40,15 @@ func BuildLabelsForWatchedResources(jenkins *v1alpha1.Jenkins) map[string]string
 // GetResourceName returns name of Kubernetes resource base on Jenkins CR
 func GetResourceName(jenkins *v1alpha1.Jenkins) string {
 	return fmt.Sprintf("%s-%s", constants.LabelAppValue, jenkins.ObjectMeta.Name)
+}
+
+// VerifyIfLabelsAreSet check is selected labels are set for specific resource
+func VerifyIfLabelsAreSet(object metav1.Object, requiredLabels map[string]string) bool {
+	for key, value := range requiredLabels {
+		if object.GetLabels()[key] != value {
+			return false
+		}
+	}
+
+	return true
 }

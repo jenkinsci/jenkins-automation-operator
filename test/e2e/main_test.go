@@ -1,6 +1,7 @@
 package e2e
 
 import (
+	"flag"
 	"testing"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis"
@@ -14,10 +15,16 @@ import (
 )
 
 const (
-	jenkinsOperatorDeploymentName = constants.OperatorName
+	jenkinsOperatorDeploymentName     = constants.OperatorName
+	seedJobConfigurationParameterName = "seed-job-config"
+)
+
+var (
+	seedJobConfigurationFile *string
 )
 
 func TestMain(m *testing.M) {
+	seedJobConfigurationFile = flag.String(seedJobConfigurationParameterName, "", "path to seed job config")
 	f.MainEntry(m)
 }
 

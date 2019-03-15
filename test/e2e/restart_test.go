@@ -21,7 +21,7 @@ func TestJenkinsMasterPodRestart(t *testing.T) {
 	// Deletes test namespace
 	defer ctx.Cleanup()
 
-	jenkins := createJenkinsCR(t, "e2e", namespace)
+	jenkins := createJenkinsCR(t, "e2e", namespace, nil)
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
 	restartJenkinsMasterPod(t, jenkins)
 	waitForRecreateJenkinsMasterPod(t, jenkins)
@@ -37,7 +37,7 @@ func TestSafeRestart(t *testing.T) {
 
 	jenkinsCRName := "e2e"
 	configureAuthorizationToUnSecure(t, jenkinsCRName, namespace)
-	jenkins := createJenkinsCR(t, jenkinsCRName, namespace)
+	jenkins := createJenkinsCR(t, jenkinsCRName, namespace, nil)
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
 	waitForJenkinsUserConfigurationToComplete(t, jenkins)
 	jenkinsClient := verifyJenkinsAPIConnection(t, jenkins)

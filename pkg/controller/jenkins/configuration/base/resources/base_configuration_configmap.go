@@ -155,6 +155,16 @@ if (jenkins.getView(jenkinsViewName) == null) {
 jenkins.save()
 `
 
+const disableJobDSLScriptApproval = `
+import jenkins.model.Jenkins
+import javaposse.jobdsl.plugin.GlobalJobDslSecurityConfiguration
+import jenkins.model.GlobalConfiguration
+
+// disable Job DSL script approval
+GlobalConfiguration.all().get(GlobalJobDslSecurityConfiguration.class).useScriptSecurity=false
+GlobalConfiguration.all().get(GlobalJobDslSecurityConfiguration.class).save()
+`
+
 // GetBaseConfigurationConfigMapName returns name of Kubernetes config map used to base configuration
 func GetBaseConfigurationConfigMapName(jenkins *v1alpha1.Jenkins) string {
 	return fmt.Sprintf("%s-base-configuration-%s", constants.OperatorName, jenkins.ObjectMeta.Name)
@@ -178,7 +188,8 @@ func NewBaseConfigurationConfigMap(meta metav1.ObjectMeta, jenkins *v1alpha1.Jen
 				fmt.Sprintf("http://%s.%s:%d", GetJenkinsHTTPServiceName(jenkins), jenkins.ObjectMeta.Namespace, jenkins.Spec.Service.Port),
 				fmt.Sprintf("%s.%s:%d", GetJenkinsSlavesServiceName(jenkins), jenkins.ObjectMeta.Namespace, jenkins.Spec.SlaveService.Port),
 			),
-			"7-configure-views.groovy": configureViews,
+			"7-configure-views.groovy":                 configureViews,
+			"8-disable-job-dsl-script-approval.groovy": disableJobDSLScriptApproval,
 		},
 	}
 }

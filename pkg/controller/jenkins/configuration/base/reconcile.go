@@ -253,9 +253,8 @@ func (r *ReconcileJenkinsBaseConfiguration) createUserConfigurationConfigMap(met
 	} else if err != nil {
 		return stackerr.WithStack(err)
 	}
-	valid := r.verifyLabelsForWatchedResource(currentConfigMap)
-	if !valid {
-		currentConfigMap.ObjectMeta.Labels = resources.BuildLabelsForWatchedResources(r.jenkins)
+	if !resources.VerifyIfLabelsAreSet(currentConfigMap, resources.BuildLabelsForWatchedResources(*r.jenkins)) {
+		currentConfigMap.ObjectMeta.Labels = resources.BuildLabelsForWatchedResources(*r.jenkins)
 		return stackerr.WithStack(r.k8sClient.Update(context.TODO(), currentConfigMap))
 	}
 
@@ -270,9 +269,8 @@ func (r *ReconcileJenkinsBaseConfiguration) createUserConfigurationSecret(meta m
 	} else if err != nil {
 		return stackerr.WithStack(err)
 	}
-	valid := r.verifyLabelsForWatchedResource(currentSecret)
-	if !valid {
-		currentSecret.ObjectMeta.Labels = resources.BuildLabelsForWatchedResources(r.jenkins)
+	if !resources.VerifyIfLabelsAreSet(currentSecret, resources.BuildLabelsForWatchedResources(*r.jenkins)) {
+		currentSecret.ObjectMeta.Labels = resources.BuildLabelsForWatchedResources(*r.jenkins)
 		return stackerr.WithStack(r.k8sClient.Update(context.TODO(), currentSecret))
 	}
 
@@ -546,15 +544,4 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureBaseConfiguration(jenkinsClien
 	}
 
 	return reconcile.Result{}, nil
-}
-
-func (r *ReconcileJenkinsBaseConfiguration) verifyLabelsForWatchedResource(object metav1.Object) bool {
-	requiredLabels := resources.BuildLabelsForWatchedResources(r.jenkins)
-	for key, value := range requiredLabels {
-		if object.GetLabels()[key] != value {
-			return false
-		}
-	}
-
-	return true
 }

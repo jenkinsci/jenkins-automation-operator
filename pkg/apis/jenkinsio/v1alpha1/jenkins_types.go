@@ -107,19 +107,34 @@ type JenkinsList struct {
 	Items           []Jenkins `json:"items"`
 }
 
-// SeedJob defined configuration for seed jobs and deploy keys
-type SeedJob struct {
-	ID               string     `json:"id"`
-	Description      string     `json:"description,omitempty"`
-	Targets          string     `json:"targets,omitempty"`
-	RepositoryBranch string     `json:"repositoryBranch,omitempty"`
-	RepositoryURL    string     `json:"repositoryUrl"`
-	PrivateKey       PrivateKey `json:"privateKey,omitempty"`
+// JenkinsCredentialType defines type of Jenkins credential used to seed job mechanisms
+type JenkinsCredentialType string
+
+const (
+	// NoJenkinsCredentialCredentialType define none Jenkins credential type
+	NoJenkinsCredentialCredentialType JenkinsCredentialType = ""
+	// BasicSSHCredentialType define basic SSH Jenkins credential type
+	BasicSSHCredentialType JenkinsCredentialType = "basicSSHUserPrivateKey"
+	// UsernamePasswordCredentialType define username & password Jenkins credential type
+	UsernamePasswordCredentialType JenkinsCredentialType = "usernamePassword"
+)
+
+// AllowedJenkinsCredentialMap contains all allowed Jenkins credentials types
+var AllowedJenkinsCredentialMap = map[string]string{
+	string(NoJenkinsCredentialCredentialType): "",
+	string(BasicSSHCredentialType):            "",
+	string(UsernamePasswordCredentialType):    "",
 }
 
-// PrivateKey contains a private key
-type PrivateKey struct {
-	SecretKeyRef *corev1.SecretKeySelector `json:"secretKeyRef"`
+// SeedJob defined configuration for seed jobs and deploy keys
+type SeedJob struct {
+	ID                    string                `json:"id,omitempty"`
+	CredentialID          string                `json:"credentialID,omitempty"`
+	Description           string                `json:"description,omitempty"`
+	Targets               string                `json:"targets,omitempty"`
+	RepositoryBranch      string                `json:"repositoryBranch,omitempty"`
+	RepositoryURL         string                `json:"repositoryUrl,omitempty"`
+	JenkinsCredentialType JenkinsCredentialType `json:"credentialType,omitempty"`
 }
 
 func init() {

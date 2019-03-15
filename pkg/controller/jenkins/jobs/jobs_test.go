@@ -402,11 +402,12 @@ func jenkinsCustomResource() *v1alpha1.Jenkins {
 			},
 			SeedJobs: []v1alpha1.SeedJob{
 				{
-					ID:               "jenkins-operator-e2e",
-					Targets:          "cicd/jobs/*.jenkins",
-					Description:      "Jenkins Operator e2e tests repository",
-					RepositoryBranch: "master",
-					RepositoryURL:    "https://github.com/jenkinsci/kubernetes-operator.git",
+					ID: "jenkins-operator-e2e",
+					JenkinsCredentialType: v1alpha1.NoJenkinsCredentialCredentialType,
+					Targets:               "cicd/jobs/*.jenkins",
+					Description:           "Jenkins Operator e2e tests repository",
+					RepositoryBranch:      "master",
+					RepositoryURL:         "https://github.com/jenkinsci/kubernetes-operator.git",
 				},
 			},
 		},
