@@ -8,5 +8,5 @@ import (
 // Validate validates Jenkins CR Spec section
 func (r *ReconcileUserConfiguration) Validate(jenkins *v1alpha1.Jenkins) (bool, error) {
 	seedJobs := seedjobs.New(r.jenkinsClient, r.k8sClient, r.logger)
-	return seedJobs.ValidateSeedJobs(jenkins)
+	return seedJobs.ValidateSeedJobs(*jenkins)
 }

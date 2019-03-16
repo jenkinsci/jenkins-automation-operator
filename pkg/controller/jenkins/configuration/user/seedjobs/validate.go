@@ -18,76 +18,89 @@ import (
 )
 
 // ValidateSeedJobs verify seed jobs configuration
-func (r *SeedJobs) ValidateSeedJobs(jenkins *v1alpha1.Jenkins) (bool, error) {
+func (r *SeedJobs) ValidateSeedJobs(jenkins v1alpha1.Jenkins) (bool, error) {
 	valid := true
 
-	// TODO id must be unique
-	if jenkins.Spec.SeedJobs != nil {
-		for _, seedJob := range jenkins.Spec.SeedJobs {
-			logger := r.logger.WithValues("seedJob", fmt.Sprintf("%+v", seedJob)).V(log.VWarn)
+	if !r.validateIfIDIsUnique(jenkins.Spec.SeedJobs) {
+		valid = false
+	}
 
-			if len(seedJob.ID) == 0 {
-				logger.Info("id can't be empty")
-				valid = false
-			}
+	for _, seedJob := range jenkins.Spec.SeedJobs {
+		logger := r.logger.WithValues("seedJob", fmt.Sprintf("%+v", seedJob)).V(log.VWarn)
 
-			if len(seedJob.RepositoryBranch) == 0 {
-				logger.Info("repository branch can't be empty")
-				valid = false
-			}
+		if len(seedJob.ID) == 0 {
+			logger.Info("id can't be empty")
+			valid = false
+		}
 
-			if len(seedJob.RepositoryURL) == 0 {
-				logger.Info("repository URL branch can't be empty")
-				valid = false
-			}
+		if len(seedJob.RepositoryBranch) == 0 {
+			logger.Info("repository branch can't be empty")
+			valid = false
+		}
 
-			if len(seedJob.Targets) == 0 {
-				logger.Info("targets can't be empty")
-				valid = false
-			}
+		if len(seedJob.RepositoryURL) == 0 {
+			logger.Info("repository URL branch can't be empty")
+			valid = false
+		}
 
-			if _, ok := v1alpha1.AllowedJenkinsCredentialMap[string(seedJob.JenkinsCredentialType)]; !ok {
-				logger.Info("unknown credential type")
+		if len(seedJob.Targets) == 0 {
+			logger.Info("targets can't be empty")
+			valid = false
+		}
+
+		if _, ok := v1alpha1.AllowedJenkinsCredentialMap[string(seedJob.JenkinsCredentialType)]; !ok {
+			logger.Info("unknown credential type")
+			return false, nil
+		}
+
+		if (seedJob.JenkinsCredentialType == v1alpha1.BasicSSHCredentialType ||
+			seedJob.JenkinsCredentialType == v1alpha1.UsernamePasswordCredentialType) && len(seedJob.CredentialID) == 0 {
+			logger.Info("credential ID can't be empty")
+			valid = false
+		}
+
+		// validate repository url match private key
+		if strings.Contains(seedJob.RepositoryURL, "git@") && seedJob.JenkinsCredentialType == v1alpha1.NoJenkinsCredentialCredentialType {
+			logger.Info("Jenkins credential must be set while using ssh repository url")
+			valid = false
+		}
+
+		if seedJob.JenkinsCredentialType == v1alpha1.BasicSSHCredentialType || seedJob.JenkinsCredentialType == v1alpha1.UsernamePasswordCredentialType {
+			secret := &v1.Secret{}
+			namespaceName := types.NamespacedName{Namespace: jenkins.Namespace, Name: seedJob.CredentialID}
+			err := r.k8sClient.Get(context.TODO(), namespaceName, secret)
+			if err != nil && apierrors.IsNotFound(err) {
+				logger.Info(fmt.Sprintf("required secret '%s' with Jenkins credential not found", seedJob.CredentialID))
 				return false, nil
+			} else if err != nil {
+				return false, stackerr.WithStack(err)
 			}
 
-			if (seedJob.JenkinsCredentialType == v1alpha1.BasicSSHCredentialType ||
-				seedJob.JenkinsCredentialType == v1alpha1.UsernamePasswordCredentialType) && len(seedJob.CredentialID) == 0 {
-				logger.Info("credential ID can't be empty")
-				valid = false
-			}
-
-			// validate repository url match private key
-			if strings.Contains(seedJob.RepositoryURL, "git@") && seedJob.JenkinsCredentialType == v1alpha1.NoJenkinsCredentialCredentialType {
-				logger.Info("Jenkins credential must be set while using ssh repository url")
-				valid = false
-			}
-
-			if seedJob.JenkinsCredentialType == v1alpha1.BasicSSHCredentialType || seedJob.JenkinsCredentialType == v1alpha1.UsernamePasswordCredentialType {
-				secret := &v1.Secret{}
-				namespaceName := types.NamespacedName{Namespace: jenkins.Namespace, Name: seedJob.CredentialID}
-				err := r.k8sClient.Get(context.TODO(), namespaceName, secret)
-				if err != nil && apierrors.IsNotFound(err) {
-					logger.Info(fmt.Sprintf("required secret '%s' with Jenkins credential not found", seedJob.CredentialID))
-					return false, nil
-				} else if err != nil {
-					return false, stackerr.WithStack(err)
+			if seedJob.JenkinsCredentialType == v1alpha1.BasicSSHCredentialType {
+				if ok := validateBasicSSHSecret(logger, *secret); !ok {
+					valid = false
 				}
-
-				if seedJob.JenkinsCredentialType == v1alpha1.BasicSSHCredentialType {
-					if ok := validateBasicSSHSecret(logger, *secret); !ok {
-						valid = false
-					}
-				}
-				if seedJob.JenkinsCredentialType == v1alpha1.UsernamePasswordCredentialType {
-					if ok := validateUsernamePasswordSecret(logger, *secret); !ok {
-						valid = false
-					}
+			}
+			if seedJob.JenkinsCredentialType == v1alpha1.UsernamePasswordCredentialType {
+				if ok := validateUsernamePasswordSecret(logger, *secret); !ok {
+					valid = false
 				}
 			}
 		}
 	}
 	return valid, nil
+}
+
+func (r *SeedJobs) validateIfIDIsUnique(seedJobs []v1alpha1.SeedJob) bool {
+	ids := map[string]bool{}
+	for _, seedJob := range seedJobs {
+		if _, found := ids[seedJob.ID]; found {
+			r.logger.V(log.VWarn).Info(fmt.Sprintf("'%s' seed job ID is not unique", seedJob.ID))
+			return false
+		}
+		ids[seedJob.ID] = true
+	}
+	return true
 }
 
 func validateBasicSSHSecret(logger logr.InfoLogger, secret v1.Secret) bool {

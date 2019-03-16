@@ -57,7 +57,7 @@ func TestValidateSeedJobs(t *testing.T) {
 		Namespace: "default",
 	}
 	t.Run("Valid with public repository and without private key", func(t *testing.T) {
-		jenkins := &v1alpha1.Jenkins{
+		jenkins := v1alpha1.Jenkins{
 			Spec: v1alpha1.JenkinsSpec{
 				SeedJobs: []v1alpha1.SeedJob{
 					{
@@ -79,7 +79,7 @@ func TestValidateSeedJobs(t *testing.T) {
 		assert.Equal(t, true, result)
 	})
 	t.Run("Invalid without id", func(t *testing.T) {
-		jenkins := &v1alpha1.Jenkins{
+		jenkins := v1alpha1.Jenkins{
 			Spec: v1alpha1.JenkinsSpec{
 				SeedJobs: []v1alpha1.SeedJob{
 					{
@@ -99,7 +99,7 @@ func TestValidateSeedJobs(t *testing.T) {
 		assert.Equal(t, false, result)
 	})
 	t.Run("Valid with private key and secret", func(t *testing.T) {
-		jenkins := &v1alpha1.Jenkins{
+		jenkins := v1alpha1.Jenkins{
 			Spec: v1alpha1.JenkinsSpec{
 				SeedJobs: []v1alpha1.SeedJob{
 					{
@@ -132,7 +132,7 @@ func TestValidateSeedJobs(t *testing.T) {
 		assert.Equal(t, true, result)
 	})
 	t.Run("Invalid private key in secret", func(t *testing.T) {
-		jenkins := &v1alpha1.Jenkins{
+		jenkins := v1alpha1.Jenkins{
 			Spec: v1alpha1.JenkinsSpec{
 				SeedJobs: []v1alpha1.SeedJob{
 					{
@@ -165,7 +165,7 @@ func TestValidateSeedJobs(t *testing.T) {
 		assert.Equal(t, false, result)
 	})
 	t.Run("Invalid with PrivateKey and empty Secret data", func(t *testing.T) {
-		jenkins := &v1alpha1.Jenkins{
+		jenkins := v1alpha1.Jenkins{
 			Spec: v1alpha1.JenkinsSpec{
 				SeedJobs: []v1alpha1.SeedJob{
 					{
@@ -198,7 +198,7 @@ func TestValidateSeedJobs(t *testing.T) {
 		assert.Equal(t, false, result)
 	})
 	t.Run("Invalid with ssh RepositoryURL and empty PrivateKey", func(t *testing.T) {
-		jenkins := &v1alpha1.Jenkins{
+		jenkins := v1alpha1.Jenkins{
 			Spec: v1alpha1.JenkinsSpec{
 				SeedJobs: []v1alpha1.SeedJob{
 					{
@@ -220,7 +220,7 @@ func TestValidateSeedJobs(t *testing.T) {
 		assert.Equal(t, false, result)
 	})
 	t.Run("Invalid without targets", func(t *testing.T) {
-		jenkins := &v1alpha1.Jenkins{
+		jenkins := v1alpha1.Jenkins{
 			Spec: v1alpha1.JenkinsSpec{
 				SeedJobs: []v1alpha1.SeedJob{
 					{
@@ -240,7 +240,7 @@ func TestValidateSeedJobs(t *testing.T) {
 		assert.Equal(t, false, result)
 	})
 	t.Run("Invalid without repository URL", func(t *testing.T) {
-		jenkins := &v1alpha1.Jenkins{
+		jenkins := v1alpha1.Jenkins{
 			Spec: v1alpha1.JenkinsSpec{
 				SeedJobs: []v1alpha1.SeedJob{
 					{
@@ -260,7 +260,7 @@ func TestValidateSeedJobs(t *testing.T) {
 		assert.Equal(t, false, result)
 	})
 	t.Run("Invalid without repository branch", func(t *testing.T) {
-		jenkins := &v1alpha1.Jenkins{
+		jenkins := v1alpha1.Jenkins{
 			Spec: v1alpha1.JenkinsSpec{
 				SeedJobs: []v1alpha1.SeedJob{
 					{
@@ -280,7 +280,7 @@ func TestValidateSeedJobs(t *testing.T) {
 		assert.Equal(t, false, result)
 	})
 	t.Run("Valid with username and password", func(t *testing.T) {
-		jenkins := &v1alpha1.Jenkins{
+		jenkins := v1alpha1.Jenkins{
 			Spec: v1alpha1.JenkinsSpec{
 				SeedJobs: []v1alpha1.SeedJob{
 					{
@@ -313,7 +313,7 @@ func TestValidateSeedJobs(t *testing.T) {
 		assert.Equal(t, true, result)
 	})
 	t.Run("Invalid with empty username", func(t *testing.T) {
-		jenkins := &v1alpha1.Jenkins{
+		jenkins := v1alpha1.Jenkins{
 			Spec: v1alpha1.JenkinsSpec{
 				SeedJobs: []v1alpha1.SeedJob{
 					{
@@ -346,7 +346,7 @@ func TestValidateSeedJobs(t *testing.T) {
 		assert.Equal(t, false, result)
 	})
 	t.Run("Invalid with empty password", func(t *testing.T) {
-		jenkins := &v1alpha1.Jenkins{
+		jenkins := v1alpha1.Jenkins{
 			Spec: v1alpha1.JenkinsSpec{
 				SeedJobs: []v1alpha1.SeedJob{
 					{
@@ -379,7 +379,7 @@ func TestValidateSeedJobs(t *testing.T) {
 		assert.Equal(t, false, result)
 	})
 	t.Run("Invalid without username", func(t *testing.T) {
-		jenkins := &v1alpha1.Jenkins{
+		jenkins := v1alpha1.Jenkins{
 			Spec: v1alpha1.JenkinsSpec{
 				SeedJobs: []v1alpha1.SeedJob{
 					{
@@ -411,7 +411,7 @@ func TestValidateSeedJobs(t *testing.T) {
 		assert.Equal(t, false, result)
 	})
 	t.Run("Invalid without password", func(t *testing.T) {
-		jenkins := &v1alpha1.Jenkins{
+		jenkins := v1alpha1.Jenkins{
 			Spec: v1alpha1.JenkinsSpec{
 				SeedJobs: []v1alpha1.SeedJob{
 					{
@@ -441,5 +441,24 @@ func TestValidateSeedJobs(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Equal(t, false, result)
+	})
+}
+
+func TestValidateIfIDIsUnique(t *testing.T) {
+	t.Run("happy", func(t *testing.T) {
+		seedJobs := []v1alpha1.SeedJob{
+			{ID: "first"}, {ID: "second"},
+		}
+		ctrl := New(nil, nil, logf.ZapLogger(false))
+		got := ctrl.validateIfIDIsUnique(seedJobs)
+		assert.Equal(t, true, got)
+	})
+	t.Run("duplicated ids", func(t *testing.T) {
+		seedJobs := []v1alpha1.SeedJob{
+			{ID: "first"}, {ID: "first"},
+		}
+		ctrl := New(nil, nil, logf.ZapLogger(false))
+		got := ctrl.validateIfIDIsUnique(seedJobs)
+		assert.Equal(t, false, got)
 	})
 }
