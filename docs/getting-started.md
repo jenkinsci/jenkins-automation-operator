@@ -66,7 +66,7 @@ Then open browser with address http://localhost:8080.
 
 ## Configure Seed Jobs and Pipelines
 
-Jenkins operator uses [job-dsl][job-dsl] and [ssh-credentials][ssh-credentials] plugins for configuring jobs
+Jenkins operator uses [job-dsl][job-dsl] and [kubernetes-credentials-provider][kubernetes-credentials-provider] plugins for configuring jobs
 and deploy keys.
 
 ## Prepare job definitions and pipelines
@@ -163,7 +163,21 @@ spec:
     repositoryUrl: https://github.com/jenkinsci/kubernetes-operator.git
 ```
 
-If your GitHub repository is **private** you have to configure corresponding **privateKey** and Kubernetes Secret:
+**jenkins-operator** will automatically discover and configure all seed jobs.
+
+You can verify if deploy keys were successfully configured in Jenkins **Credentials** tab.
+
+![jenkins](../assets/jenkins-credentials.png)
+
+You can verify if your pipelines were successfully configured in Jenkins Seed Job console output.
+
+![jenkins](../assets/jenkins-seed.png)
+
+If your GitHub repository is **private** you have to configure SSH or username/password authentication.
+
+### SSH authentication
+
+Configure seed job like:
 
 ```
 apiVersion: jenkins.io/v1alpha1
@@ -174,41 +188,64 @@ spec:
   master:
    image: jenkins/jenkins:lts
   seedJobs:
-  - id: jenkins-operator
+  - id: jenkins-operator-ssh
+    credentialType: basicSSHUserPrivateKey
+    credentialID: k8s-ssh
     targets: "cicd/jobs/*.jenkins"
     description: "Jenkins Operator repository"
     repositoryBranch: master
     repositoryUrl: git@github.com:jenkinsci/kubernetes-operator.git
-    privateKey:
-      secretKeyRef:
-        name: deploy-keys
-        key: jenkins-operator
 ```
 
-And Kubernetes Secret:
+and create Kubernetes Secret(name of secret should be the same from `credentialID` field):
 
 ```
 apiVersion: v1
 kind: Secret
 metadata:
-  name: deploy-keys
+  name: k8s-ssh
 data:
-  jenkins-operator-e2e: |
+  privateKey: |
     -----BEGIN RSA PRIVATE KEY-----
     MIIJKAIBAAKCAgEAxxDpleJjMCN5nusfW/AtBAZhx8UVVlhhhIKXvQ+dFODQIdzO
     oDXybs1zVHWOj31zqbbJnsfsVZ9Uf3p9k6xpJ3WFY9b85WasqTDN1xmSd6swD4N8
     ...
+  username: github_user_name
 ```
 
-**jenkins-operator** will automatically discover and configure all seed jobs.
+### Username & password authentication
 
-You can verify if deploy keys were successfully configured in Jenkins **Credentials** tab.
+Configure seed job like:
 
-![jenkins](../assets/jenkins-credentials.png)
+```
+apiVersion: jenkins.io/v1alpha1
+kind: Jenkins
+metadata:
+  name: example
+spec:
+  master:
+   image: jenkins/jenkins:lts
+  seedJobs:
+  - id: jenkins-operator-user-pass
+    credentialType: usernamePassword
+    credentialID: k8s-user-pass
+    targets: "cicd/jobs/*.jenkins"
+    description: "Jenkins Operator repository"
+    repositoryBranch: master
+    repositoryUrl: https://github.com/jenkinsci/kubernetes-operator.git
+```
 
-You can verify if your pipelines were successfully configured in Jenkins Seed Job console output.
+and create Kubernetes Secret(name of secret should be the same from `credentialID` field):
 
-![jenkins](../assets/jenkins-seed.png)
+```
+apiVersion: v1
+kind: Secret
+metadata:
+  name: k8s-user-pass
+data:
+  username: github_user_name
+  password: password_or_token
+```
 
 ## Jenkins Customisation
 
@@ -406,4 +443,4 @@ kubectl delete pod jenkins-operator-example
 ```
 
 [job-dsl]:https://github.com/jenkinsci/job-dsl-plugin
-[ssh-credentials]:https://github.com/jenkinsci/ssh-credentials-plugin
+[kubernetes-credentials-provider]:https://jenkinsci.github.io/kubernetes-credentials-provider-plugin/
