@@ -1,11 +1,10 @@
-package user
+package seedjobs
 
 import (
 	"context"
 	"testing"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
-	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/user/seedjobs"
 
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
@@ -73,8 +72,8 @@ func TestValidateSeedJobs(t *testing.T) {
 			},
 		}
 
-		userReconcileLoop := New(fake.NewFakeClient(), nil, logf.ZapLogger(false), nil)
-		result, err := userReconcileLoop.validateSeedJobs(jenkins)
+		seedJobs := New(nil, fake.NewFakeClient(), logf.ZapLogger(false))
+		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
 		assert.Equal(t, true, result)
@@ -93,8 +92,8 @@ func TestValidateSeedJobs(t *testing.T) {
 			},
 		}
 
-		userReconcileLoop := New(fake.NewFakeClient(), nil, logf.ZapLogger(false), nil)
-		result, err := userReconcileLoop.validateSeedJobs(jenkins)
+		seedJobs := New(nil, fake.NewFakeClient(), logf.ZapLogger(false))
+		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
 		assert.Equal(t, false, result)
@@ -118,16 +117,16 @@ func TestValidateSeedJobs(t *testing.T) {
 			TypeMeta:   secretTypeMeta,
 			ObjectMeta: secretObjectMeta,
 			Data: map[string][]byte{
-				seedjobs.UsernameSecretKey:   []byte("username"),
-				seedjobs.PrivateKeySecretKey: []byte(fakePrivateKey),
+				UsernameSecretKey:   []byte("username"),
+				PrivateKeySecretKey: []byte(fakePrivateKey),
 			},
 		}
 		fakeClient := fake.NewFakeClient()
 		err := fakeClient.Create(context.TODO(), secret)
 		assert.NoError(t, err)
 
-		userReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false), nil)
-		result, err := userReconcileLoop.validateSeedJobs(jenkins)
+		seedJobs := New(nil, fakeClient, logf.ZapLogger(false))
+		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
 		assert.Equal(t, true, result)
@@ -151,16 +150,16 @@ func TestValidateSeedJobs(t *testing.T) {
 			TypeMeta:   secretTypeMeta,
 			ObjectMeta: secretObjectMeta,
 			Data: map[string][]byte{
-				seedjobs.UsernameSecretKey:   []byte("username"),
-				seedjobs.PrivateKeySecretKey: []byte(fakeInvalidPrivateKey),
+				UsernameSecretKey:   []byte("username"),
+				PrivateKeySecretKey: []byte(fakeInvalidPrivateKey),
 			},
 		}
 		fakeClient := fake.NewFakeClient()
 		err := fakeClient.Create(context.TODO(), secret)
 		assert.NoError(t, err)
 
-		userReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false), nil)
-		result, err := userReconcileLoop.validateSeedJobs(jenkins)
+		seedJobs := New(nil, fakeClient, logf.ZapLogger(false))
+		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
 		assert.Equal(t, false, result)
@@ -184,16 +183,16 @@ func TestValidateSeedJobs(t *testing.T) {
 			TypeMeta:   secretTypeMeta,
 			ObjectMeta: secretObjectMeta,
 			Data: map[string][]byte{
-				seedjobs.UsernameSecretKey:   []byte("username"),
-				seedjobs.PrivateKeySecretKey: []byte(""),
+				UsernameSecretKey:   []byte("username"),
+				PrivateKeySecretKey: []byte(""),
 			},
 		}
 		fakeClient := fake.NewFakeClient()
 		err := fakeClient.Create(context.TODO(), secret)
 		assert.NoError(t, err)
 
-		userReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false), nil)
-		result, err := userReconcileLoop.validateSeedJobs(jenkins)
+		seedJobs := New(nil, fakeClient, logf.ZapLogger(false))
+		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
 		assert.Equal(t, false, result)
@@ -214,8 +213,8 @@ func TestValidateSeedJobs(t *testing.T) {
 			},
 		}
 
-		userReconcileLoop := New(fake.NewFakeClient(), nil, logf.ZapLogger(false), nil)
-		result, err := userReconcileLoop.validateSeedJobs(jenkins)
+		seedJobs := New(nil, fake.NewFakeClient(), logf.ZapLogger(false))
+		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
 		assert.Equal(t, false, result)
@@ -234,8 +233,8 @@ func TestValidateSeedJobs(t *testing.T) {
 			},
 		}
 
-		userReconcileLoop := New(fake.NewFakeClient(), nil, logf.ZapLogger(false), nil)
-		result, err := userReconcileLoop.validateSeedJobs(jenkins)
+		seedJobs := New(nil, fake.NewFakeClient(), logf.ZapLogger(false))
+		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
 		assert.Equal(t, false, result)
@@ -254,8 +253,8 @@ func TestValidateSeedJobs(t *testing.T) {
 			},
 		}
 
-		userReconcileLoop := New(fake.NewFakeClient(), nil, logf.ZapLogger(false), nil)
-		result, err := userReconcileLoop.validateSeedJobs(jenkins)
+		seedJobs := New(nil, fake.NewFakeClient(), logf.ZapLogger(false))
+		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
 		assert.Equal(t, false, result)
@@ -274,8 +273,8 @@ func TestValidateSeedJobs(t *testing.T) {
 			},
 		}
 
-		userReconcileLoop := New(fake.NewFakeClient(), nil, logf.ZapLogger(false), nil)
-		result, err := userReconcileLoop.validateSeedJobs(jenkins)
+		seedJobs := New(nil, fake.NewFakeClient(), logf.ZapLogger(false))
+		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
 		assert.Equal(t, false, result)
@@ -299,16 +298,16 @@ func TestValidateSeedJobs(t *testing.T) {
 			TypeMeta:   secretTypeMeta,
 			ObjectMeta: secretObjectMeta,
 			Data: map[string][]byte{
-				seedjobs.UsernameSecretKey: []byte("some-username"),
-				seedjobs.PasswordSecretKey: []byte("some-password"),
+				UsernameSecretKey: []byte("some-username"),
+				PasswordSecretKey: []byte("some-password"),
 			},
 		}
 		fakeClient := fake.NewFakeClient()
 		err := fakeClient.Create(context.TODO(), secret)
 		assert.NoError(t, err)
 
-		userReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false), nil)
-		result, err := userReconcileLoop.validateSeedJobs(jenkins)
+		seedJobs := New(nil, fakeClient, logf.ZapLogger(false))
+		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
 		assert.Equal(t, true, result)
@@ -332,16 +331,16 @@ func TestValidateSeedJobs(t *testing.T) {
 			TypeMeta:   secretTypeMeta,
 			ObjectMeta: secretObjectMeta,
 			Data: map[string][]byte{
-				seedjobs.UsernameSecretKey: []byte(""),
-				seedjobs.PasswordSecretKey: []byte("some-password"),
+				UsernameSecretKey: []byte(""),
+				PasswordSecretKey: []byte("some-password"),
 			},
 		}
 		fakeClient := fake.NewFakeClient()
 		err := fakeClient.Create(context.TODO(), secret)
 		assert.NoError(t, err)
 
-		userReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false), nil)
-		result, err := userReconcileLoop.validateSeedJobs(jenkins)
+		seedJobs := New(nil, fakeClient, logf.ZapLogger(false))
+		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
 		assert.Equal(t, false, result)
@@ -365,16 +364,16 @@ func TestValidateSeedJobs(t *testing.T) {
 			TypeMeta:   secretTypeMeta,
 			ObjectMeta: secretObjectMeta,
 			Data: map[string][]byte{
-				seedjobs.UsernameSecretKey: []byte("some-username"),
-				seedjobs.PasswordSecretKey: []byte(""),
+				UsernameSecretKey: []byte("some-username"),
+				PasswordSecretKey: []byte(""),
 			},
 		}
 		fakeClient := fake.NewFakeClient()
 		err := fakeClient.Create(context.TODO(), secret)
 		assert.NoError(t, err)
 
-		userReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false), nil)
-		result, err := userReconcileLoop.validateSeedJobs(jenkins)
+		seedJobs := New(nil, fakeClient, logf.ZapLogger(false))
+		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
 		assert.Equal(t, false, result)
@@ -398,15 +397,15 @@ func TestValidateSeedJobs(t *testing.T) {
 			TypeMeta:   secretTypeMeta,
 			ObjectMeta: secretObjectMeta,
 			Data: map[string][]byte{
-				seedjobs.PasswordSecretKey: []byte("some-password"),
+				PasswordSecretKey: []byte("some-password"),
 			},
 		}
 		fakeClient := fake.NewFakeClient()
 		err := fakeClient.Create(context.TODO(), secret)
 		assert.NoError(t, err)
 
-		userReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false), nil)
-		result, err := userReconcileLoop.validateSeedJobs(jenkins)
+		seedJobs := New(nil, fakeClient, logf.ZapLogger(false))
+		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
 		assert.Equal(t, false, result)
@@ -430,15 +429,15 @@ func TestValidateSeedJobs(t *testing.T) {
 			TypeMeta:   secretTypeMeta,
 			ObjectMeta: secretObjectMeta,
 			Data: map[string][]byte{
-				seedjobs.UsernameSecretKey: []byte("some-username"),
+				UsernameSecretKey: []byte("some-username"),
 			},
 		}
 		fakeClient := fake.NewFakeClient()
 		err := fakeClient.Create(context.TODO(), secret)
 		assert.NoError(t, err)
 
-		userReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false), nil)
-		result, err := userReconcileLoop.validateSeedJobs(jenkins)
+		seedJobs := New(nil, fakeClient, logf.ZapLogger(false))
+		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
 		assert.Equal(t, false, result)
