@@ -17,7 +17,7 @@ Once you have running Kubernetes cluster you can focus on installing **jenkins-o
 ## Deploy Jenkins
 
 Once jenkins-operator is up and running let's deploy actual Jenkins instance.
-Let's use example below:
+Create manifest ie. **jenkins_instance.yaml** with following data and save it on drive.
 
 ```bash
 apiVersion: jenkins.io/v1alpha1
@@ -27,6 +27,26 @@ metadata:
 spec:
   master:
    image: jenkins/jenkins
+   readinessProbe:
+     httpGet:
+       path: /login
+       port: 8080
+       scheme: HTTP
+     failureThreshold: 12
+     initialDelaySeconds: 20
+     periodSeconds: 10
+     successThreshold: 1
+     timeoutSeconds: 5
+   livenessProbe:
+     httpGet:
+       path: /login
+       port: 8080
+       scheme: HTTP
+     initialDelaySeconds: 20
+     failureThreshold: 12
+     periodSeconds: 10
+     successThreshold: 1
+     timeoutSeconds: 5
   seedJobs:
   - id: jenkins-operator
     targets: "cicd/jobs/*.jenkins"
@@ -35,6 +55,11 @@ spec:
     repositoryUrl: https://github.com/jenkinsci/kubernetes-operator.git
 ```
 
+Deploy Jenkins to K8s:
+
+```bash
+kubectl create -f jenkins_instance.yaml
+```
 Watch Jenkins instance being created:
 
 ```bash
