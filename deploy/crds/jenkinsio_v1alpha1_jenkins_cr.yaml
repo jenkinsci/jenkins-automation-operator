@@ -10,8 +10,8 @@ spec:
        path: /login
        port: 8080
        scheme: HTTP
-     failureThreshold: 12
-     initialDelaySeconds: 20
+     failureThreshold: 10
+     initialDelaySeconds: 30
      periodSeconds: 10
      successThreshold: 1
      timeoutSeconds: 5
@@ -20,8 +20,8 @@ spec:
        path: /login
        port: 8080
        scheme: HTTP
-     initialDelaySeconds: 20
-     failureThreshold: 12
+     initialDelaySeconds: 35
+     failureThreshold: 10
      periodSeconds: 10
      successThreshold: 1
      timeoutSeconds: 5

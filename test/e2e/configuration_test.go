@@ -25,7 +25,6 @@ func TestConfiguration(t *testing.T) {
 	// Deletes test namespace
 	defer ctx.Cleanup()
 
-	t.Logf("BASE")
 	jenkinsCRName := "e2e"
 	numberOfExecutors := 6
 	systemMessage := "Configuration as Code integration works!!!"
@@ -43,7 +42,6 @@ func TestConfiguration(t *testing.T) {
 	}
 
 	// base
-
 	createUserConfigurationSecret(t, jenkinsCRName, namespace, systemMessageEnvName, systemMessage)
 	createUserConfigurationConfigMap(t, jenkinsCRName, namespace, numberOfExecutors, fmt.Sprintf("${%s}", systemMessageEnvName))
 	jenkins := createJenkinsCR(t, jenkinsCRName, namespace, &[]v1alpha1.SeedJob{mySeedJob.SeedJob})
@@ -141,30 +139,32 @@ func verifyJenkinsMasterPodAttributes(t *testing.T, jenkins *v1alpha1.Jenkins) {
 		}
 	}
 
-	if jenkinsPod.Spec.Containers[0].Image != jenkins.Spec.Master.Image {
-		t.Fatalf("Invalid jenkins pod image expected '%s', actual '%s'", jenkins.Spec.Master.Image, jenkinsPod.Spec.Containers[0].Image)
+	jenkinsContainer := jenkinsPod.Spec.Containers[0]
+
+	if jenkinsContainer.Image != jenkins.Spec.Master.Image {
+		t.Fatalf("Invalid jenkins pod image expected '%s', actual '%s'", jenkins.Spec.Master.Image, jenkinsContainer.Image)
 	}
 
-	if !reflect.DeepEqual(jenkinsPod.Spec.Containers[0].Resources, jenkins.Spec.Master.Resources) {
-		t.Fatalf("Invalid jenkins pod continer resources expected '%+v', actual '%+v'", jenkins.Spec.Master.Resources, jenkinsPod.Spec.Containers[0].Resources)
+	if !reflect.DeepEqual(jenkinsContainer.Resources, jenkins.Spec.Master.Resources) {
+		t.Fatalf("Invalid jenkins pod continer resources expected '%+v', actual '%+v'", jenkins.Spec.Master.Resources, jenkinsContainer.Resources)
 	}
 
 	if !reflect.DeepEqual(jenkinsPod.Spec.NodeSelector, jenkins.Spec.Master.NodeSelector) {
 		t.Fatalf("Invalid jenkins pod node selector expected '%+v', actual '%+v'", jenkins.Spec.Master.NodeSelector, jenkinsPod.Spec.NodeSelector)
 	}
 
-	if !reflect.DeepEqual(jenkinsPod.Spec.Containers[0].ReadinessProbe, jenkins.Spec.Master.ReadinessProbe) {
-		t.Fatalf("Invalid jenkins pod readinessProbe. Expected '%+v', actual '%+v'", jenkins.Spec.Master.NodeSelector, jenkinsPod.Spec.NodeSelector)
+	if !reflect.DeepEqual(jenkinsContainer.ReadinessProbe, jenkins.Spec.Master.ReadinessProbe) {
+		t.Fatalf("Invalid jenkins pod readinessProbe. Expected '%+v', actual '%+v'", jenkins.Spec.Master.ReadinessProbe, jenkinsContainer.ReadinessProbe)
 	}
 
-	if !reflect.DeepEqual(jenkinsPod.Spec.Containers[0].LivenessProbe, jenkins.Spec.Master.LivenessProbe) {
-		t.Fatalf("Invalid jenkins pod livenessProbe. Expected '%+v', actual '%+v'", jenkins.Spec.Master.NodeSelector, jenkinsPod.Spec.NodeSelector)
+	if !reflect.DeepEqual(jenkinsContainer.LivenessProbe, jenkins.Spec.Master.LivenessProbe) {
+		t.Fatalf("Invalid jenkins pod livenessProbe. Expected '%+v', actual '%+v'", jenkins.Spec.Master.LivenessProbe, jenkinsContainer.LivenessProbe)
 	}
 
 	requiredEnvs := resources.GetJenkinsMasterPodBaseEnvs()
 	requiredEnvs = append(requiredEnvs, jenkins.Spec.Master.Env...)
-	if !reflect.DeepEqual(jenkinsPod.Spec.Containers[0].Env, requiredEnvs) {
-		t.Fatalf("Invalid jenkins pod continer resources expected '%+v', actual '%+v'", requiredEnvs, jenkinsPod.Spec.Containers[0].Env)
+	if !reflect.DeepEqual(jenkinsContainer.Env, requiredEnvs) {
+		t.Fatalf("Invalid jenkins pod continer resources expected '%+v', actual '%+v'", requiredEnvs, jenkinsContainer.Env)
 	}
 
 	t.Log("Jenkins pod attributes are valid")

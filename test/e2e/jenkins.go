@@ -2,7 +2,6 @@ package e2e
 
 import (
 	"context"
-	"k8s.io/apimachinery/pkg/util/intstr"
 	"testing"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
@@ -15,6 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 func getJenkins(t *testing.T, namespace, name string) *v1alpha1.Jenkins {
@@ -94,7 +94,9 @@ func createJenkinsCR(t *testing.T, name, namespace string, seedJob *[]v1alpha1.S
 							Scheme: corev1.URISchemeHTTP,
 						},
 					},
-					InitialDelaySeconds: int32(50),
+					InitialDelaySeconds: int32(35),
+					TimeoutSeconds:      int32(4),
+					FailureThreshold:    int32(10),
 				},
 				LivenessProbe: &corev1.Probe{
 					Handler: corev1.Handler{
@@ -105,8 +107,8 @@ func createJenkinsCR(t *testing.T, name, namespace string, seedJob *[]v1alpha1.S
 						},
 					},
 					InitialDelaySeconds: int32(40),
-					TimeoutSeconds:      int32(8),
-					FailureThreshold:    int32(15),
+					TimeoutSeconds:      int32(4),
+					FailureThreshold:    int32(10),
 				},
 			},
 			SeedJobs: seedJobs,
