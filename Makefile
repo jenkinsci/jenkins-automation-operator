@@ -175,7 +175,10 @@ HAS_STATICCHECK := $(shell which staticcheck)
 staticcheck: ## Verifies `staticcheck` passes
 	@echo "+ $@"
 ifndef HAS_STATICCHECK
-	go get -u honnef.co/go/tools/cmd/staticcheck
+	wget https://github.com/dominikh/go-tools/releases/download/2019.1.1/staticcheck_linux_amd64
+	chmod +x staticcheck_linux_amd64
+	mkdir -p $(HOME)/bin
+	mv staticcheck_linux_amd64 $(HOME)/bin/staticcheck
 endif
 	@staticcheck $(PACKAGES)
 
