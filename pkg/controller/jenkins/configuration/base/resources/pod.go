@@ -8,7 +8,6 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 const (
@@ -75,9 +74,6 @@ func GetJenkinsMasterPodBaseEnvs() []corev1.EnvVar {
 
 // NewJenkinsMasterPod builds Jenkins Master Kubernetes Pod resource
 func NewJenkinsMasterPod(objectMeta metav1.ObjectMeta, jenkins *v1alpha1.Jenkins) *corev1.Pod {
-	initialDelaySeconds := int32(30)
-	timeoutSeconds := int32(5)
-	failureThreshold := int32(12)
 	runAsUser := jenkinsUserUID
 
 	objectMeta.Annotations = jenkins.Spec.Master.Annotations
@@ -104,28 +100,8 @@ func NewJenkinsMasterPod(objectMeta metav1.ObjectMeta, jenkins *v1alpha1.Jenkins
 						"bash",
 						fmt.Sprintf("%s/%s", jenkinsScriptsVolumePath, initScriptName),
 					},
-					LivenessProbe: &corev1.Probe{
-						Handler: corev1.Handler{
-							HTTPGet: &corev1.HTTPGetAction{
-								Path:   "/login",
-								Port:   intstr.FromString(httpPortName),
-								Scheme: corev1.URISchemeHTTP,
-							},
-						},
-						InitialDelaySeconds: initialDelaySeconds,
-						TimeoutSeconds:      timeoutSeconds,
-						FailureThreshold:    failureThreshold,
-					},
-					ReadinessProbe: &corev1.Probe{
-						Handler: corev1.Handler{
-							HTTPGet: &corev1.HTTPGetAction{
-								Path:   "/login",
-								Port:   intstr.FromString(httpPortName),
-								Scheme: corev1.URISchemeHTTP,
-							},
-						},
-						InitialDelaySeconds: initialDelaySeconds,
-					},
+					LivenessProbe:  jenkins.Spec.Master.LivenessProbe,
+					ReadinessProbe: jenkins.Spec.Master.ReadinessProbe,
 					Ports: []corev1.ContainerPort{
 						{
 							Name:          httpPortName,

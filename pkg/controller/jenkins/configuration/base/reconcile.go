@@ -407,6 +407,18 @@ func (r *ReconcileJenkinsBaseConfiguration) isRecreatePodNeeded(currentJenkinsMa
 		return true
 	}
 
+	if !reflect.DeepEqual(r.jenkins.Spec.Master.ReadinessProbe, currentJenkinsMasterPod.Spec.Containers[0].ReadinessProbe) {
+		r.logger.Info(fmt.Sprintf("Jenkins pod readinessProbe have changed, actual '%+v' required '%+v' - recreating pod",
+			currentJenkinsMasterPod.Spec.Containers[0].ReadinessProbe, r.jenkins.Spec.Master.ReadinessProbe))
+		return true
+	}
+
+	if !reflect.DeepEqual(r.jenkins.Spec.Master.LivenessProbe, currentJenkinsMasterPod.Spec.Containers[0].LivenessProbe) {
+		r.logger.Info(fmt.Sprintf("Jenkins pod livenessProbe have changed, actual '%+v' required '%+v' - recreating pod",
+			currentJenkinsMasterPod.Spec.Containers[0].LivenessProbe, r.jenkins.Spec.Master.LivenessProbe))
+		return true
+	}
+
 	if !reflect.DeepEqual(r.jenkins.Spec.Master.NodeSelector, currentJenkinsMasterPod.Spec.NodeSelector) {
 		r.logger.Info(fmt.Sprintf("Jenkins pod node selector has changed, actual '%+v' required '%+v' - recreating pod",
 			currentJenkinsMasterPod.Spec.NodeSelector, r.jenkins.Spec.Master.NodeSelector))

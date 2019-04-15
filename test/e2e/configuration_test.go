@@ -25,6 +25,7 @@ func TestConfiguration(t *testing.T) {
 	// Deletes test namespace
 	defer ctx.Cleanup()
 
+	t.Logf("BASE")
 	jenkinsCRName := "e2e"
 	numberOfExecutors := 6
 	systemMessage := "Configuration as Code integration works!!!"
@@ -42,6 +43,7 @@ func TestConfiguration(t *testing.T) {
 	}
 
 	// base
+
 	createUserConfigurationSecret(t, jenkinsCRName, namespace, systemMessageEnvName, systemMessage)
 	createUserConfigurationConfigMap(t, jenkinsCRName, namespace, numberOfExecutors, fmt.Sprintf("${%s}", systemMessageEnvName))
 	jenkins := createJenkinsCR(t, jenkinsCRName, namespace, &[]v1alpha1.SeedJob{mySeedJob.SeedJob})
@@ -149,6 +151,14 @@ func verifyJenkinsMasterPodAttributes(t *testing.T, jenkins *v1alpha1.Jenkins) {
 
 	if !reflect.DeepEqual(jenkinsPod.Spec.NodeSelector, jenkins.Spec.Master.NodeSelector) {
 		t.Fatalf("Invalid jenkins pod node selector expected '%+v', actual '%+v'", jenkins.Spec.Master.NodeSelector, jenkinsPod.Spec.NodeSelector)
+	}
+
+	if !reflect.DeepEqual(jenkinsPod.Spec.Containers[0].ReadinessProbe, jenkins.Spec.Master.ReadinessProbe) {
+		t.Fatalf("Invalid jenkins pod readinessProbe. Expected '%+v', actual '%+v'", jenkins.Spec.Master.NodeSelector, jenkinsPod.Spec.NodeSelector)
+	}
+
+	if !reflect.DeepEqual(jenkinsPod.Spec.Containers[0].LivenessProbe, jenkins.Spec.Master.LivenessProbe) {
+		t.Fatalf("Invalid jenkins pod livenessProbe. Expected '%+v', actual '%+v'", jenkins.Spec.Master.NodeSelector, jenkinsPod.Spec.NodeSelector)
 	}
 
 	requiredEnvs := resources.GetJenkinsMasterPodBaseEnvs()

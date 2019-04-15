@@ -135,6 +135,16 @@ func (in *JenkinsMaster) DeepCopyInto(out *JenkinsMaster) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
+	if in.LivenessProbe != nil {
+		in, out := &in.LivenessProbe, &out.LivenessProbe
+		*out = new(v1.Probe)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.ReadinessProbe != nil {
+		in, out := &in.ReadinessProbe, &out.ReadinessProbe
+		*out = new(v1.Probe)
+		(*in).DeepCopyInto(*out)
+	}
 	if in.OperatorPlugins != nil {
 		in, out := &in.OperatorPlugins, &out.OperatorPlugins
 		*out = make(map[string][]string, len(*in))

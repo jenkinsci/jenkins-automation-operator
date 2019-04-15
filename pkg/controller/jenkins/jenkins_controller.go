@@ -3,6 +3,7 @@ package jenkins
 import (
 	"context"
 	"fmt"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"reflect"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
@@ -136,7 +137,6 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request, logger logr.Logg
 		// Error reading the object - requeue the request.
 		return reconcile.Result{}, errors.WithStack(err)
 	}
-
 	err = r.setDefaults(jenkins, logger)
 	if err != nil {
 		return reconcile.Result{}, err
@@ -226,6 +226,36 @@ func (r *ReconcileJenkins) setDefaults(jenkins *v1alpha1.Jenkins, logger logr.Lo
 		logger.Info(fmt.Sprintf("Setting default Jenkins master image pull policy: %s", corev1.PullAlways))
 		changed = true
 		jenkins.Spec.Master.ImagePullPolicy = corev1.PullAlways
+	}
+	if jenkins.Spec.Master.ReadinessProbe == nil {
+		logger.Info("Setting default Jenkins readinessProbe")
+		changed = true
+		jenkins.Spec.Master.ReadinessProbe = &corev1.Probe{
+			Handler: corev1.Handler{
+				HTTPGet: &corev1.HTTPGetAction{
+					Path:   "/login",
+					Port:   intstr.FromString("http"),
+					Scheme: corev1.URISchemeHTTP,
+				},
+			},
+			InitialDelaySeconds: int32(30),
+		}
+	}
+	if jenkins.Spec.Master.LivenessProbe == nil {
+		logger.Info("Setting default Jenkins livenessProbe")
+		changed = true
+		jenkins.Spec.Master.LivenessProbe = &corev1.Probe{
+			Handler: corev1.Handler{
+				HTTPGet: &corev1.HTTPGetAction{
+					Path:   "/login",
+					Port:   intstr.FromString("http"),
+					Scheme: corev1.URISchemeHTTP,
+				},
+			},
+			InitialDelaySeconds: int32(30),
+			TimeoutSeconds:      int32(5),
+			FailureThreshold:    int32(12),
+		}
 	}
 	if len(jenkins.Spec.Master.OperatorPlugins) == 0 {
 		logger.Info("Setting default operator plugins")
