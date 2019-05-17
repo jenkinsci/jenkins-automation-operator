@@ -2,7 +2,6 @@ package e2e
 
 import (
 	goctx "context"
-	"fmt"
 	"net/http"
 	"testing"
 	"time"
@@ -27,14 +26,14 @@ var (
 	timeout       = time.Second * 60
 )
 
-// checkConditionFunc is used to check if a condition for the jenkins CR is true
-type checkConditionFunc func(*v1alpha1.Jenkins) bool
+// checkConditionFunc is used to check if a condition for the jenkins CR is set
+type checkConditionFunc func(*v1alpha1.Jenkins, error) bool
 
 func waitForJenkinsBaseConfigurationToComplete(t *testing.T, jenkins *v1alpha1.Jenkins) {
 	t.Log("Waiting for Jenkins base configuration to complete")
-	_, err := WaitUntilJenkinsConditionTrue(retryInterval, 150, jenkins, func(jenkins *v1alpha1.Jenkins) bool {
-		t.Logf("Current Jenkins status '%+v'", jenkins.Status)
-		return jenkins.Status.BaseConfigurationCompletedTime != nil
+	_, err := WaitUntilJenkinsConditionSet(retryInterval, 150, jenkins, func(jenkins *v1alpha1.Jenkins, err error) bool {
+		t.Logf("Current Jenkins status: '%+v', error '%s'", jenkins.Status, err)
+		return err == nil && jenkins.Status.BaseConfigurationCompletedTime != nil
 	})
 	assert.NoError(t, err)
 	t.Log("Jenkins pod is running")
@@ -68,9 +67,9 @@ func waitForRecreateJenkinsMasterPod(t *testing.T, jenkins *v1alpha1.Jenkins) {
 
 func waitForJenkinsUserConfigurationToComplete(t *testing.T, jenkins *v1alpha1.Jenkins) {
 	t.Log("Waiting for Jenkins user configuration to complete")
-	_, err := WaitUntilJenkinsConditionTrue(retryInterval, 30, jenkins, func(jenkins *v1alpha1.Jenkins) bool {
-		t.Logf("Current Jenkins status '%+v'", jenkins.Status)
-		return jenkins.Status.UserConfigurationCompletedTime != nil
+	_, err := WaitUntilJenkinsConditionSet(retryInterval, 70, jenkins, func(jenkins *v1alpha1.Jenkins, err error) bool {
+		t.Logf("Current Jenkins status: '%+v', error '%s'", jenkins.Status, err)
+		return err == nil && jenkins.Status.UserConfigurationCompletedTime != nil
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -92,16 +91,13 @@ func waitForJenkinsSafeRestart(t *testing.T, jenkinsClient jenkinsclient.Jenkins
 	require.NoError(t, err)
 }
 
-// WaitUntilJenkinsConditionTrue retries until the specified condition check becomes true for the jenkins CR
-func WaitUntilJenkinsConditionTrue(retryInterval time.Duration, retries int, jenkins *v1alpha1.Jenkins, checkCondition checkConditionFunc) (*v1alpha1.Jenkins, error) {
+// WaitUntilJenkinsConditionSet retries until the specified condition check becomes true for the jenkins CR
+func WaitUntilJenkinsConditionSet(retryInterval time.Duration, retries int, jenkins *v1alpha1.Jenkins, checkCondition checkConditionFunc) (*v1alpha1.Jenkins, error) {
 	jenkinsStatus := &v1alpha1.Jenkins{}
 	err := wait.Poll(retryInterval, time.Duration(retries)*retryInterval, func() (bool, error) {
 		namespacedName := types.NamespacedName{Namespace: jenkins.Namespace, Name: jenkins.Name}
 		err := framework.Global.Client.Get(goctx.TODO(), namespacedName, jenkinsStatus)
-		if err != nil {
-			return false, fmt.Errorf("failed to get CR: %v", err)
-		}
-		return checkCondition(jenkinsStatus), nil
+		return checkCondition(jenkinsStatus, err), nil
 	})
 	if err != nil {
 		return nil, err

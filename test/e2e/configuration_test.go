@@ -3,11 +3,11 @@ package e2e
 import (
 	"context"
 	"fmt"
-	"reflect"
 	"testing"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/plugins"
 
@@ -133,41 +133,55 @@ func verifyJenkinsMasterPodAttributes(t *testing.T, jenkins *v1alpha1.Jenkins) {
 	jenkinsPod := getJenkinsMasterPod(t, jenkins)
 	jenkins = getJenkins(t, jenkins.Namespace, jenkins.Name)
 
-	for key, value := range jenkins.Spec.Master.Annotations {
-		if jenkinsPod.ObjectMeta.Annotations[key] != value {
-			t.Fatalf("Invalid Jenkins pod annotation expected '%+v', actual '%+v'", jenkins.Spec.Master.Annotations, jenkinsPod.ObjectMeta.Annotations)
+	assert.Equal(t, jenkins.Spec.Master.Annotations, jenkinsPod.ObjectMeta.Annotations)
+	assert.Equal(t, jenkins.Spec.Master.NodeSelector, jenkinsPod.Spec.NodeSelector)
+
+	assert.Equal(t, resources.JenkinsMasterContainerName, jenkinsPod.Spec.Containers[0].Name)
+	assert.Equal(t, len(jenkins.Spec.Master.Containers)+1, len(jenkinsPod.Spec.Containers))
+
+	for _, actualContainer := range jenkinsPod.Spec.Containers {
+		if actualContainer.Name == resources.JenkinsMasterContainerName {
+			verifyContainer(t, resources.NewJenkinsMasterContainer(jenkins), actualContainer)
+			continue
 		}
-	}
 
-	jenkinsContainer := jenkinsPod.Spec.Containers[0]
+		var expectedContainer *corev1.Container
+		for _, jenkinsContainer := range jenkins.Spec.Master.Containers {
+			if jenkinsContainer.Name == actualContainer.Name {
+				tmp := resources.ConvertJenkinsContainerToKubernetesContainer(jenkinsContainer)
+				expectedContainer = &tmp
+			}
+		}
 
-	if jenkinsContainer.Image != jenkins.Spec.Master.Image {
-		t.Fatalf("Invalid jenkins pod image expected '%s', actual '%s'", jenkins.Spec.Master.Image, jenkinsContainer.Image)
-	}
+		if expectedContainer == nil {
+			t.Errorf("Container '%+v' not found in pod", actualContainer)
+			continue
+		}
 
-	if !reflect.DeepEqual(jenkinsContainer.Resources, jenkins.Spec.Master.Resources) {
-		t.Fatalf("Invalid jenkins pod continer resources expected '%+v', actual '%+v'", jenkins.Spec.Master.Resources, jenkinsContainer.Resources)
-	}
-
-	if !reflect.DeepEqual(jenkinsPod.Spec.NodeSelector, jenkins.Spec.Master.NodeSelector) {
-		t.Fatalf("Invalid jenkins pod node selector expected '%+v', actual '%+v'", jenkins.Spec.Master.NodeSelector, jenkinsPod.Spec.NodeSelector)
-	}
-
-	if !reflect.DeepEqual(jenkinsContainer.ReadinessProbe, jenkins.Spec.Master.ReadinessProbe) {
-		t.Fatalf("Invalid jenkins pod readinessProbe. Expected '%+v', actual '%+v'", jenkins.Spec.Master.ReadinessProbe, jenkinsContainer.ReadinessProbe)
-	}
-
-	if !reflect.DeepEqual(jenkinsContainer.LivenessProbe, jenkins.Spec.Master.LivenessProbe) {
-		t.Fatalf("Invalid jenkins pod livenessProbe. Expected '%+v', actual '%+v'", jenkins.Spec.Master.LivenessProbe, jenkinsContainer.LivenessProbe)
-	}
-
-	requiredEnvs := resources.GetJenkinsMasterPodBaseEnvs()
-	requiredEnvs = append(requiredEnvs, jenkins.Spec.Master.Env...)
-	if !reflect.DeepEqual(jenkinsContainer.Env, requiredEnvs) {
-		t.Fatalf("Invalid jenkins pod continer resources expected '%+v', actual '%+v'", requiredEnvs, jenkinsContainer.Env)
+		verifyContainer(t, *expectedContainer, actualContainer)
 	}
 
 	t.Log("Jenkins pod attributes are valid")
+}
+
+func verifyContainer(t *testing.T, expected corev1.Container, actual corev1.Container) {
+	assert.Equal(t, expected.Args, actual.Args, expected.Name, expected.Name)
+	assert.Equal(t, expected.Command, actual.Command, expected.Name)
+	assert.Equal(t, expected.Env, actual.Env, expected.Name)
+	assert.Equal(t, expected.EnvFrom, actual.EnvFrom, expected.Name)
+	assert.Equal(t, expected.Image, actual.Image, expected.Name)
+	assert.Equal(t, expected.ImagePullPolicy, actual.ImagePullPolicy, expected.Name)
+	assert.Equal(t, expected.Lifecycle, actual.Lifecycle, expected.Name)
+	assert.Equal(t, expected.LivenessProbe, actual.LivenessProbe, expected.Name)
+	assert.Equal(t, expected.Ports, actual.Ports, expected.Name)
+	assert.Equal(t, expected.ReadinessProbe, actual.ReadinessProbe, expected.Name)
+	assert.Equal(t, expected.Resources, actual.Resources, expected.Name)
+	assert.Equal(t, expected.SecurityContext, actual.SecurityContext, expected.Name)
+	assert.Equal(t, expected.WorkingDir, actual.WorkingDir, expected.Name)
+	if !base.CompareContainerVolumeMounts(expected, actual) {
+		t.Errorf("Volume mounts are different in container '%s': expected '%+v', actual '%+v'",
+			expected.Name, expected.VolumeMounts, actual.VolumeMounts)
+	}
 }
 
 func verifyPlugins(t *testing.T, jenkinsClient jenkinsclient.Jenkins, jenkins *v1alpha1.Jenkins) {

@@ -18,15 +18,14 @@ var (
 
 // Validate validates Jenkins CR Spec.master section
 func (r *ReconcileJenkinsBaseConfiguration) Validate(jenkins *v1alpha1.Jenkins) (bool, error) {
-	if jenkins.Spec.Master.Image == "" {
-		r.logger.V(log.VWarn).Info("Image not set")
+	if !r.validateContainer(jenkins.Spec.Master.Container) {
 		return false, nil
 	}
 
-	if !dockerImageRegexp.MatchString(jenkins.Spec.Master.Image) && !docker.ReferenceRegexp.MatchString(jenkins.Spec.Master.Image) {
-		r.logger.V(log.VWarn).Info("Invalid image")
-		return false, nil
-
+	for _, container := range jenkins.Spec.Master.Containers {
+		if !r.validateContainer(container) {
+			return false, nil
+		}
 	}
 
 	if !r.validatePlugins(jenkins.Spec.Master.OperatorPlugins, jenkins.Spec.Master.Plugins) {
@@ -38,6 +37,26 @@ func (r *ReconcileJenkinsBaseConfiguration) Validate(jenkins *v1alpha1.Jenkins) 
 	}
 
 	return true, nil
+}
+
+func (r *ReconcileJenkinsBaseConfiguration) validateContainer(container v1alpha1.Container) bool {
+	logger := r.logger.WithValues("container", container.Name)
+	if container.Image == "" {
+		logger.V(log.VWarn).Info("Image not set")
+		return false
+	}
+
+	if !dockerImageRegexp.MatchString(container.Image) && !docker.ReferenceRegexp.MatchString(container.Image) {
+		r.logger.V(log.VWarn).Info("Invalid image")
+		return false
+	}
+
+	if container.ImagePullPolicy == "" {
+		logger.V(log.VWarn).Info("Image pull policy not set")
+		return false
+	}
+
+	return true
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) validateJenkinsMasterPodEnvs() bool {

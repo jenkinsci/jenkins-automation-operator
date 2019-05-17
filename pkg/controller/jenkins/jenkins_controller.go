@@ -252,7 +252,7 @@ func (r *ReconcileJenkins) setDefaults(jenkins *v1alpha1.Jenkins, logger logr.Lo
 					Scheme: corev1.URISchemeHTTP,
 				},
 			},
-			InitialDelaySeconds: int32(30),
+			InitialDelaySeconds: int32(80),
 			TimeoutSeconds:      int32(5),
 			FailureThreshold:    int32(12),
 		}
@@ -276,12 +276,8 @@ func (r *ReconcileJenkins) setDefaults(jenkins *v1alpha1.Jenkins, logger logr.Lo
 		changed = true
 		jenkins.Spec.Master.Plugins = map[string][]string{"simple-theme-plugin:0.5.1": {}}
 	}
-	_, requestCPUSet := jenkins.Spec.Master.Resources.Requests[corev1.ResourceCPU]
-	_, requestMemporySet := jenkins.Spec.Master.Resources.Requests[corev1.ResourceMemory]
-	_, limitCPUSet := jenkins.Spec.Master.Resources.Limits[corev1.ResourceCPU]
-	_, limitMemporySet := jenkins.Spec.Master.Resources.Limits[corev1.ResourceMemory]
-	if !limitCPUSet || !limitMemporySet || !requestCPUSet || !requestMemporySet {
-		logger.Info("Setting default Jenkins master pod resource requirements")
+	if isResourceRequirementsNotSet(jenkins.Spec.Master.Resources) {
+		logger.Info("Setting default Jenkins master container resource requirements")
 		changed = true
 		jenkins.Spec.Master.Resources = corev1.ResourceRequirements{
 			Requests: corev1.ResourceList{
@@ -318,9 +314,49 @@ func (r *ReconcileJenkins) setDefaults(jenkins *v1alpha1.Jenkins, logger logr.Lo
 			Port: constants.DefaultSlavePortInt32,
 		}
 	}
+	for i, container := range jenkins.Spec.Master.Containers {
+		if setDefaultsForContainer(jenkins, i, logger.WithValues("container", container.Name)) {
+			changed = true
+		}
+	}
 
 	if changed {
 		return errors.WithStack(r.client.Update(context.TODO(), jenkins))
 	}
 	return nil
+}
+
+func setDefaultsForContainer(jenkins *v1alpha1.Jenkins, containerIndex int, logger logr.Logger) bool {
+	changed := false
+
+	if len(jenkins.Spec.Master.Containers[containerIndex].ImagePullPolicy) == 0 {
+		logger.Info(fmt.Sprintf("Setting default container image pull policy: %s", corev1.PullAlways))
+		changed = true
+		jenkins.Spec.Master.Containers[containerIndex].ImagePullPolicy = corev1.PullAlways
+	}
+	if isResourceRequirementsNotSet(jenkins.Spec.Master.Containers[containerIndex].Resources) {
+		logger.Info("Setting default container resource requirements")
+		changed = true
+		jenkins.Spec.Master.Containers[containerIndex].Resources = corev1.ResourceRequirements{
+			Requests: corev1.ResourceList{
+				corev1.ResourceCPU:    resource.MustParse("50m"),
+				corev1.ResourceMemory: resource.MustParse("50Mi"),
+			},
+			Limits: corev1.ResourceList{
+				corev1.ResourceCPU:    resource.MustParse("100m"),
+				corev1.ResourceMemory: resource.MustParse("100Mi"),
+			},
+		}
+	}
+
+	return changed
+}
+
+func isResourceRequirementsNotSet(requirements corev1.ResourceRequirements) bool {
+	_, requestCPUSet := requirements.Requests[corev1.ResourceCPU]
+	_, requestMemporySet := requirements.Requests[corev1.ResourceMemory]
+	_, limitCPUSet := requirements.Limits[corev1.ResourceCPU]
+	_, limitMemorySet := requirements.Limits[corev1.ResourceMemory]
+
+	return !limitCPUSet || !limitMemorySet || !requestCPUSet || !requestMemporySet
 }

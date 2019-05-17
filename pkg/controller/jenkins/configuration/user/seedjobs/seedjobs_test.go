@@ -119,16 +119,18 @@ func jenkinsCustomResource() *v1alpha1.Jenkins {
 		},
 		Spec: v1alpha1.JenkinsSpec{
 			Master: v1alpha1.JenkinsMaster{
-				Image:       "jenkins/jenkins",
 				Annotations: map[string]string{"test": "label"},
-				Resources: corev1.ResourceRequirements{
-					Requests: corev1.ResourceList{
-						corev1.ResourceCPU:    resource.MustParse("300m"),
-						corev1.ResourceMemory: resource.MustParse("500Mi"),
-					},
-					Limits: corev1.ResourceList{
-						corev1.ResourceCPU:    resource.MustParse("2"),
-						corev1.ResourceMemory: resource.MustParse("2Gi"),
+				Container: v1alpha1.Container{
+					Image: "jenkins/jenkins",
+					Resources: corev1.ResourceRequirements{
+						Requests: corev1.ResourceList{
+							corev1.ResourceCPU:    resource.MustParse("300m"),
+							corev1.ResourceMemory: resource.MustParse("500Mi"),
+						},
+						Limits: corev1.ResourceList{
+							corev1.ResourceCPU:    resource.MustParse("2"),
+							corev1.ResourceMemory: resource.MustParse("2Gi"),
+						},
 					},
 				},
 			},

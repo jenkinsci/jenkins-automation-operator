@@ -18,17 +18,35 @@ type JenkinsSpec struct {
 	SlaveService Service       `json:"slaveService,omitempty"`
 }
 
+// Container defines Kubernetes container attributes
+type Container struct {
+	Name            string                      `json:"name"`
+	Image           string                      `json:"image"`
+	Command         []string                    `json:"command,omitempty"`
+	Args            []string                    `json:"args,omitempty"`
+	WorkingDir      string                      `json:"workingDir,omitempty"`
+	Ports           []corev1.ContainerPort      `json:"ports,omitempty"`
+	EnvFrom         []corev1.EnvFromSource      `json:"envFrom,omitempty"`
+	Env             []corev1.EnvVar             `json:"env,omitempty"`
+	Resources       corev1.ResourceRequirements `json:"resources,omitempty"`
+	VolumeMounts    []corev1.VolumeMount        `json:"volumeMounts,omitempty"`
+	LivenessProbe   *corev1.Probe               `json:"livenessProbe,omitempty"`
+	ReadinessProbe  *corev1.Probe               `json:"readinessProbe,omitempty"`
+	Lifecycle       *corev1.Lifecycle           `json:"lifecycle,omitempty"`
+	ImagePullPolicy corev1.PullPolicy           `json:"imagePullPolicy,omitempty"`
+	SecurityContext *corev1.SecurityContext     `json:"securityContext,omitempty"`
+}
+
 // JenkinsMaster defines the Jenkins master pod attributes and plugins,
 // every single change requires Jenkins master pod restart
 type JenkinsMaster struct {
-	Image           string                      `json:"image,omitempty"`
-	ImagePullPolicy corev1.PullPolicy           `json:"imagePullPolicy,omitempty"`
-	NodeSelector    map[string]string           `json:"nodeSelector,omitempty"`
-	Annotations     map[string]string           `json:"masterAnnotations,omitempty"`
-	Resources       corev1.ResourceRequirements `json:"resources,omitempty"`
-	Env             []corev1.EnvVar             `json:"env,omitempty"`
-	LivenessProbe   *corev1.Probe               `json:"livenessProbe,omitempty"`
-	ReadinessProbe  *corev1.Probe               `json:"readinessProbe,omitempty"`
+	Container
+
+	// pod properties
+	Annotations  map[string]string `json:"masterAnnotations,omitempty"`
+	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
+	Containers   []Container       `json:"containers,omitempty"`
+
 	// OperatorPlugins contains plugins required by operator
 	OperatorPlugins map[string][]string `json:"basePlugins,omitempty"`
 	// Plugins contains plugins required by user

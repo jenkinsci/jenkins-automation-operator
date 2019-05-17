@@ -73,43 +73,51 @@ func createJenkinsCR(t *testing.T, name, namespace string, seedJob *[]v1alpha1.S
 		},
 		Spec: v1alpha1.JenkinsSpec{
 			Master: v1alpha1.JenkinsMaster{
-				Image:       "jenkins/jenkins",
 				Annotations: map[string]string{"test": "label"},
+				Container: v1alpha1.Container{
+					Image: "jenkins/jenkins",
+					Env: []v1.EnvVar{
+						{
+							Name:  "TEST_ENV",
+							Value: "test_env_value",
+						},
+					},
+					ReadinessProbe: &corev1.Probe{
+						Handler: corev1.Handler{
+							HTTPGet: &corev1.HTTPGetAction{
+								Path:   "/login",
+								Port:   intstr.FromString("http"),
+								Scheme: corev1.URISchemeHTTP,
+							},
+						},
+						InitialDelaySeconds: int32(80),
+						TimeoutSeconds:      int32(4),
+						FailureThreshold:    int32(10),
+					},
+					LivenessProbe: &corev1.Probe{
+						Handler: corev1.Handler{
+							HTTPGet: &corev1.HTTPGetAction{
+								Path:   "/login",
+								Port:   intstr.FromString("http"),
+								Scheme: corev1.URISchemeHTTP,
+							},
+						},
+						InitialDelaySeconds: int32(80),
+						TimeoutSeconds:      int32(4),
+						FailureThreshold:    int32(10),
+					},
+				},
+				Containers: []v1alpha1.Container{
+					{
+						Name:  "envoyproxy",
+						Image: "envoyproxy/envoy-alpine",
+					},
+				},
 				Plugins: map[string][]string{
 					"audit-trail:2.4":           {},
 					"simple-theme-plugin:0.5.1": {},
 				},
 				NodeSelector: map[string]string{"kubernetes.io/hostname": "minikube"},
-				Env: []v1.EnvVar{
-					{
-						Name:  "TEST_ENV",
-						Value: "test_env_value",
-					},
-				},
-				ReadinessProbe: &corev1.Probe{
-					Handler: corev1.Handler{
-						HTTPGet: &corev1.HTTPGetAction{
-							Path:   "/login",
-							Port:   intstr.FromString("http"),
-							Scheme: corev1.URISchemeHTTP,
-						},
-					},
-					InitialDelaySeconds: int32(35),
-					TimeoutSeconds:      int32(4),
-					FailureThreshold:    int32(10),
-				},
-				LivenessProbe: &corev1.Probe{
-					Handler: corev1.Handler{
-						HTTPGet: &corev1.HTTPGetAction{
-							Path:   "/login",
-							Port:   intstr.FromString("http"),
-							Scheme: corev1.URISchemeHTTP,
-						},
-					},
-					InitialDelaySeconds: int32(40),
-					TimeoutSeconds:      int32(4),
-					FailureThreshold:    int32(10),
-				},
 			},
 			SeedJobs: seedJobs,
 		},

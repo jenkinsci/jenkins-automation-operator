@@ -373,7 +373,7 @@ func isPodTerminating(pod corev1.Pod) bool {
 
 func (r *ReconcileJenkinsBaseConfiguration) isRecreatePodNeeded(currentJenkinsMasterPod corev1.Pod) bool {
 	if version.Version != r.jenkins.Status.OperatorVersion {
-		r.logger.Info(fmt.Sprintf("Jenkins Operator version has changed, actual '%+v' new '%+v' - recreating pod",
+		r.logger.Info(fmt.Sprintf("Jenkins Operator version has changed, actual '%+v' new '%+v', recreating pod",
 			r.jenkins.Status.OperatorVersion, version.Version))
 		return true
 	}
@@ -385,13 +385,9 @@ func (r *ReconcileJenkinsBaseConfiguration) isRecreatePodNeeded(currentJenkinsMa
 		return true
 	}
 
-	if r.jenkins.Spec.Master.Image != currentJenkinsMasterPod.Spec.Containers[0].Image {
-		r.logger.Info(fmt.Sprintf("Jenkins image has changed to '%+v', recreating pod", r.jenkins.Spec.Master.Image))
-		return true
-	}
-
-	if r.jenkins.Spec.Master.ImagePullPolicy != currentJenkinsMasterPod.Spec.Containers[0].ImagePullPolicy {
-		r.logger.Info(fmt.Sprintf("Jenkins image pull policy has changed to '%+v', recreating pod", r.jenkins.Spec.Master.ImagePullPolicy))
+	if !reflect.DeepEqual(r.jenkins.Spec.Master.NodeSelector, currentJenkinsMasterPod.Spec.NodeSelector) {
+		r.logger.Info(fmt.Sprintf("Jenkins pod node selector has changed, actual '%+v' required '%+v', recreating pod",
+			currentJenkinsMasterPod.Spec.NodeSelector, r.jenkins.Spec.Master.NodeSelector))
 		return true
 	}
 
@@ -401,47 +397,119 @@ func (r *ReconcileJenkinsBaseConfiguration) isRecreatePodNeeded(currentJenkinsMa
 		return true
 	}
 
-	if !reflect.DeepEqual(r.jenkins.Spec.Master.Resources, currentJenkinsMasterPod.Spec.Containers[0].Resources) {
-		r.logger.Info(fmt.Sprintf("Jenkins pod resources have changed, actual '%+v' required '%+v' - recreating pod",
-			currentJenkinsMasterPod.Spec.Containers[0].Resources, r.jenkins.Spec.Master.Resources))
+	if (len(r.jenkins.Spec.Master.Containers) + 1) != len(currentJenkinsMasterPod.Spec.Containers) {
+		r.logger.Info(fmt.Sprintf("Jenkins amount of containers has changed to '%+v', recreating pod", len(r.jenkins.Spec.Master.Containers)+1))
 		return true
 	}
 
-	if !reflect.DeepEqual(r.jenkins.Spec.Master.ReadinessProbe, currentJenkinsMasterPod.Spec.Containers[0].ReadinessProbe) {
-		r.logger.Info(fmt.Sprintf("Jenkins pod readinessProbe have changed, actual '%+v' required '%+v' - recreating pod",
-			currentJenkinsMasterPod.Spec.Containers[0].ReadinessProbe, r.jenkins.Spec.Master.ReadinessProbe))
-		return true
+	for _, actualContainer := range currentJenkinsMasterPod.Spec.Containers {
+		if actualContainer.Name == resources.JenkinsMasterContainerName {
+			if changed := r.compareContainers(resources.NewJenkinsMasterContainer(r.jenkins), actualContainer); changed {
+				return true
+			}
+			continue
+		}
+
+		var expectedContainer *corev1.Container
+		for _, jenkinsContainer := range r.jenkins.Spec.Master.Containers {
+			if jenkinsContainer.Name == actualContainer.Name {
+				tmp := resources.ConvertJenkinsContainerToKubernetesContainer(jenkinsContainer)
+				expectedContainer = &tmp
+			}
+		}
+
+		if expectedContainer == nil {
+			r.logger.Info(fmt.Sprintf("Container '%+v' not found in pod, recreating pod", actualContainer))
+			return true
+		}
+
+		if changed := r.compareContainers(*expectedContainer, actualContainer); changed {
+			return true
+		}
 	}
 
-	if !reflect.DeepEqual(r.jenkins.Spec.Master.LivenessProbe, currentJenkinsMasterPod.Spec.Containers[0].LivenessProbe) {
-		r.logger.Info(fmt.Sprintf("Jenkins pod livenessProbe have changed, actual '%+v' required '%+v' - recreating pod",
-			currentJenkinsMasterPod.Spec.Containers[0].LivenessProbe, r.jenkins.Spec.Master.LivenessProbe))
+	return false
+}
+
+func (r *ReconcileJenkinsBaseConfiguration) compareContainers(expected corev1.Container, actual corev1.Container) bool {
+	if !reflect.DeepEqual(expected.Args, actual.Args) {
+		r.logger.Info(fmt.Sprintf("Arguments have changed to '%+v' in container '%s', recreating pod", expected.Args, expected.Name))
 		return true
 	}
-
-	if !reflect.DeepEqual(r.jenkins.Spec.Master.NodeSelector, currentJenkinsMasterPod.Spec.NodeSelector) {
-		r.logger.Info(fmt.Sprintf("Jenkins pod node selector has changed, actual '%+v' required '%+v' - recreating pod",
-			currentJenkinsMasterPod.Spec.NodeSelector, r.jenkins.Spec.Master.NodeSelector))
+	if !reflect.DeepEqual(expected.Command, actual.Command) {
+		r.logger.Info(fmt.Sprintf("Command has changed to '%+v' in container '%s', recreating pod", expected.Command, expected.Name))
 		return true
 	}
-
-	requiredEnvs := resources.GetJenkinsMasterPodBaseEnvs()
-	requiredEnvs = append(requiredEnvs, r.jenkins.Spec.Master.Env...)
-	if !reflect.DeepEqual(requiredEnvs, currentJenkinsMasterPod.Spec.Containers[0].Env) {
-		r.logger.Info(fmt.Sprintf("Jenkins env have changed, actual '%+v' required '%+v' - recreating pod",
-			currentJenkinsMasterPod.Spec.Containers[0].Env, requiredEnvs))
+	if !reflect.DeepEqual(expected.Env, actual.Env) {
+		r.logger.Info(fmt.Sprintf("Env has changed to '%+v' in container '%s', recreating pod", expected.Env, expected.Name))
+		return true
+	}
+	if !reflect.DeepEqual(expected.EnvFrom, actual.EnvFrom) {
+		r.logger.Info(fmt.Sprintf("EnvFrom has changed to '%+v' in container '%s', recreating pod", expected.EnvFrom, expected.Name))
+		return true
+	}
+	if !reflect.DeepEqual(expected.Image, actual.Image) {
+		r.logger.Info(fmt.Sprintf("Image has changed to '%+v' in container '%s', recreating pod", expected.Image, expected.Name))
+		return true
+	}
+	if !reflect.DeepEqual(expected.ImagePullPolicy, actual.ImagePullPolicy) {
+		r.logger.Info(fmt.Sprintf("Image pull policy has changed to '%+v' in container '%s', recreating pod", expected.ImagePullPolicy, expected.Name))
+		return true
+	}
+	if !reflect.DeepEqual(expected.Lifecycle, actual.Lifecycle) {
+		r.logger.Info(fmt.Sprintf("Lifecycle has changed to '%+v' in container '%s', recreating pod", expected.Lifecycle, expected.Name))
+		return true
+	}
+	if !reflect.DeepEqual(expected.LivenessProbe, actual.LivenessProbe) {
+		r.logger.Info(fmt.Sprintf("Liveness probe has changed to '%+v' in container '%s', recreating pod", expected.LivenessProbe, expected.Name))
+		return true
+	}
+	if !reflect.DeepEqual(expected.Ports, actual.Ports) {
+		r.logger.Info(fmt.Sprintf("Ports have changed to '%+v' in container '%s', recreating pod", expected.Ports, expected.Name))
+		return true
+	}
+	if !reflect.DeepEqual(expected.ReadinessProbe, actual.ReadinessProbe) {
+		r.logger.Info(fmt.Sprintf("Readiness probe has changed to '%+v' in container '%s', recreating pod", expected.ReadinessProbe, expected.Name))
+		return true
+	}
+	if !reflect.DeepEqual(expected.Resources, actual.Resources) {
+		r.logger.Info(fmt.Sprintf("Resources have changed to '%+v' in container '%s', recreating pod", expected.Resources, expected.Name))
+		return true
+	}
+	if !reflect.DeepEqual(expected.SecurityContext, actual.SecurityContext) {
+		r.logger.Info(fmt.Sprintf("Security context has changed to '%+v' in container '%s', recreating pod", expected.SecurityContext, expected.Name))
+		return true
+	}
+	if !reflect.DeepEqual(expected.WorkingDir, actual.WorkingDir) {
+		r.logger.Info(fmt.Sprintf("Working directory has changed to '%+v' in container '%s', recreating pod", expected.WorkingDir, expected.Name))
+		return true
+	}
+	if !CompareContainerVolumeMounts(expected, actual) {
+		r.logger.Info(fmt.Sprintf("Volume mounts has changed to '%+v' in container '%s', recreating pod", expected.VolumeMounts, expected.Name))
 		return true
 	}
 
 	return false
 }
 
+// CompareContainerVolumeMounts returns true if two containers volume mounts are the same
+func CompareContainerVolumeMounts(expected corev1.Container, actual corev1.Container) bool {
+	var withoutServiceAccount []corev1.VolumeMount
+	for _, volumeMount := range actual.VolumeMounts {
+		if volumeMount.MountPath != "/var/run/secrets/kubernetes.io/serviceaccount" {
+			withoutServiceAccount = append(withoutServiceAccount, volumeMount)
+		}
+	}
+
+	return reflect.DeepEqual(expected.VolumeMounts, withoutServiceAccount)
+}
+
 func (r *ReconcileJenkinsBaseConfiguration) restartJenkinsMasterPod(meta metav1.ObjectMeta) error {
 	currentJenkinsMasterPod, err := r.getJenkinsMasterPod(meta)
-	r.logger.Info(fmt.Sprintf("Terminating Jenkins Master Pod %s/%s", currentJenkinsMasterPod.Namespace, currentJenkinsMasterPod.Name))
 	if err != nil {
 		return err
 	}
+	r.logger.Info(fmt.Sprintf("Terminating Jenkins Master Pod %s/%s", currentJenkinsMasterPod.Namespace, currentJenkinsMasterPod.Name))
 	return stackerr.WithStack(r.k8sClient.Delete(context.TODO(), currentJenkinsMasterPod))
 }
 
@@ -461,11 +529,20 @@ func (r *ReconcileJenkinsBaseConfiguration) waitForJenkins(meta metav1.ObjectMet
 		return reconcile.Result{Requeue: true, RequeueAfter: time.Second * 5}, nil
 	}
 
+	containersReadyCount := 0
 	for _, containerStatus := range jenkinsMasterPodStatus.Status.ContainerStatuses {
-		if !containerStatus.Ready {
-			r.logger.V(log.VDebug).Info("Jenkins master pod not ready, readiness probe failed")
-			return reconcile.Result{Requeue: true, RequeueAfter: time.Second * 5}, nil
+		if containerStatus.State.Terminated != nil {
+			r.logger.Info(fmt.Sprintf("Container '%s' is terminated, status '%+v', recreating pod", containerStatus.Name, containerStatus))
+			return reconcile.Result{Requeue: true}, r.restartJenkinsMasterPod(meta)
 		}
+		if !containerStatus.Ready {
+			r.logger.V(log.VDebug).Info(fmt.Sprintf("Container '%s' not ready, readiness probe failed", containerStatus.Name))
+		} else {
+			containersReadyCount++
+		}
+	}
+	if containersReadyCount != len(jenkinsMasterPodStatus.Status.ContainerStatuses) {
+		return reconcile.Result{Requeue: true, RequeueAfter: time.Second * 5}, nil
 	}
 
 	return reconcile.Result{}, nil

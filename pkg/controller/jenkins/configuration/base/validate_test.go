@@ -74,10 +74,12 @@ func TestValidateJenkinsMasterPodEnvs(t *testing.T) {
 		jenkins := v1alpha1.Jenkins{
 			Spec: v1alpha1.JenkinsSpec{
 				Master: v1alpha1.JenkinsMaster{
-					Env: []v1.EnvVar{
-						{
-							Name:  "SOME_VALUE",
-							Value: "",
+					Container: v1alpha1.Container{
+						Env: []v1.EnvVar{
+							{
+								Name:  "SOME_VALUE",
+								Value: "",
+							},
 						},
 					},
 				},
@@ -92,10 +94,12 @@ func TestValidateJenkinsMasterPodEnvs(t *testing.T) {
 		jenkins := v1alpha1.Jenkins{
 			Spec: v1alpha1.JenkinsSpec{
 				Master: v1alpha1.JenkinsMaster{
-					Env: []v1.EnvVar{
-						{
-							Name:  "JENKINS_HOME",
-							Value: "",
+					Container: v1alpha1.Container{
+						Env: []v1.EnvVar{
+							{
+								Name:  "JENKINS_HOME",
+								Value: "",
+							},
 						},
 					},
 				},

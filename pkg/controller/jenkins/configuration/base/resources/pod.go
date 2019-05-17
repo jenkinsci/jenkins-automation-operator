@@ -11,9 +11,11 @@ import (
 )
 
 const (
-	jenkinsHomeVolumeName = "home"
-	jenkinsPath           = "/var/jenkins"
-	jenkinsHomePath       = jenkinsPath + "/home"
+	// JenkinsMasterContainerName is the Jenkins master container name in pod
+	JenkinsMasterContainerName = "jenkins-master"
+	jenkinsHomeVolumeName      = "home"
+	jenkinsPath                = "/var/jenkins"
+	jenkinsHomePath            = jenkinsPath + "/home"
 
 	jenkinsScriptsVolumeName = "scripts"
 	jenkinsScriptsVolumePath = jenkinsPath + "/scripts"
@@ -72,13 +74,111 @@ func GetJenkinsMasterPodBaseEnvs() []corev1.EnvVar {
 	}
 }
 
+// NewJenkinsMasterContainer returns Jenkins master Kubernetes container
+func NewJenkinsMasterContainer(jenkins *v1alpha1.Jenkins) corev1.Container {
+	envs := GetJenkinsMasterPodBaseEnvs()
+	envs = append(envs, jenkins.Spec.Master.Env...)
+
+	return corev1.Container{
+		Name:            JenkinsMasterContainerName,
+		Image:           jenkins.Spec.Master.Image,
+		ImagePullPolicy: jenkins.Spec.Master.ImagePullPolicy,
+		Command: []string{
+			"bash",
+			fmt.Sprintf("%s/%s", jenkinsScriptsVolumePath, initScriptName),
+		},
+		LivenessProbe:  jenkins.Spec.Master.LivenessProbe,
+		ReadinessProbe: jenkins.Spec.Master.ReadinessProbe,
+		Ports: []corev1.ContainerPort{
+			{
+				Name:          httpPortName,
+				ContainerPort: constants.DefaultHTTPPortInt32,
+				Protocol:      corev1.ProtocolTCP,
+			},
+			{
+				Name:          slavePortName,
+				ContainerPort: constants.DefaultSlavePortInt32,
+				Protocol:      corev1.ProtocolTCP,
+			},
+		},
+		Env:       envs,
+		Resources: jenkins.Spec.Master.Resources,
+		VolumeMounts: []corev1.VolumeMount{
+			{
+				Name:      jenkinsHomeVolumeName,
+				MountPath: jenkinsHomePath,
+				ReadOnly:  false,
+			},
+			{
+				Name:      jenkinsScriptsVolumeName,
+				MountPath: jenkinsScriptsVolumePath,
+				ReadOnly:  true,
+			},
+			{
+				Name:      jenkinsInitConfigurationVolumeName,
+				MountPath: jenkinsInitConfigurationVolumePath,
+				ReadOnly:  true,
+			},
+			{
+				Name:      jenkinsBaseConfigurationVolumeName,
+				MountPath: JenkinsBaseConfigurationVolumePath,
+				ReadOnly:  true,
+			},
+			{
+				Name:      jenkinsUserConfigurationVolumeName,
+				MountPath: JenkinsUserConfigurationVolumePath,
+				ReadOnly:  true,
+			},
+			{
+				Name:      jenkinsOperatorCredentialsVolumeName,
+				MountPath: jenkinsOperatorCredentialsVolumePath,
+				ReadOnly:  true,
+			},
+			{
+				Name:      userConfigurationSecretVolumeName,
+				MountPath: UserConfigurationSecretVolumePath,
+				ReadOnly:  true,
+			},
+		},
+	}
+}
+
+// ConvertJenkinsContainerToKubernetesContainer converts Jenkins container to Kubernetes container
+func ConvertJenkinsContainerToKubernetesContainer(container v1alpha1.Container) corev1.Container {
+	return corev1.Container{
+		Name:            container.Name,
+		Image:           container.Image,
+		Command:         container.Command,
+		Args:            container.Args,
+		WorkingDir:      container.WorkingDir,
+		Ports:           container.Ports,
+		EnvFrom:         container.EnvFrom,
+		Env:             container.Env,
+		Resources:       container.Resources,
+		VolumeMounts:    container.VolumeMounts,
+		LivenessProbe:   container.LivenessProbe,
+		ReadinessProbe:  container.ReadinessProbe,
+		Lifecycle:       container.Lifecycle,
+		ImagePullPolicy: container.ImagePullPolicy,
+		SecurityContext: container.SecurityContext,
+	}
+}
+
+func newContainers(jenkins *v1alpha1.Jenkins) (containers []corev1.Container) {
+	containers = append(containers, NewJenkinsMasterContainer(jenkins))
+
+	for _, container := range jenkins.Spec.Master.Containers {
+		containers = append(containers, ConvertJenkinsContainerToKubernetesContainer(container))
+	}
+
+	return
+}
+
 // NewJenkinsMasterPod builds Jenkins Master Kubernetes Pod resource
 func NewJenkinsMasterPod(objectMeta metav1.ObjectMeta, jenkins *v1alpha1.Jenkins) *corev1.Pod {
 	runAsUser := jenkinsUserUID
 
 	objectMeta.Annotations = jenkins.Spec.Master.Annotations
-	envs := GetJenkinsMasterPodBaseEnvs()
-	envs = append(envs, jenkins.Spec.Master.Env...)
 
 	return &corev1.Pod{
 		TypeMeta:   buildPodTypeMeta(),
@@ -91,68 +191,7 @@ func NewJenkinsMasterPod(objectMeta metav1.ObjectMeta, jenkins *v1alpha1.Jenkins
 				RunAsGroup: &runAsUser,
 			},
 			NodeSelector: jenkins.Spec.Master.NodeSelector,
-			Containers: []corev1.Container{
-				{
-					Name:            "jenkins-master",
-					Image:           jenkins.Spec.Master.Image,
-					ImagePullPolicy: jenkins.Spec.Master.ImagePullPolicy,
-					Command: []string{
-						"bash",
-						fmt.Sprintf("%s/%s", jenkinsScriptsVolumePath, initScriptName),
-					},
-					LivenessProbe:  jenkins.Spec.Master.LivenessProbe,
-					ReadinessProbe: jenkins.Spec.Master.ReadinessProbe,
-					Ports: []corev1.ContainerPort{
-						{
-							Name:          httpPortName,
-							ContainerPort: constants.DefaultHTTPPortInt32,
-						},
-						{
-							Name:          slavePortName,
-							ContainerPort: constants.DefaultSlavePortInt32,
-						},
-					},
-					Env:       envs,
-					Resources: jenkins.Spec.Master.Resources,
-					VolumeMounts: []corev1.VolumeMount{
-						{
-							Name:      jenkinsHomeVolumeName,
-							MountPath: jenkinsHomePath,
-							ReadOnly:  false,
-						},
-						{
-							Name:      jenkinsScriptsVolumeName,
-							MountPath: jenkinsScriptsVolumePath,
-							ReadOnly:  true,
-						},
-						{
-							Name:      jenkinsInitConfigurationVolumeName,
-							MountPath: jenkinsInitConfigurationVolumePath,
-							ReadOnly:  true,
-						},
-						{
-							Name:      jenkinsBaseConfigurationVolumeName,
-							MountPath: JenkinsBaseConfigurationVolumePath,
-							ReadOnly:  true,
-						},
-						{
-							Name:      jenkinsUserConfigurationVolumeName,
-							MountPath: JenkinsUserConfigurationVolumePath,
-							ReadOnly:  true,
-						},
-						{
-							Name:      jenkinsOperatorCredentialsVolumeName,
-							MountPath: jenkinsOperatorCredentialsVolumePath,
-							ReadOnly:  true,
-						},
-						{
-							Name:      userConfigurationSecretVolumeName,
-							MountPath: UserConfigurationSecretVolumePath,
-							ReadOnly:  true,
-						},
-					},
-				},
-			},
+			Containers:   newContainers(jenkins),
 			Volumes: []corev1.Volume{
 				{
 					Name: jenkinsHomeVolumeName,
