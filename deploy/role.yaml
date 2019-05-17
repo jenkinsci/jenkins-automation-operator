@@ -64,3 +64,9 @@ rules:
       - pods/exec
     verbs:
       - "*"
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
