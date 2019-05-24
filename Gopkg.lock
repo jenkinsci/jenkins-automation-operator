@@ -418,7 +418,10 @@
 [[projects]]
   digest = "1:4af061277c04a7660e082acc2020f4c66d2c21dfc62e0242ffa1d2120cdfb4ec"
   name = "github.com/stretchr/testify"
-  packages = ["assert"]
+  packages = [
+    "assert",
+    "require",
+  ]
   pruneopts = "NT"
   revision = "f35b8ab0b5a2cef36673838d662e249dd9c94686"
   version = "v1.2.2"
@@ -864,6 +867,7 @@
     "github.com/bndr/gojenkins",
     "github.com/docker/distribution/reference",
     "github.com/go-logr/logr",
+    "github.com/go-logr/zapr",
     "github.com/golang/mock/gomock",
     "github.com/operator-framework/operator-sdk/pkg/k8sutil",
     "github.com/operator-framework/operator-sdk/pkg/leader",
@@ -873,6 +877,8 @@
     "github.com/operator-framework/operator-sdk/version",
     "github.com/pkg/errors",
     "github.com/stretchr/testify/assert",
+    "github.com/stretchr/testify/require",
+    "go.uber.org/zap",
     "k8s.io/api/core/v1",
     "k8s.io/api/rbac/v1",
     "k8s.io/apimachinery/pkg/api/errors",
