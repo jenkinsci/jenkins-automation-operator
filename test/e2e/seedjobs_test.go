@@ -51,7 +51,7 @@ func TestSeedJobs(t *testing.T) {
 		createKubernetesCredentialsProviderSecret(t, namespace, seedJobConfig)
 		seedJobs = append(seedJobs, seedJobConfig.SeedJob)
 	}
-	jenkins := createJenkinsCR(t, jenkinsCRName, namespace, &seedJobs)
+	jenkins := createJenkinsCR(t, jenkinsCRName, namespace, &seedJobs, []corev1.Volume{})
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
 
 	verifyJenkinsMasterPodAttributes(t, jenkins)

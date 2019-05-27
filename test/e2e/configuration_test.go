@@ -40,11 +40,31 @@ func TestConfiguration(t *testing.T) {
 			RepositoryURL:         "https://github.com/jenkinsci/kubernetes-operator.git",
 		},
 	}
+	volumes := []corev1.Volume{
+		{
+			Name: "test-configmap",
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: resources.GetUserConfigurationConfigMapName(jenkinsCRName),
+					},
+				},
+			},
+		},
+		{
+			Name: "test-secret",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: resources.GetUserConfigurationSecretName(jenkinsCRName),
+				},
+			},
+		},
+	}
 
 	// base
 	createUserConfigurationSecret(t, jenkinsCRName, namespace, systemMessageEnvName, systemMessage)
 	createUserConfigurationConfigMap(t, jenkinsCRName, namespace, numberOfExecutors, fmt.Sprintf("${%s}", systemMessageEnvName))
-	jenkins := createJenkinsCR(t, jenkinsCRName, namespace, &[]v1alpha1.SeedJob{mySeedJob.SeedJob})
+	jenkins := createJenkinsCR(t, jenkinsCRName, namespace, &[]v1alpha1.SeedJob{mySeedJob.SeedJob}, volumes)
 	createDefaultLimitsForContainersInNamespace(t, namespace)
 	createKubernetesCredentialsProviderSecret(t, namespace, mySeedJob)
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
@@ -159,6 +179,20 @@ func verifyJenkinsMasterPodAttributes(t *testing.T, jenkins *v1alpha1.Jenkins) {
 		}
 
 		verifyContainer(t, *expectedContainer, actualContainer)
+	}
+
+	for _, expectedVolume := range jenkins.Spec.Master.Volumes {
+		volumeFound := false
+		for _, actualVolume := range jenkinsPod.Spec.Volumes {
+			if expectedVolume.Name == actualVolume.Name {
+				volumeFound = true
+				assert.Equal(t, expectedVolume, actualVolume)
+			}
+		}
+
+		if !volumeFound {
+			t.Errorf("Missing volume '+%v', actaul volumes '%+v'", expectedVolume, jenkinsPod.Spec.Volumes)
+		}
 	}
 
 	t.Log("Jenkins pod attributes are valid")

@@ -60,7 +60,7 @@ func createJenkinsAPIClient(jenkins *v1alpha1.Jenkins) (jenkinsclient.Jenkins, e
 	)
 }
 
-func createJenkinsCR(t *testing.T, name, namespace string, seedJob *[]v1alpha1.SeedJob) *v1alpha1.Jenkins {
+func createJenkinsCR(t *testing.T, name, namespace string, seedJob *[]v1alpha1.SeedJob, volumes []corev1.Volume) *v1alpha1.Jenkins {
 	var seedJobs []v1alpha1.SeedJob
 	if seedJob != nil {
 		seedJobs = append(seedJobs, *seedJob...)
@@ -118,6 +118,7 @@ func createJenkinsCR(t *testing.T, name, namespace string, seedJob *[]v1alpha1.S
 					"simple-theme-plugin:0.5.1": {},
 				},
 				NodeSelector: map[string]string{"kubernetes.io/hostname": "minikube"},
+				Volumes:      volumes,
 			},
 			SeedJobs: seedJobs,
 		},

@@ -53,6 +53,12 @@ eval $(minikube docker-env)
 make e2e
 ```
 
+Run the specific e2e test:
+
+```bash
+make e2e E2E_TEST_SELECTOR='^TestConfiguration$'
+```
+
 ## Tips & Tricks
 
 ### Building docker image on minikube (for e2e tests)

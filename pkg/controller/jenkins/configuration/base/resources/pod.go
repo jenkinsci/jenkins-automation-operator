@@ -13,9 +13,10 @@ import (
 const (
 	// JenkinsMasterContainerName is the Jenkins master container name in pod
 	JenkinsMasterContainerName = "jenkins-master"
-	jenkinsHomeVolumeName      = "home"
-	jenkinsPath                = "/var/jenkins"
-	jenkinsHomePath            = jenkinsPath + "/home"
+	// JenkinsHomeVolumeName is the Jenkins home volume name
+	JenkinsHomeVolumeName = "home"
+	jenkinsPath           = "/var/jenkins"
+	jenkinsHomePath       = jenkinsPath + "/home"
 
 	jenkinsScriptsVolumeName = "scripts"
 	jenkinsScriptsVolumePath = jenkinsPath + "/scripts"
@@ -74,6 +75,123 @@ func GetJenkinsMasterPodBaseEnvs() []corev1.EnvVar {
 	}
 }
 
+// GetJenkinsMasterPodBaseVolumes returns Jenkins master pod volumes required by operator
+func GetJenkinsMasterPodBaseVolumes(jenkins *v1alpha1.Jenkins) []corev1.Volume {
+	configMapVolumeSourceDefaultMode := corev1.ConfigMapVolumeSourceDefaultMode
+	secretVolumeSourceDefaultMode := corev1.SecretVolumeSourceDefaultMode
+	return []corev1.Volume{
+		{
+			Name: JenkinsHomeVolumeName,
+			VolumeSource: corev1.VolumeSource{
+				EmptyDir: &corev1.EmptyDirVolumeSource{},
+			},
+		},
+		{
+			Name: jenkinsScriptsVolumeName,
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					DefaultMode: &configMapVolumeSourceDefaultMode,
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: getScriptsConfigMapName(jenkins),
+					},
+				},
+			},
+		},
+		{
+			Name: jenkinsInitConfigurationVolumeName,
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					DefaultMode: &configMapVolumeSourceDefaultMode,
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: GetInitConfigurationConfigMapName(jenkins),
+					},
+				},
+			},
+		},
+		{
+			Name: jenkinsBaseConfigurationVolumeName,
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					DefaultMode: &configMapVolumeSourceDefaultMode,
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: GetBaseConfigurationConfigMapName(jenkins),
+					},
+				},
+			},
+		},
+		{
+			Name: jenkinsUserConfigurationVolumeName,
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					DefaultMode: &configMapVolumeSourceDefaultMode,
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: GetUserConfigurationConfigMapNameFromJenkins(jenkins),
+					},
+				},
+			},
+		},
+		{
+			Name: jenkinsOperatorCredentialsVolumeName,
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					DefaultMode: &secretVolumeSourceDefaultMode,
+					SecretName:  GetOperatorCredentialsSecretName(jenkins),
+				},
+			},
+		},
+		{
+			Name: userConfigurationSecretVolumeName,
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					DefaultMode: &secretVolumeSourceDefaultMode,
+					SecretName:  GetUserConfigurationSecretNameFromJenkins(jenkins),
+				},
+			},
+		},
+	}
+}
+
+// GetJenkinsMasterContainerBaseVolumeMounts returns Jenkins master pod volume mounts required by operator
+func GetJenkinsMasterContainerBaseVolumeMounts() []corev1.VolumeMount {
+	return []corev1.VolumeMount{
+		{
+			Name:      JenkinsHomeVolumeName,
+			MountPath: jenkinsHomePath,
+			ReadOnly:  false,
+		},
+		{
+			Name:      jenkinsScriptsVolumeName,
+			MountPath: jenkinsScriptsVolumePath,
+			ReadOnly:  true,
+		},
+		{
+			Name:      jenkinsInitConfigurationVolumeName,
+			MountPath: jenkinsInitConfigurationVolumePath,
+			ReadOnly:  true,
+		},
+		{
+			Name:      jenkinsBaseConfigurationVolumeName,
+			MountPath: JenkinsBaseConfigurationVolumePath,
+			ReadOnly:  true,
+		},
+		{
+			Name:      jenkinsUserConfigurationVolumeName,
+			MountPath: JenkinsUserConfigurationVolumePath,
+			ReadOnly:  true,
+		},
+		{
+			Name:      jenkinsOperatorCredentialsVolumeName,
+			MountPath: jenkinsOperatorCredentialsVolumePath,
+			ReadOnly:  true,
+		},
+		{
+			Name:      userConfigurationSecretVolumeName,
+			MountPath: UserConfigurationSecretVolumePath,
+			ReadOnly:  true,
+		},
+	}
+}
+
 // NewJenkinsMasterContainer returns Jenkins master Kubernetes container
 func NewJenkinsMasterContainer(jenkins *v1alpha1.Jenkins) corev1.Container {
 	envs := GetJenkinsMasterPodBaseEnvs()
@@ -101,45 +219,9 @@ func NewJenkinsMasterContainer(jenkins *v1alpha1.Jenkins) corev1.Container {
 				Protocol:      corev1.ProtocolTCP,
 			},
 		},
-		Env:       envs,
-		Resources: jenkins.Spec.Master.Resources,
-		VolumeMounts: []corev1.VolumeMount{
-			{
-				Name:      jenkinsHomeVolumeName,
-				MountPath: jenkinsHomePath,
-				ReadOnly:  false,
-			},
-			{
-				Name:      jenkinsScriptsVolumeName,
-				MountPath: jenkinsScriptsVolumePath,
-				ReadOnly:  true,
-			},
-			{
-				Name:      jenkinsInitConfigurationVolumeName,
-				MountPath: jenkinsInitConfigurationVolumePath,
-				ReadOnly:  true,
-			},
-			{
-				Name:      jenkinsBaseConfigurationVolumeName,
-				MountPath: JenkinsBaseConfigurationVolumePath,
-				ReadOnly:  true,
-			},
-			{
-				Name:      jenkinsUserConfigurationVolumeName,
-				MountPath: JenkinsUserConfigurationVolumePath,
-				ReadOnly:  true,
-			},
-			{
-				Name:      jenkinsOperatorCredentialsVolumeName,
-				MountPath: jenkinsOperatorCredentialsVolumePath,
-				ReadOnly:  true,
-			},
-			{
-				Name:      userConfigurationSecretVolumeName,
-				MountPath: UserConfigurationSecretVolumePath,
-				ReadOnly:  true,
-			},
-		},
+		Env:          envs,
+		Resources:    jenkins.Spec.Master.Resources,
+		VolumeMounts: append(GetJenkinsMasterContainerBaseVolumeMounts(), jenkins.Spec.Master.VolumeMounts...),
 	}
 }
 
@@ -192,70 +274,7 @@ func NewJenkinsMasterPod(objectMeta metav1.ObjectMeta, jenkins *v1alpha1.Jenkins
 			},
 			NodeSelector: jenkins.Spec.Master.NodeSelector,
 			Containers:   newContainers(jenkins),
-			Volumes: []corev1.Volume{
-				{
-					Name: jenkinsHomeVolumeName,
-					VolumeSource: corev1.VolumeSource{
-						EmptyDir: &corev1.EmptyDirVolumeSource{},
-					},
-				},
-				{
-					Name: jenkinsScriptsVolumeName,
-					VolumeSource: corev1.VolumeSource{
-						ConfigMap: &corev1.ConfigMapVolumeSource{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: getScriptsConfigMapName(jenkins),
-							},
-						},
-					},
-				},
-				{
-					Name: jenkinsInitConfigurationVolumeName,
-					VolumeSource: corev1.VolumeSource{
-						ConfigMap: &corev1.ConfigMapVolumeSource{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: GetInitConfigurationConfigMapName(jenkins),
-							},
-						},
-					},
-				},
-				{
-					Name: jenkinsBaseConfigurationVolumeName,
-					VolumeSource: corev1.VolumeSource{
-						ConfigMap: &corev1.ConfigMapVolumeSource{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: GetBaseConfigurationConfigMapName(jenkins),
-							},
-						},
-					},
-				},
-				{
-					Name: jenkinsUserConfigurationVolumeName,
-					VolumeSource: corev1.VolumeSource{
-						ConfigMap: &corev1.ConfigMapVolumeSource{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: GetUserConfigurationConfigMapNameFromJenkins(jenkins),
-							},
-						},
-					},
-				},
-				{
-					Name: jenkinsOperatorCredentialsVolumeName,
-					VolumeSource: corev1.VolumeSource{
-						Secret: &corev1.SecretVolumeSource{
-							SecretName: GetOperatorCredentialsSecretName(jenkins),
-						},
-					},
-				},
-				{
-					Name: userConfigurationSecretVolumeName,
-					VolumeSource: corev1.VolumeSource{
-						Secret: &corev1.SecretVolumeSource{
-							SecretName: GetUserConfigurationSecretNameFromJenkins(jenkins),
-						},
-					},
-				},
-			},
+			Volumes:      append(GetJenkinsMasterPodBaseVolumes(jenkins), jenkins.Spec.Master.Volumes...),
 		},
 	}
 }

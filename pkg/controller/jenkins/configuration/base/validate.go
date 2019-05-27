@@ -1,6 +1,7 @@
 package base
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 
@@ -10,6 +11,10 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
 
 	docker "github.com/docker/distribution/reference"
+	stackerr "github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 var (
@@ -18,6 +23,15 @@ var (
 
 // Validate validates Jenkins CR Spec.master section
 func (r *ReconcileJenkinsBaseConfiguration) Validate(jenkins *v1alpha1.Jenkins) (bool, error) {
+	if !r.validateReservedVolumes() {
+		return false, nil
+	}
+	if valid, err := r.validateVolumes(); err != nil {
+		return false, err
+	} else if !valid {
+		return false, nil
+	}
+
 	if !r.validateContainer(jenkins.Spec.Master.Container) {
 		return false, nil
 	}
@@ -39,6 +53,80 @@ func (r *ReconcileJenkinsBaseConfiguration) Validate(jenkins *v1alpha1.Jenkins) 
 	return true, nil
 }
 
+func (r *ReconcileJenkinsBaseConfiguration) validateVolumes() (bool, error) {
+	valid := true
+	for _, volume := range r.jenkins.Spec.Master.Volumes {
+		switch {
+		case volume.ConfigMap != nil:
+			if ok, err := r.validateConfigMapVolume(volume); err != nil {
+				return false, err
+			} else if !ok {
+				valid = false
+			}
+		case volume.Secret != nil:
+			if ok, err := r.validateSecretVolume(volume); err != nil {
+				return false, err
+			} else if !ok {
+				valid = false
+			}
+		default: //TODO add support for rest of volumes
+			valid = false
+			r.logger.V(log.VWarn).Info(fmt.Sprintf("Unsupported volume '%+v'", volume))
+		}
+	}
+
+	return valid, nil
+}
+
+func (r *ReconcileJenkinsBaseConfiguration) validateConfigMapVolume(volume corev1.Volume) (bool, error) {
+	if volume.ConfigMap.Optional != nil && *volume.ConfigMap.Optional {
+		return true, nil
+	}
+
+	configMap := &corev1.ConfigMap{}
+	err := r.k8sClient.Get(context.TODO(), types.NamespacedName{Name: volume.ConfigMap.Name, Namespace: r.jenkins.ObjectMeta.Namespace}, configMap)
+	if err != nil && apierrors.IsNotFound(err) {
+		r.logger.V(log.VWarn).Info(fmt.Sprintf("ConfigMap '%s' not found for volume '%+v'", volume.ConfigMap.Name, volume))
+		return false, nil
+	} else if err != nil && !apierrors.IsNotFound(err) {
+		return false, stackerr.WithStack(err)
+	}
+
+	return true, nil
+}
+
+func (r *ReconcileJenkinsBaseConfiguration) validateSecretVolume(volume corev1.Volume) (bool, error) {
+	if volume.Secret.Optional != nil && *volume.Secret.Optional {
+		return true, nil
+	}
+
+	secret := &corev1.Secret{}
+	err := r.k8sClient.Get(context.TODO(), types.NamespacedName{Name: volume.Secret.SecretName, Namespace: r.jenkins.ObjectMeta.Namespace}, secret)
+	if err != nil && apierrors.IsNotFound(err) {
+		r.logger.V(log.VWarn).Info(fmt.Sprintf("Secret '%s' not found for volume '%+v'", volume.Secret.SecretName, volume))
+		return false, nil
+	} else if err != nil && !apierrors.IsNotFound(err) {
+		return false, stackerr.WithStack(err)
+	}
+
+	return true, nil
+}
+
+func (r *ReconcileJenkinsBaseConfiguration) validateReservedVolumes() bool {
+	valid := true
+
+	for _, baseVolume := range resources.GetJenkinsMasterPodBaseVolumes(r.jenkins) {
+		for _, volume := range r.jenkins.Spec.Master.Volumes {
+			if baseVolume.Name == volume.Name {
+				r.logger.V(log.VWarn).Info(fmt.Sprintf("Jenkins Master pod volume '%s' is reserved please choose different one", volume.Name))
+				valid = false
+			}
+		}
+	}
+
+	return valid
+}
+
 func (r *ReconcileJenkinsBaseConfiguration) validateContainer(container v1alpha1.Container) bool {
 	logger := r.logger.WithValues("container", container.Name)
 	if container.Image == "" {
@@ -47,7 +135,7 @@ func (r *ReconcileJenkinsBaseConfiguration) validateContainer(container v1alpha1
 	}
 
 	if !dockerImageRegexp.MatchString(container.Image) && !docker.ReferenceRegexp.MatchString(container.Image) {
-		r.logger.V(log.VWarn).Info("Invalid image")
+		logger.V(log.VWarn).Info("Invalid image")
 		return false
 	}
 
@@ -56,7 +144,38 @@ func (r *ReconcileJenkinsBaseConfiguration) validateContainer(container v1alpha1
 		return false
 	}
 
+	if !r.validateContainerVolumeMounts(container) {
+		return false
+	}
+
 	return true
+}
+
+func (r *ReconcileJenkinsBaseConfiguration) validateContainerVolumeMounts(container v1alpha1.Container) bool {
+	logger := r.logger.WithValues("container", container.Name)
+	allVolumes := append(resources.GetJenkinsMasterPodBaseVolumes(r.jenkins), r.jenkins.Spec.Master.Volumes...)
+	valid := true
+
+	for _, volumeMount := range container.VolumeMounts {
+		if len(volumeMount.MountPath) == 0 {
+			logger.V(log.VWarn).Info(fmt.Sprintf("mountPath not set for '%s' volume mount", volumeMount.Name))
+			valid = false
+		}
+
+		foundVolume := false
+		for _, volume := range allVolumes {
+			if volumeMount.Name == volume.Name {
+				foundVolume = true
+			}
+		}
+
+		if !foundVolume {
+			logger.V(log.VWarn).Info(fmt.Sprintf("Not found volume for '%s' volume mount", volumeMount.Name))
+			valid = false
+		}
+	}
+
+	return valid
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) validateJenkinsMasterPodEnvs() bool {

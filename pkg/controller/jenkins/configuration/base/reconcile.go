@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkinsio/v1alpha1"
@@ -378,6 +379,8 @@ func (r *ReconcileJenkinsBaseConfiguration) isRecreatePodNeeded(currentJenkinsMa
 		return true
 	}
 
+	//TODO check if image can't be pulled, volume can't be mounted etc. (get info from events)
+
 	if currentJenkinsMasterPod.Status.Phase == corev1.PodFailed ||
 		currentJenkinsMasterPod.Status.Phase == corev1.PodSucceeded ||
 		currentJenkinsMasterPod.Status.Phase == corev1.PodUnknown {
@@ -394,6 +397,12 @@ func (r *ReconcileJenkinsBaseConfiguration) isRecreatePodNeeded(currentJenkinsMa
 	if len(r.jenkins.Spec.Master.Annotations) > 0 &&
 		!reflect.DeepEqual(r.jenkins.Spec.Master.Annotations, currentJenkinsMasterPod.ObjectMeta.Annotations) {
 		r.logger.Info(fmt.Sprintf("Jenkins pod annotations have changed to '%+v', recreating pod", r.jenkins.Spec.Master.Annotations))
+		return true
+	}
+
+	if !r.compareVolumes(currentJenkinsMasterPod) {
+		r.logger.Info(fmt.Sprintf("Jenkins pod volumes have changed, actual '%+v' required '%+v', recreating pod",
+			currentJenkinsMasterPod.Spec.Volumes, r.jenkins.Spec.Master.Volumes))
 		return true
 	}
 
@@ -485,7 +494,7 @@ func (r *ReconcileJenkinsBaseConfiguration) compareContainers(expected corev1.Co
 		return true
 	}
 	if !CompareContainerVolumeMounts(expected, actual) {
-		r.logger.Info(fmt.Sprintf("Volume mounts has changed to '%+v' in container '%s', recreating pod", expected.VolumeMounts, expected.Name))
+		r.logger.Info(fmt.Sprintf("Volume mounts have changed to '%+v' in container '%s', recreating pod", expected.VolumeMounts, expected.Name))
 		return true
 	}
 
@@ -502,6 +511,21 @@ func CompareContainerVolumeMounts(expected corev1.Container, actual corev1.Conta
 	}
 
 	return reflect.DeepEqual(expected.VolumeMounts, withoutServiceAccount)
+}
+
+// compareVolumes returns true if Jenkins pod and Jenkins CR volumes are the same
+func (r *ReconcileJenkinsBaseConfiguration) compareVolumes(actualPod corev1.Pod) bool {
+	var withoutServiceAccount []corev1.Volume
+	for _, volume := range actualPod.Spec.Volumes {
+		if !strings.HasPrefix(volume.Name, actualPod.Spec.ServiceAccountName) {
+			withoutServiceAccount = append(withoutServiceAccount, volume)
+		}
+	}
+
+	return reflect.DeepEqual(
+		append(resources.GetJenkinsMasterPodBaseVolumes(r.jenkins), r.jenkins.Spec.Master.Volumes...),
+		withoutServiceAccount,
+	)
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) restartJenkinsMasterPod(meta metav1.ObjectMeta) error {
