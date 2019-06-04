@@ -5,6 +5,8 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/jenkinsci/kubernetes-operator "Go Report Card")](https://goreportcard.com/report/github.com/jenkinsci/kubernetes-operator)
 [![Docker Pulls](https://img.shields.io/docker/pulls/virtuslab/jenkins-operator.svg)](https://hub.docker.com/r/virtuslab/jenkins-operator/tags)
 
+![logo](/assets/jenkins_gopher_wide.png)
+
 ## What's Jenkins Operator?
 
 Jenkins operator is a Kubernetes native operator which fully manages Jenkins on Kubernetes.
