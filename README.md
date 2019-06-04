@@ -48,7 +48,7 @@ Feel free to file [issues](https://github.com/jenkinsci/kubernetes-operator/issu
 
 ## About the authors
 
-This project was originally developed by [VirtusLab](https://virtuslab.com/) and the following [CONTRIBUTORS](https://github.com/VirtusLab/jenkins-operator/graphs/contributors).
+This project was originally developed by [VirtusLab](https://virtuslab.com/) and the following [CONTRIBUTORS](https://github.com/jenkinsci/kubernetes-operator/graphs/contributors).
 
 [installation]:docs/installation.md
 [getting_started]:docs/getting-started.md
