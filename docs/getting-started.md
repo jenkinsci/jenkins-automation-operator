@@ -358,6 +358,7 @@ spec:
   master:
    image: jenkins/jenkins:lts
    plugins:
+     simple-theme-plugin:0.5.1: []
      configuration-as-code:1.4:
      - configuration-as-code-support:1.4
 ```
