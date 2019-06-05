@@ -111,6 +111,10 @@ Jenkins.instance.save()`, numberOfExecutors),
 			"1-casc.yaml": fmt.Sprintf(`
 jenkins:
   systemMessage: "%s"`, systemMessage),
+			"2-casc.yaml": `
+unclassified:
+  location:
+    url: http://external-jenkins-url:8080`,
 		},
 	}
 
