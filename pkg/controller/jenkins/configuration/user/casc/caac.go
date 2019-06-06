@@ -166,6 +166,9 @@ node(&apos;master&apos;) {
     configs.addAll(configsText.tokenize(&apos;\n&apos;))
     
     stage(&apos;Synchronizing files&apos;) {
+        println &quot;Synchronizing Kubernetes ConfigMaps and Secrets to the Jenkins master pod.&quot;
+        println &quot;This step may fail and will be retried in the next job build if necessary.&quot;
+
 		synchronizeFiles(secretsPath, (String[])secrets, userConfigurationSecretExpectedHash)
 		synchronizeFiles(configsPath, (String[])configs, userConfigurationExpectedHash)
     }
@@ -183,7 +186,7 @@ def synchronizeFiles(String path, String[] files, String hash) {
     def complete = false
     for(int i = 1; i &lt;= 10; i++) {
         def actualHash = calculateHash(files, path)
-        println &quot;Expected hash &apos;${hash}&apos;, actual hash &apos;${actualHash}&apos;, path &apos;${path}&apos;&quot;
+        println &quot;Expected hash &apos;${hash}&apos;, actual hash &apos;${actualHash}&apos;, path &apos;${path}&apos;, will retry&quot;
         if(hash == actualHash) {
             complete = true
             break

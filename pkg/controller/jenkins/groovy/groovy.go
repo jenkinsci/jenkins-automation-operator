@@ -108,10 +108,13 @@ node(&apos;master&apos;) {
     scripts.addAll(scriptsText.tokenize(&apos;\n&apos;))
     
     stage(&apos;Synchronizing files&apos;) {
+        println &quot;Synchronizing Kubernetes ConfigMaps to the Jenkins master pod.&quot;
+        println &quot;This step may fail and will be retried in the next job build if necessary.&quot;
+
         def complete = false
         for(int i = 1; i &lt;= 10; i++) {
             def actualHash = calculateHash((String[])scripts, scriptsPath)
-            println &quot;Expected hash &apos;${expectedHash}&apos;, actual hash &apos;${actualHash}&apos;&quot;
+            println &quot;Expected hash &apos;${expectedHash}&apos;, actual hash &apos;${actualHash}&apos;, will retry&quot;
             if(expectedHash == actualHash) {
                 complete = true
                 break
