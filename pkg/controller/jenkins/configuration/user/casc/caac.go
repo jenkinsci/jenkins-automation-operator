@@ -45,9 +45,7 @@ func New(jenkinsClient jenkinsclient.Jenkins, k8sClient k8s.Client, logger logr.
 
 // ConfigureJob configures jenkins job which configures Jenkins with help Configuration as a code plugin
 func (g *ConfigurationAsCode) ConfigureJob() error {
-	_, created, err := g.jenkinsClient.CreateOrUpdateJob(
-		fmt.Sprintf(configurationJobXMLFmt, resources.UserConfigurationSecretVolumePath, resources.JenkinsUserConfigurationVolumePath),
-		g.jobName)
+	_, created, err := g.jenkinsClient.CreateOrUpdateJob(configurationJobXMLFmt, g.jobName)
 	if err != nil {
 		return err
 	}
@@ -62,15 +60,15 @@ func (g *ConfigurationAsCode) Ensure(jenkins *v1alpha1.Jenkins) (bool, error) {
 	jobsClient := jobs.New(g.jenkinsClient, g.k8sClient, g.logger)
 
 	configuration := &corev1.ConfigMap{}
-	namespaceName := types.NamespacedName{Namespace: jenkins.Namespace, Name: resources.GetUserConfigurationConfigMapNameFromJenkins(jenkins)}
-	err := g.k8sClient.Get(context.TODO(), namespaceName, configuration)
+	ConfigMapNamespaceName := types.NamespacedName{Namespace: jenkins.Namespace, Name: resources.GetUserConfigurationConfigMapNameFromJenkins(jenkins)}
+	err := g.k8sClient.Get(context.TODO(), ConfigMapNamespaceName, configuration)
 	if err != nil {
 		return false, errors.WithStack(err)
 	}
 
 	secret := &corev1.Secret{}
-	namespaceName = types.NamespacedName{Namespace: jenkins.Namespace, Name: resources.GetUserConfigurationSecretNameFromJenkins(jenkins)}
-	err = g.k8sClient.Get(context.TODO(), namespaceName, configuration)
+	secretNamespaceName := types.NamespacedName{Namespace: jenkins.Namespace, Name: resources.GetUserConfigurationSecretNameFromJenkins(jenkins)}
+	err = g.k8sClient.Get(context.TODO(), secretNamespaceName, secret)
 	if err != nil {
 		return false, errors.WithStack(err)
 	}
@@ -151,13 +149,13 @@ const configurationJobXMLFmt = `<?xml version='1.1' encoding='UTF-8'?>
   <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.61.1">
     <script>import io.jenkins.plugins.casc.yaml.YamlSource;
 
-def secretsPath = &apos;%s&apos;
-def configsPath = &apos;%s&apos;
+def secretsPath = &apos;` + resources.UserConfigurationSecretVolumePath + `&apos;
+def configsPath = &apos;` + resources.JenkinsUserConfigurationVolumePath + `&apos;
 def userConfigurationSecretExpectedHash = params.` + userConfigurationSecretHashParameterName + `
 def userConfigurationExpectedHash = params.` + userConfigurationHashParameterName + `
 
 node(&apos;master&apos;) {
-    def secretsText = sh(script: &quot;ls ${secretsPath} | grep .yaml | sort&quot;, returnStdout: true).trim()
+    def secretsText = sh(script: &quot;ls ${secretsPath} | sort&quot;, returnStdout: true).trim()
     def secrets = []
     secrets.addAll(secretsText.tokenize(&apos;\n&apos;))
 
