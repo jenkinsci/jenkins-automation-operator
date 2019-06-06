@@ -88,13 +88,12 @@ func (r *ReconcileJenkinsBaseConfiguration) Reconcile() (reconcile.Result, jenki
 	}
 	r.logger.V(log.VDebug).Info("Jenkins API client set")
 
-	ok, err := r.verifyPlugins(jenkinsClient)
+	ok, err := r.verifyPlugins(jenkinsClient, plugins.BasePluginsMap)
 	if err != nil {
 		return reconcile.Result{}, nil, err
 	}
 	if !ok {
-		r.logger.V(log.VWarn).Info("Please correct Jenkins CR(spec.master.OperatorPlugins or spec.master.plugins)")
-		// TODO inform user via Admin Monitor and don't restart Jenkins
+		r.logger.Info("Some plugins have changed, restarting Jenkins")
 		return reconcile.Result{Requeue: true}, nil, r.restartJenkinsMasterPod(metaObject)
 	}
 
@@ -150,7 +149,7 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureResourcesRequiredForJenkinsPod
 	return nil
 }
 
-func (r *ReconcileJenkinsBaseConfiguration) verifyPlugins(jenkinsClient jenkinsclient.Jenkins) (bool, error) {
+func (r *ReconcileJenkinsBaseConfiguration) verifyPlugins(jenkinsClient jenkinsclient.Jenkins, basePlugins map[string][]plugins.Plugin) (bool, error) {
 	allPluginsInJenkins, err := jenkinsClient.GetPlugins(fetchAllPlugins)
 	if err != nil {
 		return false, stackerr.WithStack(err)
@@ -158,7 +157,7 @@ func (r *ReconcileJenkinsBaseConfiguration) verifyPlugins(jenkinsClient jenkinsc
 
 	var installedPlugins []string
 	for _, jenkinsPlugin := range allPluginsInJenkins.Raw.Plugins {
-		if !jenkinsPlugin.Deleted {
+		if isValidPlugin(jenkinsPlugin) {
 			installedPlugins = append(installedPlugins, plugins.Plugin{Name: jenkinsPlugin.ShortName, Version: jenkinsPlugin.Version}.String())
 		}
 	}
@@ -178,7 +177,7 @@ func (r *ReconcileJenkinsBaseConfiguration) verifyPlugins(jenkinsClient jenkinsc
 	}
 
 	status := true
-	allRequiredPlugins := []map[string][]plugins.Plugin{plugins.BasePluginsMap, userPlugins}
+	allRequiredPlugins := []map[string][]plugins.Plugin{basePlugins, userPlugins}
 	for _, requiredPlugins := range allRequiredPlugins {
 		for rootPluginName, p := range requiredPlugins {
 			rootPlugin, _ := plugins.New(rootPluginName)
@@ -195,7 +194,34 @@ func (r *ReconcileJenkinsBaseConfiguration) verifyPlugins(jenkinsClient jenkinsc
 		}
 	}
 
+	for rootPluginName, p := range userPlugins {
+		rootPlugin, _ := plugins.New(rootPluginName)
+		if found, ok := isPluginVersionCompatible(allPluginsInJenkins, *rootPlugin); !ok {
+			r.logger.V(log.VWarn).Info(fmt.Sprintf("Incompatible plugin '%s' version, actual '%+v'", rootPlugin, found))
+			status = false
+		}
+		for _, requiredPlugin := range p {
+			if found, ok := isPluginInstalled(allPluginsInJenkins, requiredPlugin); !ok {
+				r.logger.V(log.VWarn).Info(fmt.Sprintf("Incompatible plugin '%s' version, actual '%+v'", requiredPlugin, found))
+				status = false
+			}
+		}
+	}
+
 	return status, nil
+}
+
+func isPluginVersionCompatible(plugins *gojenkins.Plugins, plugin plugins.Plugin) (gojenkins.Plugin, bool) {
+	p := plugins.Contains(plugin.Name)
+	if p == nil {
+		return gojenkins.Plugin{}, false
+	}
+
+	return *p, p.Version == plugin.Version
+}
+
+func isValidPlugin(plugin gojenkins.Plugin) bool {
+	return plugin.Active && plugin.Enabled && !plugin.Deleted
 }
 
 func isPluginInstalled(plugins *gojenkins.Plugins, requiredPlugin plugins.Plugin) (gojenkins.Plugin, bool) {
@@ -204,7 +230,7 @@ func isPluginInstalled(plugins *gojenkins.Plugins, requiredPlugin plugins.Plugin
 		return gojenkins.Plugin{}, false
 	}
 
-	return *p, p.Active && p.Enabled && !p.Deleted
+	return *p, isValidPlugin(*p)
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) createOperatorCredentialsSecret(meta metav1.ObjectMeta) error {
