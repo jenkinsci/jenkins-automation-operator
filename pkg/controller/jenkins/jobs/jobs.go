@@ -126,7 +126,7 @@ func (jobs *Jobs) ensureRunningBuild(build v1alpha1.Build, jenkins *v1alpha1.Jen
 
 	err = jobs.updateBuildStatus(build, jenkins)
 	if err != nil {
-		jobs.logger.V(log.VWarn).Info(fmt.Sprintf("Couldn't update build status, %+v", build))
+		jobs.logger.V(log.VDebug).Info(fmt.Sprintf("Couldn't update build status, %+v", build))
 		return false, err
 	}
 
@@ -248,7 +248,7 @@ func (jobs *Jobs) buildJob(build v1alpha1.Build, parameters map[string]string, j
 
 	err = jobs.updateBuildStatus(build, jenkins)
 	if err != nil {
-		jobs.logger.V(log.VWarn).Info(fmt.Sprintf("Couldn't update build status, %+v", build))
+		jobs.logger.V(log.VDebug).Info(fmt.Sprintf("Couldn't update build status, %+v", build))
 		return false, err
 	}
 	return false, nil

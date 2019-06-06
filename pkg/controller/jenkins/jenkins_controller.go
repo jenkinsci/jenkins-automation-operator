@@ -110,13 +110,14 @@ func (r *ReconcileJenkins) Reconcile(request reconcile.Request) (reconcile.Resul
 
 	result, err := r.reconcile(request, logger)
 	if err != nil && apierrors.IsConflict(err) {
-		logger.V(log.VWarn).Info(err.Error())
 		return reconcile.Result{Requeue: true}, nil
 	} else if err != nil {
 		if log.Debug {
 			logger.V(log.VWarn).Info(fmt.Sprintf("Reconcile loop failed: %+v", err))
 		} else {
-			logger.V(log.VWarn).Info(fmt.Sprintf("Reconcile loop failed: %s", err))
+			if err.Error() != fmt.Sprintf("Operation cannot be fulfilled on jenkins.jenkins.io \"%s\": the object has been modified; please apply your changes to the latest version and try again", request.Name) {
+				logger.V(log.VWarn).Info(fmt.Sprintf("Reconcile loop failed: %s", err))
+			}
 		}
 		return reconcile.Result{Requeue: true}, nil
 	}
