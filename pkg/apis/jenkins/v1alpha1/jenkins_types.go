@@ -9,6 +9,7 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // JenkinsSpec defines the desired state of Jenkins
+// +k8s:openapi-gen=true
 type JenkinsSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
@@ -66,6 +67,7 @@ type Service struct {
 }
 
 // JenkinsStatus defines the observed state of Jenkins
+// +k8s:openapi-gen=true
 type JenkinsStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
@@ -111,6 +113,7 @@ type Build struct {
 
 // Jenkins is the Schema for the jenkins API
 // +k8s:openapi-gen=true
+// +kubebuilder:subresource:status
 type Jenkins struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

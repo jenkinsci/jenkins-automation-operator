@@ -160,7 +160,7 @@ ifeq ($(ENVIRONMENT),minikube)
 endif
 
 	@RUNNING_TESTS=1 go test -parallel=1 "./test/e2e/" -tags "$(BUILDTAGS) cgo" -v -timeout 30m -run "$(E2E_TEST_SELECTOR)" \
-		-root=$(CURRENT_DIRECTORY) -kubeconfig=$(HOME)/.kube/config -globalMan deploy/crds/jenkinsio_v1alpha1_jenkins_crd.yaml -namespacedMan deploy/namespace-init.yaml $(EXTRA_ARGS)
+		-root=$(CURRENT_DIRECTORY) -kubeconfig=$(HOME)/.kube/config -globalMan deploy/crds/jenkins_v1alpha1_jenkins_crd.yaml -namespacedMan deploy/namespace-init.yaml $(EXTRA_ARGS)
 
 .PHONY: vet
 vet: ## Verifies `go vet` passes
@@ -311,7 +311,7 @@ minikube-run: export OPERATOR_NAME = $(NAME)
 minikube-run: start-minikube ## Run the operator locally and use minikube as Kubernetes cluster, you can use EXTRA_ARGS
 	@echo "+ $@"
 	kubectl config use-context minikube
-	kubectl apply -f deploy/crds/jenkinsio_v1alpha1_jenkins_crd.yaml
+	kubectl apply -f deploy/crds/jenkins_v1alpha1_jenkins_crd.yaml
 	@echo "Watching '$(WATCH_NAMESPACE)' namespace"
 	build/_output/bin/jenkins-operator $(EXTRA_ARGS)
 

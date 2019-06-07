@@ -31,7 +31,7 @@ make build && make minikube-run EXTRA_ARGS='--minikube --local'
 Once minikube and **jenkins-operator** are up and running, apply Jenkins custom resource:
 
 ```bash
-kubectl apply -f deploy/crds/jenkinsio_v1alpha1_jenkins_cr.yaml
+kubectl apply -f deploy/crds/jenkins_v1alpha1_jenkins_cr.yaml
 kubectl get jenkins -o yaml
 kubectl get po
 ```
