@@ -5,10 +5,9 @@ This document explains how to setup your development environment.
 ## Prerequisites
 
 - [operator_sdk][operator_sdk]
-- [dep][dep_tool] version v0.5.0+
 - [git][git_tool]
-- [go][go_tool] version v1.10+
-- [minikube][minikube] version v0.31.0+ (preferred Hypervisor - [virtualbox][virtualbox])
+- [go][go_tool] version v1.12+
+- [minikube][minikube] version v1.1.0+ (preferred Hypervisor - [virtualbox][virtualbox])
 - [docker][docker_tool] version 17.03+
 
 ## Clone repository and download dependencies

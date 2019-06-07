@@ -94,10 +94,7 @@ HAS_DEP := $(shell which dep)
 go-dependencies: ## Ensure build dependencies
 	@echo "+ $@"
 	@echo "Ensure Golang runtime dependencies"
-ifndef HAS_DEP
-	go get -u github.com/golang/dep/cmd/dep
-endif
-	dep ensure -v
+	go mod vendor -v
 
 .PHONY: dep
 dep: go-dependencies ## Ensure build dependencies
@@ -370,5 +367,5 @@ ifneq ($(GITIGNOREDBUTTRACKEDCHANGES),)
 	@echo
 endif
 	@echo "Dependencies:"
-	dep status
+	go mod vendor -v
 	@echo

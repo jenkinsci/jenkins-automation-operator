@@ -404,7 +404,7 @@ func jenkinsCustomResource() *v1alpha1.Jenkins {
 			},
 			SeedJobs: []v1alpha1.SeedJob{
 				{
-					ID: "jenkins-operator-e2e",
+					ID:                    "jenkins-operator-e2e",
 					JenkinsCredentialType: v1alpha1.NoJenkinsCredentialCredentialType,
 					Targets:               "cicd/jobs/*.jenkins",
 					Description:           "Jenkins Operator e2e tests repository",

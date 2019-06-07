@@ -1,4 +1,3 @@
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -17,9 +16,6 @@ spec:
       containers:
         - name: jenkins-operator
           image: virtuslab/jenkins-operator:v0.0.12
-          ports:
-          - containerPort: 60000
-            name: metrics
           command:
           - jenkins-operator
           args: []

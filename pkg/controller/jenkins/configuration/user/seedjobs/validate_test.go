@@ -224,7 +224,7 @@ func TestValidateSeedJobs(t *testing.T) {
 			Spec: v1alpha1.JenkinsSpec{
 				SeedJobs: []v1alpha1.SeedJob{
 					{
-						ID: "example",
+						ID:                    "example",
 						JenkinsCredentialType: v1alpha1.NoJenkinsCredentialCredentialType,
 						RepositoryBranch:      "master",
 						RepositoryURL:         "https://github.com/jenkinsci/kubernetes-operator.git",
@@ -244,7 +244,7 @@ func TestValidateSeedJobs(t *testing.T) {
 			Spec: v1alpha1.JenkinsSpec{
 				SeedJobs: []v1alpha1.SeedJob{
 					{
-						ID: "example",
+						ID:                    "example",
 						JenkinsCredentialType: v1alpha1.NoJenkinsCredentialCredentialType,
 						Targets:               "cicd/jobs/*.jenkins",
 						RepositoryBranch:      "master",
@@ -264,7 +264,7 @@ func TestValidateSeedJobs(t *testing.T) {
 			Spec: v1alpha1.JenkinsSpec{
 				SeedJobs: []v1alpha1.SeedJob{
 					{
-						ID: "example",
+						ID:                    "example",
 						JenkinsCredentialType: v1alpha1.NoJenkinsCredentialCredentialType,
 						Targets:               "cicd/jobs/*.jenkins",
 						RepositoryURL:         "https://github.com/jenkinsci/kubernetes-operator.git",

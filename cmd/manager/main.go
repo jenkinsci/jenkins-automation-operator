@@ -7,6 +7,9 @@ import (
 	"os"
 	"runtime"
 
+	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
+
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
@@ -16,14 +19,25 @@ import (
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
-	"github.com/operator-framework/operator-sdk/pkg/ready"
+	"github.com/operator-framework/operator-sdk/pkg/log/zap"
+	"github.com/operator-framework/operator-sdk/pkg/metrics"
+	"github.com/operator-framework/operator-sdk/pkg/restmapper"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 	"github.com/pkg/errors"
+	"github.com/spf13/pflag"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
 )
+
+// Change below variables to serve metrics on different host or port.
+var (
+	metricsHost       = "0.0.0.0"
+	metricsPort int32 = 8383
+)
+
+//var log = logf.Log.WithName("cmd")
 
 func printInfo() {
 	log.Log.Info(fmt.Sprintf("Version: %s", version.Version))
@@ -34,10 +48,18 @@ func printInfo() {
 }
 
 func main() {
-	minikube := flag.Bool("minikube", false, "Use minikube as a Kubernetes platform")
-	local := flag.Bool("local", false, "Run operator locally")
-	debug := flag.Bool("debug", false, "Set log level to debug")
-	flag.Parse()
+	// Add the zap logger flag set to the CLI. The flag set must
+	// be added before calling pflag.Parse().
+	pflag.CommandLine.AddFlagSet(zap.FlagSet())
+
+	// Add flags registered by imported packages (e.g. glog and
+	// controller-runtime)
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+
+	minikube := pflag.Bool("minikube", false, "Use minikube as a Kubernetes platform")
+	local := pflag.Bool("local", false, "Run operator locally")
+	debug := pflag.Bool("debug", false, "Set log level to debug")
+	pflag.Parse()
 
 	log.SetupLogger(*debug)
 	printInfo()
@@ -46,7 +68,7 @@ func main() {
 	if err != nil {
 		fatal(errors.Wrap(err, "failed to get watch namespace"), *debug)
 	}
-	log.Log.Info(fmt.Sprintf("watch namespace: %v", namespace))
+	log.Log.Info(fmt.Sprintf("Watch namespace: %v", namespace))
 
 	// get a config to talk to the apiserver
 	cfg, err := config.GetConfig()
@@ -54,23 +76,20 @@ func main() {
 		fatal(errors.Wrap(err, "failed to get config"), *debug)
 	}
 
-	// become the leader before proceeding
-	err = leader.Become(context.TODO(), "jenkins-operator-lock")
+	ctx := context.TODO()
+
+	// Become the leader before proceeding
+	err = leader.Become(ctx, "jenkins-operator-lock")
 	if err != nil {
 		fatal(errors.Wrap(err, "failed to become leader"), *debug)
 	}
 
-	r := ready.NewFileReady()
-	err = r.Set()
-	if err != nil {
-		fatal(errors.Wrap(err, "failed to get ready.NewFileReady"), *debug)
-	}
-	defer func() {
-		_ = r.Unset()
-	}()
-
-	// create a new Cmd to provide shared dependencies and start components
-	mgr, err := manager.New(cfg, manager.Options{Namespace: namespace})
+	// Create a new Cmd to provide shared dependencies and start components
+	mgr, err := manager.New(cfg, manager.Options{
+		Namespace:          namespace,
+		MapperProvider:     restmapper.NewDynamicRESTMapper,
+		MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metricsPort),
+	})
 	if err != nil {
 		fatal(errors.Wrap(err, "failed to create manager"), *debug)
 	}
@@ -91,6 +110,12 @@ func main() {
 	// setup Jenkins controller
 	if err := jenkins.Add(mgr, *local, *minikube, events); err != nil {
 		fatal(errors.Wrap(err, "failed to setup controllers"), *debug)
+	}
+
+	// Create Service object to expose the metrics port.
+	_, err = metrics.ExposeMetricsPort(ctx, metricsPort)
+	if err != nil {
+		log.Log.Info(err.Error())
 	}
 
 	log.Log.Info("Starting the Cmd.")
