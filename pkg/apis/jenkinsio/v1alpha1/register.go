@@ -23,4 +23,5 @@ var (
 	SchemeBuilder = &scheme.Builder{GroupVersion: SchemeGroupVersion}
 )
 
+// GetObjectKind returns Jenkins object kind
 func (in *Jenkins) GetObjectKind() schema.ObjectKind { return in }

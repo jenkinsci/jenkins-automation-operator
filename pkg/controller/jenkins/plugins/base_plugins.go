@@ -4,7 +4,7 @@ const (
 	aceEditorPlugin                     = "ace-editor:1.1"
 	apacheComponentsClientPlugin        = "apache-httpcomponents-client-4-api:4.5.5-3.0"
 	authenticationTokensPlugin          = "authentication-tokens:1.3"
-	branchApiPlugin                     = "branch-api:2.5.2"
+	branchAPIPlugin                     = "branch-api:2.5.2"
 	cloudBeesFolderPlugin               = "cloudbees-folder:6.8"
 	configurationAsCodePlugin           = "configuration-as-code:1.17"
 	configurationAsCodeSupportPlugin    = "configuration-as-code-support:1.17"
@@ -34,11 +34,11 @@ const (
 	pipelineGraphAnalysisPlugin         = "pipeline-graph-analysis:1.10"
 	pipelineInputStepPlugin             = "pipeline-input-step:2.10"
 	pipelineMilestoneStepPlugin         = "pipeline-milestone-step:1.3.1"
-	pipelineModelApiPlugin              = "pipeline-model-api:1.3.8"
+	pipelineModelAPIPlugin              = "pipeline-model-api:1.3.8"
 	pipelineModelDeclarativeAgentPlugin = "pipeline-model-declarative-agent:1.1.1"
 	pipelineModelDefinitionPlugin       = "pipeline-model-definition:1.3.8"
 	pipelineModelExtensionsPlugin       = "pipeline-model-extensions:1.3.8"
-	pipelineRestApiPlugin               = "pipeline-rest-api:2.11"
+	pipelineRestAPIPlugin               = "pipeline-rest-api:2.11"
 	pipelineStageStepPlugin             = "pipeline-stage-step:2.3"
 	pipelineStageTagsMetadataPlugin     = "pipeline-stage-tags-metadata:1.3.8"
 	pipelineStageViewPlugin             = "pipeline-stage-view:2.11"
@@ -87,7 +87,7 @@ var BasePluginsMap = map[string][]Plugin{
 		Must(New(aceEditorPlugin)),
 		Must(New(apacheComponentsClientPlugin)),
 		Must(New(authenticationTokensPlugin)),
-		Must(New(branchApiPlugin)),
+		Must(New(branchAPIPlugin)),
 		Must(New(cloudBeesFolderPlugin)),
 		Must(New(credentialsBindingPlugin)),
 		Must(New(credentialsPlugin)),
@@ -110,11 +110,11 @@ var BasePluginsMap = map[string][]Plugin{
 		Must(New(pipelineGraphAnalysisPlugin)),
 		Must(New(pipelineInputStepPlugin)),
 		Must(New(pipelineMilestoneStepPlugin)),
-		Must(New(pipelineModelApiPlugin)),
+		Must(New(pipelineModelAPIPlugin)),
 		Must(New(pipelineModelDeclarativeAgentPlugin)),
 		Must(New(pipelineModelDefinitionPlugin)),
 		Must(New(pipelineModelExtensionsPlugin)),
-		Must(New(pipelineRestApiPlugin)),
+		Must(New(pipelineRestAPIPlugin)),
 		Must(New(pipelineStageStepPlugin)),
 		Must(New(pipelineStageTagsMetadataPlugin)),
 		Must(New(pipelineStageViewPlugin)),
