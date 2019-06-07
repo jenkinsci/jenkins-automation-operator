@@ -65,7 +65,8 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	// Watch for changes to primary resource Jenkins
-	err = c.Watch(&source.Kind{Type: &v1alpha1.Jenkins{}}, &handler.EnqueueRequestForObject{})
+	decorator := jenkinsDecorator{handler: &handler.EnqueueRequestForObject{}}
+	err = c.Watch(&source.Kind{Type: &v1alpha1.Jenkins{}}, &decorator)
 	if err != nil {
 		return errors.WithStack(err)
 	}
