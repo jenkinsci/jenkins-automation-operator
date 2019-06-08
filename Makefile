@@ -90,14 +90,10 @@ ifndef HAS_GO
 endif
 
 .PHONY: go-dependencies
-HAS_DEP := $(shell which dep)
 go-dependencies: ## Ensure build dependencies
 	@echo "+ $@"
 	@echo "Ensure Golang runtime dependencies"
 	go mod vendor -v
-
-.PHONY: dep
-dep: go-dependencies ## Ensure build dependencies
 
 .PHONY: build
 build: $(NAME) ## Builds a dynamic executable or package

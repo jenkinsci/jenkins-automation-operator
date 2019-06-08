@@ -1,6 +1,10 @@
 language: go
 sudo: false
 
+env:
+  global:
+    - GO111MODULE=on
+
 go:
 - 1.12.x
 - master
