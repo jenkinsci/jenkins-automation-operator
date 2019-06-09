@@ -164,6 +164,9 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request, logger logr.Logg
 	if result.Requeue {
 		return result, nil
 	}
+	if jenkinsClient == nil {
+		return reconcile.Result{Requeue: false}, nil
+	}
 
 	if jenkins.Status.BaseConfigurationCompletedTime == nil {
 		now := metav1.Now()

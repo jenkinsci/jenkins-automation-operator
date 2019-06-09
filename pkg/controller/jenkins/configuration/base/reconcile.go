@@ -83,6 +83,14 @@ func (r *ReconcileJenkinsBaseConfiguration) Reconcile() (reconcile.Result, jenki
 	}
 	r.logger.V(log.VDebug).Info("Jenkins master pod is present")
 
+	stopReconcileLoop, err := r.detectJenkinsMasterPodStartingIssues(metaObject)
+	if err != nil {
+		return reconcile.Result{}, nil, err
+	}
+	if stopReconcileLoop {
+		return reconcile.Result{Requeue: false}, nil, nil
+	}
+
 	result, err = r.waitForJenkins(metaObject)
 	if err != nil {
 		return reconcile.Result{}, nil, err
@@ -435,8 +443,6 @@ func (r *ReconcileJenkinsBaseConfiguration) isRecreatePodNeeded(currentJenkinsMa
 		return true
 	}
 
-	//TODO check if image can't be pulled, volume can't be mounted etc. (get info from events)
-
 	if currentJenkinsMasterPod.Status.Phase == corev1.PodFailed ||
 		currentJenkinsMasterPod.Status.Phase == corev1.PodSucceeded ||
 		currentJenkinsMasterPod.Status.Phase == corev1.PodUnknown {
@@ -593,24 +599,68 @@ func (r *ReconcileJenkinsBaseConfiguration) restartJenkinsMasterPod(meta metav1.
 	return stackerr.WithStack(r.k8sClient.Delete(context.TODO(), currentJenkinsMasterPod))
 }
 
+func (r *ReconcileJenkinsBaseConfiguration) detectJenkinsMasterPodStartingIssues(meta metav1.ObjectMeta) (stopReconcileLoop bool, err error) {
+	jenkinsMasterPod, err := r.getJenkinsMasterPod(meta)
+	if err != nil {
+		return false, err
+	}
+
+	if jenkinsMasterPod.Status.Phase == corev1.PodPending {
+		timeout := r.jenkins.Status.ProvisionStartTime.Add(time.Minute * 2).UTC()
+		now := time.Now().UTC()
+		if now.After(timeout) {
+			events := &corev1.EventList{}
+			err = r.k8sClient.List(context.TODO(), &client.ListOptions{Namespace: r.jenkins.Namespace}, events)
+			if err != nil {
+				return false, stackerr.WithStack(err)
+			}
+
+			filteredEvents := r.filterEvents(*events, *jenkinsMasterPod)
+
+			r.logger.Info(fmt.Sprintf("Jenkins master pod starting timeout, events '%+v'", filteredEvents))
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+func (r *ReconcileJenkinsBaseConfiguration) filterEvents(source corev1.EventList, jenkinsMasterPod corev1.Pod) []string {
+	events := []string{}
+	for _, event := range source.Items {
+		if r.jenkins.Status.ProvisionStartTime.UTC().After(event.LastTimestamp.UTC()) {
+			continue
+		}
+		if event.Type == corev1.EventTypeNormal {
+			continue
+		}
+		if !strings.HasPrefix(event.ObjectMeta.Name, jenkinsMasterPod.Name) {
+			continue
+		}
+		events = append(events, fmt.Sprintf("Message: %s Subobject: %s", event.Message, event.InvolvedObject.FieldPath))
+	}
+
+	return events
+}
+
 func (r *ReconcileJenkinsBaseConfiguration) waitForJenkins(meta metav1.ObjectMeta) (reconcile.Result, error) {
-	jenkinsMasterPodStatus, err := r.getJenkinsMasterPod(meta)
+	jenkinsMasterPod, err := r.getJenkinsMasterPod(meta)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
 
-	if jenkinsMasterPodStatus.ObjectMeta.DeletionTimestamp != nil {
+	if jenkinsMasterPod.ObjectMeta.DeletionTimestamp != nil {
 		r.logger.V(log.VDebug).Info("Jenkins master pod is terminating")
 		return reconcile.Result{Requeue: true, RequeueAfter: time.Second * 5}, nil
 	}
 
-	if jenkinsMasterPodStatus.Status.Phase != corev1.PodRunning {
+	if jenkinsMasterPod.Status.Phase != corev1.PodRunning {
 		r.logger.V(log.VDebug).Info("Jenkins master pod not ready")
 		return reconcile.Result{Requeue: true, RequeueAfter: time.Second * 5}, nil
 	}
 
 	containersReadyCount := 0
-	for _, containerStatus := range jenkinsMasterPodStatus.Status.ContainerStatuses {
+	for _, containerStatus := range jenkinsMasterPod.Status.ContainerStatuses {
 		if containerStatus.State.Terminated != nil {
 			r.logger.Info(fmt.Sprintf("Container '%s' is terminated, status '%+v', recreating pod", containerStatus.Name, containerStatus))
 			return reconcile.Result{Requeue: true}, r.restartJenkinsMasterPod(meta)
@@ -621,7 +671,7 @@ func (r *ReconcileJenkinsBaseConfiguration) waitForJenkins(meta metav1.ObjectMet
 			containersReadyCount++
 		}
 	}
-	if containersReadyCount != len(jenkinsMasterPodStatus.Status.ContainerStatuses) {
+	if containersReadyCount != len(jenkinsMasterPod.Status.ContainerStatuses) {
 		return reconcile.Result{Requeue: true, RequeueAfter: time.Second * 5}, nil
 	}
 

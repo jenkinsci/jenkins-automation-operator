@@ -63,7 +63,9 @@ rules:
     resources:
       - events
     verbs:
+      - list
       - create
+      - patch
   - apiGroups:
       - apps
     resourceNames:
