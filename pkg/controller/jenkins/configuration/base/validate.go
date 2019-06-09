@@ -69,13 +69,32 @@ func (r *ReconcileJenkinsBaseConfiguration) validateVolumes() (bool, error) {
 			} else if !ok {
 				valid = false
 			}
+		case volume.PersistentVolumeClaim != nil:
+			if ok, err := r.validatePersistentVolumeClaim(volume); err != nil {
+				return false, err
+			} else if !ok {
+				valid = false
+			}
 		default: //TODO add support for rest of volumes
 			valid = false
-			r.logger.V(log.VWarn).Info(fmt.Sprintf("Unsupported volume '%+v'", volume))
+			r.logger.V(log.VWarn).Info(fmt.Sprintf("Unsupported volume '%v'", volume))
 		}
 	}
 
 	return valid, nil
+}
+
+func (r *ReconcileJenkinsBaseConfiguration) validatePersistentVolumeClaim(volume corev1.Volume) (bool, error) {
+	pvc := &corev1.PersistentVolumeClaim{}
+	err := r.k8sClient.Get(context.TODO(), types.NamespacedName{Name: volume.PersistentVolumeClaim.ClaimName, Namespace: r.jenkins.ObjectMeta.Namespace}, pvc)
+	if err != nil && apierrors.IsNotFound(err) {
+		r.logger.V(log.VWarn).Info(fmt.Sprintf("PersistentVolumeClaim '%s' not found for volume '%v'", volume.PersistentVolumeClaim.ClaimName, volume))
+		return false, nil
+	} else if err != nil && !apierrors.IsNotFound(err) {
+		return false, stackerr.WithStack(err)
+	}
+
+	return true, nil
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) validateConfigMapVolume(volume corev1.Volume) (bool, error) {
@@ -86,7 +105,7 @@ func (r *ReconcileJenkinsBaseConfiguration) validateConfigMapVolume(volume corev
 	configMap := &corev1.ConfigMap{}
 	err := r.k8sClient.Get(context.TODO(), types.NamespacedName{Name: volume.ConfigMap.Name, Namespace: r.jenkins.ObjectMeta.Namespace}, configMap)
 	if err != nil && apierrors.IsNotFound(err) {
-		r.logger.V(log.VWarn).Info(fmt.Sprintf("ConfigMap '%s' not found for volume '%+v'", volume.ConfigMap.Name, volume))
+		r.logger.V(log.VWarn).Info(fmt.Sprintf("ConfigMap '%s' not found for volume '%v'", volume.ConfigMap.Name, volume))
 		return false, nil
 	} else if err != nil && !apierrors.IsNotFound(err) {
 		return false, stackerr.WithStack(err)
@@ -103,7 +122,7 @@ func (r *ReconcileJenkinsBaseConfiguration) validateSecretVolume(volume corev1.V
 	secret := &corev1.Secret{}
 	err := r.k8sClient.Get(context.TODO(), types.NamespacedName{Name: volume.Secret.SecretName, Namespace: r.jenkins.ObjectMeta.Namespace}, secret)
 	if err != nil && apierrors.IsNotFound(err) {
-		r.logger.V(log.VWarn).Info(fmt.Sprintf("Secret '%s' not found for volume '%+v'", volume.Secret.SecretName, volume))
+		r.logger.V(log.VWarn).Info(fmt.Sprintf("Secret '%s' not found for volume '%v'", volume.Secret.SecretName, volume))
 		return false, nil
 	} else if err != nil && !apierrors.IsNotFound(err) {
 		return false, stackerr.WithStack(err)
@@ -158,7 +177,7 @@ func (r *ReconcileJenkinsBaseConfiguration) validateContainerVolumeMounts(contai
 
 	for _, volumeMount := range container.VolumeMounts {
 		if len(volumeMount.MountPath) == 0 {
-			logger.V(log.VWarn).Info(fmt.Sprintf("mountPath not set for '%s' volume mount", volumeMount.Name))
+			logger.V(log.VWarn).Info(fmt.Sprintf("mountPath not set for '%s' volume mount in container '%s'", volumeMount.Name, container.Name))
 			valid = false
 		}
 
@@ -170,7 +189,7 @@ func (r *ReconcileJenkinsBaseConfiguration) validateContainerVolumeMounts(contai
 		}
 
 		if !foundVolume {
-			logger.V(log.VWarn).Info(fmt.Sprintf("Not found volume for '%s' volume mount", volumeMount.Name))
+			logger.V(log.VWarn).Info(fmt.Sprintf("Not found volume for '%s' volume mount in container '%s'", volumeMount.Name, container.Name))
 			valid = false
 		}
 	}
