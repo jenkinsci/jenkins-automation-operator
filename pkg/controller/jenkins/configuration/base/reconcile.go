@@ -235,12 +235,12 @@ func (r *ReconcileJenkinsBaseConfiguration) verifyPlugins(jenkinsClient jenkinsc
 	for rootPluginName, p := range userPlugins {
 		rootPlugin, _ := plugins.New(rootPluginName)
 		if found, ok := isPluginVersionCompatible(allPluginsInJenkins, *rootPlugin); !ok {
-			r.logger.V(log.VWarn).Info(fmt.Sprintf("Incompatible plugin '%s' version, actual '%+v'", rootPlugin, found))
+			r.logger.V(log.VWarn).Info(fmt.Sprintf("Incompatible plugin '%s' version, actual '%+v'", rootPlugin, found.Version))
 			status = false
 		}
 		for _, requiredPlugin := range p {
 			if found, ok := isPluginInstalled(allPluginsInJenkins, requiredPlugin); !ok {
-				r.logger.V(log.VWarn).Info(fmt.Sprintf("Incompatible plugin '%s' version, actual '%+v'", requiredPlugin, found))
+				r.logger.V(log.VWarn).Info(fmt.Sprintf("Incompatible plugin '%s' version, actual '%+v'", requiredPlugin, found.Version))
 				status = false
 			}
 		}
