@@ -3,7 +3,7 @@ package resources
 import (
 	"fmt"
 
-	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
 
 	corev1 "k8s.io/api/core/v1"
@@ -33,7 +33,7 @@ jenkins.save()
 `
 
 // GetUserConfigurationConfigMapNameFromJenkins returns name of Kubernetes config map used to user configuration
-func GetUserConfigurationConfigMapNameFromJenkins(jenkins *v1alpha1.Jenkins) string {
+func GetUserConfigurationConfigMapNameFromJenkins(jenkins *v1alpha2.Jenkins) string {
 	return fmt.Sprintf("%s-user-configuration-%s", constants.OperatorName, jenkins.ObjectMeta.Name)
 }
 
@@ -43,7 +43,7 @@ func GetUserConfigurationConfigMapName(jenkinsCRName string) string {
 }
 
 // NewUserConfigurationConfigMap builds Kubernetes config map used to user configuration
-func NewUserConfigurationConfigMap(jenkins *v1alpha1.Jenkins) *corev1.ConfigMap {
+func NewUserConfigurationConfigMap(jenkins *v1alpha2.Jenkins) *corev1.ConfigMap {
 	return &corev1.ConfigMap{
 		TypeMeta: buildConfigMapTypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{

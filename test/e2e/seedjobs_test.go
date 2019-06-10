@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/jenkinsci/kubernetes-operator/internal/try"
-	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/user/seedjobs"
 
@@ -22,7 +22,7 @@ import (
 )
 
 type seedJobConfig struct {
-	v1alpha1.SeedJob
+	v1alpha2.SeedJob
 	JobNames   []string `json:"jobNames,omitempty"`
 	Username   string   `json:"username,omitempty"`
 	Password   string   `json:"password,omitempty"`
@@ -44,7 +44,7 @@ func TestSeedJobs(t *testing.T) {
 	defer ctx.Cleanup()
 
 	jenkinsCRName := "e2e"
-	var seedJobs []v1alpha1.SeedJob
+	var seedJobs []v1alpha2.SeedJob
 
 	// base
 	for _, seedJobConfig := range seedJobsConfig.SeedJobs {
@@ -79,7 +79,7 @@ func loadSeedJobsConfig(t *testing.T) seedJobsConfig {
 }
 
 func createKubernetesCredentialsProviderSecret(t *testing.T, namespace string, config seedJobConfig) {
-	if config.JenkinsCredentialType == v1alpha1.NoJenkinsCredentialCredentialType {
+	if config.JenkinsCredentialType == v1alpha2.NoJenkinsCredentialCredentialType {
 		return
 	}
 
@@ -108,7 +108,7 @@ func createKubernetesCredentialsProviderSecret(t *testing.T, namespace string, c
 func verifyJenkinsSeedJobs(t *testing.T, jenkinsClient jenkinsclient.Jenkins, seedJobs []seedJobConfig) {
 	var err error
 	for _, seedJob := range seedJobs {
-		if seedJob.JenkinsCredentialType == v1alpha1.BasicSSHCredentialType || seedJob.JenkinsCredentialType == v1alpha1.UsernamePasswordCredentialType {
+		if seedJob.JenkinsCredentialType == v1alpha2.BasicSSHCredentialType || seedJob.JenkinsCredentialType == v1alpha2.UsernamePasswordCredentialType {
 			err = verifyIfJenkinsCredentialExists(jenkinsClient, seedJob.CredentialID)
 			assert.NoErrorf(t, err, "Jenkins credential '%s' not created for seed job ID '%s'", seedJob.CredentialID, seedJob.ID)
 		}

@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 
@@ -86,8 +86,8 @@ func checkIfAuthorizationStrategyUnsecuredIsSet(t *testing.T, jenkinsClient jenk
 	require.NoError(t, err, logs)
 }
 
-func checkBaseConfigurationCompleteTimeIsNotSet(t *testing.T, jenkins *v1alpha1.Jenkins) {
-	jenkinsStatus := &v1alpha1.Jenkins{}
+func checkBaseConfigurationCompleteTimeIsNotSet(t *testing.T, jenkins *v1alpha2.Jenkins) {
+	jenkinsStatus := &v1alpha2.Jenkins{}
 	namespaceName := types.NamespacedName{Namespace: jenkins.Namespace, Name: jenkins.Name}
 	err := framework.Global.Client.Get(context.TODO(), namespaceName, jenkinsStatus)
 	if err != nil {

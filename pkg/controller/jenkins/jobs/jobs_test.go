@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 
 	"github.com/bndr/gojenkins"
@@ -37,7 +37,7 @@ func TestSuccessEnsureJob(t *testing.T) {
 	// when
 	jenkins := jenkinsCustomResource()
 	fakeClient := fake.NewFakeClient()
-	err := v1alpha1.SchemeBuilder.AddToScheme(scheme.Scheme)
+	err := v1alpha2.SchemeBuilder.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
 	err = fakeClient.Create(ctx, jenkins)
 	assert.NoError(t, err)
@@ -67,7 +67,7 @@ func TestSuccessEnsureJob(t *testing.T) {
 			GetBuild(jobName, buildNumber).
 			Return(&gojenkins.Build{
 				Raw: &gojenkins.BuildResponse{
-					Result: string(v1alpha1.BuildSuccessStatus),
+					Result: string(v1alpha2.BuildSuccessStatus),
 				},
 			}, nil).AnyTimes()
 
@@ -91,13 +91,13 @@ func TestSuccessEnsureJob(t *testing.T) {
 		// first run - build should be scheduled and status updated
 		if reconcileAttempt == 1 {
 			assert.False(t, done)
-			assert.Equal(t, build.Status, v1alpha1.BuildRunningStatus)
+			assert.Equal(t, build.Status, v1alpha2.BuildRunningStatus)
 		}
 
 		// second run -job should be success and status updated
 		if reconcileAttempt == 2 {
 			assert.True(t, done)
-			assert.Equal(t, build.Status, v1alpha1.BuildSuccessStatus)
+			assert.Equal(t, build.Status, v1alpha2.BuildSuccessStatus)
 		}
 	}
 }
@@ -149,7 +149,7 @@ func TestEnsureJobWithFailedBuild(t *testing.T) {
 				GetBuild(jobName, int64(1)).
 				Return(&gojenkins.Build{
 					Raw: &gojenkins.BuildResponse{
-						Result: string(v1alpha1.BuildFailureStatus),
+						Result: string(v1alpha2.BuildFailureStatus),
 					},
 				}, nil)
 		}
@@ -178,7 +178,7 @@ func TestEnsureJobWithFailedBuild(t *testing.T) {
 				GetBuild(jobName, int64(2)).
 				Return(&gojenkins.Build{
 					Raw: &gojenkins.BuildResponse{
-						Result: string(v1alpha1.BuildSuccessStatus),
+						Result: string(v1alpha2.BuildSuccessStatus),
 					},
 				}, nil)
 		}
@@ -204,7 +204,7 @@ func TestEnsureJobWithFailedBuild(t *testing.T) {
 			assert.NoError(t, errEnsureBuildJob)
 			assert.False(t, done)
 			assert.Equal(t, build.Number, int64(1))
-			assert.Equal(t, build.Status, v1alpha1.BuildRunningStatus)
+			assert.Equal(t, build.Status, v1alpha2.BuildRunningStatus)
 		}
 
 		// second run - build should be failure and status updated
@@ -212,7 +212,7 @@ func TestEnsureJobWithFailedBuild(t *testing.T) {
 			assert.Error(t, errEnsureBuildJob)
 			assert.False(t, done)
 			assert.Equal(t, build.Number, int64(1))
-			assert.Equal(t, build.Status, v1alpha1.BuildFailureStatus)
+			assert.Equal(t, build.Status, v1alpha2.BuildFailureStatus)
 		}
 
 		// third run - build should be rescheduled and status updated
@@ -220,7 +220,7 @@ func TestEnsureJobWithFailedBuild(t *testing.T) {
 			assert.NoError(t, errEnsureBuildJob)
 			assert.False(t, done)
 			assert.Equal(t, build.Number, int64(2))
-			assert.Equal(t, build.Status, v1alpha1.BuildRunningStatus)
+			assert.Equal(t, build.Status, v1alpha2.BuildRunningStatus)
 		}
 
 		// fourth run - build should be success and status updated
@@ -228,7 +228,7 @@ func TestEnsureJobWithFailedBuild(t *testing.T) {
 			assert.NoError(t, errEnsureBuildJob)
 			assert.True(t, done)
 			assert.Equal(t, build.Number, int64(2))
-			assert.Equal(t, build.Status, v1alpha1.BuildSuccessStatus)
+			assert.Equal(t, build.Status, v1alpha2.BuildSuccessStatus)
 		}
 	}
 }
@@ -281,7 +281,7 @@ func TestEnsureJobFailedWithMaxRetries(t *testing.T) {
 				GetBuild(buildName, int64(1)).
 				Return(&gojenkins.Build{
 					Raw: &gojenkins.BuildResponse{
-						Result: string(v1alpha1.BuildFailureStatus),
+						Result: string(v1alpha2.BuildFailureStatus),
 					},
 				}, nil)
 		}
@@ -310,7 +310,7 @@ func TestEnsureJobFailedWithMaxRetries(t *testing.T) {
 				GetBuild(buildName, int64(2)).
 				Return(&gojenkins.Build{
 					Raw: &gojenkins.BuildResponse{
-						Result: string(v1alpha1.BuildFailureStatus),
+						Result: string(v1alpha2.BuildFailureStatus),
 					},
 				}, nil)
 		}
@@ -337,7 +337,7 @@ func TestEnsureJobFailedWithMaxRetries(t *testing.T) {
 			assert.False(t, done)
 			assert.Equal(t, build.Number, int64(1))
 			assert.Equal(t, build.Retires, 0)
-			assert.Equal(t, build.Status, v1alpha1.BuildRunningStatus)
+			assert.Equal(t, build.Status, v1alpha2.BuildRunningStatus)
 		}
 
 		// second run - build should be failure and status updated
@@ -346,7 +346,7 @@ func TestEnsureJobFailedWithMaxRetries(t *testing.T) {
 			assert.False(t, done)
 			assert.Equal(t, build.Number, int64(1))
 			assert.Equal(t, build.Retires, 0)
-			assert.Equal(t, build.Status, v1alpha1.BuildFailureStatus)
+			assert.Equal(t, build.Status, v1alpha2.BuildFailureStatus)
 		}
 
 		// third run - build should be rescheduled and status updated
@@ -356,7 +356,7 @@ func TestEnsureJobFailedWithMaxRetries(t *testing.T) {
 			//assert.Equal(t, build.Retires, 1)
 			assert.Equal(t, build.Number, int64(2))
 			assert.Equal(t, build.Retires, 1)
-			assert.Equal(t, build.Status, v1alpha1.BuildRunningStatus)
+			assert.Equal(t, build.Status, v1alpha2.BuildRunningStatus)
 		}
 
 		// fourth run - build should be failure and status updated
@@ -365,7 +365,7 @@ func TestEnsureJobFailedWithMaxRetries(t *testing.T) {
 			assert.False(t, done)
 			assert.Equal(t, build.Number, int64(2))
 			assert.Equal(t, build.Retires, 1)
-			assert.Equal(t, build.Status, v1alpha1.BuildFailureStatus)
+			assert.Equal(t, build.Status, v1alpha2.BuildFailureStatus)
 		}
 
 		// fifth run - build should be unrecoverable failed and status updated
@@ -374,21 +374,21 @@ func TestEnsureJobFailedWithMaxRetries(t *testing.T) {
 			assert.False(t, done)
 			assert.Equal(t, build.Number, int64(2))
 			assert.Equal(t, build.Retires, 1)
-			assert.Equal(t, build.Status, v1alpha1.BuildFailureStatus)
+			assert.Equal(t, build.Status, v1alpha2.BuildFailureStatus)
 		}
 	}
 }
 
-func jenkinsCustomResource() *v1alpha1.Jenkins {
-	return &v1alpha1.Jenkins{
+func jenkinsCustomResource() *v1alpha2.Jenkins {
+	return &v1alpha2.Jenkins{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "jenkins",
 			Namespace: "default",
 		},
-		Spec: v1alpha1.JenkinsSpec{
-			Master: v1alpha1.JenkinsMaster{
+		Spec: v1alpha2.JenkinsSpec{
+			Master: v1alpha2.JenkinsMaster{
 				Annotations: map[string]string{"test": "label"},
-				Container: v1alpha1.Container{
+				Container: v1alpha2.Container{
 					Image: "jenkins/jenkins",
 					Resources: corev1.ResourceRequirements{
 						Requests: corev1.ResourceList{
@@ -402,10 +402,10 @@ func jenkinsCustomResource() *v1alpha1.Jenkins {
 					},
 				},
 			},
-			SeedJobs: []v1alpha1.SeedJob{
+			SeedJobs: []v1alpha2.SeedJob{
 				{
 					ID:                    "jenkins-operator-e2e",
-					JenkinsCredentialType: v1alpha1.NoJenkinsCredentialCredentialType,
+					JenkinsCredentialType: v1alpha2.NoJenkinsCredentialCredentialType,
 					Targets:               "cicd/jobs/*.jenkins",
 					Description:           "Jenkins Operator e2e tests repository",
 					RepositoryBranch:      "master",

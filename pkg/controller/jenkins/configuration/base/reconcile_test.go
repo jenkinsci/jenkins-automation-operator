@@ -3,7 +3,7 @@ package base
 import (
 	"testing"
 
-	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/plugins"
@@ -92,7 +92,7 @@ func TestCompareContainerVolumeMounts(t *testing.T) {
 
 func TestCompareVolumes(t *testing.T) {
 	t.Run("defaults", func(t *testing.T) {
-		jenkins := &v1alpha1.Jenkins{}
+		jenkins := &v1alpha2.Jenkins{}
 		pod := corev1.Pod{
 			Spec: corev1.PodSpec{
 				ServiceAccountName: "service-account-name",
@@ -106,9 +106,9 @@ func TestCompareVolumes(t *testing.T) {
 		assert.True(t, got)
 	})
 	t.Run("different", func(t *testing.T) {
-		jenkins := &v1alpha1.Jenkins{
-			Spec: v1alpha1.JenkinsSpec{
-				Master: v1alpha1.JenkinsMaster{
+		jenkins := &v1alpha2.Jenkins{
+			Spec: v1alpha2.JenkinsSpec{
+				Master: v1alpha2.JenkinsMaster{
 					Volumes: []corev1.Volume{
 						{
 							Name: "added",
@@ -130,9 +130,9 @@ func TestCompareVolumes(t *testing.T) {
 		assert.False(t, got)
 	})
 	t.Run("added one volume", func(t *testing.T) {
-		jenkins := &v1alpha1.Jenkins{
-			Spec: v1alpha1.JenkinsSpec{
-				Master: v1alpha1.JenkinsMaster{
+		jenkins := &v1alpha2.Jenkins{
+			Spec: v1alpha2.JenkinsSpec{
+				Master: v1alpha2.JenkinsMaster{
 					Volumes: []corev1.Volume{
 						{
 							Name: "added",
@@ -159,7 +159,7 @@ func TestReconcileJenkinsBaseConfiguration_verifyPlugins(t *testing.T) {
 	log.SetupLogger(true)
 
 	t.Run("happy, empty base and user plugins", func(t *testing.T) {
-		jenkins := &v1alpha1.Jenkins{}
+		jenkins := &v1alpha2.Jenkins{}
 		r := ReconcileJenkinsBaseConfiguration{
 			logger:  log.Log,
 			jenkins: jenkins,
@@ -179,7 +179,7 @@ func TestReconcileJenkinsBaseConfiguration_verifyPlugins(t *testing.T) {
 		assert.True(t, got)
 	})
 	t.Run("happy, not empty base and empty user plugins", func(t *testing.T) {
-		jenkins := &v1alpha1.Jenkins{}
+		jenkins := &v1alpha2.Jenkins{}
 		r := ReconcileJenkinsBaseConfiguration{
 			logger:  log.Log,
 			jenkins: jenkins,
@@ -211,9 +211,9 @@ func TestReconcileJenkinsBaseConfiguration_verifyPlugins(t *testing.T) {
 		assert.True(t, got)
 	})
 	t.Run("happy, empty base and not empty user plugins", func(t *testing.T) {
-		jenkins := &v1alpha1.Jenkins{
-			Spec: v1alpha1.JenkinsSpec{
-				Master: v1alpha1.JenkinsMaster{
+		jenkins := &v1alpha2.Jenkins{
+			Spec: v1alpha2.JenkinsSpec{
+				Master: v1alpha2.JenkinsMaster{
 					Plugins: map[string][]string{"plugin-name:0.0.1": {}},
 				},
 			},
@@ -247,7 +247,7 @@ func TestReconcileJenkinsBaseConfiguration_verifyPlugins(t *testing.T) {
 		assert.True(t, got)
 	})
 	t.Run("happy, plugin version doesn't matter for base plugins", func(t *testing.T) {
-		jenkins := &v1alpha1.Jenkins{}
+		jenkins := &v1alpha2.Jenkins{}
 		r := ReconcileJenkinsBaseConfiguration{
 			logger:  log.Log,
 			jenkins: jenkins,
@@ -279,9 +279,9 @@ func TestReconcileJenkinsBaseConfiguration_verifyPlugins(t *testing.T) {
 		assert.True(t, got)
 	})
 	t.Run("plugin version matter for user plugins", func(t *testing.T) {
-		jenkins := &v1alpha1.Jenkins{
-			Spec: v1alpha1.JenkinsSpec{
-				Master: v1alpha1.JenkinsMaster{
+		jenkins := &v1alpha2.Jenkins{
+			Spec: v1alpha2.JenkinsSpec{
+				Master: v1alpha2.JenkinsMaster{
 					Plugins: map[string][]string{"plugin-name:0.0.2": {}},
 				},
 			},
@@ -315,7 +315,7 @@ func TestReconcileJenkinsBaseConfiguration_verifyPlugins(t *testing.T) {
 		assert.False(t, got)
 	})
 	t.Run("missing base plugin", func(t *testing.T) {
-		jenkins := &v1alpha1.Jenkins{}
+		jenkins := &v1alpha2.Jenkins{}
 		r := ReconcileJenkinsBaseConfiguration{
 			logger:  log.Log,
 			jenkins: jenkins,
@@ -339,9 +339,9 @@ func TestReconcileJenkinsBaseConfiguration_verifyPlugins(t *testing.T) {
 		assert.False(t, got)
 	})
 	t.Run("missing user plugin", func(t *testing.T) {
-		jenkins := &v1alpha1.Jenkins{
-			Spec: v1alpha1.JenkinsSpec{
-				Master: v1alpha1.JenkinsMaster{
+		jenkins := &v1alpha2.Jenkins{
+			Spec: v1alpha2.JenkinsSpec{
+				Master: v1alpha2.JenkinsMaster{
 					Plugins: map[string][]string{"plugin-name:0.0.2": {}},
 				},
 			},

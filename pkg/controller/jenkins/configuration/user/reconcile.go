@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/user/casc"
@@ -26,12 +26,12 @@ type ReconcileUserConfiguration struct {
 	k8sClient     k8s.Client
 	jenkinsClient jenkinsclient.Jenkins
 	logger        logr.Logger
-	jenkins       *v1alpha1.Jenkins
+	jenkins       *v1alpha2.Jenkins
 }
 
 // New create structure which takes care of user configuration
 func New(k8sClient k8s.Client, jenkinsClient jenkinsclient.Jenkins, logger logr.Logger,
-	jenkins *v1alpha1.Jenkins) *ReconcileUserConfiguration {
+	jenkins *v1alpha2.Jenkins) *ReconcileUserConfiguration {
 	return &ReconcileUserConfiguration{
 		k8sClient:     k8sClient,
 		jenkinsClient: jenkinsClient,

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
@@ -30,10 +30,10 @@ func TestConfiguration(t *testing.T) {
 	systemMessage := "Configuration as Code integration works!!!"
 	systemMessageEnvName := "SYSTEM_MESSAGE"
 	mySeedJob := seedJobConfig{
-		SeedJob: v1alpha1.SeedJob{
+		SeedJob: v1alpha2.SeedJob{
 			ID:                    "jenkins-operator",
 			CredentialID:          "jenkins-operator",
-			JenkinsCredentialType: v1alpha1.NoJenkinsCredentialCredentialType,
+			JenkinsCredentialType: v1alpha2.NoJenkinsCredentialCredentialType,
 			Targets:               "cicd/jobs/*.jenkins",
 			Description:           "Jenkins Operator repository",
 			RepositoryBranch:      "master",
@@ -64,7 +64,7 @@ func TestConfiguration(t *testing.T) {
 	// base
 	createUserConfigurationSecret(t, jenkinsCRName, namespace, systemMessageEnvName, systemMessage)
 	createUserConfigurationConfigMap(t, jenkinsCRName, namespace, numberOfExecutors, fmt.Sprintf("${%s}", systemMessageEnvName))
-	jenkins := createJenkinsCR(t, jenkinsCRName, namespace, &[]v1alpha1.SeedJob{mySeedJob.SeedJob}, volumes)
+	jenkins := createJenkinsCR(t, jenkinsCRName, namespace, &[]v1alpha2.SeedJob{mySeedJob.SeedJob}, volumes)
 	createDefaultLimitsForContainersInNamespace(t, namespace)
 	createKubernetesCredentialsProviderSecret(t, namespace, mySeedJob)
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
@@ -153,7 +153,7 @@ func createDefaultLimitsForContainersInNamespace(t *testing.T, namespace string)
 	}
 }
 
-func verifyJenkinsMasterPodAttributes(t *testing.T, jenkins *v1alpha1.Jenkins) {
+func verifyJenkinsMasterPodAttributes(t *testing.T, jenkins *v1alpha2.Jenkins) {
 	jenkinsPod := getJenkinsMasterPod(t, jenkins)
 	jenkins = getJenkins(t, jenkins.Namespace, jenkins.Name)
 
@@ -222,7 +222,7 @@ func verifyContainer(t *testing.T, expected corev1.Container, actual corev1.Cont
 	}
 }
 
-func verifyPlugins(t *testing.T, jenkinsClient jenkinsclient.Jenkins, jenkins *v1alpha1.Jenkins) {
+func verifyPlugins(t *testing.T, jenkinsClient jenkinsclient.Jenkins, jenkins *v1alpha2.Jenkins) {
 	installedPlugins, err := jenkinsClient.GetPlugins(1)
 	if err != nil {
 		t.Fatal(err)

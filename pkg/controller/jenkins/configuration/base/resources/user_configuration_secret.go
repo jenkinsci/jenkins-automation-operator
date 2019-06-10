@@ -3,7 +3,7 @@ package resources
 import (
 	"fmt"
 
-	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
 
 	corev1 "k8s.io/api/core/v1"
@@ -11,7 +11,7 @@ import (
 )
 
 // GetUserConfigurationSecretNameFromJenkins returns name of Kubernetes secret used to store jenkins operator credentials
-func GetUserConfigurationSecretNameFromJenkins(jenkins *v1alpha1.Jenkins) string {
+func GetUserConfigurationSecretNameFromJenkins(jenkins *v1alpha2.Jenkins) string {
 	return fmt.Sprintf("%s-user-configuration-%s", constants.OperatorName, jenkins.Name)
 }
 
@@ -21,7 +21,7 @@ func GetUserConfigurationSecretName(jenkinsCRName string) string {
 }
 
 // NewUserConfigurationSecret builds the Kubernetes secret resource which is used to store user sensitive data for Jenkins configuration
-func NewUserConfigurationSecret(jenkins *v1alpha1.Jenkins) *corev1.Secret {
+func NewUserConfigurationSecret(jenkins *v1alpha2.Jenkins) *corev1.Secret {
 	return &corev1.Secret{
 		TypeMeta: buildServiceTypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{

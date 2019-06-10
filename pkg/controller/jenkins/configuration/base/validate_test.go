@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 
 	"github.com/stretchr/testify/assert"
@@ -76,10 +76,10 @@ func TestValidatePlugins(t *testing.T) {
 
 func TestValidateJenkinsMasterPodEnvs(t *testing.T) {
 	t.Run("happy", func(t *testing.T) {
-		jenkins := v1alpha1.Jenkins{
-			Spec: v1alpha1.JenkinsSpec{
-				Master: v1alpha1.JenkinsMaster{
-					Container: v1alpha1.Container{
+		jenkins := v1alpha2.Jenkins{
+			Spec: v1alpha2.JenkinsSpec{
+				Master: v1alpha2.JenkinsMaster{
+					Container: v1alpha2.Container{
 						Env: []v1.EnvVar{
 							{
 								Name:  "SOME_VALUE",
@@ -96,10 +96,10 @@ func TestValidateJenkinsMasterPodEnvs(t *testing.T) {
 		assert.Equal(t, true, got)
 	})
 	t.Run("override JENKINS_HOME env", func(t *testing.T) {
-		jenkins := v1alpha1.Jenkins{
-			Spec: v1alpha1.JenkinsSpec{
-				Master: v1alpha1.JenkinsMaster{
-					Container: v1alpha1.Container{
+		jenkins := v1alpha2.Jenkins{
+			Spec: v1alpha2.JenkinsSpec{
+				Master: v1alpha2.JenkinsMaster{
+					Container: v1alpha2.Container{
 						Env: []v1.EnvVar{
 							{
 								Name:  "JENKINS_HOME",
@@ -119,9 +119,9 @@ func TestValidateJenkinsMasterPodEnvs(t *testing.T) {
 
 func TestValidateReservedVolumes(t *testing.T) {
 	t.Run("happy", func(t *testing.T) {
-		jenkins := v1alpha1.Jenkins{
-			Spec: v1alpha1.JenkinsSpec{
-				Master: v1alpha1.JenkinsMaster{
+		jenkins := v1alpha2.Jenkins{
+			Spec: v1alpha2.JenkinsSpec{
+				Master: v1alpha2.JenkinsMaster{
 					Volumes: []v1.Volume{
 						{
 							Name: "not-used-name",
@@ -136,9 +136,9 @@ func TestValidateReservedVolumes(t *testing.T) {
 		assert.Equal(t, true, got)
 	})
 	t.Run("used reserved name", func(t *testing.T) {
-		jenkins := v1alpha1.Jenkins{
-			Spec: v1alpha1.JenkinsSpec{
-				Master: v1alpha1.JenkinsMaster{
+		jenkins := v1alpha2.Jenkins{
+			Spec: v1alpha2.JenkinsSpec{
+				Master: v1alpha2.JenkinsMaster{
 					Volumes: []v1.Volume{
 						{
 							Name: resources.JenkinsHomeVolumeName,
@@ -156,9 +156,9 @@ func TestValidateReservedVolumes(t *testing.T) {
 
 func TestValidateContainerVolumeMounts(t *testing.T) {
 	t.Run("default Jenkins master container", func(t *testing.T) {
-		jenkins := v1alpha1.Jenkins{
-			Spec: v1alpha1.JenkinsSpec{
-				Master: v1alpha1.JenkinsMaster{},
+		jenkins := v1alpha2.Jenkins{
+			Spec: v1alpha2.JenkinsSpec{
+				Master: v1alpha2.JenkinsMaster{},
 			},
 		}
 		baseReconcileLoop := New(nil, nil, logf.ZapLogger(false),
@@ -167,15 +167,15 @@ func TestValidateContainerVolumeMounts(t *testing.T) {
 		assert.Equal(t, true, got)
 	})
 	t.Run("one extra volume", func(t *testing.T) {
-		jenkins := v1alpha1.Jenkins{
-			Spec: v1alpha1.JenkinsSpec{
-				Master: v1alpha1.JenkinsMaster{
+		jenkins := v1alpha2.Jenkins{
+			Spec: v1alpha2.JenkinsSpec{
+				Master: v1alpha2.JenkinsMaster{
 					Volumes: []v1.Volume{
 						{
 							Name: "example",
 						},
 					},
-					Container: v1alpha1.Container{
+					Container: v1alpha2.Container{
 						VolumeMounts: []v1.VolumeMount{
 							{
 								Name:      "example",
@@ -192,15 +192,15 @@ func TestValidateContainerVolumeMounts(t *testing.T) {
 		assert.Equal(t, true, got)
 	})
 	t.Run("empty mountPath", func(t *testing.T) {
-		jenkins := v1alpha1.Jenkins{
-			Spec: v1alpha1.JenkinsSpec{
-				Master: v1alpha1.JenkinsMaster{
+		jenkins := v1alpha2.Jenkins{
+			Spec: v1alpha2.JenkinsSpec{
+				Master: v1alpha2.JenkinsMaster{
 					Volumes: []v1.Volume{
 						{
 							Name: "example",
 						},
 					},
-					Container: v1alpha1.Container{
+					Container: v1alpha2.Container{
 						VolumeMounts: []v1.VolumeMount{
 							{
 								Name:      "example",
@@ -217,10 +217,10 @@ func TestValidateContainerVolumeMounts(t *testing.T) {
 		assert.Equal(t, false, got)
 	})
 	t.Run("missing volume", func(t *testing.T) {
-		jenkins := v1alpha1.Jenkins{
-			Spec: v1alpha1.JenkinsSpec{
-				Master: v1alpha1.JenkinsMaster{
-					Container: v1alpha1.Container{
+		jenkins := v1alpha2.Jenkins{
+			Spec: v1alpha2.JenkinsSpec{
+				Master: v1alpha2.JenkinsMaster{
+					Container: v1alpha2.Container{
 						VolumeMounts: []v1.VolumeMount{
 							{
 								Name:      "missing-volume",
@@ -262,7 +262,7 @@ func TestValidateConfigMapVolume(t *testing.T) {
 	t.Run("happy, required", func(t *testing.T) {
 		optional := false
 		configMap := corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: "configmap-name"}}
-		jenkins := &v1alpha1.Jenkins{ObjectMeta: metav1.ObjectMeta{Namespace: namespace}}
+		jenkins := &v1alpha2.Jenkins{ObjectMeta: metav1.ObjectMeta{Namespace: namespace}}
 		volume := corev1.Volume{
 			Name: "volume-name",
 			VolumeSource: corev1.VolumeSource{
@@ -288,7 +288,7 @@ func TestValidateConfigMapVolume(t *testing.T) {
 	t.Run("missing configmap", func(t *testing.T) {
 		optional := false
 		configMap := corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: "configmap-name"}}
-		jenkins := &v1alpha1.Jenkins{ObjectMeta: metav1.ObjectMeta{Namespace: namespace}}
+		jenkins := &v1alpha2.Jenkins{ObjectMeta: metav1.ObjectMeta{Namespace: namespace}}
 		volume := corev1.Volume{
 			Name: "volume-name",
 			VolumeSource: corev1.VolumeSource{
@@ -335,7 +335,7 @@ func TestValidateSecretVolume(t *testing.T) {
 	t.Run("happy, required", func(t *testing.T) {
 		optional := false
 		secret := corev1.Secret{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: "secret-name"}}
-		jenkins := &v1alpha1.Jenkins{ObjectMeta: metav1.ObjectMeta{Namespace: namespace}}
+		jenkins := &v1alpha2.Jenkins{ObjectMeta: metav1.ObjectMeta{Namespace: namespace}}
 		volume := corev1.Volume{
 			Name: "volume-name",
 			VolumeSource: corev1.VolumeSource{
@@ -359,7 +359,7 @@ func TestValidateSecretVolume(t *testing.T) {
 	t.Run("missing secret", func(t *testing.T) {
 		optional := false
 		secret := corev1.Secret{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: "secret-name"}}
-		jenkins := &v1alpha1.Jenkins{ObjectMeta: metav1.ObjectMeta{Namespace: namespace}}
+		jenkins := &v1alpha2.Jenkins{ObjectMeta: metav1.ObjectMeta{Namespace: namespace}}
 		volume := corev1.Volume{
 			Name: "volume-name",
 			VolumeSource: corev1.VolumeSource{

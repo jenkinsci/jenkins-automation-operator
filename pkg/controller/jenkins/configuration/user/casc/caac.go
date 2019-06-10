@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/jobs"
@@ -56,7 +56,7 @@ func (g *ConfigurationAsCode) ConfigureJob() error {
 }
 
 // Ensure configures Jenkins with help Configuration as a code plugin
-func (g *ConfigurationAsCode) Ensure(jenkins *v1alpha1.Jenkins) (bool, error) {
+func (g *ConfigurationAsCode) Ensure(jenkins *v1alpha2.Jenkins) (bool, error) {
 	jobsClient := jobs.New(g.jenkinsClient, g.k8sClient, g.logger)
 
 	configuration := &corev1.ConfigMap{}

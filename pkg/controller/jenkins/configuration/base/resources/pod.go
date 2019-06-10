@@ -3,7 +3,7 @@ package resources
 import (
 	"fmt"
 
-	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
 
 	corev1 "k8s.io/api/core/v1"
@@ -76,7 +76,7 @@ func GetJenkinsMasterPodBaseEnvs() []corev1.EnvVar {
 }
 
 // GetJenkinsMasterPodBaseVolumes returns Jenkins master pod volumes required by operator
-func GetJenkinsMasterPodBaseVolumes(jenkins *v1alpha1.Jenkins) []corev1.Volume {
+func GetJenkinsMasterPodBaseVolumes(jenkins *v1alpha2.Jenkins) []corev1.Volume {
 	configMapVolumeSourceDefaultMode := corev1.ConfigMapVolumeSourceDefaultMode
 	secretVolumeSourceDefaultMode := corev1.SecretVolumeSourceDefaultMode
 	return []corev1.Volume{
@@ -193,7 +193,7 @@ func GetJenkinsMasterContainerBaseVolumeMounts() []corev1.VolumeMount {
 }
 
 // NewJenkinsMasterContainer returns Jenkins master Kubernetes container
-func NewJenkinsMasterContainer(jenkins *v1alpha1.Jenkins) corev1.Container {
+func NewJenkinsMasterContainer(jenkins *v1alpha2.Jenkins) corev1.Container {
 	envs := GetJenkinsMasterPodBaseEnvs()
 	envs = append(envs, jenkins.Spec.Master.Env...)
 
@@ -226,7 +226,7 @@ func NewJenkinsMasterContainer(jenkins *v1alpha1.Jenkins) corev1.Container {
 }
 
 // ConvertJenkinsContainerToKubernetesContainer converts Jenkins container to Kubernetes container
-func ConvertJenkinsContainerToKubernetesContainer(container v1alpha1.Container) corev1.Container {
+func ConvertJenkinsContainerToKubernetesContainer(container v1alpha2.Container) corev1.Container {
 	return corev1.Container{
 		Name:            container.Name,
 		Image:           container.Image,
@@ -246,7 +246,7 @@ func ConvertJenkinsContainerToKubernetesContainer(container v1alpha1.Container) 
 	}
 }
 
-func newContainers(jenkins *v1alpha1.Jenkins) (containers []corev1.Container) {
+func newContainers(jenkins *v1alpha2.Jenkins) (containers []corev1.Container) {
 	containers = append(containers, NewJenkinsMasterContainer(jenkins))
 
 	for _, container := range jenkins.Spec.Master.Containers {
@@ -257,7 +257,7 @@ func newContainers(jenkins *v1alpha1.Jenkins) (containers []corev1.Container) {
 }
 
 // NewJenkinsMasterPod builds Jenkins Master Kubernetes Pod resource
-func NewJenkinsMasterPod(objectMeta metav1.ObjectMeta, jenkins *v1alpha1.Jenkins) *corev1.Pod {
+func NewJenkinsMasterPod(objectMeta metav1.ObjectMeta, jenkins *v1alpha2.Jenkins) *corev1.Pod {
 	runAsUser := jenkinsUserUID
 
 	objectMeta.Annotations = jenkins.Spec.Master.Annotations

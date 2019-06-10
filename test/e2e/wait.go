@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/jenkinsci/kubernetes-operator/internal/try"
-	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 
@@ -27,11 +27,11 @@ var (
 )
 
 // checkConditionFunc is used to check if a condition for the jenkins CR is set
-type checkConditionFunc func(*v1alpha1.Jenkins, error) bool
+type checkConditionFunc func(*v1alpha2.Jenkins, error) bool
 
-func waitForJenkinsBaseConfigurationToComplete(t *testing.T, jenkins *v1alpha1.Jenkins) {
+func waitForJenkinsBaseConfigurationToComplete(t *testing.T, jenkins *v1alpha2.Jenkins) {
 	t.Log("Waiting for Jenkins base configuration to complete")
-	_, err := WaitUntilJenkinsConditionSet(retryInterval, 150, jenkins, func(jenkins *v1alpha1.Jenkins, err error) bool {
+	_, err := WaitUntilJenkinsConditionSet(retryInterval, 150, jenkins, func(jenkins *v1alpha2.Jenkins, err error) bool {
 		t.Logf("Current Jenkins status: '%+v', error '%s'", jenkins.Status, err)
 		return err == nil && jenkins.Status.BaseConfigurationCompletedTime != nil
 	})
@@ -44,7 +44,7 @@ func waitForJenkinsBaseConfigurationToComplete(t *testing.T, jenkins *v1alpha1.J
 	assert.NoError(t, err)
 }
 
-func waitForRecreateJenkinsMasterPod(t *testing.T, jenkins *v1alpha1.Jenkins) {
+func waitForRecreateJenkinsMasterPod(t *testing.T, jenkins *v1alpha2.Jenkins) {
 	err := wait.Poll(retryInterval, 30*retryInterval, func() (bool, error) {
 		lo := metav1.ListOptions{
 			LabelSelector: labels.SelectorFromSet(resources.BuildResourceLabels(jenkins)).String(),
@@ -65,9 +65,9 @@ func waitForRecreateJenkinsMasterPod(t *testing.T, jenkins *v1alpha1.Jenkins) {
 	t.Log("Jenkins pod has been recreated")
 }
 
-func waitForJenkinsUserConfigurationToComplete(t *testing.T, jenkins *v1alpha1.Jenkins) {
+func waitForJenkinsUserConfigurationToComplete(t *testing.T, jenkins *v1alpha2.Jenkins) {
 	t.Log("Waiting for Jenkins user configuration to complete")
-	_, err := WaitUntilJenkinsConditionSet(retryInterval, 70, jenkins, func(jenkins *v1alpha1.Jenkins, err error) bool {
+	_, err := WaitUntilJenkinsConditionSet(retryInterval, 70, jenkins, func(jenkins *v1alpha2.Jenkins, err error) bool {
 		t.Logf("Current Jenkins status: '%+v', error '%s'", jenkins.Status, err)
 		return err == nil && jenkins.Status.UserConfigurationCompletedTime != nil
 	})
@@ -92,8 +92,8 @@ func waitForJenkinsSafeRestart(t *testing.T, jenkinsClient jenkinsclient.Jenkins
 }
 
 // WaitUntilJenkinsConditionSet retries until the specified condition check becomes true for the jenkins CR
-func WaitUntilJenkinsConditionSet(retryInterval time.Duration, retries int, jenkins *v1alpha1.Jenkins, checkCondition checkConditionFunc) (*v1alpha1.Jenkins, error) {
-	jenkinsStatus := &v1alpha1.Jenkins{}
+func WaitUntilJenkinsConditionSet(retryInterval time.Duration, retries int, jenkins *v1alpha2.Jenkins, checkCondition checkConditionFunc) (*v1alpha2.Jenkins, error) {
+	jenkinsStatus := &v1alpha2.Jenkins{}
 	err := wait.Poll(retryInterval, time.Duration(retries)*retryInterval, func() (bool, error) {
 		namespacedName := types.NamespacedName{Namespace: jenkins.Namespace, Name: jenkins.Name}
 		err := framework.Global.Client.Get(goctx.TODO(), namespacedName, jenkinsStatus)

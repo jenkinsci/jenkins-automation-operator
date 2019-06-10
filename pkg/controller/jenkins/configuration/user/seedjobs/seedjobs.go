@@ -6,7 +6,7 @@ import (
 	"encoding/base64"
 	"fmt"
 
-	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
@@ -60,7 +60,7 @@ func New(jenkinsClient jenkinsclient.Jenkins, k8sClient k8s.Client, logger logr.
 }
 
 // EnsureSeedJobs configures seed job and runs it for every entry from Jenkins.Spec.SeedJobs
-func (s *SeedJobs) EnsureSeedJobs(jenkins *v1alpha1.Jenkins) (done bool, err error) {
+func (s *SeedJobs) EnsureSeedJobs(jenkins *v1alpha2.Jenkins) (done bool, err error) {
 	if err = s.createJob(); err != nil {
 		s.logger.V(log.VWarn).Info("Couldn't create jenkins seed job")
 		return false, err
@@ -93,9 +93,9 @@ func (s *SeedJobs) createJob() error {
 // ensureLabelsForSecrets adds labels to Kubernetes secrets where are Jenkins credentials used for seed jobs,
 // thanks to them kubernetes-credentials-provider-plugin will create Jenkins credentials in Jenkins and
 // Operator will able to watch any changes made to them
-func (s *SeedJobs) ensureLabelsForSecrets(jenkins v1alpha1.Jenkins) error {
+func (s *SeedJobs) ensureLabelsForSecrets(jenkins v1alpha2.Jenkins) error {
 	for _, seedJob := range jenkins.Spec.SeedJobs {
-		if seedJob.JenkinsCredentialType == v1alpha1.BasicSSHCredentialType || seedJob.JenkinsCredentialType == v1alpha1.UsernamePasswordCredentialType {
+		if seedJob.JenkinsCredentialType == v1alpha2.BasicSSHCredentialType || seedJob.JenkinsCredentialType == v1alpha2.UsernamePasswordCredentialType {
 			requiredLabels := resources.BuildLabelsForWatchedResources(jenkins)
 			requiredLabels[JenkinsCredentialTypeLabelName] = string(seedJob.JenkinsCredentialType)
 
@@ -120,7 +120,7 @@ func (s *SeedJobs) ensureLabelsForSecrets(jenkins v1alpha1.Jenkins) error {
 }
 
 // buildJobs is responsible for running jenkins builds which configures jenkins seed jobs and deploy keys
-func (s *SeedJobs) buildJobs(jenkins *v1alpha1.Jenkins) (done bool, err error) {
+func (s *SeedJobs) buildJobs(jenkins *v1alpha2.Jenkins) (done bool, err error) {
 	allDone := true
 	for _, seedJob := range jenkins.Spec.SeedJobs {
 		credentialValue, err := s.credentialValue(jenkins.Namespace, seedJob)
@@ -158,8 +158,8 @@ func (s *SeedJobs) buildJobs(jenkins *v1alpha1.Jenkins) (done bool, err error) {
 	return allDone, nil
 }
 
-func (s *SeedJobs) credentialValue(namespace string, seedJob v1alpha1.SeedJob) (string, error) {
-	if seedJob.JenkinsCredentialType == v1alpha1.BasicSSHCredentialType || seedJob.JenkinsCredentialType == v1alpha1.UsernamePasswordCredentialType {
+func (s *SeedJobs) credentialValue(namespace string, seedJob v1alpha2.SeedJob) (string, error) {
+	if seedJob.JenkinsCredentialType == v1alpha2.BasicSSHCredentialType || seedJob.JenkinsCredentialType == v1alpha2.UsernamePasswordCredentialType {
 		secret := &corev1.Secret{}
 		namespaceName := types.NamespacedName{Namespace: namespace, Name: seedJob.CredentialID}
 		err := s.k8sClient.Get(context.TODO(), namespaceName, secret)
@@ -167,7 +167,7 @@ func (s *SeedJobs) credentialValue(namespace string, seedJob v1alpha1.SeedJob) (
 			return "", err
 		}
 
-		if seedJob.JenkinsCredentialType == v1alpha1.BasicSSHCredentialType {
+		if seedJob.JenkinsCredentialType == v1alpha2.BasicSSHCredentialType {
 			return string(secret.Data[PrivateKeySecretKey]), nil
 		}
 		return string(secret.Data[UsernameSecretKey]) + string(secret.Data[PasswordSecretKey]), nil

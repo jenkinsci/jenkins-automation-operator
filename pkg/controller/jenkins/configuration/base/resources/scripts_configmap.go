@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"text/template"
 
-	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
 
 	corev1 "k8s.io/api/core/v1"
@@ -278,7 +278,7 @@ func buildConfigMapTypeMeta() metav1.TypeMeta {
 	}
 }
 
-func buildInitBashScript(jenkins *v1alpha1.Jenkins) (*string, error) {
+func buildInitBashScript(jenkins *v1alpha2.Jenkins) (*string, error) {
 	data := struct {
 		JenkinsHomePath          string
 		InitConfigurationPath    string
@@ -303,12 +303,12 @@ func buildInitBashScript(jenkins *v1alpha1.Jenkins) (*string, error) {
 	return &output, nil
 }
 
-func getScriptsConfigMapName(jenkins *v1alpha1.Jenkins) string {
+func getScriptsConfigMapName(jenkins *v1alpha2.Jenkins) string {
 	return fmt.Sprintf("%s-scripts-%s", constants.OperatorName, jenkins.ObjectMeta.Name)
 }
 
 // NewScriptsConfigMap builds Kubernetes config map used to store scripts
-func NewScriptsConfigMap(meta metav1.ObjectMeta, jenkins *v1alpha1.Jenkins) (*corev1.ConfigMap, error) {
+func NewScriptsConfigMap(meta metav1.ObjectMeta, jenkins *v1alpha2.Jenkins) (*corev1.ConfigMap, error) {
 	meta.Name = getScriptsConfigMapName(jenkins)
 
 	initBashScript, err := buildInitBashScript(jenkins)

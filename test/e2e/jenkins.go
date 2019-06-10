@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 
@@ -17,8 +17,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-func getJenkins(t *testing.T, namespace, name string) *v1alpha1.Jenkins {
-	jenkins := &v1alpha1.Jenkins{}
+func getJenkins(t *testing.T, namespace, name string) *v1alpha2.Jenkins {
+	jenkins := &v1alpha2.Jenkins{}
 	namespaceName := types.NamespacedName{Namespace: namespace, Name: name}
 	if err := framework.Global.Client.Get(context.TODO(), namespaceName, jenkins); err != nil {
 		t.Fatal(err)
@@ -27,7 +27,7 @@ func getJenkins(t *testing.T, namespace, name string) *v1alpha1.Jenkins {
 	return jenkins
 }
 
-func getJenkinsMasterPod(t *testing.T, jenkins *v1alpha1.Jenkins) *v1.Pod {
+func getJenkinsMasterPod(t *testing.T, jenkins *v1alpha2.Jenkins) *v1.Pod {
 	lo := metav1.ListOptions{
 		LabelSelector: labels.SelectorFromSet(resources.BuildResourceLabels(jenkins)).String(),
 	}
@@ -41,7 +41,7 @@ func getJenkinsMasterPod(t *testing.T, jenkins *v1alpha1.Jenkins) *v1.Pod {
 	return &podList.Items[0]
 }
 
-func createJenkinsAPIClient(jenkins *v1alpha1.Jenkins) (jenkinsclient.Jenkins, error) {
+func createJenkinsAPIClient(jenkins *v1alpha2.Jenkins) (jenkinsclient.Jenkins, error) {
 	adminSecret := &v1.Secret{}
 	namespaceName := types.NamespacedName{Namespace: jenkins.Namespace, Name: resources.GetOperatorCredentialsSecretName(jenkins)}
 	if err := framework.Global.Client.Get(context.TODO(), namespaceName, adminSecret); err != nil {
@@ -60,21 +60,21 @@ func createJenkinsAPIClient(jenkins *v1alpha1.Jenkins) (jenkinsclient.Jenkins, e
 	)
 }
 
-func createJenkinsCR(t *testing.T, name, namespace string, seedJob *[]v1alpha1.SeedJob, volumes []corev1.Volume) *v1alpha1.Jenkins {
-	var seedJobs []v1alpha1.SeedJob
+func createJenkinsCR(t *testing.T, name, namespace string, seedJob *[]v1alpha2.SeedJob, volumes []corev1.Volume) *v1alpha2.Jenkins {
+	var seedJobs []v1alpha2.SeedJob
 	if seedJob != nil {
 		seedJobs = append(seedJobs, *seedJob...)
 	}
 
-	jenkins := &v1alpha1.Jenkins{
+	jenkins := &v1alpha2.Jenkins{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
 		},
-		Spec: v1alpha1.JenkinsSpec{
-			Master: v1alpha1.JenkinsMaster{
+		Spec: v1alpha2.JenkinsSpec{
+			Master: v1alpha2.JenkinsMaster{
 				Annotations: map[string]string{"test": "label"},
-				Container: v1alpha1.Container{
+				Container: v1alpha2.Container{
 					Image: "jenkins/jenkins",
 					Env: []v1.EnvVar{
 						{
@@ -107,7 +107,7 @@ func createJenkinsCR(t *testing.T, name, namespace string, seedJob *[]v1alpha1.S
 						FailureThreshold:    int32(10),
 					},
 				},
-				Containers: []v1alpha1.Container{
+				Containers: []v1alpha2.Container{
 					{
 						Name:  "envoyproxy",
 						Image: "envoyproxy/envoy-alpine",
@@ -132,7 +132,7 @@ func createJenkinsCR(t *testing.T, name, namespace string, seedJob *[]v1alpha1.S
 	return jenkins
 }
 
-func verifyJenkinsAPIConnection(t *testing.T, jenkins *v1alpha1.Jenkins) jenkinsclient.Jenkins {
+func verifyJenkinsAPIConnection(t *testing.T, jenkins *v1alpha2.Jenkins) jenkinsclient.Jenkins {
 	client, err := createJenkinsAPIClient(jenkins)
 	if err != nil {
 		t.Fatal(err)
@@ -142,7 +142,7 @@ func verifyJenkinsAPIConnection(t *testing.T, jenkins *v1alpha1.Jenkins) jenkins
 	return client
 }
 
-func restartJenkinsMasterPod(t *testing.T, jenkins *v1alpha1.Jenkins) {
+func restartJenkinsMasterPod(t *testing.T, jenkins *v1alpha2.Jenkins) {
 	t.Log("Restarting Jenkins master pod")
 	jenkinsPod := getJenkinsMasterPod(t, jenkins)
 	err := framework.Global.Client.Delete(context.TODO(), jenkinsPod)

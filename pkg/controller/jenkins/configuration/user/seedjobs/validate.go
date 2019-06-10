@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
 
 	"github.com/go-logr/logr"
@@ -18,7 +18,7 @@ import (
 )
 
 // ValidateSeedJobs verify seed jobs configuration
-func (r *SeedJobs) ValidateSeedJobs(jenkins v1alpha1.Jenkins) (bool, error) {
+func (r *SeedJobs) ValidateSeedJobs(jenkins v1alpha2.Jenkins) (bool, error) {
 	valid := true
 
 	if !r.validateIfIDIsUnique(jenkins.Spec.SeedJobs) {
@@ -48,24 +48,24 @@ func (r *SeedJobs) ValidateSeedJobs(jenkins v1alpha1.Jenkins) (bool, error) {
 			valid = false
 		}
 
-		if _, ok := v1alpha1.AllowedJenkinsCredentialMap[string(seedJob.JenkinsCredentialType)]; !ok {
+		if _, ok := v1alpha2.AllowedJenkinsCredentialMap[string(seedJob.JenkinsCredentialType)]; !ok {
 			logger.Info("unknown credential type")
 			return false, nil
 		}
 
-		if (seedJob.JenkinsCredentialType == v1alpha1.BasicSSHCredentialType ||
-			seedJob.JenkinsCredentialType == v1alpha1.UsernamePasswordCredentialType) && len(seedJob.CredentialID) == 0 {
+		if (seedJob.JenkinsCredentialType == v1alpha2.BasicSSHCredentialType ||
+			seedJob.JenkinsCredentialType == v1alpha2.UsernamePasswordCredentialType) && len(seedJob.CredentialID) == 0 {
 			logger.Info("credential ID can't be empty")
 			valid = false
 		}
 
 		// validate repository url match private key
-		if strings.Contains(seedJob.RepositoryURL, "git@") && seedJob.JenkinsCredentialType == v1alpha1.NoJenkinsCredentialCredentialType {
+		if strings.Contains(seedJob.RepositoryURL, "git@") && seedJob.JenkinsCredentialType == v1alpha2.NoJenkinsCredentialCredentialType {
 			logger.Info("Jenkins credential must be set while using ssh repository url")
 			valid = false
 		}
 
-		if seedJob.JenkinsCredentialType == v1alpha1.BasicSSHCredentialType || seedJob.JenkinsCredentialType == v1alpha1.UsernamePasswordCredentialType {
+		if seedJob.JenkinsCredentialType == v1alpha2.BasicSSHCredentialType || seedJob.JenkinsCredentialType == v1alpha2.UsernamePasswordCredentialType {
 			secret := &v1.Secret{}
 			namespaceName := types.NamespacedName{Namespace: jenkins.Namespace, Name: seedJob.CredentialID}
 			err := r.k8sClient.Get(context.TODO(), namespaceName, secret)
@@ -76,12 +76,12 @@ func (r *SeedJobs) ValidateSeedJobs(jenkins v1alpha1.Jenkins) (bool, error) {
 				return false, stackerr.WithStack(err)
 			}
 
-			if seedJob.JenkinsCredentialType == v1alpha1.BasicSSHCredentialType {
+			if seedJob.JenkinsCredentialType == v1alpha2.BasicSSHCredentialType {
 				if ok := validateBasicSSHSecret(logger, *secret); !ok {
 					valid = false
 				}
 			}
-			if seedJob.JenkinsCredentialType == v1alpha1.UsernamePasswordCredentialType {
+			if seedJob.JenkinsCredentialType == v1alpha2.UsernamePasswordCredentialType {
 				if ok := validateUsernamePasswordSecret(logger, *secret); !ok {
 					valid = false
 				}
@@ -91,7 +91,7 @@ func (r *SeedJobs) ValidateSeedJobs(jenkins v1alpha1.Jenkins) (bool, error) {
 	return valid, nil
 }
 
-func (r *SeedJobs) validateIfIDIsUnique(seedJobs []v1alpha1.SeedJob) bool {
+func (r *SeedJobs) validateIfIDIsUnique(seedJobs []v1alpha2.SeedJob) bool {
 	ids := map[string]bool{}
 	for _, seedJob := range seedJobs {
 		if _, found := ids[seedJob.ID]; found {

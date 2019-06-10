@@ -20,7 +20,7 @@ Once jenkins-operator is up and running let's deploy actual Jenkins instance.
 Create manifest ie. **jenkins_instance.yaml** with following data and save it on drive.
 
 ```bash
-apiVersion: jenkins.io/v1alpha1
+apiVersion: jenkins.io/v1alpha2
 kind: Jenkins
 metadata:
   name: example
@@ -173,7 +173,7 @@ podTemplate(label: label,
 Jenkins Seed Jobs are configured using `Jenkins.spec.seedJobs` section from your custom resource manifest:
 
 ```
-apiVersion: jenkins.io/v1alpha1
+apiVersion: jenkins.io/v1alpha2
 kind: Jenkins
 metadata:
   name: example
@@ -205,7 +205,7 @@ If your GitHub repository is **private** you have to configure SSH or username/p
 Configure seed job like:
 
 ```
-apiVersion: jenkins.io/v1alpha1
+apiVersion: jenkins.io/v1alpha2
 kind: Jenkins
 metadata:
   name: example
@@ -243,7 +243,7 @@ data:
 Configure seed job like:
 
 ```
-apiVersion: jenkins.io/v1alpha1
+apiVersion: jenkins.io/v1alpha2
 kind: Jenkins
 metadata:
   name: example
@@ -350,7 +350,7 @@ runs the **jenkins-operator-user-configuration-casc** Jenkins Job which applies 
 Edit CR under `spec.master.plugins`:
 
 ```
-apiVersion: jenkins.io/v1alpha1
+apiVersion: jenkins.io/v1alpha2
 kind: Jenkins
 metadata:
   name: example

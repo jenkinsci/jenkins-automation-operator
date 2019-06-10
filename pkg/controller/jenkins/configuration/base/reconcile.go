@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
@@ -38,13 +38,13 @@ type ReconcileJenkinsBaseConfiguration struct {
 	k8sClient       client.Client
 	scheme          *runtime.Scheme
 	logger          logr.Logger
-	jenkins         *v1alpha1.Jenkins
+	jenkins         *v1alpha2.Jenkins
 	local, minikube bool
 }
 
 // New create structure which takes care of base configuration
 func New(client client.Client, scheme *runtime.Scheme, logger logr.Logger,
-	jenkins *v1alpha1.Jenkins, local, minikube bool) *ReconcileJenkinsBaseConfiguration {
+	jenkins *v1alpha2.Jenkins, local, minikube bool) *ReconcileJenkinsBaseConfiguration {
 	return &ReconcileJenkinsBaseConfiguration{
 		k8sClient: client,
 		scheme:    scheme,
@@ -364,7 +364,7 @@ func (r *ReconcileJenkinsBaseConfiguration) createRBAC(meta metav1.ObjectMeta) e
 	return nil
 }
 
-func (r *ReconcileJenkinsBaseConfiguration) createService(meta metav1.ObjectMeta, name string, config v1alpha1.Service) error {
+func (r *ReconcileJenkinsBaseConfiguration) createService(meta metav1.ObjectMeta, name string, config v1alpha2.Service) error {
 	service := corev1.Service{}
 	err := r.k8sClient.Get(context.TODO(), types.NamespacedName{Name: name, Namespace: meta.Namespace}, &service)
 	if err != nil && errors.IsNotFound(err) {
@@ -410,7 +410,7 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsMasterPod(meta metav1.O
 			return reconcile.Result{}, stackerr.WithStack(err)
 		}
 		now := metav1.Now()
-		r.jenkins.Status = v1alpha1.JenkinsStatus{
+		r.jenkins.Status = v1alpha2.JenkinsStatus{
 			ProvisionStartTime: &now,
 		}
 		err = r.updateResource(r.jenkins)

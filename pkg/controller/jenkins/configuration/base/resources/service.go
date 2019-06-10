@@ -3,7 +3,7 @@ package resources
 import (
 	"fmt"
 
-	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
 
 	corev1 "k8s.io/api/core/v1"
@@ -18,7 +18,7 @@ func buildServiceTypeMeta() metav1.TypeMeta {
 }
 
 // UpdateService returns new service with override fields from config
-func UpdateService(actual corev1.Service, config v1alpha1.Service) corev1.Service {
+func UpdateService(actual corev1.Service, config v1alpha2.Service) corev1.Service {
 	actual.ObjectMeta.Annotations = config.Annotations
 	for key, value := range config.Labels {
 		actual.ObjectMeta.Labels[key] = value
@@ -38,11 +38,11 @@ func UpdateService(actual corev1.Service, config v1alpha1.Service) corev1.Servic
 }
 
 // GetJenkinsHTTPServiceName returns Kubernetes service name used for expose Jenkins HTTP endpoint
-func GetJenkinsHTTPServiceName(jenkins *v1alpha1.Jenkins) string {
+func GetJenkinsHTTPServiceName(jenkins *v1alpha2.Jenkins) string {
 	return fmt.Sprintf("%s-http-%s", constants.OperatorName, jenkins.ObjectMeta.Name)
 }
 
 // GetJenkinsSlavesServiceName returns Kubernetes service name used for expose Jenkins slave endpoint
-func GetJenkinsSlavesServiceName(jenkins *v1alpha1.Jenkins) string {
+func GetJenkinsSlavesServiceName(jenkins *v1alpha2.Jenkins) string {
 	return fmt.Sprintf("%s-slave-%s", constants.OperatorName, jenkins.ObjectMeta.Name)
 }

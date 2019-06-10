@@ -6,15 +6,15 @@ All container images can be found at [virtuslab/jenkins-operator](https://hub.do
 ## Requirements
  
 To run **jenkins-operator**, you will need:
-- running Kubernetes cluster
-- kubectl
+- running Kubernetes cluster version 1.11+
+- kubectl version 1.11+
 
 ## Configure Custom Resource Definition 
 
 Install Jenkins Custom Resource Definition:
 
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/jenkinsci/kubernetes-operator/master/deploy/crds/jenkins_v1alpha1_jenkins_crd.yaml
+kubectl apply -f https://raw.githubusercontent.com/jenkinsci/kubernetes-operator/master/deploy/crds/jenkins_v1alpha2_jenkins_crd.yaml
 ```
 
 ## Deploy jenkins-operator

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/user"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
@@ -66,7 +66,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 
 	// Watch for changes to primary resource Jenkins
 	decorator := jenkinsDecorator{handler: &handler.EnqueueRequestForObject{}}
-	err = c.Watch(&source.Kind{Type: &v1alpha1.Jenkins{}}, &decorator)
+	err = c.Watch(&source.Kind{Type: &v1alpha2.Jenkins{}}, &decorator)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -74,7 +74,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// Watch for changes to secondary resource Pods and requeue the owner Jenkins
 	err = c.Watch(&source.Kind{Type: &corev1.Pod{}}, &handler.EnqueueRequestForOwner{
 		IsController: true,
-		OwnerType:    &v1alpha1.Jenkins{},
+		OwnerType:    &v1alpha2.Jenkins{},
 	})
 	if err != nil {
 		return errors.WithStack(err)
@@ -127,7 +127,7 @@ func (r *ReconcileJenkins) Reconcile(request reconcile.Request) (reconcile.Resul
 
 func (r *ReconcileJenkins) reconcile(request reconcile.Request, logger logr.Logger) (reconcile.Result, error) {
 	// Fetch the Jenkins instance
-	jenkins := &v1alpha1.Jenkins{}
+	jenkins := &v1alpha2.Jenkins{}
 	err := r.client.Get(context.TODO(), request.NamespacedName, jenkins)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -219,7 +219,7 @@ func (r *ReconcileJenkins) buildLogger(jenkinsName string) logr.Logger {
 	return log.Log.WithValues("cr", jenkinsName)
 }
 
-func (r *ReconcileJenkins) setDefaults(jenkins *v1alpha1.Jenkins, logger logr.Logger) error {
+func (r *ReconcileJenkins) setDefaults(jenkins *v1alpha2.Jenkins, logger logr.Logger) error {
 	changed := false
 	if len(jenkins.Spec.Master.Image) == 0 {
 		logger.Info("Setting default Jenkins master image: " + constants.DefaultJenkinsMasterImage)
@@ -295,7 +295,7 @@ func (r *ReconcileJenkins) setDefaults(jenkins *v1alpha1.Jenkins, logger logr.Lo
 			},
 		}
 	}
-	if reflect.DeepEqual(jenkins.Spec.Service, v1alpha1.Service{}) {
+	if reflect.DeepEqual(jenkins.Spec.Service, v1alpha2.Service{}) {
 		logger.Info("Setting default Jenkins master service")
 		changed = true
 		var serviceType corev1.ServiceType
@@ -306,15 +306,15 @@ func (r *ReconcileJenkins) setDefaults(jenkins *v1alpha1.Jenkins, logger logr.Lo
 		} else {
 			serviceType = corev1.ServiceTypeClusterIP
 		}
-		jenkins.Spec.Service = v1alpha1.Service{
+		jenkins.Spec.Service = v1alpha2.Service{
 			Type: serviceType,
 			Port: constants.DefaultHTTPPortInt32,
 		}
 	}
-	if reflect.DeepEqual(jenkins.Spec.SlaveService, v1alpha1.Service{}) {
+	if reflect.DeepEqual(jenkins.Spec.SlaveService, v1alpha2.Service{}) {
 		logger.Info("Setting default Jenkins slave service")
 		changed = true
-		jenkins.Spec.SlaveService = v1alpha1.Service{
+		jenkins.Spec.SlaveService = v1alpha2.Service{
 			Type: corev1.ServiceTypeClusterIP,
 			Port: constants.DefaultSlavePortInt32,
 		}
@@ -331,7 +331,7 @@ func (r *ReconcileJenkins) setDefaults(jenkins *v1alpha1.Jenkins, logger logr.Lo
 	return nil
 }
 
-func setDefaultsForContainer(jenkins *v1alpha1.Jenkins, containerIndex int, logger logr.Logger) bool {
+func setDefaultsForContainer(jenkins *v1alpha2.Jenkins, containerIndex int, logger logr.Logger) bool {
 	changed := false
 
 	if len(jenkins.Spec.Master.Containers[containerIndex].ImagePullPolicy) == 0 {

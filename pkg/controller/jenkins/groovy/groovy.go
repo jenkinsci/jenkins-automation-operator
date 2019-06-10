@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/jobs"
 
@@ -52,7 +52,7 @@ func (g *Groovy) ConfigureJob() error {
 }
 
 // Ensure executes groovy script and verifies jenkins job status according to reconciliation loop lifecycle
-func (g *Groovy) Ensure(secretOrConfigMapData map[string]string, jenkins *v1alpha1.Jenkins) (bool, error) {
+func (g *Groovy) Ensure(secretOrConfigMapData map[string]string, jenkins *v1alpha2.Jenkins) (bool, error) {
 	jobsClient := jobs.New(g.jenkinsClient, g.k8sClient, g.logger)
 
 	hash := g.calculateHash(secretOrConfigMapData)

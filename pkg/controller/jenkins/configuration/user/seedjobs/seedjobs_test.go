@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 
 	"github.com/bndr/gojenkins"
@@ -29,7 +29,7 @@ func TestEnsureSeedJobs(t *testing.T) {
 
 	jenkinsClient := client.NewMockJenkins(ctrl)
 	fakeClient := fake.NewFakeClient()
-	err := v1alpha1.SchemeBuilder.AddToScheme(scheme.Scheme)
+	err := v1alpha2.SchemeBuilder.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
 
 	jenkins := jenkinsCustomResource()
@@ -76,7 +76,7 @@ func TestEnsureSeedJobs(t *testing.T) {
 				GetBuild(ConfigureSeedJobsName, gomock.Any()).
 				Return(&gojenkins.Build{
 					Raw: &gojenkins.BuildResponse{
-						Result: string(v1alpha1.BuildSuccessStatus),
+						Result: string(v1alpha2.BuildSuccessStatus),
 					},
 				}, nil)
 		}
@@ -99,28 +99,28 @@ func TestEnsureSeedJobs(t *testing.T) {
 		// first run - should create job and schedule build
 		if reconcileAttempt == 1 {
 			assert.False(t, done)
-			assert.Equal(t, string(v1alpha1.BuildRunningStatus), string(build.Status))
+			assert.Equal(t, string(v1alpha2.BuildRunningStatus), string(build.Status))
 		}
 
 		// second run - should update and finish job
 		if reconcileAttempt == 2 {
 			assert.True(t, done)
-			assert.Equal(t, string(v1alpha1.BuildSuccessStatus), string(build.Status))
+			assert.Equal(t, string(v1alpha2.BuildSuccessStatus), string(build.Status))
 		}
 
 	}
 }
 
-func jenkinsCustomResource() *v1alpha1.Jenkins {
-	return &v1alpha1.Jenkins{
+func jenkinsCustomResource() *v1alpha2.Jenkins {
+	return &v1alpha2.Jenkins{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "jenkins",
 			Namespace: "default",
 		},
-		Spec: v1alpha1.JenkinsSpec{
-			Master: v1alpha1.JenkinsMaster{
+		Spec: v1alpha2.JenkinsSpec{
+			Master: v1alpha2.JenkinsMaster{
 				Annotations: map[string]string{"test": "label"},
-				Container: v1alpha1.Container{
+				Container: v1alpha2.Container{
 					Image: "jenkins/jenkins",
 					Resources: corev1.ResourceRequirements{
 						Requests: corev1.ResourceList{
@@ -134,10 +134,10 @@ func jenkinsCustomResource() *v1alpha1.Jenkins {
 					},
 				},
 			},
-			SeedJobs: []v1alpha1.SeedJob{
+			SeedJobs: []v1alpha2.SeedJob{
 				{
 					ID:                    "jenkins-operator-e2e",
-					JenkinsCredentialType: v1alpha1.NoJenkinsCredentialCredentialType,
+					JenkinsCredentialType: v1alpha2.NoJenkinsCredentialCredentialType,
 					Targets:               "cicd/jobs/*.jenkins",
 					Description:           "Jenkins Operator e2e tests repository",
 					RepositoryBranch:      "master",

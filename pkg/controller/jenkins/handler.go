@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
 
@@ -85,7 +85,7 @@ func (e *jenkinsDecorator) Create(evt event.CreateEvent, q workqueue.RateLimitin
 }
 
 func (e *jenkinsDecorator) Update(evt event.UpdateEvent, q workqueue.RateLimitingInterface) {
-	if !reflect.DeepEqual(evt.ObjectOld.(*v1alpha1.Jenkins).Spec, evt.ObjectNew.(*v1alpha1.Jenkins).Spec) {
+	if !reflect.DeepEqual(evt.ObjectOld.(*v1alpha2.Jenkins).Spec, evt.ObjectNew.(*v1alpha2.Jenkins).Spec) {
 		log.Log.WithValues("cr", evt.MetaNew.GetName()).Info(
 			fmt.Sprintf("%T/%s has been updated", evt.ObjectNew, evt.MetaNew.GetName()))
 	}

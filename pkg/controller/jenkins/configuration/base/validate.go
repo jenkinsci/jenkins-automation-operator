@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha1"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/plugins"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
@@ -22,7 +22,7 @@ var (
 )
 
 // Validate validates Jenkins CR Spec.master section
-func (r *ReconcileJenkinsBaseConfiguration) Validate(jenkins *v1alpha1.Jenkins) (bool, error) {
+func (r *ReconcileJenkinsBaseConfiguration) Validate(jenkins *v1alpha2.Jenkins) (bool, error) {
 	if !r.validateReservedVolumes() {
 		return false, nil
 	}
@@ -146,7 +146,7 @@ func (r *ReconcileJenkinsBaseConfiguration) validateReservedVolumes() bool {
 	return valid
 }
 
-func (r *ReconcileJenkinsBaseConfiguration) validateContainer(container v1alpha1.Container) bool {
+func (r *ReconcileJenkinsBaseConfiguration) validateContainer(container v1alpha2.Container) bool {
 	logger := r.logger.WithValues("container", container.Name)
 	if container.Image == "" {
 		logger.V(log.VWarn).Info("Image not set")
@@ -170,7 +170,7 @@ func (r *ReconcileJenkinsBaseConfiguration) validateContainer(container v1alpha1
 	return true
 }
 
-func (r *ReconcileJenkinsBaseConfiguration) validateContainerVolumeMounts(container v1alpha1.Container) bool {
+func (r *ReconcileJenkinsBaseConfiguration) validateContainerVolumeMounts(container v1alpha2.Container) bool {
 	logger := r.logger.WithValues("container", container.Name)
 	allVolumes := append(resources.GetJenkinsMasterPodBaseVolumes(r.jenkins), r.jenkins.Spec.Master.Volumes...)
 	valid := true
