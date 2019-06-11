@@ -7,6 +7,7 @@ import (
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 
 	"github.com/bndr/gojenkins"
 	"github.com/golang/mock/gomock"
@@ -120,16 +121,19 @@ func jenkinsCustomResource() *v1alpha2.Jenkins {
 		Spec: v1alpha2.JenkinsSpec{
 			Master: v1alpha2.JenkinsMaster{
 				Annotations: map[string]string{"test": "label"},
-				Container: v1alpha2.Container{
-					Image: "jenkins/jenkins",
-					Resources: corev1.ResourceRequirements{
-						Requests: corev1.ResourceList{
-							corev1.ResourceCPU:    resource.MustParse("300m"),
-							corev1.ResourceMemory: resource.MustParse("500Mi"),
-						},
-						Limits: corev1.ResourceList{
-							corev1.ResourceCPU:    resource.MustParse("2"),
-							corev1.ResourceMemory: resource.MustParse("2Gi"),
+				Containers: []v1alpha2.Container{
+					{
+						Name:  resources.JenkinsMasterContainerName,
+						Image: "jenkins/jenkins",
+						Resources: corev1.ResourceRequirements{
+							Requests: corev1.ResourceList{
+								corev1.ResourceCPU:    resource.MustParse("300m"),
+								corev1.ResourceMemory: resource.MustParse("500Mi"),
+							},
+							Limits: corev1.ResourceList{
+								corev1.ResourceCPU:    resource.MustParse("2"),
+								corev1.ResourceMemory: resource.MustParse("2Gi"),
+							},
 						},
 					},
 				},

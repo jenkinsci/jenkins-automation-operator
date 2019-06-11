@@ -136,11 +136,13 @@ func TestValidateJenkinsMasterPodEnvs(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
 			Spec: v1alpha2.JenkinsSpec{
 				Master: v1alpha2.JenkinsMaster{
-					Container: v1alpha2.Container{
-						Env: []v1.EnvVar{
-							{
-								Name:  "SOME_VALUE",
-								Value: "",
+					Containers: []v1alpha2.Container{
+						{
+							Env: []v1.EnvVar{
+								{
+									Name:  "SOME_VALUE",
+									Value: "",
+								},
 							},
 						},
 					},
@@ -156,11 +158,13 @@ func TestValidateJenkinsMasterPodEnvs(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
 			Spec: v1alpha2.JenkinsSpec{
 				Master: v1alpha2.JenkinsMaster{
-					Container: v1alpha2.Container{
-						Env: []v1.EnvVar{
-							{
-								Name:  "JENKINS_HOME",
-								Value: "",
+					Containers: []v1alpha2.Container{
+						{
+							Env: []v1.EnvVar{
+								{
+									Name:  "JENKINS_HOME",
+									Value: "",
+								},
 							},
 						},
 					},
@@ -220,7 +224,7 @@ func TestValidateContainerVolumeMounts(t *testing.T) {
 		}
 		baseReconcileLoop := New(nil, nil, logf.ZapLogger(false),
 			&jenkins, false, false)
-		got := baseReconcileLoop.validateContainerVolumeMounts(jenkins.Spec.Master.Container)
+		got := baseReconcileLoop.validateContainerVolumeMounts(v1alpha2.Container{})
 		assert.Equal(t, true, got)
 	})
 	t.Run("one extra volume", func(t *testing.T) {
@@ -232,11 +236,13 @@ func TestValidateContainerVolumeMounts(t *testing.T) {
 							Name: "example",
 						},
 					},
-					Container: v1alpha2.Container{
-						VolumeMounts: []v1.VolumeMount{
-							{
-								Name:      "example",
-								MountPath: "/test",
+					Containers: []v1alpha2.Container{
+						{
+							VolumeMounts: []v1.VolumeMount{
+								{
+									Name:      "example",
+									MountPath: "/test",
+								},
 							},
 						},
 					},
@@ -245,7 +251,7 @@ func TestValidateContainerVolumeMounts(t *testing.T) {
 		}
 		baseReconcileLoop := New(nil, nil, logf.ZapLogger(false),
 			&jenkins, false, false)
-		got := baseReconcileLoop.validateContainerVolumeMounts(jenkins.Spec.Master.Container)
+		got := baseReconcileLoop.validateContainerVolumeMounts(jenkins.Spec.Master.Containers[0])
 		assert.Equal(t, true, got)
 	})
 	t.Run("empty mountPath", func(t *testing.T) {
@@ -257,11 +263,13 @@ func TestValidateContainerVolumeMounts(t *testing.T) {
 							Name: "example",
 						},
 					},
-					Container: v1alpha2.Container{
-						VolumeMounts: []v1.VolumeMount{
-							{
-								Name:      "example",
-								MountPath: "", // empty
+					Containers: []v1alpha2.Container{
+						{
+							VolumeMounts: []v1.VolumeMount{
+								{
+									Name:      "example",
+									MountPath: "", // empty
+								},
 							},
 						},
 					},
@@ -270,18 +278,20 @@ func TestValidateContainerVolumeMounts(t *testing.T) {
 		}
 		baseReconcileLoop := New(nil, nil, logf.ZapLogger(false),
 			&jenkins, false, false)
-		got := baseReconcileLoop.validateContainerVolumeMounts(jenkins.Spec.Master.Container)
+		got := baseReconcileLoop.validateContainerVolumeMounts(jenkins.Spec.Master.Containers[0])
 		assert.Equal(t, false, got)
 	})
 	t.Run("missing volume", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
 			Spec: v1alpha2.JenkinsSpec{
 				Master: v1alpha2.JenkinsMaster{
-					Container: v1alpha2.Container{
-						VolumeMounts: []v1.VolumeMount{
-							{
-								Name:      "missing-volume",
-								MountPath: "/test",
+					Containers: []v1alpha2.Container{
+						{
+							VolumeMounts: []v1.VolumeMount{
+								{
+									Name:      "missing-volume",
+									MountPath: "/test",
+								},
 							},
 						},
 					},
@@ -290,7 +300,7 @@ func TestValidateContainerVolumeMounts(t *testing.T) {
 		}
 		baseReconcileLoop := New(nil, nil, logf.ZapLogger(false),
 			&jenkins, false, false)
-		got := baseReconcileLoop.validateContainerVolumeMounts(jenkins.Spec.Master.Container)
+		got := baseReconcileLoop.validateContainerVolumeMounts(jenkins.Spec.Master.Containers[0])
 		assert.Equal(t, false, got)
 	})
 }

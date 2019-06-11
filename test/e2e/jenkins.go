@@ -74,40 +74,41 @@ func createJenkinsCR(t *testing.T, name, namespace string, seedJob *[]v1alpha2.S
 		Spec: v1alpha2.JenkinsSpec{
 			Master: v1alpha2.JenkinsMaster{
 				Annotations: map[string]string{"test": "label"},
-				Container: v1alpha2.Container{
-					Image: "jenkins/jenkins",
-					Env: []v1.EnvVar{
-						{
-							Name:  "TEST_ENV",
-							Value: "test_env_value",
-						},
-					},
-					ReadinessProbe: &corev1.Probe{
-						Handler: corev1.Handler{
-							HTTPGet: &corev1.HTTPGetAction{
-								Path:   "/login",
-								Port:   intstr.FromString("http"),
-								Scheme: corev1.URISchemeHTTP,
-							},
-						},
-						InitialDelaySeconds: int32(80),
-						TimeoutSeconds:      int32(4),
-						FailureThreshold:    int32(10),
-					},
-					LivenessProbe: &corev1.Probe{
-						Handler: corev1.Handler{
-							HTTPGet: &corev1.HTTPGetAction{
-								Path:   "/login",
-								Port:   intstr.FromString("http"),
-								Scheme: corev1.URISchemeHTTP,
-							},
-						},
-						InitialDelaySeconds: int32(80),
-						TimeoutSeconds:      int32(4),
-						FailureThreshold:    int32(10),
-					},
-				},
 				Containers: []v1alpha2.Container{
+					{
+						Name:  resources.JenkinsMasterContainerName,
+						Image: "jenkins/jenkins",
+						Env: []v1.EnvVar{
+							{
+								Name:  "TEST_ENV",
+								Value: "test_env_value",
+							},
+						},
+						ReadinessProbe: &corev1.Probe{
+							Handler: corev1.Handler{
+								HTTPGet: &corev1.HTTPGetAction{
+									Path:   "/login",
+									Port:   intstr.FromString("http"),
+									Scheme: corev1.URISchemeHTTP,
+								},
+							},
+							InitialDelaySeconds: int32(80),
+							TimeoutSeconds:      int32(4),
+							FailureThreshold:    int32(10),
+						},
+						LivenessProbe: &corev1.Probe{
+							Handler: corev1.Handler{
+								HTTPGet: &corev1.HTTPGetAction{
+									Path:   "/login",
+									Port:   intstr.FromString("http"),
+									Scheme: corev1.URISchemeHTTP,
+								},
+							},
+							InitialDelaySeconds: int32(80),
+							TimeoutSeconds:      int32(4),
+							FailureThreshold:    int32(10),
+						},
+					},
 					{
 						Name:  "envoyproxy",
 						Image: "envoyproxy/envoy-alpine",

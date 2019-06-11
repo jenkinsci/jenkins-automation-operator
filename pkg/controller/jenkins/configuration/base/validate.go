@@ -32,10 +32,6 @@ func (r *ReconcileJenkinsBaseConfiguration) Validate(jenkins *v1alpha2.Jenkins) 
 		return false, nil
 	}
 
-	if !r.validateContainer(jenkins.Spec.Master.Container) {
-		return false, nil
-	}
-
 	for _, container := range jenkins.Spec.Master.Containers {
 		if !r.validateContainer(container) {
 			return false, nil
@@ -205,7 +201,7 @@ func (r *ReconcileJenkinsBaseConfiguration) validateJenkinsMasterPodEnvs() bool 
 	}
 
 	valid := true
-	for _, userEnv := range r.jenkins.Spec.Master.Env {
+	for _, userEnv := range r.jenkins.Spec.Master.Containers[0].Env {
 		if _, overriding := baseEnvNames[userEnv.Name]; overriding {
 			r.logger.V(log.VWarn).Info(fmt.Sprintf("Jenkins Master pod env '%s' cannot be overridden", userEnv.Name))
 			valid = false

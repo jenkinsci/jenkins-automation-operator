@@ -194,19 +194,20 @@ func GetJenkinsMasterContainerBaseVolumeMounts() []corev1.VolumeMount {
 
 // NewJenkinsMasterContainer returns Jenkins master Kubernetes container
 func NewJenkinsMasterContainer(jenkins *v1alpha2.Jenkins) corev1.Container {
+	jenkinsContainer := jenkins.Spec.Master.Containers[0]
 	envs := GetJenkinsMasterPodBaseEnvs()
-	envs = append(envs, jenkins.Spec.Master.Env...)
+	envs = append(envs, jenkinsContainer.Env...)
 
 	return corev1.Container{
 		Name:            JenkinsMasterContainerName,
-		Image:           jenkins.Spec.Master.Image,
-		ImagePullPolicy: jenkins.Spec.Master.ImagePullPolicy,
+		Image:           jenkinsContainer.Image,
+		ImagePullPolicy: jenkinsContainer.ImagePullPolicy,
 		Command: []string{
 			"bash",
 			fmt.Sprintf("%s/%s", jenkinsScriptsVolumePath, initScriptName),
 		},
-		LivenessProbe:  jenkins.Spec.Master.LivenessProbe,
-		ReadinessProbe: jenkins.Spec.Master.ReadinessProbe,
+		LivenessProbe:  jenkinsContainer.LivenessProbe,
+		ReadinessProbe: jenkinsContainer.ReadinessProbe,
 		Ports: []corev1.ContainerPort{
 			{
 				Name:          httpPortName,
@@ -220,8 +221,8 @@ func NewJenkinsMasterContainer(jenkins *v1alpha2.Jenkins) corev1.Container {
 			},
 		},
 		Env:          envs,
-		Resources:    jenkins.Spec.Master.Resources,
-		VolumeMounts: append(GetJenkinsMasterContainerBaseVolumeMounts(), jenkins.Spec.Master.VolumeMounts...),
+		Resources:    jenkinsContainer.Resources,
+		VolumeMounts: append(GetJenkinsMasterContainerBaseVolumeMounts(), jenkinsContainer.VolumeMounts...),
 	}
 }
 
@@ -249,7 +250,7 @@ func ConvertJenkinsContainerToKubernetesContainer(container v1alpha2.Container) 
 func newContainers(jenkins *v1alpha2.Jenkins) (containers []corev1.Container) {
 	containers = append(containers, NewJenkinsMasterContainer(jenkins))
 
-	for _, container := range jenkins.Spec.Master.Containers {
+	for _, container := range jenkins.Spec.Master.Containers[1:] {
 		containers = append(containers, ConvertJenkinsContainerToKubernetesContainer(container))
 	}
 

@@ -438,8 +438,8 @@ func (r *ReconcileJenkinsBaseConfiguration) isRecreatePodNeeded(currentJenkinsMa
 		return true
 	}
 
-	if (len(r.jenkins.Spec.Master.Containers) + 1) != len(currentJenkinsMasterPod.Spec.Containers) {
-		r.logger.Info(fmt.Sprintf("Jenkins amount of containers has changed to '%+v', recreating pod", len(r.jenkins.Spec.Master.Containers)+1))
+	if len(r.jenkins.Spec.Master.Containers) != len(currentJenkinsMasterPod.Spec.Containers) {
+		r.logger.Info(fmt.Sprintf("Jenkins amount of containers has changed to '%+v', recreating pod", len(r.jenkins.Spec.Master.Containers)))
 		return true
 	}
 

@@ -7,6 +7,7 @@ import (
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/user"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/plugins"
@@ -221,21 +222,33 @@ func (r *ReconcileJenkins) buildLogger(jenkinsName string) logr.Logger {
 
 func (r *ReconcileJenkins) setDefaults(jenkins *v1alpha2.Jenkins, logger logr.Logger) error {
 	changed := false
-	if len(jenkins.Spec.Master.Image) == 0 {
+
+	var jenkinsContainer v1alpha2.Container
+	if len(jenkins.Spec.Master.Containers) == 0 {
+		changed = true
+		jenkinsContainer = v1alpha2.Container{Name: resources.JenkinsMasterContainerName}
+	} else {
+		if jenkins.Spec.Master.Containers[0].Name != resources.JenkinsMasterContainerName {
+			return errors.Errorf("first container in spec.master.containers must be Jenkins container with name '%s', please correct CR", resources.JenkinsMasterContainerName)
+		}
+		jenkinsContainer = jenkins.Spec.Master.Containers[0]
+	}
+
+	if len(jenkinsContainer.Image) == 0 {
 		logger.Info("Setting default Jenkins master image: " + constants.DefaultJenkinsMasterImage)
 		changed = true
-		jenkins.Spec.Master.Image = constants.DefaultJenkinsMasterImage
-		jenkins.Spec.Master.ImagePullPolicy = corev1.PullAlways
+		jenkinsContainer.Image = constants.DefaultJenkinsMasterImage
+		jenkinsContainer.ImagePullPolicy = corev1.PullAlways
 	}
-	if len(jenkins.Spec.Master.ImagePullPolicy) == 0 {
+	if len(jenkinsContainer.ImagePullPolicy) == 0 {
 		logger.Info(fmt.Sprintf("Setting default Jenkins master image pull policy: %s", corev1.PullAlways))
 		changed = true
-		jenkins.Spec.Master.ImagePullPolicy = corev1.PullAlways
+		jenkinsContainer.ImagePullPolicy = corev1.PullAlways
 	}
-	if jenkins.Spec.Master.ReadinessProbe == nil {
+	if jenkinsContainer.ReadinessProbe == nil {
 		logger.Info("Setting default Jenkins readinessProbe")
 		changed = true
-		jenkins.Spec.Master.ReadinessProbe = &corev1.Probe{
+		jenkinsContainer.ReadinessProbe = &corev1.Probe{
 			Handler: corev1.Handler{
 				HTTPGet: &corev1.HTTPGetAction{
 					Path:   "/login",
@@ -246,10 +259,10 @@ func (r *ReconcileJenkins) setDefaults(jenkins *v1alpha2.Jenkins, logger logr.Lo
 			InitialDelaySeconds: int32(30),
 		}
 	}
-	if jenkins.Spec.Master.LivenessProbe == nil {
+	if jenkinsContainer.LivenessProbe == nil {
 		logger.Info("Setting default Jenkins livenessProbe")
 		changed = true
-		jenkins.Spec.Master.LivenessProbe = &corev1.Probe{
+		jenkinsContainer.LivenessProbe = &corev1.Probe{
 			Handler: corev1.Handler{
 				HTTPGet: &corev1.HTTPGetAction{
 					Path:   "/login",
@@ -281,10 +294,10 @@ func (r *ReconcileJenkins) setDefaults(jenkins *v1alpha2.Jenkins, logger logr.Lo
 		changed = true
 		jenkins.Spec.Master.Plugins = []v1alpha2.Plugin{{Name: "simple-theme-plugin", Version: "0.5.1"}}
 	}
-	if isResourceRequirementsNotSet(jenkins.Spec.Master.Resources) {
+	if isResourceRequirementsNotSet(jenkinsContainer.Resources) {
 		logger.Info("Setting default Jenkins master container resource requirements")
 		changed = true
-		jenkins.Spec.Master.Resources = corev1.ResourceRequirements{
+		jenkinsContainer.Resources = corev1.ResourceRequirements{
 			Requests: corev1.ResourceList{
 				corev1.ResourceCPU:    resource.MustParse("1"),
 				corev1.ResourceMemory: resource.MustParse("500Mi"),
@@ -319,11 +332,15 @@ func (r *ReconcileJenkins) setDefaults(jenkins *v1alpha2.Jenkins, logger logr.Lo
 			Port: constants.DefaultSlavePortInt32,
 		}
 	}
-	for i, container := range jenkins.Spec.Master.Containers {
-		if setDefaultsForContainer(jenkins, i, logger.WithValues("container", container.Name)) {
-			changed = true
+	if len(jenkins.Spec.Master.Containers) > 1 {
+		for i, container := range jenkins.Spec.Master.Containers[1:] {
+			if setDefaultsForContainer(jenkins, i, logger.WithValues("container", container.Name)) {
+				changed = true
+			}
 		}
 	}
+
+	jenkins.Spec.Master.Containers = []v1alpha2.Container{jenkinsContainer}
 
 	if changed {
 		return errors.WithStack(r.client.Update(context.TODO(), jenkins))
