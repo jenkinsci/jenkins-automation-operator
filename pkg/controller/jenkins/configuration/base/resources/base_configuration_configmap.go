@@ -94,7 +94,9 @@ def remove = { list ->
 remove(jenkins.getExtensionList(RootAction.class))
 remove(jenkins.actions)
 
-jenkins.getDescriptor("jenkins.CLI").get().setEnabled(false)
+if (jenkins.getDescriptor("jenkins.CLI") != null) {
+    jenkins.getDescriptor("jenkins.CLI").get().setEnabled(false)
+}
 
 jenkins.save()
 `

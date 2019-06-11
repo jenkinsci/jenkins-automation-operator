@@ -38,6 +38,12 @@ type Container struct {
 	SecurityContext *corev1.SecurityContext     `json:"securityContext,omitempty"`
 }
 
+// Plugin defines Jenkins plugin
+type Plugin struct {
+	Name    string `json:"name"`
+	Version string `json:"version"`
+}
+
 // JenkinsMaster defines the Jenkins master pod attributes and plugins,
 // every single change requires Jenkins master pod restart
 type JenkinsMaster struct {
@@ -49,10 +55,10 @@ type JenkinsMaster struct {
 	Containers   []Container       `json:"containers,omitempty"`
 	Volumes      []corev1.Volume   `json:"volumes,omitempty"`
 
-	// OperatorPlugins contains plugins required by operator
-	OperatorPlugins map[string][]string `json:"basePlugins,omitempty"`
+	// BasePlugins contains plugins required by operator
+	BasePlugins []Plugin `json:"basePlugins,omitempty"`
 	// Plugins contains plugins required by user
-	Plugins map[string][]string `json:"plugins,omitempty"`
+	Plugins []Plugin `json:"plugins,omitempty"`
 }
 
 // Service defines Kubernetes service attributes which Operator will manage

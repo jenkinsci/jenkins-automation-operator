@@ -2,6 +2,7 @@ package plugins
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
@@ -20,16 +21,50 @@ func (p Plugin) String() string {
 	return fmt.Sprintf("%s:%s", p.Name, p.Version)
 }
 
+var (
+	namePattern    = regexp.MustCompile(`^[0-9a-z-]+$`)
+	versionPattern = regexp.MustCompile(`^[0-9\\.]+$`)
+)
+
 // New creates plugin from string, for example "name-of-plugin:0.0.1"
 func New(nameWithVersion string) (*Plugin, error) {
 	val := strings.SplitN(nameWithVersion, ":", 2)
 	if val == nil || len(val) != 2 {
 		return nil, errors.Errorf("invalid plugin format '%s'", nameWithVersion)
 	}
+	name := val[0]
+	version := val[1]
+
+	if err := validatePlugin(name, version); err != nil {
+		return nil, err
+	}
+
 	return &Plugin{
-		Name:    val[0],
-		Version: val[1],
+		Name:    name,
+		Version: version,
 	}, nil
+}
+
+// NewPlugin creates plugin from name and version, for example "name-of-plugin:0.0.1"
+func NewPlugin(name, version string) (*Plugin, error) {
+	if err := validatePlugin(name, version); err != nil {
+		return nil, err
+	}
+
+	return &Plugin{
+		Name:    name,
+		Version: version,
+	}, nil
+}
+
+func validatePlugin(name, version string) error {
+	if ok := namePattern.MatchString(name); !ok {
+		return errors.Errorf("invalid plugin name '%s:%s', must follow pattern '%s'", name, version, namePattern.String())
+	}
+	if ok := versionPattern.MatchString(version); !ok {
+		return errors.Errorf("invalid plugin version '%s:%s', must follow pattern '%s'", name, version, versionPattern.String())
+	}
+	return nil
 }
 
 // Must returns plugin from pointer and throws panic when error is set

@@ -228,25 +228,16 @@ func verifyPlugins(t *testing.T, jenkinsClient jenkinsclient.Jenkins, jenkins *v
 		t.Fatal(err)
 	}
 
-	requiredPlugins := []map[string][]string{plugins.BasePlugins(), jenkins.Spec.Master.Plugins}
-	for _, p := range requiredPlugins {
-		for rootPluginName, dependentPlugins := range p {
-			rootPlugin, err := plugins.New(rootPluginName)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if found, ok := isPluginValid(installedPlugins, *rootPlugin); !ok {
-				t.Fatalf("Invalid plugin '%s', actual '%+v'", rootPlugin, found)
-			}
-			for _, pluginName := range dependentPlugins {
-				plugin, err := plugins.New(pluginName)
-				if err != nil {
-					t.Fatal(err)
-				}
-				if found, ok := isPluginValid(installedPlugins, *plugin); !ok {
-					t.Fatalf("Invalid plugin '%s', actual '%+v'", rootPlugin, found)
-				}
-			}
+	for _, basePlugin := range plugins.BasePlugins() {
+		if found, ok := isPluginValid(installedPlugins, basePlugin); !ok {
+			t.Fatalf("Invalid plugin '%s', actual '%+v'", basePlugin, found)
+		}
+	}
+
+	for _, userPlugin := range jenkins.Spec.Master.Plugins {
+		plugin := plugins.Plugin{Name: userPlugin.Name, Version: userPlugin.Version}
+		if found, ok := isPluginValid(installedPlugins, plugin); !ok {
+			t.Fatalf("Invalid plugin '%s', actual '%+v'", plugin, found)
 		}
 	}
 

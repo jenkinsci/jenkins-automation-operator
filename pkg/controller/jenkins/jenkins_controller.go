@@ -262,15 +262,15 @@ func (r *ReconcileJenkins) setDefaults(jenkins *v1alpha2.Jenkins, logger logr.Lo
 			FailureThreshold:    int32(12),
 		}
 	}
-	if len(jenkins.Spec.Master.OperatorPlugins) == 0 {
+	if len(jenkins.Spec.Master.BasePlugins) == 0 {
 		logger.Info("Setting default operator plugins")
 		changed = true
-		jenkins.Spec.Master.OperatorPlugins = plugins.BasePlugins()
+		jenkins.Spec.Master.BasePlugins = basePlugins()
 	}
 	if len(jenkins.Status.OperatorVersion) > 0 && version.Version != jenkins.Status.OperatorVersion {
 		logger.Info("Setting default operator plugins after Operator version change")
 		changed = true
-		jenkins.Spec.Master.OperatorPlugins = plugins.BasePlugins()
+		jenkins.Spec.Master.BasePlugins = basePlugins()
 	}
 	if len(jenkins.Status.OperatorVersion) == 0 {
 		logger.Info("Setting operator version")
@@ -279,7 +279,7 @@ func (r *ReconcileJenkins) setDefaults(jenkins *v1alpha2.Jenkins, logger logr.Lo
 	}
 	if len(jenkins.Spec.Master.Plugins) == 0 {
 		changed = true
-		jenkins.Spec.Master.Plugins = map[string][]string{"simple-theme-plugin:0.5.1": {}}
+		jenkins.Spec.Master.Plugins = []v1alpha2.Plugin{{Name: "simple-theme-plugin", Version: "0.5.1"}}
 	}
 	if isResourceRequirementsNotSet(jenkins.Spec.Master.Resources) {
 		logger.Info("Setting default Jenkins master container resource requirements")
@@ -364,4 +364,11 @@ func isResourceRequirementsNotSet(requirements corev1.ResourceRequirements) bool
 	_, limitMemorySet := requirements.Limits[corev1.ResourceMemory]
 
 	return !limitCPUSet || !limitMemorySet || !requestCPUSet || !requestMemporySet
+}
+
+func basePlugins() (result []v1alpha2.Plugin) {
+	for _, value := range plugins.BasePlugins() {
+		result = append(result, v1alpha2.Plugin{Name: value.Name, Version: value.Version})
+	}
+	return
 }

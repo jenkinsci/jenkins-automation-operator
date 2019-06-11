@@ -6,7 +6,6 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
-	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/plugins"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
 
 	"github.com/bndr/gojenkins"
@@ -167,19 +166,67 @@ func TestReconcileJenkinsBaseConfiguration_verifyPlugins(t *testing.T) {
 		pluginsInJenkins := &gojenkins.Plugins{
 			Raw: &gojenkins.PluginResponse{},
 		}
-		basePlugins := map[string][]plugins.Plugin{}
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 		jenkinsClient := client.NewMockJenkins(ctrl)
 		jenkinsClient.EXPECT().GetPlugins(fetchAllPlugins).Return(pluginsInJenkins, nil)
 
-		got, err := r.verifyPlugins(jenkinsClient, basePlugins)
+		got, err := r.verifyPlugins(jenkinsClient)
+
+		assert.NoError(t, err)
+		assert.True(t, got)
+	})
+	t.Run("happy, not empty base and user plugins", func(t *testing.T) {
+		jenkins := &v1alpha2.Jenkins{
+			Spec: v1alpha2.JenkinsSpec{
+				Master: v1alpha2.JenkinsMaster{
+					BasePlugins: []v1alpha2.Plugin{{Name: "plugin-name1", Version: "0.0.1"}},
+					Plugins:     []v1alpha2.Plugin{{Name: "plugin-name2", Version: "0.0.1"}},
+				},
+			},
+		}
+		r := ReconcileJenkinsBaseConfiguration{
+			logger:  log.Log,
+			jenkins: jenkins,
+		}
+		pluginsInJenkins := &gojenkins.Plugins{
+			Raw: &gojenkins.PluginResponse{
+				Plugins: []gojenkins.Plugin{
+					{
+						ShortName: "plugin-name1",
+						Active:    true,
+						Deleted:   false,
+						Enabled:   true,
+						Version:   "0.0.1",
+					},
+					{
+						ShortName: "plugin-name2",
+						Active:    true,
+						Deleted:   false,
+						Enabled:   true,
+						Version:   "0.0.1",
+					},
+				},
+			},
+		}
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+		jenkinsClient := client.NewMockJenkins(ctrl)
+		jenkinsClient.EXPECT().GetPlugins(fetchAllPlugins).Return(pluginsInJenkins, nil)
+
+		got, err := r.verifyPlugins(jenkinsClient)
 
 		assert.NoError(t, err)
 		assert.True(t, got)
 	})
 	t.Run("happy, not empty base and empty user plugins", func(t *testing.T) {
-		jenkins := &v1alpha2.Jenkins{}
+		jenkins := &v1alpha2.Jenkins{
+			Spec: v1alpha2.JenkinsSpec{
+				Master: v1alpha2.JenkinsMaster{
+					BasePlugins: []v1alpha2.Plugin{{Name: "plugin-name", Version: "0.0.1"}},
+				},
+			},
+		}
 		r := ReconcileJenkinsBaseConfiguration{
 			logger:  log.Log,
 			jenkins: jenkins,
@@ -197,15 +244,12 @@ func TestReconcileJenkinsBaseConfiguration_verifyPlugins(t *testing.T) {
 				},
 			},
 		}
-		basePlugins := map[string][]plugins.Plugin{
-			"plugin-name:0.0.1": {},
-		}
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 		jenkinsClient := client.NewMockJenkins(ctrl)
 		jenkinsClient.EXPECT().GetPlugins(fetchAllPlugins).Return(pluginsInJenkins, nil)
 
-		got, err := r.verifyPlugins(jenkinsClient, basePlugins)
+		got, err := r.verifyPlugins(jenkinsClient)
 
 		assert.NoError(t, err)
 		assert.True(t, got)
@@ -214,7 +258,7 @@ func TestReconcileJenkinsBaseConfiguration_verifyPlugins(t *testing.T) {
 		jenkins := &v1alpha2.Jenkins{
 			Spec: v1alpha2.JenkinsSpec{
 				Master: v1alpha2.JenkinsMaster{
-					Plugins: map[string][]string{"plugin-name:0.0.1": {}},
+					Plugins: []v1alpha2.Plugin{{Name: "plugin-name", Version: "0.0.1"}},
 				},
 			},
 		}
@@ -235,19 +279,24 @@ func TestReconcileJenkinsBaseConfiguration_verifyPlugins(t *testing.T) {
 				},
 			},
 		}
-		basePlugins := map[string][]plugins.Plugin{}
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 		jenkinsClient := client.NewMockJenkins(ctrl)
 		jenkinsClient.EXPECT().GetPlugins(fetchAllPlugins).Return(pluginsInJenkins, nil)
 
-		got, err := r.verifyPlugins(jenkinsClient, basePlugins)
+		got, err := r.verifyPlugins(jenkinsClient)
 
 		assert.NoError(t, err)
 		assert.True(t, got)
 	})
-	t.Run("happy, plugin version doesn't matter for base plugins", func(t *testing.T) {
-		jenkins := &v1alpha2.Jenkins{}
+	t.Run("happy, plugin version matter for base plugins", func(t *testing.T) {
+		jenkins := &v1alpha2.Jenkins{
+			Spec: v1alpha2.JenkinsSpec{
+				Master: v1alpha2.JenkinsMaster{
+					BasePlugins: []v1alpha2.Plugin{{Name: "plugin-name", Version: "0.0.1"}},
+				},
+			},
+		}
 		r := ReconcileJenkinsBaseConfiguration{
 			logger:  log.Log,
 			jenkins: jenkins,
@@ -265,24 +314,21 @@ func TestReconcileJenkinsBaseConfiguration_verifyPlugins(t *testing.T) {
 				},
 			},
 		}
-		basePlugins := map[string][]plugins.Plugin{
-			"plugin-name:0.0.1": {},
-		}
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 		jenkinsClient := client.NewMockJenkins(ctrl)
 		jenkinsClient.EXPECT().GetPlugins(fetchAllPlugins).Return(pluginsInJenkins, nil)
 
-		got, err := r.verifyPlugins(jenkinsClient, basePlugins)
+		got, err := r.verifyPlugins(jenkinsClient)
 
 		assert.NoError(t, err)
-		assert.True(t, got)
+		assert.False(t, got)
 	})
 	t.Run("plugin version matter for user plugins", func(t *testing.T) {
 		jenkins := &v1alpha2.Jenkins{
 			Spec: v1alpha2.JenkinsSpec{
 				Master: v1alpha2.JenkinsMaster{
-					Plugins: map[string][]string{"plugin-name:0.0.2": {}},
+					Plugins: []v1alpha2.Plugin{{Name: "plugin-name", Version: "0.0.2"}},
 				},
 			},
 		}
@@ -303,46 +349,21 @@ func TestReconcileJenkinsBaseConfiguration_verifyPlugins(t *testing.T) {
 				},
 			},
 		}
-		basePlugins := map[string][]plugins.Plugin{}
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 		jenkinsClient := client.NewMockJenkins(ctrl)
 		jenkinsClient.EXPECT().GetPlugins(fetchAllPlugins).Return(pluginsInJenkins, nil)
 
-		got, err := r.verifyPlugins(jenkinsClient, basePlugins)
+		got, err := r.verifyPlugins(jenkinsClient)
 
 		assert.NoError(t, err)
 		assert.False(t, got)
 	})
 	t.Run("missing base plugin", func(t *testing.T) {
-		jenkins := &v1alpha2.Jenkins{}
-		r := ReconcileJenkinsBaseConfiguration{
-			logger:  log.Log,
-			jenkins: jenkins,
-		}
-		pluginsInJenkins := &gojenkins.Plugins{
-			Raw: &gojenkins.PluginResponse{
-				Plugins: []gojenkins.Plugin{},
-			},
-		}
-		basePlugins := map[string][]plugins.Plugin{
-			"plugin-name:0.0.2": {},
-		}
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-		jenkinsClient := client.NewMockJenkins(ctrl)
-		jenkinsClient.EXPECT().GetPlugins(fetchAllPlugins).Return(pluginsInJenkins, nil)
-
-		got, err := r.verifyPlugins(jenkinsClient, basePlugins)
-
-		assert.NoError(t, err)
-		assert.False(t, got)
-	})
-	t.Run("missing user plugin", func(t *testing.T) {
 		jenkins := &v1alpha2.Jenkins{
 			Spec: v1alpha2.JenkinsSpec{
 				Master: v1alpha2.JenkinsMaster{
-					Plugins: map[string][]string{"plugin-name:0.0.2": {}},
+					BasePlugins: []v1alpha2.Plugin{{Name: "plugin-name", Version: "0.0.2"}},
 				},
 			},
 		}
@@ -355,13 +376,39 @@ func TestReconcileJenkinsBaseConfiguration_verifyPlugins(t *testing.T) {
 				Plugins: []gojenkins.Plugin{},
 			},
 		}
-		basePlugins := map[string][]plugins.Plugin{}
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 		jenkinsClient := client.NewMockJenkins(ctrl)
 		jenkinsClient.EXPECT().GetPlugins(fetchAllPlugins).Return(pluginsInJenkins, nil)
 
-		got, err := r.verifyPlugins(jenkinsClient, basePlugins)
+		got, err := r.verifyPlugins(jenkinsClient)
+
+		assert.NoError(t, err)
+		assert.False(t, got)
+	})
+	t.Run("missing user plugin", func(t *testing.T) {
+		jenkins := &v1alpha2.Jenkins{
+			Spec: v1alpha2.JenkinsSpec{
+				Master: v1alpha2.JenkinsMaster{
+					Plugins: []v1alpha2.Plugin{{Name: "plugin-name", Version: "0.0.2"}},
+				},
+			},
+		}
+		r := ReconcileJenkinsBaseConfiguration{
+			logger:  log.Log,
+			jenkins: jenkins,
+		}
+		pluginsInJenkins := &gojenkins.Plugins{
+			Raw: &gojenkins.PluginResponse{
+				Plugins: []gojenkins.Plugin{},
+			},
+		}
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+		jenkinsClient := client.NewMockJenkins(ctrl)
+		jenkinsClient.EXPECT().GetPlugins(fetchAllPlugins).Return(pluginsInJenkins, nil)
+
+		got, err := r.verifyPlugins(jenkinsClient)
 
 		assert.NoError(t, err)
 		assert.False(t, got)

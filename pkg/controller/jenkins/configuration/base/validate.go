@@ -42,7 +42,7 @@ func (r *ReconcileJenkinsBaseConfiguration) Validate(jenkins *v1alpha2.Jenkins) 
 		}
 	}
 
-	if !r.validatePlugins(jenkins.Spec.Master.OperatorPlugins, jenkins.Spec.Master.Plugins) {
+	if !r.validatePlugins(plugins.BasePlugins(), jenkins.Spec.Master.BasePlugins, jenkins.Spec.Master.Plugins) {
 		return false, nil
 	}
 
@@ -215,36 +215,60 @@ func (r *ReconcileJenkinsBaseConfiguration) validateJenkinsMasterPodEnvs() bool 
 	return valid
 }
 
-func (r *ReconcileJenkinsBaseConfiguration) validatePlugins(pluginsWithVersionSlice ...map[string][]string) bool {
+func (r *ReconcileJenkinsBaseConfiguration) validatePlugins(requiredBasePlugins []plugins.Plugin, basePlugins, userPlugins []v1alpha2.Plugin) bool {
 	valid := true
 	allPlugins := map[plugins.Plugin][]plugins.Plugin{}
 
-	for _, pluginsWithVersions := range pluginsWithVersionSlice {
-		for rootPluginName, dependentPluginNames := range pluginsWithVersions {
-			rootPlugin, err := plugins.New(rootPluginName)
-			if err != nil {
-				r.logger.V(log.VWarn).Info(fmt.Sprintf("Invalid root plugin name '%s'", rootPluginName))
-				valid = false
-			}
+	for _, jenkinsPlugin := range basePlugins {
+		plugin, err := plugins.NewPlugin(jenkinsPlugin.Name, jenkinsPlugin.Version)
+		if err != nil {
+			r.logger.V(log.VWarn).Info(err.Error())
+			valid = false
+		}
 
-			var dependentPlugins []plugins.Plugin
-			for _, pluginName := range dependentPluginNames {
-				if p, err := plugins.New(pluginName); err != nil {
-					r.logger.V(log.VWarn).Info(fmt.Sprintf("Invalid dependent plugin name '%s' in root plugin '%s'", pluginName, rootPluginName))
-					valid = false
-				} else {
-					dependentPlugins = append(dependentPlugins, *p)
-				}
-			}
-
-			if rootPlugin != nil {
-				allPlugins[*rootPlugin] = dependentPlugins
-			}
+		if plugin != nil {
+			allPlugins[*plugin] = []plugins.Plugin{}
 		}
 	}
 
-	if valid {
-		return plugins.VerifyDependencies(allPlugins)
+	for _, jenkinsPlugin := range userPlugins {
+		plugin, err := plugins.NewPlugin(jenkinsPlugin.Name, jenkinsPlugin.Version)
+		if err != nil {
+			r.logger.V(log.VWarn).Info(err.Error())
+			valid = false
+		}
+
+		if plugin != nil {
+			allPlugins[*plugin] = []plugins.Plugin{}
+		}
+	}
+
+	if !plugins.VerifyDependencies(allPlugins) {
+		valid = false
+	}
+
+	if !r.verifyBasePlugins(requiredBasePlugins, basePlugins) {
+		valid = false
+	}
+
+	return valid
+}
+
+func (r *ReconcileJenkinsBaseConfiguration) verifyBasePlugins(requiredBasePlugins []plugins.Plugin, basePlugins []v1alpha2.Plugin) bool {
+	valid := true
+
+	for _, requiredBasePlugin := range requiredBasePlugins {
+		found := false
+		for _, basePlugin := range basePlugins {
+			if requiredBasePlugin.Name == basePlugin.Name {
+				found = true
+				break
+			}
+		}
+		if !found {
+			valid = false
+			r.logger.V(log.VWarn).Info(fmt.Sprintf("Missing plugin '%s' in spec.master.basePlugins", requiredBasePlugin.Name))
+		}
 	}
 
 	return valid

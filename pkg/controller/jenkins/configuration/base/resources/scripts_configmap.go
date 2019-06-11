@@ -255,17 +255,11 @@ chmod +x {{ .JenkinsHomePath }}/scripts/*.sh
 {{- $installPluginsCommand := .InstallPluginsCommand }}
 
 echo "Installing plugins required by Operator - begin"
-{{- range $rootPluginName, $plugins := .OperatorPlugins }}
-echo "Installing required plugins for '{{ $rootPluginName }}'"
-{{ $jenkinsHomePath }}/scripts/{{ $installPluginsCommand }} {{ $rootPluginName }} {{ range $index, $plugin := $plugins }}{{ . }} {{ end }}
-{{- end }}
+{{ $installPluginsCommand }} {{ range $index, $plugin := .BasePlugins }}{{ $plugin.Name }}:{{ $plugin.Version }} {{ end }}
 echo "Installing plugins required by Operator - end"
 
 echo "Installing plugins required by user - begin"
-{{- range $rootPluginName, $plugins := .UserPlugins }}
-echo "Installing required plugins for '{{ $rootPluginName }}'"
-{{ $jenkinsHomePath }}/scripts/{{ $installPluginsCommand }} {{ $rootPluginName }} {{ range $index, $plugin := $plugins }}{{ . }} {{ end }}
-{{- end }}
+{{ $installPluginsCommand }} {{ range $index, $plugin := .UserPlugins }}{{ $plugin.Name }}:{{ $plugin.Version }} {{ end }}
 echo "Installing plugins required by user - end"
 
 /sbin/tini -s -- /usr/local/bin/jenkins.sh
@@ -284,12 +278,12 @@ func buildInitBashScript(jenkins *v1alpha2.Jenkins) (*string, error) {
 		InitConfigurationPath    string
 		InstallPluginsCommand    string
 		JenkinsScriptsVolumePath string
-		OperatorPlugins          map[string][]string
-		UserPlugins              map[string][]string
+		BasePlugins              []v1alpha2.Plugin
+		UserPlugins              []v1alpha2.Plugin
 	}{
 		JenkinsHomePath:          jenkinsHomePath,
 		InitConfigurationPath:    jenkinsInitConfigurationVolumePath,
-		OperatorPlugins:          jenkins.Spec.Master.OperatorPlugins,
+		BasePlugins:              jenkins.Spec.Master.BasePlugins,
 		UserPlugins:              jenkins.Spec.Master.Plugins,
 		InstallPluginsCommand:    installPluginsCommand,
 		JenkinsScriptsVolumePath: jenkinsScriptsVolumePath,

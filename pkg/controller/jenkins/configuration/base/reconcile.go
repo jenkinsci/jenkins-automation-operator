@@ -106,7 +106,7 @@ func (r *ReconcileJenkinsBaseConfiguration) Reconcile() (reconcile.Result, jenki
 	}
 	r.logger.V(log.VDebug).Info("Jenkins API client set")
 
-	ok, err := r.verifyPlugins(jenkinsClient, plugins.BasePluginsMap)
+	ok, err := r.verifyPlugins(jenkinsClient)
 	if err != nil {
 		return reconcile.Result{}, nil, err
 	}
@@ -187,7 +187,7 @@ func (r *ReconcileJenkinsBaseConfiguration) waitForVolumes() (reconcile.Result, 
 	return reconcile.Result{}, nil
 }
 
-func (r *ReconcileJenkinsBaseConfiguration) verifyPlugins(jenkinsClient jenkinsclient.Jenkins, basePlugins map[string][]plugins.Plugin) (bool, error) {
+func (r *ReconcileJenkinsBaseConfiguration) verifyPlugins(jenkinsClient jenkinsclient.Jenkins) (bool, error) {
 	allPluginsInJenkins, err := jenkinsClient.GetPlugins(fetchAllPlugins)
 	if err != nil {
 		return false, stackerr.WithStack(err)
@@ -201,46 +201,16 @@ func (r *ReconcileJenkinsBaseConfiguration) verifyPlugins(jenkinsClient jenkinsc
 	}
 	r.logger.V(log.VDebug).Info(fmt.Sprintf("Installed plugins '%+v'", installedPlugins))
 
-	userPlugins := map[string][]plugins.Plugin{}
-	for rootPlugin, dependentPluginNames := range r.jenkins.Spec.Master.Plugins {
-		var dependentPlugins []plugins.Plugin
-		for _, pluginNameWithVersion := range dependentPluginNames {
-			plugin, err := plugins.New(pluginNameWithVersion)
-			if err != nil {
-				return false, err
-			}
-			dependentPlugins = append(dependentPlugins, *plugin)
-		}
-		userPlugins[rootPlugin] = dependentPlugins
-	}
-
 	status := true
-	allRequiredPlugins := []map[string][]plugins.Plugin{basePlugins, userPlugins}
+	allRequiredPlugins := [][]v1alpha2.Plugin{r.jenkins.Spec.Master.BasePlugins, r.jenkins.Spec.Master.Plugins}
 	for _, requiredPlugins := range allRequiredPlugins {
-		for rootPluginName, p := range requiredPlugins {
-			rootPlugin, _ := plugins.New(rootPluginName)
-			if found, ok := isPluginInstalled(allPluginsInJenkins, *rootPlugin); !ok {
-				r.logger.V(log.VWarn).Info(fmt.Sprintf("Missing plugin '%s', actual '%+v'", rootPlugin, found))
+		for _, plugin := range requiredPlugins {
+			if found, ok := isPluginInstalled(allPluginsInJenkins, plugin); !ok {
+				r.logger.V(log.VWarn).Info(fmt.Sprintf("Missing plugin '%s', actual '%+v'", plugin, found))
 				status = false
 			}
-			for _, requiredPlugin := range p {
-				if found, ok := isPluginInstalled(allPluginsInJenkins, requiredPlugin); !ok {
-					r.logger.V(log.VWarn).Info(fmt.Sprintf("Missing plugin '%s', actual '%+v'", requiredPlugin, found))
-					status = false
-				}
-			}
-		}
-	}
-
-	for rootPluginName, p := range userPlugins {
-		rootPlugin, _ := plugins.New(rootPluginName)
-		if found, ok := isPluginVersionCompatible(allPluginsInJenkins, *rootPlugin); !ok {
-			r.logger.V(log.VWarn).Info(fmt.Sprintf("Incompatible plugin '%s' version, actual '%+v'", rootPlugin, found.Version))
-			status = false
-		}
-		for _, requiredPlugin := range p {
-			if found, ok := isPluginInstalled(allPluginsInJenkins, requiredPlugin); !ok {
-				r.logger.V(log.VWarn).Info(fmt.Sprintf("Incompatible plugin '%s' version, actual '%+v'", requiredPlugin, found.Version))
+			if found, ok := isPluginVersionCompatible(allPluginsInJenkins, plugin); !ok {
+				r.logger.V(log.VWarn).Info(fmt.Sprintf("Incompatible plugin '%s' version, actual '%+v'", plugin, found.Version))
 				status = false
 			}
 		}
@@ -249,7 +219,7 @@ func (r *ReconcileJenkinsBaseConfiguration) verifyPlugins(jenkinsClient jenkinsc
 	return status, nil
 }
 
-func isPluginVersionCompatible(plugins *gojenkins.Plugins, plugin plugins.Plugin) (gojenkins.Plugin, bool) {
+func isPluginVersionCompatible(plugins *gojenkins.Plugins, plugin v1alpha2.Plugin) (gojenkins.Plugin, bool) {
 	p := plugins.Contains(plugin.Name)
 	if p == nil {
 		return gojenkins.Plugin{}, false
@@ -262,7 +232,7 @@ func isValidPlugin(plugin gojenkins.Plugin) bool {
 	return plugin.Active && plugin.Enabled && !plugin.Deleted
 }
 
-func isPluginInstalled(plugins *gojenkins.Plugins, requiredPlugin plugins.Plugin) (gojenkins.Plugin, bool) {
+func isPluginInstalled(plugins *gojenkins.Plugins, requiredPlugin v1alpha2.Plugin) (gojenkins.Plugin, bool) {
 	p := plugins.Contains(requiredPlugin.Name)
 	if p == nil {
 		return gojenkins.Plugin{}, false

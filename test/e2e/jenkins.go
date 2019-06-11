@@ -113,9 +113,9 @@ func createJenkinsCR(t *testing.T, name, namespace string, seedJob *[]v1alpha2.S
 						Image: "envoyproxy/envoy-alpine",
 					},
 				},
-				Plugins: map[string][]string{
-					"audit-trail:2.4":           {},
-					"simple-theme-plugin:0.5.1": {},
+				Plugins: []v1alpha2.Plugin{
+					{Name: "audit-trail:", Version: "2.4"},
+					{Name: "simple-theme-plugin", Version: "0.5.1"},
 				},
 				NodeSelector: map[string]string{"kubernetes.io/hostname": "minikube"},
 				Volumes:      volumes,
