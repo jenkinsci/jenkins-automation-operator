@@ -587,6 +587,10 @@ func (r *ReconcileJenkinsBaseConfiguration) detectJenkinsMasterPodStartingIssues
 
 			filteredEvents := r.filterEvents(*events, *jenkinsMasterPod)
 
+			if len(filteredEvents) == 0 {
+				return false, nil
+			}
+
 			r.logger.Info(fmt.Sprintf("Jenkins master pod starting timeout, events '%+v'", filteredEvents))
 			return true, nil
 		}

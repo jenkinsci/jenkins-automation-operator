@@ -257,17 +257,24 @@ func newContainers(jenkins *v1alpha2.Jenkins) (containers []corev1.Container) {
 	return
 }
 
+// GetJenkinsMasterPodName returns Jenkins pod name for given CR
+func GetJenkinsMasterPodName(jenkins v1alpha2.Jenkins) string {
+	return fmt.Sprintf("jenkins-%s", jenkins.Name)
+}
+
 // NewJenkinsMasterPod builds Jenkins Master Kubernetes Pod resource
 func NewJenkinsMasterPod(objectMeta metav1.ObjectMeta, jenkins *v1alpha2.Jenkins) *corev1.Pod {
 	runAsUser := jenkinsUserUID
 
+	serviceAccountName := objectMeta.Name
 	objectMeta.Annotations = jenkins.Spec.Master.Annotations
+	objectMeta.Name = GetJenkinsMasterPodName(*jenkins)
 
 	return &corev1.Pod{
 		TypeMeta:   buildPodTypeMeta(),
 		ObjectMeta: objectMeta,
 		Spec: corev1.PodSpec{
-			ServiceAccountName: objectMeta.Name,
+			ServiceAccountName: serviceAccountName,
 			RestartPolicy:      corev1.RestartPolicyNever,
 			SecurityContext: &corev1.PodSecurityContext{
 				RunAsUser:  &runAsUser,
