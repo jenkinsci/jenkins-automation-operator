@@ -6,8 +6,8 @@ import (
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/backuprestore"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
-	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/user/backuprestore"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/user/casc"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/user/seedjobs"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
@@ -49,7 +49,7 @@ func New(k8sClient k8s.Client, jenkinsClient jenkinsclient.Jenkins, logger logr.
 
 // Reconcile it's a main reconciliation loop for user supplied configuration
 func (r *ReconcileUserConfiguration) Reconcile() (reconcile.Result, error) {
-	backupAndRestore := backuprestore.New(r.k8sClient, r.clientSet, r.jenkinsClient, r.logger, r.jenkins, r.config)
+	backupAndRestore := backuprestore.New(r.k8sClient, r.clientSet, r.logger, r.jenkins, r.config)
 
 	result, err := r.ensureSeedJobs()
 	if err != nil {
@@ -59,7 +59,7 @@ func (r *ReconcileUserConfiguration) Reconcile() (reconcile.Result, error) {
 		return result, nil
 	}
 
-	if err := backupAndRestore.Restore(); err != nil {
+	if err := backupAndRestore.Restore(r.jenkinsClient); err != nil {
 		return reconcile.Result{}, err
 	}
 
@@ -74,7 +74,9 @@ func (r *ReconcileUserConfiguration) Reconcile() (reconcile.Result, error) {
 	if err := backupAndRestore.Backup(); err != nil {
 		return reconcile.Result{}, err
 	}
-	//TODO backup Goroutine
+	if err := backupAndRestore.EnsureBackupTrigger(); err != nil {
+		return reconcile.Result{}, err
+	}
 
 	return reconcile.Result{}, nil
 }

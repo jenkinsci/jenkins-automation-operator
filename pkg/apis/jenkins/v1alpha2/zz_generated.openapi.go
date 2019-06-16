@@ -96,11 +96,21 @@ func schema_pkg_apis_jenkins_v1alpha2_JenkinsSpec(ref common.ReferenceCallback) 
 							Ref: ref("github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Service"),
 						},
 					},
+					"backup": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Backup"),
+						},
+					},
+					"restore": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Restore"),
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.JenkinsMaster", "github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.SeedJob", "github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Service"},
+			"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Backup", "github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.JenkinsMaster", "github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Restore", "github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.SeedJob", "github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Service"},
 	}
 }
 
@@ -142,6 +152,24 @@ func schema_pkg_apis_jenkins_v1alpha2_JenkinsStatus(ref common.ReferenceCallback
 									},
 								},
 							},
+						},
+					},
+					"restoredBackup": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"lastBackup": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"pendingBackup": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
 						},
 					},
 				},

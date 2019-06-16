@@ -152,7 +152,7 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request, logger logr.Logg
 	}
 
 	// Reconcile base configuration
-	baseConfiguration := base.New(r.client, r.scheme, logger, jenkins, r.local, r.minikube)
+	baseConfiguration := base.New(r.client, r.scheme, logger, jenkins, r.local, r.minikube, &r.clientSet, &r.config)
 
 	valid, err := baseConfiguration.Validate(jenkins)
 	if err != nil {

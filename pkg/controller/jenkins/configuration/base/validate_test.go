@@ -20,7 +20,7 @@ import (
 func TestValidatePlugins(t *testing.T) {
 	log.SetupLogger(true)
 	baseReconcileLoop := New(nil, nil, log.Log,
-		nil, false, false)
+		nil, false, false, nil, nil)
 	t.Run("empty", func(t *testing.T) {
 		var requiredBasePlugins []plugins.Plugin
 		var basePlugins []v1alpha2.Plugin
@@ -150,7 +150,7 @@ func TestValidateJenkinsMasterPodEnvs(t *testing.T) {
 			},
 		}
 		baseReconcileLoop := New(nil, nil, logf.ZapLogger(false),
-			&jenkins, false, false)
+			&jenkins, false, false, nil, nil)
 		got := baseReconcileLoop.validateJenkinsMasterPodEnvs()
 		assert.Equal(t, true, got)
 	})
@@ -172,7 +172,7 @@ func TestValidateJenkinsMasterPodEnvs(t *testing.T) {
 			},
 		}
 		baseReconcileLoop := New(nil, nil, logf.ZapLogger(false),
-			&jenkins, false, false)
+			&jenkins, false, false, nil, nil)
 		got := baseReconcileLoop.validateJenkinsMasterPodEnvs()
 		assert.Equal(t, false, got)
 	})
@@ -192,7 +192,7 @@ func TestValidateReservedVolumes(t *testing.T) {
 			},
 		}
 		baseReconcileLoop := New(nil, nil, logf.ZapLogger(false),
-			&jenkins, false, false)
+			&jenkins, false, false, nil, nil)
 		got := baseReconcileLoop.validateReservedVolumes()
 		assert.Equal(t, true, got)
 	})
@@ -209,7 +209,7 @@ func TestValidateReservedVolumes(t *testing.T) {
 			},
 		}
 		baseReconcileLoop := New(nil, nil, logf.ZapLogger(false),
-			&jenkins, false, false)
+			&jenkins, false, false, nil, nil)
 		got := baseReconcileLoop.validateReservedVolumes()
 		assert.Equal(t, false, got)
 	})
@@ -223,7 +223,7 @@ func TestValidateContainerVolumeMounts(t *testing.T) {
 			},
 		}
 		baseReconcileLoop := New(nil, nil, logf.ZapLogger(false),
-			&jenkins, false, false)
+			&jenkins, false, false, nil, nil)
 		got := baseReconcileLoop.validateContainerVolumeMounts(v1alpha2.Container{})
 		assert.Equal(t, true, got)
 	})
@@ -250,7 +250,7 @@ func TestValidateContainerVolumeMounts(t *testing.T) {
 			},
 		}
 		baseReconcileLoop := New(nil, nil, logf.ZapLogger(false),
-			&jenkins, false, false)
+			&jenkins, false, false, nil, nil)
 		got := baseReconcileLoop.validateContainerVolumeMounts(jenkins.Spec.Master.Containers[0])
 		assert.Equal(t, true, got)
 	})
@@ -277,7 +277,7 @@ func TestValidateContainerVolumeMounts(t *testing.T) {
 			},
 		}
 		baseReconcileLoop := New(nil, nil, logf.ZapLogger(false),
-			&jenkins, false, false)
+			&jenkins, false, false, nil, nil)
 		got := baseReconcileLoop.validateContainerVolumeMounts(jenkins.Spec.Master.Containers[0])
 		assert.Equal(t, false, got)
 	})
@@ -299,7 +299,7 @@ func TestValidateContainerVolumeMounts(t *testing.T) {
 			},
 		}
 		baseReconcileLoop := New(nil, nil, logf.ZapLogger(false),
-			&jenkins, false, false)
+			&jenkins, false, false, nil, nil)
 		got := baseReconcileLoop.validateContainerVolumeMounts(jenkins.Spec.Master.Containers[0])
 		assert.Equal(t, false, got)
 	})
@@ -319,7 +319,7 @@ func TestValidateConfigMapVolume(t *testing.T) {
 		}
 		fakeClient := fake.NewFakeClient()
 		baseReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false),
-			nil, false, false)
+			nil, false, false, nil, nil)
 
 		got, err := baseReconcileLoop.validateConfigMapVolume(volume)
 
@@ -345,7 +345,7 @@ func TestValidateConfigMapVolume(t *testing.T) {
 		err := fakeClient.Create(context.TODO(), &configMap)
 		assert.NoError(t, err)
 		baseReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false),
-			jenkins, false, false)
+			jenkins, false, false, nil, nil)
 
 		got, err := baseReconcileLoop.validateConfigMapVolume(volume)
 
@@ -369,7 +369,7 @@ func TestValidateConfigMapVolume(t *testing.T) {
 		}
 		fakeClient := fake.NewFakeClient()
 		baseReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false),
-			jenkins, false, false)
+			jenkins, false, false, nil, nil)
 
 		got, err := baseReconcileLoop.validateConfigMapVolume(volume)
 
@@ -392,7 +392,7 @@ func TestValidateSecretVolume(t *testing.T) {
 		}
 		fakeClient := fake.NewFakeClient()
 		baseReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false),
-			nil, false, false)
+			nil, false, false, nil, nil)
 
 		got, err := baseReconcileLoop.validateSecretVolume(volume)
 
@@ -416,7 +416,7 @@ func TestValidateSecretVolume(t *testing.T) {
 		err := fakeClient.Create(context.TODO(), &secret)
 		assert.NoError(t, err)
 		baseReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false),
-			jenkins, false, false)
+			jenkins, false, false, nil, nil)
 
 		got, err := baseReconcileLoop.validateSecretVolume(volume)
 
@@ -438,7 +438,7 @@ func TestValidateSecretVolume(t *testing.T) {
 		}
 		fakeClient := fake.NewFakeClient()
 		baseReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false),
-			jenkins, false, false)
+			jenkins, false, false, nil, nil)
 
 		got, err := baseReconcileLoop.validateSecretVolume(volume)
 

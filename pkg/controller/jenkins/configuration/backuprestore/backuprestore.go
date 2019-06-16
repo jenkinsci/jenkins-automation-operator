@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
@@ -13,6 +14,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
@@ -20,21 +22,27 @@ import (
 	k8s "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+type backupTrigger struct {
+	interval uint64
+	ticker   *time.Ticker
+}
+
+var backupTriggers = map[string]backupTrigger{}
+
 // BackupAndRestore represents Jenkins backup and restore client
 type BackupAndRestore struct {
 	config    rest.Config
 	k8sClient k8s.Client
 	clientSet kubernetes.Clientset
 
-	jenkinsClient jenkinsclient.Jenkins
-	logger        logr.Logger
-	jenkins       *v1alpha2.Jenkins
+	logger  logr.Logger
+	jenkins *v1alpha2.Jenkins
 }
 
 // New returns Jenkins backup and restore client
-func New(k8sClient k8s.Client, clientSet kubernetes.Clientset, jenkinsClient jenkinsclient.Jenkins,
+func New(k8sClient k8s.Client, clientSet kubernetes.Clientset,
 	logger logr.Logger, jenkins *v1alpha2.Jenkins, config rest.Config) *BackupAndRestore {
-	return &BackupAndRestore{k8sClient: k8sClient, clientSet: clientSet, jenkinsClient: jenkinsClient, logger: logger, jenkins: jenkins, config: config}
+	return &BackupAndRestore{k8sClient: k8sClient, clientSet: clientSet, logger: logger, jenkins: jenkins, config: config}
 }
 
 // Validate validates backup and restore configuration
@@ -88,7 +96,7 @@ func (bar *BackupAndRestore) Validate() bool {
 }
 
 // Restore performs Jenkins restore backup operation
-func (bar *BackupAndRestore) Restore() error {
+func (bar *BackupAndRestore) Restore(jenkinsClient jenkinsclient.Jenkins) error {
 	jenkins := bar.jenkins
 	if jenkins.Status.RestoredBackup != 0 {
 		bar.logger.V(log.VDebug).Info("Skipping restore backup, backup already restored")
@@ -116,13 +124,17 @@ func (bar *BackupAndRestore) Restore() error {
 	_, _, err := bar.exec(podName, jenkins.Spec.Restore.ContainerName, command)
 
 	if err == nil {
+		_, err := jenkinsClient.ExecuteScript("Jenkins.instance.reload()")
+		if err != nil {
+			return err
+		}
+
 		jenkins.Spec.Restore.RecoveryOnce = 0
 		jenkins.Status.RestoredBackup = backupNumber
 		jenkins.Status.PendingBackup = backupNumber + 1
 		return bar.k8sClient.Update(context.TODO(), jenkins)
 	}
 
-	//TODO reload?
 	//TODO after 3 fails stop
 
 	return err
@@ -154,6 +166,70 @@ func (bar *BackupAndRestore) Backup() error {
 	//TODO after 3 fails stop
 
 	return err
+}
+
+func triggerBackup(ticker *time.Ticker, k8sClient k8s.Client, logger logr.Logger, namespace, name string) {
+	for range ticker.C {
+		jenkins := &v1alpha2.Jenkins{}
+		err := k8sClient.Get(context.TODO(), types.NamespacedName{Namespace: namespace, Name: name}, jenkins)
+		if err != nil {
+			logger.V(log.VWarn).Info(fmt.Sprintf("backup trigger, error when fetching CR: %s", err))
+		}
+		if jenkins.Status.LastBackup == jenkins.Status.PendingBackup {
+			jenkins.Status.PendingBackup = jenkins.Status.PendingBackup + 1
+			err = k8sClient.Update(context.TODO(), jenkins)
+			if err != nil {
+				logger.V(log.VWarn).Info(fmt.Sprintf("backup trigger, error when updating CR: %s", err))
+			}
+		}
+	}
+}
+
+// EnsureBackupTrigger creates or update trigger which update CR to make backup
+func (bar *BackupAndRestore) EnsureBackupTrigger() error {
+	jenkins := bar.jenkins
+	trigger, found := backupTriggers[jenkins.Name]
+	if len(jenkins.Spec.Backup.ContainerName) == 0 || jenkins.Spec.Backup.Interval == 0 {
+		bar.logger.V(log.VDebug).Info("Skipping create backup trigger")
+		if found {
+			bar.stopBackupTrigger(trigger)
+		}
+		return nil
+	}
+
+	if !found {
+		bar.startBackupTrigger()
+	}
+	if found && jenkins.Spec.Backup.Interval != trigger.interval {
+		bar.stopBackupTrigger(trigger)
+		bar.startBackupTrigger()
+	}
+
+	return nil
+}
+
+// StopBackupTrigger stops trigger which update CR to make backup
+func (bar *BackupAndRestore) StopBackupTrigger() {
+	trigger, found := backupTriggers[bar.jenkins.Name]
+	if found {
+		bar.stopBackupTrigger(trigger)
+	}
+}
+
+func (bar *BackupAndRestore) startBackupTrigger() {
+	bar.logger.Info("Starting backup trigger")
+	ticker := time.NewTicker(time.Duration(bar.jenkins.Spec.Backup.Interval) * time.Second)
+	backupTriggers[bar.jenkins.Name] = backupTrigger{
+		interval: bar.jenkins.Spec.Backup.Interval,
+		ticker:   ticker,
+	}
+	go triggerBackup(ticker, bar.k8sClient, bar.logger, bar.jenkins.Namespace, bar.jenkins.Name)
+}
+
+func (bar *BackupAndRestore) stopBackupTrigger(trigger backupTrigger) {
+	bar.logger.Info("Stopping backup trigger")
+	trigger.ticker.Stop()
+	delete(backupTriggers, bar.jenkins.Name)
 }
 
 func (bar *BackupAndRestore) exec(podName, containerName string, command []string) (stdout, stderr bytes.Buffer, err error) {

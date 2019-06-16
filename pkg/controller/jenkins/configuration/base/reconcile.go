@@ -9,6 +9,7 @@ import (
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/backuprestore"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/groovy"
@@ -25,6 +26,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -40,11 +43,13 @@ type ReconcileJenkinsBaseConfiguration struct {
 	logger          logr.Logger
 	jenkins         *v1alpha2.Jenkins
 	local, minikube bool
+	clientSet       *kubernetes.Clientset
+	config          *rest.Config
 }
 
 // New create structure which takes care of base configuration
 func New(client client.Client, scheme *runtime.Scheme, logger logr.Logger,
-	jenkins *v1alpha2.Jenkins, local, minikube bool) *ReconcileJenkinsBaseConfiguration {
+	jenkins *v1alpha2.Jenkins, local, minikube bool, clientSet *kubernetes.Clientset, config *rest.Config) *ReconcileJenkinsBaseConfiguration {
 	return &ReconcileJenkinsBaseConfiguration{
 		k8sClient: client,
 		scheme:    scheme,
@@ -52,6 +57,8 @@ func New(client client.Client, scheme *runtime.Scheme, logger logr.Logger,
 		jenkins:   jenkins,
 		local:     local,
 		minikube:  minikube,
+		clientSet: clientSet,
+		config:    config,
 	}
 }
 
@@ -395,6 +402,9 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsMasterPod(meta metav1.O
 	}
 
 	if currentJenkinsMasterPod != nil && isPodTerminating(*currentJenkinsMasterPod) {
+		backupAndRestore := backuprestore.New(r.k8sClient, *r.clientSet, r.logger, r.jenkins, *r.config)
+		backupAndRestore.StopBackupTrigger()
+		//TODO backup before pod deletion?
 		return reconcile.Result{Requeue: true}, nil
 	}
 	if currentJenkinsMasterPod != nil && r.isRecreatePodNeeded(*currentJenkinsMasterPod) {
@@ -409,7 +419,7 @@ func isPodTerminating(pod corev1.Pod) bool {
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) isRecreatePodNeeded(currentJenkinsMasterPod corev1.Pod) bool {
-	if r.jenkins.Spec.Restore.RecoveryOnce != 0 {
+	if r.jenkins.Spec.Restore.RecoveryOnce != 0 && r.jenkins.Status.RestoredBackup != 0 {
 		r.logger.Info(fmt.Sprintf("spec.restore.recoveryOnce is set, recreating pod"))
 		return true
 	}
