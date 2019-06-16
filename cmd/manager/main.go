@@ -25,6 +25,7 @@ import (
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
+	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -107,8 +108,13 @@ func main() {
 		fatal(errors.Wrap(err, "failed to create manager"), *debug)
 	}
 
+	clientSet, err := kubernetes.NewForConfig(cfg)
+	if err != nil {
+		fatal(errors.Wrap(err, "failed to create Kubernetes client set"), *debug)
+	}
+
 	// setup Jenkins controller
-	if err := jenkins.Add(mgr, *local, *minikube, events); err != nil {
+	if err := jenkins.Add(mgr, *local, *minikube, events, *clientSet, *cfg); err != nil {
 		fatal(errors.Wrap(err, "failed to setup controllers"), *debug)
 	}
 

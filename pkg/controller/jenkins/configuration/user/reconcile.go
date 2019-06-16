@@ -7,6 +7,7 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/user/backuprestore"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/user/casc"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/user/seedjobs"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
@@ -17,6 +18,8 @@ import (
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	k8s "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -27,28 +30,37 @@ type ReconcileUserConfiguration struct {
 	jenkinsClient jenkinsclient.Jenkins
 	logger        logr.Logger
 	jenkins       *v1alpha2.Jenkins
+	clientSet     kubernetes.Clientset
+	config        rest.Config
 }
 
 // New create structure which takes care of user configuration
 func New(k8sClient k8s.Client, jenkinsClient jenkinsclient.Jenkins, logger logr.Logger,
-	jenkins *v1alpha2.Jenkins) *ReconcileUserConfiguration {
+	jenkins *v1alpha2.Jenkins, clientSet kubernetes.Clientset, config rest.Config) *ReconcileUserConfiguration {
 	return &ReconcileUserConfiguration{
 		k8sClient:     k8sClient,
 		jenkinsClient: jenkinsClient,
 		logger:        logger,
 		jenkins:       jenkins,
+		clientSet:     clientSet,
+		config:        config,
 	}
 }
 
 // Reconcile it's a main reconciliation loop for user supplied configuration
 func (r *ReconcileUserConfiguration) Reconcile() (reconcile.Result, error) {
-	// reconcile seed jobs
+	backupAndRestore := backuprestore.New(r.k8sClient, r.clientSet, r.jenkinsClient, r.logger, r.jenkins, r.config)
+
 	result, err := r.ensureSeedJobs()
 	if err != nil {
 		return reconcile.Result{}, err
 	}
 	if result.Requeue {
 		return result, nil
+	}
+
+	if err := backupAndRestore.Restore(); err != nil {
+		return reconcile.Result{}, err
 	}
 
 	result, err = r.ensureUserConfiguration(r.jenkinsClient)
@@ -58,6 +70,11 @@ func (r *ReconcileUserConfiguration) Reconcile() (reconcile.Result, error) {
 	if result.Requeue {
 		return result, nil
 	}
+
+	if err := backupAndRestore.Backup(); err != nil {
+		return reconcile.Result{}, err
+	}
+	//TODO backup Goroutine
 
 	return reconcile.Result{}, nil
 }

@@ -360,9 +360,9 @@ func (r *ReconcileJenkinsBaseConfiguration) createService(meta metav1.ObjectMeta
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) getJenkinsMasterPod(meta metav1.ObjectMeta) (*corev1.Pod, error) {
-	jenkinsMasterPod := resources.NewJenkinsMasterPod(meta, r.jenkins)
+	jenkinsMasterPodName := resources.GetJenkinsMasterPodName(*r.jenkins)
 	currentJenkinsMasterPod := &corev1.Pod{}
-	err := r.k8sClient.Get(context.TODO(), types.NamespacedName{Name: jenkinsMasterPod.Name, Namespace: jenkinsMasterPod.Namespace}, currentJenkinsMasterPod)
+	err := r.k8sClient.Get(context.TODO(), types.NamespacedName{Name: jenkinsMasterPodName, Namespace: r.jenkins.Namespace}, currentJenkinsMasterPod)
 	if err != nil {
 		return nil, err // don't wrap error
 	}
@@ -382,6 +382,8 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsMasterPod(meta metav1.O
 		now := metav1.Now()
 		r.jenkins.Status = v1alpha2.JenkinsStatus{
 			ProvisionStartTime: &now,
+			LastBackup:         r.jenkins.Status.LastBackup,
+			PendingBackup:      r.jenkins.Status.LastBackup,
 		}
 		err = r.updateResource(r.jenkins)
 		if err != nil {
@@ -407,6 +409,11 @@ func isPodTerminating(pod corev1.Pod) bool {
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) isRecreatePodNeeded(currentJenkinsMasterPod corev1.Pod) bool {
+	if r.jenkins.Spec.Restore.RecoveryOnce != 0 {
+		r.logger.Info(fmt.Sprintf("spec.restore.recoveryOnce is set, recreating pod"))
+		return true
+	}
+
 	if version.Version != r.jenkins.Status.OperatorVersion {
 		r.logger.Info(fmt.Sprintf("Jenkins Operator version has changed, actual '%+v' new '%+v', recreating pod",
 			r.jenkins.Status.OperatorVersion, version.Version))

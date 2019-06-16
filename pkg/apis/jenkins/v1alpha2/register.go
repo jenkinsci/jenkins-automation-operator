@@ -25,3 +25,7 @@ var (
 
 // GetObjectKind returns Jenkins object kind
 func (in *Jenkins) GetObjectKind() schema.ObjectKind { return in }
+
+func init() {
+	SchemeBuilder.Register(&Jenkins{}, &JenkinsList{})
+}

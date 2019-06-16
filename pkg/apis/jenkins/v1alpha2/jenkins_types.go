@@ -17,6 +17,8 @@ type JenkinsSpec struct {
 	SeedJobs     []SeedJob     `json:"seedJobs,omitempty"`
 	Service      Service       `json:"service,omitempty"`
 	SlaveService Service       `json:"slaveService,omitempty"`
+	Backup       Backup        `json:"backup,omitempty"`
+	Restore      Restore       `json:"restore,omitempty"`
 }
 
 // Container defines Kubernetes container attributes
@@ -80,6 +82,9 @@ type JenkinsStatus struct {
 	BaseConfigurationCompletedTime *metav1.Time `json:"baseConfigurationCompletedTime,omitempty"`
 	UserConfigurationCompletedTime *metav1.Time `json:"userConfigurationCompletedTime,omitempty"`
 	Builds                         []Build      `json:"builds,omitempty"`
+	RestoredBackup                 uint64       `json:"restoredBackup,omitempty"`
+	LastBackup                     uint64       `json:"lastBackup,omitempty"`
+	PendingBackup                  uint64       `json:"pendingBackup,omitempty"`
 }
 
 // BuildStatus defines type of Jenkins build job status
@@ -154,7 +159,7 @@ var AllowedJenkinsCredentialMap = map[string]string{
 	string(UsernamePasswordCredentialType):    "",
 }
 
-// SeedJob defined configuration for seed jobs and deploy keys
+// SeedJob defines configuration for seed jobs and deploy keys
 type SeedJob struct {
 	ID                    string                `json:"id,omitempty"`
 	CredentialID          string                `json:"credentialID,omitempty"`
@@ -165,6 +170,22 @@ type SeedJob struct {
 	JenkinsCredentialType JenkinsCredentialType `json:"credentialType,omitempty"`
 }
 
-func init() {
-	SchemeBuilder.Register(&Jenkins{}, &JenkinsList{})
+// Handler defines a specific action that should be taken
+type Handler struct {
+	// Exec specifies the action to take.
+	Exec *corev1.ExecAction `json:"exec,omitempty"`
+}
+
+// Backup defines configuration of Jenkins backup
+type Backup struct {
+	ContainerName string  `json:"containerName"`
+	Action        Handler `json:"action"`
+	Interval      uint64  `json:"interval"`
+}
+
+// Restore defines configuration of Jenkins backup restore
+type Restore struct {
+	ContainerName string  `json:"containerName"`
+	Action        Handler `json:"action"`
+	RecoveryOnce  uint64  `json:"recoveryOnce,omitempty"`
 }

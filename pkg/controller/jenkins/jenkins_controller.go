@@ -23,6 +23,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -42,18 +44,20 @@ const (
 
 // Add creates a new Jenkins Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
-func Add(mgr manager.Manager, local, minikube bool, events event.Recorder) error {
-	return add(mgr, newReconciler(mgr, local, minikube, events))
+func Add(mgr manager.Manager, local, minikube bool, events event.Recorder, clientSet kubernetes.Clientset, config rest.Config) error {
+	return add(mgr, newReconciler(mgr, local, minikube, events, clientSet, config))
 }
 
 // newReconciler returns a new reconcile.Reconciler
-func newReconciler(mgr manager.Manager, local, minikube bool, events event.Recorder) reconcile.Reconciler {
+func newReconciler(mgr manager.Manager, local, minikube bool, events event.Recorder, clientSet kubernetes.Clientset, config rest.Config) reconcile.Reconciler {
 	return &ReconcileJenkins{
-		client:   mgr.GetClient(),
-		scheme:   mgr.GetScheme(),
-		local:    local,
-		minikube: minikube,
-		events:   events,
+		client:    mgr.GetClient(),
+		scheme:    mgr.GetScheme(),
+		local:     local,
+		minikube:  minikube,
+		events:    events,
+		clientSet: clientSet,
+		config:    config,
 	}
 }
 
@@ -103,6 +107,8 @@ type ReconcileJenkins struct {
 	scheme          *runtime.Scheme
 	local, minikube bool
 	events          event.Recorder
+	clientSet       kubernetes.Clientset
+	config          rest.Config
 }
 
 // Reconcile it's a main reconciliation loop which maintain desired state based on Jenkins.Spec
@@ -181,7 +187,7 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request, logger logr.Logg
 		r.events.Emit(jenkins, event.TypeNormal, reasonBaseConfigurationSuccess, "Base configuration completed")
 	}
 	// Reconcile user configuration
-	userConfiguration := user.New(r.client, jenkinsClient, logger, jenkins)
+	userConfiguration := user.New(r.client, jenkinsClient, logger, jenkins, r.clientSet, r.config)
 
 	valid, err = userConfiguration.Validate(jenkins)
 	if err != nil {
@@ -334,13 +340,25 @@ func (r *ReconcileJenkins) setDefaults(jenkins *v1alpha2.Jenkins, logger logr.Lo
 	}
 	if len(jenkins.Spec.Master.Containers) > 1 {
 		for i, container := range jenkins.Spec.Master.Containers[1:] {
-			if setDefaultsForContainer(jenkins, i, logger.WithValues("container", container.Name)) {
+			if setDefaultsForContainer(jenkins, i+1, logger.WithValues("container", container.Name)) {
 				changed = true
 			}
 		}
 	}
+	if len(jenkins.Spec.Backup.ContainerName) > 0 && jenkins.Spec.Backup.Interval == 0 {
+		logger.Info("Setting default backup interval")
+		changed = true
+		jenkins.Spec.Backup.Interval = 30
+	}
 
-	jenkins.Spec.Master.Containers = []v1alpha2.Container{jenkinsContainer}
+	if len(jenkins.Spec.Master.Containers) == 0 || len(jenkins.Spec.Master.Containers) == 1 {
+		jenkins.Spec.Master.Containers = []v1alpha2.Container{jenkinsContainer}
+	} else {
+		noJenkinsContainers := jenkins.Spec.Master.Containers[1:]
+		containers := []v1alpha2.Container{jenkinsContainer}
+		containers = append(containers, noJenkinsContainers...)
+		jenkins.Spec.Master.Containers = containers
+	}
 
 	if changed {
 		return errors.WithStack(r.client.Update(context.TODO(), jenkins))

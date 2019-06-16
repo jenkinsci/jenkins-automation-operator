@@ -14,7 +14,7 @@ const (
 	// JenkinsMasterContainerName is the Jenkins master container name in pod
 	JenkinsMasterContainerName = "jenkins-master"
 	// JenkinsHomeVolumeName is the Jenkins home volume name
-	JenkinsHomeVolumeName = "home"
+	JenkinsHomeVolumeName = "jenkins-home"
 	jenkinsPath           = "/var/jenkins"
 	jenkinsHomePath       = jenkinsPath + "/home"
 
