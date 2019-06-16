@@ -30,15 +30,15 @@ func (jenkins *jenkins) executeScript(script string, verifier string) (string, e
 
 	r, err := jenkins.Requester.Do(ar, &output, parameters)
 	if err != nil {
-		return "", errors.Wrap(err, "couldn't execute groovy script")
+		return "", errors.Wrapf(err, "couldn't execute groovy script, logs '%s'", output)
 	}
 
 	if r.StatusCode != http.StatusOK {
-		return output, errors.Errorf("invalid status code '%d'", r.StatusCode)
+		return output, errors.Errorf("invalid status code '%d', logs '%s'", r.StatusCode, output)
 	}
 
 	if !strings.Contains(output, verifier) {
-		return output, errors.New("script execution failed")
+		return output, errors.Errorf("script execution failed, logs '%s'", output)
 	}
 
 	return output, nil
