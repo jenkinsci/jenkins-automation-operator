@@ -135,8 +135,6 @@ func (bar *BackupAndRestore) Restore(jenkinsClient jenkinsclient.Jenkins) error 
 		return bar.k8sClient.Update(context.TODO(), jenkins)
 	}
 
-	//TODO after 3 fails stop
-
 	return err
 }
 
@@ -162,8 +160,6 @@ func (bar *BackupAndRestore) Backup() error {
 		jenkins.Status.PendingBackup = backupNumber
 		return bar.k8sClient.Update(context.TODO(), jenkins)
 	}
-
-	//TODO after 3 fails stop
 
 	return err
 }

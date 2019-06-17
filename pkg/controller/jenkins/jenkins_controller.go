@@ -42,6 +42,13 @@ const (
 	reasonCRValidationFailure event.Reason = "CRValidationFailure"
 )
 
+type reconcileError struct {
+	err     error
+	counter uint64
+}
+
+var reconcileErrors = map[string]reconcileError{}
+
 // Add creates a new Jenkins Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
 func Add(mgr manager.Manager, local, minikube bool, events event.Recorder, clientSet kubernetes.Clientset, config rest.Config) error {
@@ -120,6 +127,30 @@ func (r *ReconcileJenkins) Reconcile(request reconcile.Request) (reconcile.Resul
 	if err != nil && apierrors.IsConflict(err) {
 		return reconcile.Result{Requeue: true}, nil
 	} else if err != nil {
+		lastErrors, found := reconcileErrors[request.Name]
+		if found {
+			if err.Error() == lastErrors.err.Error() {
+				lastErrors.counter++
+			} else {
+				lastErrors.counter = 1
+				lastErrors.err = err
+			}
+		} else {
+			lastErrors = reconcileError{
+				err:     err,
+				counter: 1,
+			}
+		}
+		reconcileErrors[request.Name] = lastErrors
+		if lastErrors.counter >= 15 {
+			if log.Debug {
+				logger.V(log.VWarn).Info(fmt.Sprintf("Reconcile loop failed ten times with the same error, giving up: %+v", err))
+			} else {
+				logger.V(log.VWarn).Info(fmt.Sprintf("Reconcile loop failed ten times with the same error, giving up: %s", err))
+			}
+			return reconcile.Result{Requeue: false}, nil
+		}
+
 		if log.Debug {
 			logger.V(log.VWarn).Info(fmt.Sprintf("Reconcile loop failed: %+v", err))
 		} else {
