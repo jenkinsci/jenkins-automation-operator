@@ -17,12 +17,14 @@ rules:
       - list
       - watch
   - apiGroups:
-      - "extensions"
+      - apps
     resources:
-      - ingresses
+      - deployments
+      - daemonsets
+      - replicasets
+      - statefulsets
     verbs:
-      - create
-      - update
+      - '*'
   - apiGroups:
       - ""
     resources:
