@@ -41,7 +41,7 @@ type Container struct {
 // JenkinsMaster defines the Jenkins master pod attributes and plugins,
 // every single change requires Jenkins master pod restart
 type JenkinsMaster struct {
-	Container //TODO move to containers
+	Container
 
 	// pod properties
 	Annotations  map[string]string `json:"masterAnnotations,omitempty"`

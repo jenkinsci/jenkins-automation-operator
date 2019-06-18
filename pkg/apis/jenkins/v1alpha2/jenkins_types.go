@@ -85,6 +85,7 @@ type JenkinsStatus struct {
 	RestoredBackup                 uint64       `json:"restoredBackup,omitempty"`
 	LastBackup                     uint64       `json:"lastBackup,omitempty"`
 	PendingBackup                  uint64       `json:"pendingBackup,omitempty"`
+	BackupDoneBeforePodDeletion    bool         `json:"backupDoneBeforePodDeletion,omitempty"`
 }
 
 // BuildStatus defines type of Jenkins build job status
@@ -178,9 +179,10 @@ type Handler struct {
 
 // Backup defines configuration of Jenkins backup
 type Backup struct {
-	ContainerName string  `json:"containerName"`
-	Action        Handler `json:"action"`
-	Interval      uint64  `json:"interval"`
+	ContainerName               string  `json:"containerName"`
+	Action                      Handler `json:"action"`
+	Interval                    uint64  `json:"interval"`
+	MakeBackupBeforePodDeletion bool    `json:"makeBackupBeforePodDeletion"`
 }
 
 // Restore defines configuration of Jenkins backup restore
