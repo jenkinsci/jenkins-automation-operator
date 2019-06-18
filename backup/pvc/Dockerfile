@@ -9,4 +9,4 @@ COPY bin .
 RUN chmod +x *.sh
 USER user
 
-CMD exec /bin/sh -c "trap : TERM INT; (while true; do sleep 1000; done) & wait"
+CMD exec /bin/sh -c "while true; do sleep 1000; done"
