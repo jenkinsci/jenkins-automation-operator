@@ -139,6 +139,14 @@ test: ## Runs the go tests
 	@echo "+ $@"
 	@RUNNING_TESTS=1 go test -tags "$(BUILDTAGS) cgo" $(PACKAGES_FOR_UNIT_TESTS)
 
+.PHONY: prepare-all-in-one-deploy-file
+prepare-all-in-one-deploy-file: ## Prepares all in one deploy file
+	@echo "+ $@"
+	cp deploy/service_account.yaml deploy/$(ALL_IN_ONE_DEPLOY_FILE_PREFIX)-$(API_VERSION).yaml
+	cat deploy/role.yaml >> deploy/$(ALL_IN_ONE_DEPLOY_FILE_PREFIX)-$(API_VERSION).yaml
+	cat deploy/role_binding.yaml >> deploy/$(ALL_IN_ONE_DEPLOY_FILE_PREFIX)-$(API_VERSION).yaml
+	cat deploy/operator.yaml >> deploy/$(ALL_IN_ONE_DEPLOY_FILE_PREFIX)-$(API_VERSION).yaml
+
 .PHONY: e2e
 CURRENT_DIRECTORY := $(shell pwd)
 e2e: build docker-build ## Runs e2e tests, you can use EXTRA_ARGS
@@ -324,7 +332,7 @@ start-minikube: ## Start minikube
 
 .PHONY: bump-version
 BUMP := patch
-bump-version: ## Bump the version in the version file. Set BUMP to [ patch | major | minor ]
+bump-version: prepare-all-in-one-deploy-file ## Bump the version in the version file. Set BUMP to [ patch | major | minor ]
 	@echo "+ $@"
 	@go get -u github.com/jessfraz/junk/sembump # update sembump tool
 	$(eval NEW_VERSION=$(shell sembump --kind $(BUMP) $(VERSION)))
