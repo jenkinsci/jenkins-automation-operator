@@ -161,7 +161,7 @@ func verifyJenkinsMasterPodAttributes(t *testing.T, jenkins *v1alpha2.Jenkins) {
 	assert.Equal(t, jenkins.Spec.Master.NodeSelector, jenkinsPod.Spec.NodeSelector)
 
 	assert.Equal(t, resources.JenkinsMasterContainerName, jenkinsPod.Spec.Containers[0].Name)
-	assert.Equal(t, len(jenkins.Spec.Master.Containers)+1, len(jenkinsPod.Spec.Containers))
+	assert.Equal(t, len(jenkins.Spec.Master.Containers), len(jenkinsPod.Spec.Containers))
 
 	for _, actualContainer := range jenkinsPod.Spec.Containers {
 		if actualContainer.Name == resources.JenkinsMasterContainerName {

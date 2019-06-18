@@ -76,8 +76,7 @@ func createJenkinsCR(t *testing.T, name, namespace string, seedJob *[]v1alpha2.S
 				Annotations: map[string]string{"test": "label"},
 				Containers: []v1alpha2.Container{
 					{
-						Name:  resources.JenkinsMasterContainerName,
-						Image: "jenkins/jenkins",
+						Name: resources.JenkinsMasterContainerName,
 						Env: []v1.EnvVar{
 							{
 								Name:  "TEST_ENV",
@@ -115,7 +114,7 @@ func createJenkinsCR(t *testing.T, name, namespace string, seedJob *[]v1alpha2.S
 					},
 				},
 				Plugins: []v1alpha2.Plugin{
-					{Name: "audit-trail:", Version: "2.4"},
+					{Name: "audit-trail", Version: "2.4"},
 					{Name: "simple-theme-plugin", Version: "0.5.1"},
 				},
 				NodeSelector: map[string]string{"kubernetes.io/hostname": "minikube"},

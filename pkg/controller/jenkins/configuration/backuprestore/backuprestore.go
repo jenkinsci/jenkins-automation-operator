@@ -98,6 +98,10 @@ func (bar *BackupAndRestore) Validate() bool {
 // Restore performs Jenkins restore backup operation
 func (bar *BackupAndRestore) Restore(jenkinsClient jenkinsclient.Jenkins) error {
 	jenkins := bar.jenkins
+	if len(jenkins.Spec.Restore.ContainerName) == 0 || jenkins.Spec.Restore.Action.Exec == nil {
+		bar.logger.V(log.VDebug).Info("Skipping restore backup, backup restore not configured")
+		return nil
+	}
 	if jenkins.Status.RestoredBackup != 0 {
 		bar.logger.V(log.VDebug).Info("Skipping restore backup, backup already restored")
 		return nil
@@ -141,6 +145,10 @@ func (bar *BackupAndRestore) Restore(jenkinsClient jenkinsclient.Jenkins) error 
 // Backup performs Jenkins backup operation
 func (bar *BackupAndRestore) Backup() error {
 	jenkins := bar.jenkins
+	if len(jenkins.Spec.Backup.ContainerName) == 0 || jenkins.Spec.Backup.Action.Exec == nil {
+		bar.logger.V(log.VDebug).Info("Skipping restore backup, backup restore not configured")
+		return nil
+	}
 	if jenkins.Status.PendingBackup == jenkins.Status.LastBackup {
 		bar.logger.V(log.VDebug).Info("Skipping backup")
 		return nil
