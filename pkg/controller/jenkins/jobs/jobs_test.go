@@ -316,6 +316,19 @@ func TestEnsureJobFailedWithMaxRetries(t *testing.T) {
 				}, nil)
 		}
 
+		// fifth run - build should be unrecoverable failed and status updated
+		if reconcileAttempt == 5 {
+			jenkinsClient.
+				EXPECT().
+				GetBuild(buildName, int64(2)).
+				Return(&gojenkins.Build{
+					Raw: &gojenkins.BuildResponse{
+						Result: string(v1alpha2.BuildFailureStatus),
+					},
+					Jenkins: gojenkins.CreateJenkins(nil, ""),
+				}, nil)
+		}
+
 		done, errEnsureBuildJob := jobs.EnsureBuildJob(buildName, encodedHash, nil, jenkins, true)
 		assert.NoError(t, err)
 
