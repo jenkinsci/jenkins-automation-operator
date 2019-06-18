@@ -22,10 +22,7 @@ kubectl apply -f https://raw.githubusercontent.com/jenkinsci/kubernetes-operator
 Apply Service Account and RBAC roles:
 
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/jenkinsci/kubernetes-operator/master/deploy/service_account.yaml
-kubectl apply -f https://raw.githubusercontent.com/jenkinsci/kubernetes-operator/master/deploy/role.yaml
-kubectl apply -f https://raw.githubusercontent.com/jenkinsci/kubernetes-operator/master/deploy/role_binding.yaml
-kubectl apply -f https://raw.githubusercontent.com/jenkinsci/kubernetes-operator/master/deploy/operator.yaml
+kubectl apply -f https://raw.githubusercontent.com/jenkinsci/kubernetes-operator/master/deploy/all-in-one-v1alpha2.yaml
 ```
 
 Watch **jenkins-operator** instance being created:

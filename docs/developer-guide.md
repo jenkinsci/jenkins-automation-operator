@@ -79,9 +79,9 @@ make deepcopy-gen
 ### Getting Jenkins URL and basic credentials
 
 ```bash
-minikube service jenkins-operator-http-example --url
-kubectl get secret jenkins-operator-credentials-example -o 'jsonpath={.data.user}' | base64 -d
-kubectl get secret jenkins-operator-credentials-example -o 'jsonpath={.data.password}' | base64 -d
+minikube service jenkins-operator-http-<cr_name> --url
+kubectl get secret jenkins-operator-credentials-<cr_name> -o 'jsonpath={.data.user}' | base64 -d
+kubectl get secret jenkins-operator-credentials-<cr_name> -o 'jsonpath={.data.password}' | base64 -d
 ```
 
 

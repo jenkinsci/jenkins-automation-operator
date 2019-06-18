@@ -26,27 +26,37 @@ metadata:
   name: example
 spec:
   master:
-   image: jenkins/jenkins
-   readinessProbe:
-     httpGet:
-       path: /login
-       port: 8080
-       scheme: HTTP
-     failureThreshold: 12
-     initialDelaySeconds: 20
-     periodSeconds: 10
-     successThreshold: 1
-     timeoutSeconds: 5
-   livenessProbe:
-     httpGet:
-       path: /login
-       port: 8080
-       scheme: HTTP
-     initialDelaySeconds: 20
-     failureThreshold: 12
-     periodSeconds: 10
-     successThreshold: 1
-     timeoutSeconds: 5
+    containers:
+    - name: jenkins-master
+      image: jenkins/jenkins:lts
+      imagePullPolicy: Always
+      livenessProbe:
+        failureThreshold: 12
+        httpGet:
+          path: /login
+          port: http
+          scheme: HTTP
+        initialDelaySeconds: 80
+        periodSeconds: 10
+        successThreshold: 1
+        timeoutSeconds: 5
+      readinessProbe:
+        failureThreshold: 3
+        httpGet:
+          path: /login
+          port: http
+          scheme: HTTP
+        initialDelaySeconds: 30
+        periodSeconds: 10
+        successThreshold: 1
+        timeoutSeconds: 1
+      resources:
+        limits:
+          cpu: 1500m
+          memory: 3Gi
+        requests:
+          cpu: "1"
+          memory: 500Mi
   seedJobs:
   - id: jenkins-operator
     targets: "cicd/jobs/*.jenkins"
@@ -69,22 +79,20 @@ kubectl get pods -w
 Get Jenkins credentials:
 
 ```bash
-kubectl get secret jenkins-operator-credentials-example -o 'jsonpath={.data.user}' | base64 -d
-kubectl get secret jenkins-operator-credentials-example -o 'jsonpath={.data.password}' | base64 -d
+kubectl get secret jenkins-operator-credentials-<cr_name> -o 'jsonpath={.data.user}' | base64 -d
+kubectl get secret jenkins-operator-credentials-<cr_name> -o 'jsonpath={.data.password}' | base64 -d
 ```
 
 Connect to Jenkins (minikube):
 
 ```bash
-minikube service jenkins-operator-example --url
+minikube service jenkins-operator-http-<cr_name> --url
 ```
-Pick up the first URL.
 
 Connect to Jenkins (actual Kubernetes cluster):
 
 ```bash
-kubectl describe svc jenkins-operator-example
-kubectl port-forward jenkins-operator-example 8080:8080
+kubectl port-forward jenkins-<cr_name> 8080:8080
 ```
 Then open browser with address http://localhost:8080.
 ![jenkins](../assets/jenkins.png)
@@ -145,7 +153,11 @@ podTemplate(label: label,
         containers: [
                 containerTemplate(name: 'jnlp', image: 'jenkins/jnlp-slave:alpine'),
                 containerTemplate(name: 'go', image: 'golang:1-alpine', command: 'cat', ttyEnabled: true),
-        ]) {
+        ],
+        envVars: [
+                envVar(key: 'GOPATH', value: workspace),
+        ],
+        ) {
 
     node(label) {
         dir(workdir) {
@@ -155,6 +167,18 @@ podTemplate(label: label,
                 }
                 container('go') {
                     sh 'apk --no-cache --update add make git gcc libc-dev'
+                }
+            }
+
+            stage('Dep') {
+                container('go') {
+                    sh 'make dep'
+                }
+            }
+
+            stage('Test') {
+                container('go') {
+                    sh 'make test'
                 }
             }
 
@@ -178,8 +202,6 @@ kind: Jenkins
 metadata:
   name: example
 spec:
-  master:
-   image: jenkins/jenkins:lts
   seedJobs:
   - id: jenkins-operator
     targets: "cicd/jobs/*.jenkins"
@@ -210,8 +232,6 @@ kind: Jenkins
 metadata:
   name: example
 spec:
-  master:
-   image: jenkins/jenkins:lts
   seedJobs:
   - id: jenkins-operator-ssh
     credentialType: basicSSHUserPrivateKey
@@ -248,8 +268,6 @@ kind: Jenkins
 metadata:
   name: example
 spec:
-  master:
-   image: jenkins/jenkins:lts
   seedJobs:
   - id: jenkins-operator-user-pass
     credentialType: usernamePassword
@@ -262,7 +280,10 @@ spec:
 
 and create Kubernetes Secret(name of secret should be the same from `credentialID` field):
 
-```
+#### Create PVC
+
+Save to file pvc.yaml:
+```yaml
 apiVersion: v1
 kind: Secret
 metadata:
@@ -275,33 +296,28 @@ data:
 ## Jenkins Customisation
 
 Jenkins can be customized using groovy scripts or configuration as code plugin. All custom configuration is stored in
-the **jenkins-operator-user-configuration-example** ConfigMap which is automatically created by **jenkins-operator**.
+the **jenkins-operator-user-configuration-<cr_name>** ConfigMap which is automatically created by **jenkins-operator**.
 
-**jenkins-operator** creates **jenkins-operator-user-configuration-example** secret where user can store sensitive 
+**jenkins-operator** creates **jenkins-operator-user-configuration-<cr_name>** secret where user can store sensitive 
 information used for custom configuration. If you have entry in secret named `PASSWORD` then you can use it in 
 Configuration as Plugin as `adminAddress: "${PASSWORD}"`.
 
 ```
-kubectl get secret jenkins-operator-user-configuration-example -o yaml
+kubectl get secret jenkins-operator-user-configuration-<cr_name> -o yaml
 
+kind: Secret
 apiVersion: v1
+type: Opaque
+metadata:
+  name: jenkins-operator-user-configuration-<cr_name>
+  namespace: default
 data:
   SECRET_JENKINS_ADMIN_ADDRESS: YXNkZgo=
-kind: Secret
-metadata:
-  creationTimestamp: 2019-03-03T11:54:36Z
-  labels:
-    app: jenkins-operator
-    jenkins-cr: example
-    watch: "true"
-  name: jenkins-operator-user-configuration-example
-  namespace: default
-type: Opaque
 
 ```
 
 ```
-kubectl get configmap jenkins-operator-user-configuration-example -o yaml
+kubectl get configmap jenkins-operator-user-configuration-<cr_name> -o yaml
 
 apiVersion: v1
 data:
@@ -316,13 +332,12 @@ data:
 
     Jenkins jenkins = Jenkins.getInstance()
 
-    def decorator = Jenkins.instance.getDescriptorByType(org.codefirst.SimpleThemeDecorator.class)
+Run command:
+```bash
+$ kubectl -n <namesapce> create -f pvc.yaml
+```
 
-    List<ThemeElement> configElements = new ArrayList<>();
-    configElements.add(new CssTextThemeElement("DEFAULT"));
-    configElements.add(new CssUrlThemeElement("https://cdn.rawgit.com/afonsof/jenkins-material-theme/gh-pages/dist/material-light-green.css"));
-    decorator.setElements(configElements);
-    decorator.save();
+#### Configure Jenkins CR
 
     jenkins.save()
   1-system-message.yaml: |2
@@ -331,21 +346,15 @@ data:
       adminAddress: "${SECRET_JENKINS_ADMIN_ADDRESS}"
 kind: ConfigMap
 metadata:
-  labels:
-    app: jenkins-operator
-    jenkins-cr: example
-    watch: "true"
-  name: jenkins-operator-user-configuration-example
+  name: jenkins-operator-user-configuration-<cr_name>
   namespace: default
 ``` 
 
-When **jenkins-operator-user-configuration-example** ConfigMap is updated Jenkins automatically 
+When **jenkins-operator-user-configuration-<cr_name>** ConfigMap is updated Jenkins automatically 
 runs the **jenkins-operator-user-configuration** Jenkins Job which executes all scripts then
 runs the **jenkins-operator-user-configuration-casc** Jenkins Job which applies Configuration as Code configuration.
 
 ## Install Plugins
-
-### Via CR
 
 Edit CR under `spec.master.plugins`:
 
@@ -356,11 +365,9 @@ metadata:
   name: example
 spec:
   master:
-   image: jenkins/jenkins:lts
    plugins:
-     simple-theme-plugin:0.5.1: []
-     configuration-as-code:1.4:
-     - configuration-as-code-support:1.4
+   - name: simple-theme-plugin
+     version: 0.5.1
 ```
 
 Then **jenkins-operator** will automatically install plugins after Jenkins master pod restart.
@@ -458,7 +465,7 @@ kubectl get events --sort-by='{.lastTimestamp}'
 Verify Jenkins master logs:
 
 ```bash
-kubectl logs -f jenkins-master-example
+kubectl logs -f jenkins-<cr_name>
 ```
 
 Verify jenkins-operator logs:
@@ -472,7 +479,7 @@ kubectl logs deployment/jenkins-operator
 Delete Jenkins master pod and wait for the new one to come up:
 
 ```bash
-kubectl delete pod jenkins-operator-example
+kubectl delete pod jenkins-<cr_name>
 ```
 
 [job-dsl]:https://github.com/jenkinsci/job-dsl-plugin
