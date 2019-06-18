@@ -6,7 +6,7 @@ This document describes a getting started guide for **jenkins-operator** and an 
 2. [Deploy Jenkins](#deploy-jenkins)
 3. [Configure Seed Jobs and Pipelines](#configure-seed-jobs-and-pipelines)
 4. [Install Plugins](#install-plugins)
-5. [Configure Backup & Restore](#configure-backup-&-restore)
+5. [Configure Backup & Restore](#configure-backup-and-restore)
 6. [Debugging](#debugging)
 
 ## First Steps
@@ -365,73 +365,80 @@ spec:
 
 Then **jenkins-operator** will automatically install plugins after Jenkins master pod restart.
 
-### Via groovy script
+## Configure backup and restore
 
-To install a plugin please add **2-install-slack-plugin.groovy** script to the **jenkins-operator-user-configuration-example** ConfigMap:
+Backup and restore is done by container sidecar.
 
-```
+### PVC
+
+#### Create PVC
+
+Save to file pvc.yaml:
+```yaml
 apiVersion: v1
-data:
-  1-configure-theme.groovy: |2
-
-    import jenkins.*
-    import jenkins.model.*
-    import hudson.*
-    import hudson.model.*
-    import org.jenkinsci.plugins.simpletheme.ThemeElement
-    import org.jenkinsci.plugins.simpletheme.CssTextThemeElement
-    import org.jenkinsci.plugins.simpletheme.CssUrlThemeElement
-
-    Jenkins jenkins = Jenkins.getInstance()
-
-    def decorator = Jenkins.instance.getDescriptorByType(org.codefirst.SimpleThemeDecorator.class)
-
-    List<ThemeElement> configElements = new ArrayList<>();
-    configElements.add(new CssTextThemeElement("DEFAULT"));
-    configElements.add(new CssUrlThemeElement("https://cdn.rawgit.com/afonsof/jenkins-material-theme/gh-pages/dist/material-light-green.css"));
-    decorator.setElements(configElements);
-    decorator.save();
-
-    jenkins.save()
-  2-install-slack-plugin.groovy: |2
-  
-    import jenkins.model.*
-    import java.util.logging.Level
-    import java.util.logging.Logger
-
-    def instance = Jenkins.getInstance()
-    def plugins = instance.getPluginManager()
-    def updateCenter = instance.getUpdateCenter()
-    def hasInstalledPlugins = false
-
-    Logger logger = Logger.getLogger('jenkins.instance.restart')
-
-    if (!plugins.getPlugin("slack")) {
-        logger.log(Level.INFO, "Installing plugin: slack")
-
-        updateCenter.updateAllSites()
-        def plugin = updateCenter.getPlugin("slack")
-        def installResult = plugin.deploy()
-        while (!installResult.isDone()) sleep(10)
-        hasInstalledPlugins = true 
-        instance.save()
-    }
-
-    if (hasInstalledPlugins) {
-        logger.log(Level.INFO, "Successfully installed slack plugin, restarting ...")
-        // Queue a restart of the instance
-        instance.save()
-        instance.doSafeRestart(null)
-    } else {
-        logger.log(Level.INFO, "No plugins need installing.")
-    }
+kind: PersistentVolumeClaim
+metadata:
+  name: <pvc_name>
+  namespace: <namesapce>
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 500Gi
 ```
 
-Then **jenkins-operator** will automatically trigger **jenkins-operator-user-configuration** Jenkins Job again.
+Run command:
+```bash
+$ kubectl -n <namesapce> create -f pvc.yaml
+```
 
-## Configure Backup & Restore
+#### Configure Jenkins CR
 
-Not implemented yet.
+```yaml
+apiVersion: jenkins.io/v1alpha2
+kind: Jenkins
+metadata:
+  name: <cr_name>
+  namespace: <namespace>
+spec:
+  backup:
+    action:
+      exec:
+        command:
+        - /home/user/bin/backup.sh # this command is invoked on "backup" container to make backup, for example /home/user/bin/backup.sh <backup_number>, <backup_number> is passed by operator
+    containerName: backup # container name is responsible for backup
+    interval: 30 # how often make backup in seconds
+    makeBackupBeforePodDeletion: true # make backup before pod deletion
+  master:
+    containers:
+    - name: jenkins-master
+      image: jenkins/jenkins:lts
+    - name: backup # container responsible for backup and restore
+      env:
+      - name: BACKUP_DIR
+        value: /backup
+      - name: JENKINS_HOME
+        value: /jenkins-home
+      image: virtuslab/jenkins-operator-backup-pvc:v0.0.2 # look at backup/pvc directory
+      imagePullPolicy: IfNotPresent
+      volumeMounts:
+      - mountPath: /jenkins-home # Jenkins home volume
+        name: jenkins-home
+      - mountPath: /backup # backup volume
+        name: backup
+    volumes:
+    - name: backup # PVC volume where backups will be stored
+      persistentVolumeClaim:
+        claimName: <pvc_name>
+  restore:
+    action:
+      exec:
+        command:
+        - /home/user/bin/restore.sh # this command is invoked on "backup" container to make restore backup, for example /home/user/bin/restore.sh <backup_number>, <backup_number> is passed by operator
+    containerName: backup # container name is responsible for restore backup
+    #recoveryOnce: <backup_number> # if want to restore specific backup configure this field and then Jenkins will be restarted and desired backup will be restored
+```
 
 ## Debugging
 
