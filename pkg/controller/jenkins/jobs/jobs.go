@@ -158,7 +158,11 @@ func (jobs *Jobs) ensureFailedBuild(build v1alpha2.Build, jenkins *v1alpha2.Jenk
 		return false, nil
 	}
 
-	jobs.logger.V(log.VWarn).Info(fmt.Sprintf("The retries limit was reached , %+v", build))
+	lastFailedBuild, err := jobs.jenkinsClient.GetBuild(build.JobName, build.Number)
+	if err != nil {
+		return false, err
+	}
+	jobs.logger.V(log.VWarn).Info(fmt.Sprintf("The retries limit was reached, build %+v, logs: %s", build, lastFailedBuild.GetConsoleOutput()))
 
 	if !preserveStatus {
 		err := jobs.removeBuildFromStatus(build, jenkins)

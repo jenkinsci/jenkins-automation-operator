@@ -10,6 +10,7 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/user"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/jobs"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/plugins"
 	"github.com/jenkinsci/kubernetes-operator/pkg/event"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
@@ -157,6 +158,10 @@ func (r *ReconcileJenkins) Reconcile(request reconcile.Request) (reconcile.Resul
 			if err.Error() != fmt.Sprintf("Operation cannot be fulfilled on jenkins.jenkins.io \"%s\": the object has been modified; please apply your changes to the latest version and try again", request.Name) {
 				logger.V(log.VWarn).Info(fmt.Sprintf("Reconcile loop failed: %s", err))
 			}
+		}
+
+		if err == jobs.ErrorUnrecoverableBuildFailed {
+			return reconcile.Result{Requeue: false}, nil
 		}
 		return reconcile.Result{Requeue: true}, nil
 	}
