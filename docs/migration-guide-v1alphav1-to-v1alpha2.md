@@ -295,11 +295,34 @@ spec:
       version: 2.24
 ```
 
-## Deploy new Kubernetes manifests
+## Update CRD to new version
 
-Run commands:
+New version of the Custom Resource definition for the operator needs to be applied:
+-[Jenkins CRD v1alpha2](https://github.com/jenkinsci/kubernetes-operator/blob/master/deploy/crds/jenkins_v1alpha2_jenkins_crd.yaml)
+
+To use default CRD file:
+```
+kubectl -n <namespace> apply -f https://github.com/jenkinsci/kubernetes-operator/blob/master/deploy/crds/jenkins_v1alpha2_jenkins_crd.yaml
+```
+
+## Update RBAC to new verison
+
+New operator version requires updated RBAC permissions:
+
+To use default Role file:
+```
+$ kubectl -n <namespace> apply -f https://raw.githubusercontent.com/jenkinsci/kubernetes-operator/master/deploy/role.yaml
+```
+
+## Deploy new operator manifests
+
+Apply your modified operator configuration file:
 ```bash
-$ kubectl -n <namespace> apply -f https://raw.githubusercontent.com/jenkinsci/kubernetes-operator/master/deploy/crds/jenkins_v1alpha2_jenkins_crd.yaml
 $ kubectl -n <namespace> apply -f jenkins.yaml
-$ kubectl -n <namespace> apply -f https://raw.githubusercontent.com/jenkinsci/kubernetes-operator/master/deploy/all-in-one-v1alpha2.yaml
+```
+
+Update operator version in the deployment file to `image: virtuslab/jenkins-operator:v0.1.0` and scale up, 
+or use the default deployment manifest:
+```
+$ kubectl -n <namespace> apply -f https://raw.githubusercontent.com/jenkinsci/kubernetes-operator/master/deploy/operator.yaml
 ```
