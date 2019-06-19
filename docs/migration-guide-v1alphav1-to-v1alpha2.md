@@ -85,7 +85,7 @@ spec:
 ```
 
 See also the examples bellow for more details. For even more details please look at the source code.
-Code that defines the data structures can be found here [pkg/apis/jenkins/v1alpha2/jenkins_types.go](https://github.com/jenkinsci/kubernetes-operator/blob/master/pkg/apis/jenkins/v1alpha2/jenkins_types.go)
+Code that defines the data structures can be found [here](jenkins-v1alpha2-scheme.md)
 
 ### Examples
 

@@ -312,7 +312,7 @@ docker-run: ## Run the container in docker, you can use EXTRA_ARGS
 .PHONY: minikube-run
 minikube-run: export WATCH_NAMESPACE = $(NAMESPACE)
 minikube-run: export OPERATOR_NAME = $(NAME)
-minikube-run: start-minikube ## Run the operator locally and use minikube as Kubernetes cluster, you can use EXTRA_ARGS
+minikube-run: minikube-start ## Run the operator locally and use minikube as Kubernetes cluster, you can use EXTRA_ARGS
 	@echo "+ $@"
 	kubectl config use-context minikube
 	kubectl apply -f deploy/crds/jenkins_v1alpha2_jenkins_crd.yaml
@@ -324,8 +324,20 @@ deepcopy-gen: ## Generate deepcopy golang code
 	@echo "+ $@"
 	operator-sdk generate k8s
 
-.PHONY: start-minikube
-start-minikube: ## Start minikube
+.PHONY: scheme-doc-gen
+HAS_GEN_CRD_API_REFERENCE_DOCS := $(shell ls gen-crd-api-reference-docs)
+scheme-doc-gen: ## Generate Jenkins CRD scheme doc
+	@echo "+ $@"
+ifndef HAS_GEN_CRD_API_REFERENCE_DOCS
+	@wget https://github.com/ahmetb/$(GEN_CRD_API)/releases/download/v0.1.2/$(GEN_CRD_API)_linux_amd64.tar.gz
+	@mkdir -p $(GEN_CRD_API)
+	@tar -C $(GEN_CRD_API) -zxf $(GEN_CRD_API)_linux_amd64.tar.gz
+	@rm $(GEN_CRD_API)_linux_amd64.tar.gz
+endif
+	$(GEN_CRD_API)/$(GEN_CRD_API) -config gen-crd-api-config.json -api-dir github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/$(API_VERSION) -template-dir $(GEN_CRD_API)/template -out-file docs/jenkins-$(API_VERSION)-scheme.md
+
+.PHONY: minikube-start
+minikube-start: ## Start minikube
 	@echo "+ $@"
 	@minikube status && exit 0 || \
 	minikube start --kubernetes-version $(MINIKUBE_KUBERNETES_VERSION) --vm-driver=$(MINIKUBE_DRIVER) --memory 4096 --cpus 3

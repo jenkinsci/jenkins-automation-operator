@@ -41,6 +41,7 @@ Some of the problems we want to solve:
 3. [How it works][how_it_works]
 4. [Security][security]
 5. [Developer Guide][developer_guide]
+5. [Jenkins scheme][jenkins_scheme]
 
 ## Contribution
 
@@ -55,3 +56,4 @@ This project was originally developed by [VirtusLab](https://virtuslab.com/) and
 [how_it_works]:docs/how-it-works.md
 [security]:docs/security.md
 [developer_guide]:docs/developer-guide.md
+[jenkins_scheme]:docs/jenkins-v1alpha2-scheme.md

@@ -280,10 +280,7 @@ spec:
 
 and create Kubernetes Secret(name of secret should be the same from `credentialID` field):
 
-#### Create PVC
-
-Save to file pvc.yaml:
-```yaml
+```
 apiVersion: v1
 kind: Secret
 metadata:
@@ -332,12 +329,13 @@ data:
 
     Jenkins jenkins = Jenkins.getInstance()
 
-Run command:
-```bash
-$ kubectl -n <namesapce> create -f pvc.yaml
-```
+    def decorator = Jenkins.instance.getDescriptorByType(org.codefirst.SimpleThemeDecorator.class)
 
-#### Configure Jenkins CR
+    List<ThemeElement> configElements = new ArrayList<>();
+    configElements.add(new CssTextThemeElement("DEFAULT"));
+    configElements.add(new CssUrlThemeElement("https://cdn.rawgit.com/afonsof/jenkins-material-theme/gh-pages/dist/material-light-green.css"));
+    decorator.setElements(configElements);
+    decorator.save();
 
     jenkins.save()
   1-system-message.yaml: |2
