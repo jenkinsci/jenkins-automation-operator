@@ -40,6 +40,21 @@ $ kubectl -n <namespace> get jenkins <cr_name> -o yaml > jenkins.yaml
 
 ## Modify jenkins.yaml file
 
+Change apiVersion to `apiVersion: jenkins.io/v1alpha2`
+
+New plugin format without dependent plugins:
+- spec.master.basePlugins
+- spec.master.plugins
+
+Move Jenkins master container properties to spec.master.containers[jenkins-master]
+- spec.master.image
+- spec.master.imagePullPolicy
+- spec.master.livenessProbe
+- spec.master.readinessProbe
+- spec.master.resources
+
+### Examples
+
 Old format:
 ```yaml
 apiVersion: jenkins.io/v1alpha1
@@ -248,19 +263,6 @@ spec:
     - name: slack
       version: 2.24
 ```
-
-Change apiVersion to `apiVersion: jenkins.io/v1alpha2`
-
-New plugin format without dependent plugins:
-- spec.master.basePlugins
-- spec.master.plugins
-
-Move Jenkins master container properties to spec.master.containers[jenkins-master]
-- spec.master.image
-- spec.master.imagePullPolicy
-- spec.master.livenessProbe
-- spec.master.readinessProbe
-- spec.master.resources
 
 ## Deploy new Kubernetes manifests
 
