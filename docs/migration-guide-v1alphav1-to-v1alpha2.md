@@ -43,15 +43,44 @@ $ kubectl -n <namespace> get jenkins <cr_name> -o yaml > jenkins.yaml
 Change apiVersion to `apiVersion: jenkins.io/v1alpha2`
 
 New plugin format without dependent plugins:
-- spec.master.basePlugins
-- spec.master.plugins
 
-Move Jenkins master container properties to spec.master.containers[jenkins-master]
-- spec.master.image
-- spec.master.imagePullPolicy
-- spec.master.livenessProbe
-- spec.master.readinessProbe
-- spec.master.resources
+- `spec.master.basePlugins` example:
+```
+spec:
+  master:
+    basePlugins:
+      - name: a-plugin-name
+        version: 1.0.0
+      ...
+```
+- `spec.master.plugins` example:
+```
+
+spec:
+  master:
+    plugins:
+      - name: a-plugin-name
+         version: 1.0.0
+  ...
+```
+
+Move Jenkins master container properties to `spec.master.containers[jenkins-master]`
+- `spec.master.image` -> `spec.master.containers[jenkins-master].image`
+- `spec.master.imagePullPolicy` -> `spec.master.containers[jenkins-master].imagePullPolicy`
+- `spec.master.livenessProbe` -> `spec.master.containers[jenkins-master].livenessProbe`
+- `spec.master.readinessProbe` -> `spec.master.containers[jenkins-master].readinessProbe`
+- `spec.master.resources` -> `spec.master.containers[jenkins-master].resources`
+
+```
+spec:
+  master:
+    containers:
+      - name: jenkins-master
+        image: jenkins/jenkins:lts
+      ...
+```
+
+See also the examples bellow for mor details.
 
 ### Examples
 
@@ -227,7 +256,8 @@ spec:
     - name: kubernetes-credentials-provider
       version: 0.12.1
     containers:
-    - image: jenkins/jenkins:lts
+    - name: jenkins-master
+      image: jenkins/jenkins:lts
       imagePullPolicy: Always
       livenessProbe:
         failureThreshold: 12
@@ -239,7 +269,6 @@ spec:
         periodSeconds: 10
         successThreshold: 1
         timeoutSeconds: 5
-      name: jenkins-master
       readinessProbe:
         failureThreshold: 3
         httpGet:
