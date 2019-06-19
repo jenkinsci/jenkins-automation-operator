@@ -1,7 +1,7 @@
 # Migration guide from v1alpha1 to v1alpha2
 
 Please not that **CRD manifests are global**, not namespaced, so every jenkins operator running on the cluster
-will be impacted by the new CRD manifest.
+will be impacted by the new CRD manifest. Multiple operator instances with different versions *should* continue to work.
 
 ## Stop jenkins-operator pod
 
