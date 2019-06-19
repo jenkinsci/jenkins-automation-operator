@@ -64,12 +64,13 @@ spec:
   ...
 ```
 
-Move Jenkins master container properties to `spec.master.containers[jenkins-master]`
+Move Jenkins `master` container properties to `spec.master.containers[jenkins-master]` (non exhaustive list):
 - `spec.master.image` -> `spec.master.containers[jenkins-master].image`
 - `spec.master.imagePullPolicy` -> `spec.master.containers[jenkins-master].imagePullPolicy`
 - `spec.master.livenessProbe` -> `spec.master.containers[jenkins-master].livenessProbe`
 - `spec.master.readinessProbe` -> `spec.master.containers[jenkins-master].readinessProbe`
 - `spec.master.resources` -> `spec.master.containers[jenkins-master].resources`
+- `spec.master.env` -> `spec.master.containers[jenkins-master].env`
 
 ```
 spec:
@@ -80,7 +81,8 @@ spec:
       ...
 ```
 
-See also the examples bellow for mor details.
+See also the examples bellow for more details. For even more details please look at the source code.
+Code that defines the data structures can be found here [pkg/apis/jenkins/v1alpha2/jenkins_types.go](https://github.com/jenkinsci/kubernetes-operator/blob/master/pkg/apis/jenkins/v1alpha2/jenkins_types.go)
 
 ### Examples
 
