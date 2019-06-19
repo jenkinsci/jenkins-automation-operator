@@ -1,5 +1,8 @@
 # Migration guide from v1alpha1 to v1alpha2
 
+Please not that **CRD manifests are global**, not namespaced, so every jenkins operator running on the cluster
+will be impacted by the new CRD manifest.
+
 ## Stop jenkins-operator pod
 
 Run command:
@@ -50,7 +53,7 @@ spec:
   master:
     basePlugins:
       - name: a-plugin-name
-        version: 1.0.0
+        version: "1.0.0"
       ...
 ```
 - `spec.master.plugins` example:
@@ -60,7 +63,7 @@ spec:
   master:
     plugins:
       - name: a-plugin-name
-         version: 1.0.0
+         version: "1.0.0"
   ...
 ```
 
@@ -316,9 +319,9 @@ $ kubectl -n <namespace> apply -f https://raw.githubusercontent.com/jenkinsci/ku
 
 ## Deploy new operator manifests
 
-Apply your modified operator configuration file:
+Replace your modified operator configuration file:
 ```bash
-$ kubectl -n <namespace> apply -f jenkins.yaml
+$ kubectl -n <namespace> replace -f jenkins.yaml
 ```
 
 Update operator version in the deployment file to `image: virtuslab/jenkins-operator:v0.1.0` and scale up, 
