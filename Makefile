@@ -353,6 +353,7 @@ bump-version: prepare-all-in-one-deploy-file ## Bump the version in the version 
 	@echo "Updating version from $(VERSION) to $(NEW_VERSION) in README.md"
 	sed -i s/$(VERSION)/$(NEW_VERSION)/g README.md
 	sed -i s/$(VERSION)/$(NEW_VERSION)/g deploy/operator.yaml
+	sed -i s/$(VERSION)/$(NEW_VERSION)/g deploy/$(ALL_IN_ONE_DEPLOY_FILE_PREFIX)-$(API_VERSION).yaml
 	git add VERSION.txt README.md deploy/operator.yaml deploy/$(ALL_IN_ONE_DEPLOY_FILE_PREFIX)-$(API_VERSION).yaml
 	git commit -vaem "Bump version to $(NEW_VERSION)"
 	@echo "Run make tag to create and push the tag for new version $(NEW_VERSION)"
