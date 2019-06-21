@@ -325,7 +325,7 @@ deepcopy-gen: ## Generate deepcopy golang code
 	operator-sdk generate k8s
 
 .PHONY: scheme-doc-gen
-HAS_GEN_CRD_API_REFERENCE_DOCS := $(shell ls gen-crd-api-reference-docs)
+HAS_GEN_CRD_API_REFERENCE_DOCS := $(shell ls gen-crd-api-reference-docs 2> /dev/null)
 scheme-doc-gen: ## Generate Jenkins CRD scheme doc
 	@echo "+ $@"
 ifndef HAS_GEN_CRD_API_REFERENCE_DOCS
