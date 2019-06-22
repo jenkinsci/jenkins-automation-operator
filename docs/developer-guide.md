@@ -7,6 +7,7 @@ This document explains how to setup your development environment.
 - [operator_sdk][operator_sdk]
 - [git][git_tool]
 - [go][go_tool] version v1.12+
+- [goimports, golint, checkmake and staticcheck][install_dev_tools]
 - [minikube][minikube] version v1.1.0+ (preferred Hypervisor - [virtualbox][virtualbox])
 - [docker][docker_tool] version 17.03+
 
@@ -34,6 +35,20 @@ Once minikube and **jenkins-operator** are up and running, apply Jenkins custom 
 kubectl apply -f deploy/crds/jenkins_v1alpha2_jenkins_cr.yaml
 kubectl get jenkins -o yaml
 kubectl get po
+```
+
+## Build and run with a remote cluster
+
+If you are using a Linux development environment, you can also run the controller locally and make it listen to a remote 
+server.
+```bash
+export KUBECONFIG=$HOME/.crc/cache/crc_libvirt_4.1.0/kubeconfig
+kubectl apply -f deploy/crds/jenkins_v1alpha2_jenkins_crd.yaml
+```
+
+You can then build and run the controller locally and make it connect to your server:
+```bash
+make build && OPERATOR_NAME=jenkins-operator  WATCH_NAMESPACE=default build/_output/bin/jenkins-operator --kubeconfig $KUBECONFIG
 ```
 
 ## Testing
@@ -95,3 +110,5 @@ kubectl get secret jenkins-operator-credentials-<cr_name> -o 'jsonpath={.data.pa
 [minikube]:https://kubernetes.io/docs/tasks/tools/install-minikube/
 [virtualbox]:https://www.virtualbox.org/wiki/Downloads
 [jenkins-operator]:../README.md
+[install_dev_tools]:./install_dev_tools.md
+
