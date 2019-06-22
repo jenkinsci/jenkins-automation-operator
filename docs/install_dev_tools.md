@@ -2,6 +2,14 @@
 
 This document explains how to install the Go tools used by the development process.
 
+## Configure environment variables
+
+```bash
+export GOPATH=/home/go # example value
+export GOROOT=/usr/lib/go-1.12 # example value
+export PATH=$GOPATH/bin:$PATH
+```
+
 ## goimports
 
 ```

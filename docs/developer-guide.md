@@ -21,12 +21,12 @@ cd kubernetes-operator
 make go-dependencies
 ```
 
-## Build and run
+## Build and run with a minikube
 
 Build and run **jenkins-operator** locally:
 
 ```bash
-make build && make minikube-run EXTRA_ARGS='--minikube --local'
+make minikube-run EXTRA_ARGS='--minikube --local'
 ```
 
 Once minikube and **jenkins-operator** are up and running, apply Jenkins custom resource:
@@ -37,18 +37,20 @@ kubectl get jenkins -o yaml
 kubectl get po
 ```
 
-## Build and run with a remote cluster
+## Build and run with a remote Kubernetes cluster
 
-If you are using a Linux development environment, you can also run the controller locally and make it listen to a remote 
-server.
+You can also run the controller locally and make it listen to a remote Kubernetes server.
+
 ```bash
-export KUBECONFIG=$HOME/.crc/cache/crc_libvirt_4.1.0/kubeconfig
-kubectl apply -f deploy/crds/jenkins_v1alpha2_jenkins_crd.yaml
+make run NAMESPACE=default KUBECTL_CONTEXT=remote-k8s EXTRA_ARGS='--kubeconfig ~/.kube/config'
 ```
 
-You can then build and run the controller locally and make it connect to your server:
+Once minikube and **jenkins-operator** are up and running, apply Jenkins custom resource:
+
 ```bash
-make build && OPERATOR_NAME=jenkins-operator  WATCH_NAMESPACE=default build/_output/bin/jenkins-operator --kubeconfig $KUBECONFIG
+kubectl --context remote-k8s --namespace defaut apply -f deploy/crds/jenkins_v1alpha2_jenkins_cr.yaml
+kubectl --context remote-k8s --namespace defaut get jenkins -o yaml
+kubectl --context remote-k8s --namespace defaut get po
 ```
 
 ## Testing

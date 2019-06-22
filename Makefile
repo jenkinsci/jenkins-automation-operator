@@ -152,19 +152,19 @@ CURRENT_DIRECTORY := $(shell pwd)
 e2e: build docker-build ## Runs e2e tests, you can use EXTRA_ARGS
 	@echo "+ $@"
 	@echo "Docker image: $(DOCKER_REGISTRY):$(GITCOMMIT)"
-	kubectl config use-context $(ENVIRONMENT)
+	kubectl config use-context $(KUBECTL_CONTEXT)
 	cp deploy/service_account.yaml deploy/namespace-init.yaml
 	cat deploy/role.yaml >> deploy/namespace-init.yaml
 	cat deploy/role_binding.yaml >> deploy/namespace-init.yaml
 	cat deploy/operator.yaml >> deploy/namespace-init.yaml
 	sed -i 's|\(image:\).*|\1 $(DOCKER_REGISTRY):$(GITCOMMIT)|g' deploy/namespace-init.yaml
-ifeq ($(ENVIRONMENT),minikube)
+ifeq ($(KUBECTL_CONTEXT),minikube)
 	sed -i 's|\(imagePullPolicy\): IfNotPresent|\1: Never|g' deploy/namespace-init.yaml
 	sed -i 's|\(args:\).*|\1\ ["--minikube"\]|' deploy/namespace-init.yaml
 endif
 
 	@RUNNING_TESTS=1 go test -parallel=1 "./test/e2e/" -tags "$(BUILDTAGS) cgo" -v -timeout 30m -run "$(E2E_TEST_SELECTOR)" \
-		-root=$(CURRENT_DIRECTORY) -kubeconfig=$(HOME)/.kube/config -globalMan deploy/crds/jenkins_v1alpha2_jenkins_crd.yaml -namespacedMan deploy/namespace-init.yaml $(EXTRA_ARGS)
+		-root=$(CURRENT_DIRECTORY) -kubeconfig=$(HOME)/.kube/config -globalMan deploy/crds/jenkins_$(API_VERSION)_jenkins_crd.yaml -namespacedMan deploy/namespace-init.yaml $(EXTRA_ARGS)
 
 .PHONY: vet
 vet: ## Verifies `go vet` passes
@@ -204,10 +204,14 @@ install: ## Installs the executable
 	go install -tags "$(BUILDTAGS)" ${GO_LDFLAGS} $(BUILD_PATH)
 
 .PHONY: run
-run: ## Run the executable, you can use EXTRA_ARGS
+run: export WATCH_NAMESPACE = $(NAMESPACE)
+run: export OPERATOR_NAME = $(NAME)
+run: build ## Run the executable, you can use EXTRA_ARGS
 	@echo "+ $@"
-	kubectl config use-context $(ENVIRONMENT)
-	go run -tags "$(BUILDTAGS)" ${GO_LDFLAGS} $(BUILD_PATH)/main.go $(ARGS)
+	kubectl apply -f deploy/crds/jenkins_$(API_VERSION)_jenkins_crd.yaml
+	kubectl config use-context $(KUBECTL_CONTEXT)
+	@echo "Watching '$(WATCH_NAMESPACE)' namespace"
+	build/_output/bin/jenkins-operator $(EXTRA_ARGS)
 
 .PHONY: clean
 clean: ## Cleanup any build binaries or packages
@@ -312,10 +316,10 @@ docker-run: ## Run the container in docker, you can use EXTRA_ARGS
 .PHONY: minikube-run
 minikube-run: export WATCH_NAMESPACE = $(NAMESPACE)
 minikube-run: export OPERATOR_NAME = $(NAME)
-minikube-run: minikube-start ## Run the operator locally and use minikube as Kubernetes cluster, you can use EXTRA_ARGS
+minikube-run: minikube-start build ## Run the operator locally and use minikube as Kubernetes cluster, you can use EXTRA_ARGS
 	@echo "+ $@"
 	kubectl config use-context minikube
-	kubectl apply -f deploy/crds/jenkins_v1alpha2_jenkins_crd.yaml
+	kubectl apply -f deploy/crds/jenkins_$(API_VERSION)_jenkins_crd.yaml
 	@echo "Watching '$(WATCH_NAMESPACE)' namespace"
 	build/_output/bin/jenkins-operator $(EXTRA_ARGS)
 
