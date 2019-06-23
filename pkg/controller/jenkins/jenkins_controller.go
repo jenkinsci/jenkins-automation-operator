@@ -85,7 +85,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	// Watch for changes to secondary resource Pods and requeue the owner Jenkins
-	err = c.Watch(&source.Kind{Type: &corev1.Pod{}}, &handler.EnqueueRequestForOwner{
+	err = c.Watch(&source.Kind{Type: &corev1.Pod{TypeMeta: metav1.TypeMeta{APIVersion: "core/v1", Kind: "Pod"}}}, &handler.EnqueueRequestForOwner{
 		IsController: true,
 		OwnerType:    &v1alpha2.Jenkins{},
 	})
@@ -94,12 +94,12 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	jenkinsHandler := &enqueueRequestForJenkins{}
-	err = c.Watch(&source.Kind{Type: &corev1.Secret{}}, jenkinsHandler)
+	err = c.Watch(&source.Kind{Type: &corev1.Secret{TypeMeta: metav1.TypeMeta{APIVersion: "core/v1", Kind: "Secret"}}}, jenkinsHandler)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	err = c.Watch(&source.Kind{Type: &corev1.ConfigMap{}}, jenkinsHandler)
+	err = c.Watch(&source.Kind{Type: &corev1.ConfigMap{TypeMeta: metav1.TypeMeta{APIVersion: "core/v1", Kind: "ConfigMap"}}}, jenkinsHandler)
 	if err != nil {
 		return errors.WithStack(err)
 	}

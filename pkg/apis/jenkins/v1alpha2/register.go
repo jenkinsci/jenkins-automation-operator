@@ -1,5 +1,3 @@
-// NOTE: Boilerplate only.  Ignore this file.
-
 // Package v1alpha2 contains API Schema definitions for the jenkins.io v1alpha2 API group
 // +k8s:deepcopy-gen=package,register
 // +groupName=jenkins.io
@@ -25,6 +23,16 @@ var (
 
 // GetObjectKind returns Jenkins object kind
 func (in *Jenkins) GetObjectKind() schema.ObjectKind { return in }
+
+func (in *Jenkins) SetGroupVersionKind(kind schema.GroupVersionKind) {}
+
+func (in *Jenkins) GroupVersionKind() schema.GroupVersionKind {
+	return schema.GroupVersionKind{
+		Group:   SchemeGroupVersion.Group,
+		Version: SchemeGroupVersion.Version,
+		Kind:    Kind,
+	}
+}
 
 func init() {
 	SchemeBuilder.Register(&Jenkins{}, &JenkinsList{})
