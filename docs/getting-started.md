@@ -425,7 +425,7 @@ spec:
         value: /backup
       - name: JENKINS_HOME
         value: /jenkins-home
-      image: virtuslab/jenkins-operator-backup-pvc:v0.0.2 # look at backup/pvc directory
+      image: virtuslab/jenkins-operator-backup-pvc:v0.0.3 # look at backup/pvc directory
       imagePullPolicy: IfNotPresent
       volumeMounts:
       - mountPath: /jenkins-home # Jenkins home volume

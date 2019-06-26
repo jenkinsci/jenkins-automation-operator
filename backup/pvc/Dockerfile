@@ -1,8 +1,16 @@
 FROM alpine:3.9
 
-RUN set -x && \
-    addgroup -S user -g 1000 && \
-    adduser -S user -G user && \
+ENV USER=user
+ENV UID=1000
+ENV GID=1000
+
+RUN addgroup --gid "$GID" "$USER" && \
+    adduser \
+    --disabled-password \
+    --gecos "" \
+    --ingroup "$USER" \
+    --uid "$UID" \
+    "$USER" && \
     apk add --no-cache bash
 WORKDIR /home/user/bin
 COPY bin .
