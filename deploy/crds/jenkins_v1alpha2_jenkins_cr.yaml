@@ -4,9 +4,14 @@ metadata:
   name: example
 spec:
   master:
+    securityContext:
+      runAsUser: 1001
     containers:
     - name: jenkins-master
       image: jenkins/jenkins:lts
+      command:
+      - bash
+      - "/var/jenkins/scripts/init.sh"
       imagePullPolicy: Always
       livenessProbe:
         failureThreshold: 12

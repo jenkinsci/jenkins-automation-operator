@@ -155,6 +155,14 @@ type JenkinsMaster struct {
 	// +optional
 	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
 
+
+	// SecurityContext that applies to all the containers of the Jenkins 
+	// Master. As per kubernetes specification, it can be overidden
+	// for each container individually.
+	// +optional
+	// Defaults to: nil
+        SecurityContext *corev1.PodSecurityContext `json:"securityContext,omitempty"`
+
 	// List of containers belonging to the pod.
 	// Containers cannot currently be added or removed.
 	// There must be at least one container in a Pod.
