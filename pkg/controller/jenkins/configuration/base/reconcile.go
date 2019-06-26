@@ -546,10 +546,10 @@ func (r *ReconcileJenkinsBaseConfiguration) compareContainers(expected corev1.Co
 		r.logger.Info(fmt.Sprintf("Resources have changed to '%+v' in container '%s', recreating pod", expected.Resources, expected.Name))
 		return true
 	}
-	if !reflect.DeepEqual(expected.SecurityContext, actual.SecurityContext) {
+/*	if !reflect.DeepEqual(expected.SecurityContext, actual.SecurityContext) {
 		r.logger.Info(fmt.Sprintf("Security context has changed to '%+v' in container '%s', recreating pod", expected.SecurityContext, expected.Name))
 		return true
-	}
+	}*/
 	if !reflect.DeepEqual(expected.WorkingDir, actual.WorkingDir) {
 		r.logger.Info(fmt.Sprintf("Working directory has changed to '%+v' in container '%s', recreating pod", expected.WorkingDir, expected.Name))
 		return true

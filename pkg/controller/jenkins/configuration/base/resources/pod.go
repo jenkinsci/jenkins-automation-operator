@@ -202,10 +202,10 @@ func NewJenkinsMasterContainer(jenkins *v1alpha2.Jenkins) corev1.Container {
 		Name:            JenkinsMasterContainerName,
 		Image:           jenkinsContainer.Image,
 		ImagePullPolicy: jenkinsContainer.ImagePullPolicy,
-		Command: []string{
+		/*Command: []string{
 			"bash",
 			fmt.Sprintf("%s/%s", jenkinsScriptsVolumePath, initScriptName),
-		},
+		},*/
 		LivenessProbe:  jenkinsContainer.LivenessProbe,
 		ReadinessProbe: jenkinsContainer.ReadinessProbe,
 		Ports: []corev1.ContainerPort{
