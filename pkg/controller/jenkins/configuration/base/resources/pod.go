@@ -46,8 +46,6 @@ const (
 	slavePortName = "slavelistener"
 	// HTTPPortInt defines Jenkins master HTTP port
 	HTTPPortInt = 8080
-
-	jenkinsUserUID = int64(1000) // build in Docker image jenkins user UID
 )
 
 func buildPodTypeMeta() metav1.TypeMeta {
@@ -272,10 +270,10 @@ func NewJenkinsMasterPod(objectMeta metav1.ObjectMeta, jenkins *v1alpha2.Jenkins
 		Spec: corev1.PodSpec{
 			ServiceAccountName: serviceAccountName,
 			RestartPolicy:      corev1.RestartPolicyNever,
-			SecurityContext: jenkins.Spec.Master.SecurityContext,
-			NodeSelector: jenkins.Spec.Master.NodeSelector,
-			Containers:   newContainers(jenkins),
-			Volumes:      append(GetJenkinsMasterPodBaseVolumes(jenkins), jenkins.Spec.Master.Volumes...),
+			SecurityContext:    jenkins.Spec.Master.SecurityContext,
+			NodeSelector:       jenkins.Spec.Master.NodeSelector,
+			Containers:         newContainers(jenkins),
+			Volumes:            append(GetJenkinsMasterPodBaseVolumes(jenkins), jenkins.Spec.Master.Volumes...),
 		},
 	}
 }
