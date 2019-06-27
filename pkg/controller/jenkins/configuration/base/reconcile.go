@@ -2,6 +2,8 @@ package base
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/base64"
 	"fmt"
 	"reflect"
 	"strings"
@@ -377,6 +379,11 @@ func (r *ReconcileJenkinsBaseConfiguration) getJenkinsMasterPod(meta metav1.Obje
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsMasterPod(meta metav1.ObjectMeta) (reconcile.Result, error) {
+	userAndPasswordHash, err := r.calculateUserAndPasswordHash()
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
 	// Check if this Pod already exists
 	currentJenkinsMasterPod, err := r.getJenkinsMasterPod(meta)
 	if err != nil && errors.IsNotFound(err) {
@@ -388,13 +395,14 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsMasterPod(meta metav1.O
 		}
 		now := metav1.Now()
 		r.jenkins.Status = v1alpha2.JenkinsStatus{
-			ProvisionStartTime: &now,
-			LastBackup:         r.jenkins.Status.LastBackup,
-			PendingBackup:      r.jenkins.Status.LastBackup,
+			ProvisionStartTime:  &now,
+			LastBackup:          r.jenkins.Status.LastBackup,
+			PendingBackup:       r.jenkins.Status.LastBackup,
+			UserAndPasswordHash: userAndPasswordHash,
 		}
-		err = r.updateResource(r.jenkins)
+		err = r.k8sClient.Update(context.TODO(), r.jenkins)
 		if err != nil {
-			return reconcile.Result{}, err // don't wrap error
+			return reconcile.Result{Requeue: true}, err
 		}
 		return reconcile.Result{}, nil
 	} else if err != nil && !errors.IsNotFound(err) {
@@ -419,18 +427,36 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsMasterPod(meta metav1.O
 		}
 		return reconcile.Result{Requeue: true}, nil
 	}
-	if currentJenkinsMasterPod != nil && r.isRecreatePodNeeded(*currentJenkinsMasterPod) {
+	if currentJenkinsMasterPod != nil && r.isRecreatePodNeeded(*currentJenkinsMasterPod, userAndPasswordHash) {
 		return reconcile.Result{Requeue: true}, r.restartJenkinsMasterPod(meta)
 	}
 
 	return reconcile.Result{}, nil
 }
 
+func (r *ReconcileJenkinsBaseConfiguration) calculateUserAndPasswordHash() (string, error) {
+	credentialsSecret := &corev1.Secret{}
+	err := r.k8sClient.Get(context.TODO(), types.NamespacedName{Name: resources.GetOperatorCredentialsSecretName(r.jenkins), Namespace: r.jenkins.ObjectMeta.Namespace}, credentialsSecret)
+	if err != nil {
+		return "", stackerr.WithStack(err)
+	}
+
+	hash := sha256.New()
+	hash.Write(credentialsSecret.Data[resources.OperatorCredentialsSecretUserNameKey])
+	hash.Write(credentialsSecret.Data[resources.OperatorCredentialsSecretPasswordKey])
+	return base64.StdEncoding.EncodeToString(hash.Sum(nil)), nil
+}
+
 func isPodTerminating(pod corev1.Pod) bool {
 	return pod.ObjectMeta.DeletionTimestamp != nil
 }
 
-func (r *ReconcileJenkinsBaseConfiguration) isRecreatePodNeeded(currentJenkinsMasterPod corev1.Pod) bool {
+func (r *ReconcileJenkinsBaseConfiguration) isRecreatePodNeeded(currentJenkinsMasterPod corev1.Pod, userAndPasswordHash string) bool {
+	if userAndPasswordHash != r.jenkins.Status.UserAndPasswordHash {
+		r.logger.Info("User or password have changed, recreating pod")
+		return true
+	}
+
 	if r.jenkins.Spec.Restore.RecoveryOnce != 0 && r.jenkins.Status.RestoredBackup != 0 {
 		r.logger.Info(fmt.Sprintf("spec.restore.recoveryOnce is set, recreating pod"))
 		return true

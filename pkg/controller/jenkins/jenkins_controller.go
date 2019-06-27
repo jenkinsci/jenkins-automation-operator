@@ -93,6 +93,14 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return errors.WithStack(err)
 	}
 
+	err = c.Watch(&source.Kind{Type: &corev1.Secret{TypeMeta: metav1.TypeMeta{APIVersion: "core/v1", Kind: "Secret"}}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &v1alpha2.Jenkins{},
+	})
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
 	jenkinsHandler := &enqueueRequestForJenkins{}
 	err = c.Watch(&source.Kind{Type: &corev1.Secret{TypeMeta: metav1.TypeMeta{APIVersion: "core/v1", Kind: "Secret"}}}, jenkinsHandler)
 	if err != nil {

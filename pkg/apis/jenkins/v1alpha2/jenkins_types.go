@@ -321,6 +321,10 @@ type JenkinsStatus struct {
 	// BackupDoneBeforePodDeletion tells if backup before pod deletion has been made
 	// +optional
 	BackupDoneBeforePodDeletion bool `json:"backupDoneBeforePodDeletion,omitempty"`
+
+	// UserAndPasswordHash is a SHA256 hash made from user and password
+	// +optional
+	UserAndPasswordHash string `json:"userAndPasswordHash,omitempty"`
 }
 
 // BuildStatus defines type of Jenkins build job status
