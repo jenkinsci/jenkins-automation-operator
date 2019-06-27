@@ -96,7 +96,7 @@ go-dependencies: ## Ensure build dependencies
 	go mod vendor -v
 
 .PHONY: build
-build: $(NAME) ## Builds a dynamic executable or package
+build: deepcopy-gen $(NAME) ## Builds a dynamic executable or package
 	@echo "+ $@"
 
 .PHONY: $(NAME)
@@ -267,7 +267,7 @@ docker-login: ## Log in into the Docker repository
 	@echo "+ $@"
 
 .PHONY: docker-build
-docker-build: check-env build ## Build the container
+docker-build: build check-env build ## Build the container
 	@echo "+ $@"
 	docker build . -t $(DOCKER_REGISTRY):$(GITCOMMIT) --file build/Dockerfile
 
