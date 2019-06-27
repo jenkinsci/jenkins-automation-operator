@@ -414,3 +414,84 @@ func TestReconcileJenkinsBaseConfiguration_verifyPlugins(t *testing.T) {
 		assert.False(t, got)
 	})
 }
+
+func Test_compareEnv(t *testing.T) {
+	t.Run("empty", func(t *testing.T) {
+		var expected []corev1.EnvVar
+		var actual []corev1.EnvVar
+
+		got := compareEnv(expected, actual)
+
+		assert.True(t, got)
+	})
+	t.Run("same", func(t *testing.T) {
+		expected := []corev1.EnvVar{
+			{
+				Name:  "name",
+				Value: "value",
+			},
+		}
+		actual := []corev1.EnvVar{
+			{
+				Name:  "name",
+				Value: "value",
+			},
+		}
+
+		got := compareEnv(expected, actual)
+
+		assert.True(t, got)
+	})
+	t.Run("with KUBERNETES envs", func(t *testing.T) {
+		expected := []corev1.EnvVar{
+			{
+				Name:  "name",
+				Value: "value",
+			},
+		}
+		actual := []corev1.EnvVar{
+			{
+				Name:  "name",
+				Value: "value",
+			},
+			{
+				Name:  "KUBERNETES_PORT_443_TCP_ADDR",
+				Value: "KUBERNETES_PORT_443_TCP_ADDR",
+			},
+			{
+				Name:  "KUBERNETES_PORT",
+				Value: "KUBERNETES_PORT",
+			},
+			{
+				Name:  "KUBERNETES_PORT_443_TCP",
+				Value: "KUBERNETES_PORT_443_TCP",
+			},
+			{
+				Name:  "KUBERNETES_SERVICE_HOST",
+				Value: "KUBERNETES_SERVICE_HOST",
+			},
+		}
+
+		got := compareEnv(expected, actual)
+
+		assert.True(t, got)
+	})
+	t.Run("different", func(t *testing.T) {
+		expected := []corev1.EnvVar{
+			{
+				Name:  "name",
+				Value: "value",
+			},
+		}
+		actual := []corev1.EnvVar{
+			{
+				Name:  "name2",
+				Value: "value2",
+			},
+		}
+
+		got := compareEnv(expected, actual)
+
+		assert.False(t, got)
+	})
+}

@@ -510,7 +510,7 @@ func (r *ReconcileJenkinsBaseConfiguration) compareContainers(expected corev1.Co
 		r.logger.Info(fmt.Sprintf("Command has changed to '%+v' in container '%s', recreating pod", expected.Command, expected.Name))
 		return true
 	}
-	if !reflect.DeepEqual(expected.Env, actual.Env) {
+	if !compareEnv(expected.Env, actual.Env) {
 		r.logger.Info(fmt.Sprintf("Env has changed to '%+v' in container '%s', recreating pod", expected.Env, expected.Name))
 		return true
 	}
@@ -560,6 +560,18 @@ func (r *ReconcileJenkinsBaseConfiguration) compareContainers(expected corev1.Co
 	}
 
 	return false
+}
+
+func compareEnv(expected, actual []corev1.EnvVar) bool {
+	var actualEnv []corev1.EnvVar
+	for _, env := range actual {
+		if env.Name == "KUBERNETES_PORT_443_TCP_ADDR" || env.Name == "KUBERNETES_PORT" ||
+			env.Name == "KUBERNETES_PORT_443_TCP" || env.Name == "KUBERNETES_SERVICE_HOST" {
+			continue
+		}
+		actualEnv = append(actualEnv, env)
+	}
+	return reflect.DeepEqual(expected, actualEnv)
 }
 
 // CompareContainerVolumeMounts returns true if two containers volume mounts are the same
