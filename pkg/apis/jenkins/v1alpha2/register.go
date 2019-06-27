@@ -24,8 +24,10 @@ var (
 // GetObjectKind returns Jenkins object kind
 func (in *Jenkins) GetObjectKind() schema.ObjectKind { return in }
 
+// SetGroupVersionKind sets GroupVersionKind
 func (in *Jenkins) SetGroupVersionKind(kind schema.GroupVersionKind) {}
 
+// GroupVersionKind returns GroupVersionKind
 func (in *Jenkins) GroupVersionKind() schema.GroupVersionKind {
 	return schema.GroupVersionKind{
 		Group:   SchemeGroupVersion.Group,
