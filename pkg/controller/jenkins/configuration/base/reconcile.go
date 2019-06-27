@@ -409,7 +409,7 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsMasterPod(meta metav1.O
 		return reconcile.Result{}, stackerr.WithStack(err)
 	}
 
-	if currentJenkinsMasterPod != nil && isPodTerminating(*currentJenkinsMasterPod) {
+	if currentJenkinsMasterPod != nil && isPodTerminating(*currentJenkinsMasterPod) && r.jenkins.Status.UserConfigurationCompletedTime != nil {
 		backupAndRestore := backuprestore.New(r.k8sClient, *r.clientSet, r.logger, r.jenkins, *r.config)
 		backupAndRestore.StopBackupTrigger()
 		if r.jenkins.Spec.Backup.MakeBackupBeforePodDeletion {
