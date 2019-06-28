@@ -46,8 +46,6 @@ const (
 	slavePortName = "slavelistener"
 	// HTTPPortInt defines Jenkins master HTTP port
 	HTTPPortInt = 8080
-
-	jenkinsUserUID = int64(1000) // build in Docker image jenkins user UID
 )
 
 func buildPodTypeMeta() metav1.TypeMeta {
@@ -202,12 +200,9 @@ func NewJenkinsMasterContainer(jenkins *v1alpha2.Jenkins) corev1.Container {
 		Name:            JenkinsMasterContainerName,
 		Image:           jenkinsContainer.Image,
 		ImagePullPolicy: jenkinsContainer.ImagePullPolicy,
-		Command: []string{
-			"bash",
-			fmt.Sprintf("%s/%s", jenkinsScriptsVolumePath, initScriptName),
-		},
-		LivenessProbe:  jenkinsContainer.LivenessProbe,
-		ReadinessProbe: jenkinsContainer.ReadinessProbe,
+		Command:         jenkinsContainer.Command,
+		LivenessProbe:   jenkinsContainer.LivenessProbe,
+		ReadinessProbe:  jenkinsContainer.ReadinessProbe,
 		Ports: []corev1.ContainerPort{
 			{
 				Name:          httpPortName,
@@ -264,7 +259,6 @@ func GetJenkinsMasterPodName(jenkins v1alpha2.Jenkins) string {
 
 // NewJenkinsMasterPod builds Jenkins Master Kubernetes Pod resource
 func NewJenkinsMasterPod(objectMeta metav1.ObjectMeta, jenkins *v1alpha2.Jenkins) *corev1.Pod {
-	runAsUser := jenkinsUserUID
 
 	serviceAccountName := objectMeta.Name
 	objectMeta.Annotations = jenkins.Spec.Master.Annotations
@@ -276,13 +270,10 @@ func NewJenkinsMasterPod(objectMeta metav1.ObjectMeta, jenkins *v1alpha2.Jenkins
 		Spec: corev1.PodSpec{
 			ServiceAccountName: serviceAccountName,
 			RestartPolicy:      corev1.RestartPolicyNever,
-			SecurityContext: &corev1.PodSecurityContext{
-				RunAsUser:  &runAsUser,
-				RunAsGroup: &runAsUser,
-			},
-			NodeSelector: jenkins.Spec.Master.NodeSelector,
-			Containers:   newContainers(jenkins),
-			Volumes:      append(GetJenkinsMasterPodBaseVolumes(jenkins), jenkins.Spec.Master.Volumes...),
+			SecurityContext:    jenkins.Spec.Master.SecurityContext,
+			NodeSelector:       jenkins.Spec.Master.NodeSelector,
+			Containers:         newContainers(jenkins),
+			Volumes:            append(GetJenkinsMasterPodBaseVolumes(jenkins), jenkins.Spec.Master.Volumes...),
 		},
 	}
 }
