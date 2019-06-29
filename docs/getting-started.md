@@ -8,7 +8,8 @@ This document describes a getting started guide for **jenkins-operator** and an 
 4. [Install Plugins](#install-plugins)
 5. [Configure Backup & Restore](#configure-backup-and-restore)
 6. [AKS](#aks)
-7. [Debugging](#debugging)
+7. [Jenkins login credentials](#jenkins-login-credentials)
+8. [Debugging](#debugging)
 
 ## First Steps
 
@@ -95,7 +96,7 @@ Connect to Jenkins (actual Kubernetes cluster):
 ```bash
 kubectl port-forward jenkins-<cr_name> 8080:8080
 ```
-Then open browser with address http://localhost:8080.
+Then open browser with address `http://localhost:8080`.
 ![jenkins](../assets/jenkins.png)
 
 ## Configure Seed Jobs and Pipelines
@@ -466,6 +467,27 @@ Azure AKS managed Kubernetes service adds to every pod the following envs:
 
 The operator is aware of it and omits these envs when checking if Jenkins pod envs have been changed. It prevents 
 restart Jenkins pod over and over again.
+
+## Jenkins login credentials
+
+The operator automatically generate Jenkins user name and password and stores it in Kubernetes secret named 
+`jenkins-operator-credentials-<cr_name>` in namespace where Jenkins CR has been deployed.
+
+If you want change it you can override the secret:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: jenkins-operator-credentials-<cr-name>
+  namespace: <namespace>
+data:
+  user: <base64-encoded-new-username>
+  password: <base64-encoded-new-password>
+```
+
+If needed **jenkins-operator** will restart Jenkins master pod and then you can login with the new user and password 
+credentials.
 
 ## Debugging
 
