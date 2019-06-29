@@ -334,6 +334,10 @@ type JenkinsStatus struct {
 	// UserAndPasswordHash is a SHA256 hash made from user and password
 	// +optional
 	UserAndPasswordHash string `json:"userAndPasswordHash,omitempty"`
+
+	// CreatedSeedJobs contains list of seed job id already created in Jenkins
+	// +optional
+	CreatedSeedJobs []string `json:"createdSeedJobs,omitempty"`
 }
 
 // BuildStatus defines type of Jenkins build job status

@@ -121,7 +121,7 @@ func (r *ReconcileJenkinsBaseConfiguration) Reconcile() (reconcile.Result, jenki
 	}
 	if !ok {
 		r.logger.Info("Some plugins have changed, restarting Jenkins")
-		return reconcile.Result{Requeue: true}, nil, r.restartJenkinsMasterPod(metaObject)
+		return reconcile.Result{Requeue: true}, nil, r.restartJenkinsMasterPod()
 	}
 
 	result, err = r.ensureBaseConfiguration(jenkinsClient)
@@ -368,7 +368,7 @@ func (r *ReconcileJenkinsBaseConfiguration) createService(meta metav1.ObjectMeta
 	return stackerr.WithStack(r.updateResource(&service))
 }
 
-func (r *ReconcileJenkinsBaseConfiguration) getJenkinsMasterPod(meta metav1.ObjectMeta) (*corev1.Pod, error) {
+func (r *ReconcileJenkinsBaseConfiguration) getJenkinsMasterPod() (*corev1.Pod, error) {
 	jenkinsMasterPodName := resources.GetJenkinsMasterPodName(*r.jenkins)
 	currentJenkinsMasterPod := &corev1.Pod{}
 	err := r.k8sClient.Get(context.TODO(), types.NamespacedName{Name: jenkinsMasterPodName, Namespace: r.jenkins.Namespace}, currentJenkinsMasterPod)
@@ -385,7 +385,7 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsMasterPod(meta metav1.O
 	}
 
 	// Check if this Pod already exists
-	currentJenkinsMasterPod, err := r.getJenkinsMasterPod(meta)
+	currentJenkinsMasterPod, err := r.getJenkinsMasterPod()
 	if err != nil && errors.IsNotFound(err) {
 		jenkinsMasterPod := resources.NewJenkinsMasterPod(meta, r.jenkins)
 		if !reflect.DeepEqual(jenkinsMasterPod.Spec.Containers[0].Command, resources.GetJenkinsMasterContainerBaseCommand()) {
@@ -433,7 +433,7 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsMasterPod(meta metav1.O
 		return reconcile.Result{Requeue: true}, nil
 	}
 	if currentJenkinsMasterPod != nil && r.isRecreatePodNeeded(*currentJenkinsMasterPod, userAndPasswordHash) {
-		return reconcile.Result{Requeue: true}, r.restartJenkinsMasterPod(meta)
+		return reconcile.Result{Requeue: true}, r.restartJenkinsMasterPod()
 	}
 
 	return reconcile.Result{}, nil
@@ -638,8 +638,8 @@ func (r *ReconcileJenkinsBaseConfiguration) compareVolumes(actualPod corev1.Pod)
 	)
 }
 
-func (r *ReconcileJenkinsBaseConfiguration) restartJenkinsMasterPod(meta metav1.ObjectMeta) error {
-	currentJenkinsMasterPod, err := r.getJenkinsMasterPod(meta)
+func (r *ReconcileJenkinsBaseConfiguration) restartJenkinsMasterPod() error {
+	currentJenkinsMasterPod, err := r.getJenkinsMasterPod()
 	if err != nil {
 		return err
 	}
@@ -648,7 +648,7 @@ func (r *ReconcileJenkinsBaseConfiguration) restartJenkinsMasterPod(meta metav1.
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) detectJenkinsMasterPodStartingIssues(meta metav1.ObjectMeta) (stopReconcileLoop bool, err error) {
-	jenkinsMasterPod, err := r.getJenkinsMasterPod(meta)
+	jenkinsMasterPod, err := r.getJenkinsMasterPod()
 	if err != nil {
 		return false, err
 	}
@@ -696,7 +696,7 @@ func (r *ReconcileJenkinsBaseConfiguration) filterEvents(source corev1.EventList
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) waitForJenkins(meta metav1.ObjectMeta) (reconcile.Result, error) {
-	jenkinsMasterPod, err := r.getJenkinsMasterPod(meta)
+	jenkinsMasterPod, err := r.getJenkinsMasterPod()
 	if err != nil {
 		return reconcile.Result{}, err
 	}
@@ -715,7 +715,7 @@ func (r *ReconcileJenkinsBaseConfiguration) waitForJenkins(meta metav1.ObjectMet
 	for _, containerStatus := range jenkinsMasterPod.Status.ContainerStatuses {
 		if containerStatus.State.Terminated != nil {
 			r.logger.Info(fmt.Sprintf("Container '%s' is terminated, status '%+v', recreating pod", containerStatus.Name, containerStatus))
-			return reconcile.Result{Requeue: true}, r.restartJenkinsMasterPod(meta)
+			return reconcile.Result{Requeue: true}, r.restartJenkinsMasterPod()
 		}
 		if !containerStatus.Ready {
 			r.logger.V(log.VDebug).Info(fmt.Sprintf("Container '%s' not ready, readiness probe failed", containerStatus.Name))
@@ -743,7 +743,7 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsClient(meta metav1.Obje
 	if err != nil {
 		return nil, stackerr.WithStack(err)
 	}
-	currentJenkinsMasterPod, err := r.getJenkinsMasterPod(meta)
+	currentJenkinsMasterPod, err := r.getJenkinsMasterPod()
 	if err != nil {
 		return nil, err
 	}

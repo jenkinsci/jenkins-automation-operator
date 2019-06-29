@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
+	"reflect"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
@@ -61,6 +62,11 @@ func New(jenkinsClient jenkinsclient.Jenkins, k8sClient k8s.Client, logger logr.
 
 // EnsureSeedJobs configures seed job and runs it for every entry from Jenkins.Spec.SeedJobs
 func (s *SeedJobs) EnsureSeedJobs(jenkins *v1alpha2.Jenkins) (done bool, err error) {
+	if s.isRecreatePodNeeded(*jenkins) {
+		s.logger.Info("Some seed job has been deleted, recreating pod")
+		return false, s.restartJenkinsMasterPod(*jenkins)
+	}
+
 	if err = s.createJob(); err != nil {
 		s.logger.V(log.VWarn).Info("Couldn't create jenkins seed job")
 		return false, err
@@ -75,6 +81,13 @@ func (s *SeedJobs) EnsureSeedJobs(jenkins *v1alpha2.Jenkins) (done bool, err err
 		s.logger.V(log.VWarn).Info("Couldn't build jenkins seed job")
 		return false, err
 	}
+
+	seedJobIDs := s.getAllSeedJobIDs(*jenkins)
+	if done && !reflect.DeepEqual(seedJobIDs, jenkins.Status.CreatedSeedJobs) {
+		jenkins.Status.CreatedSeedJobs = seedJobIDs
+		return false, stackerr.WithStack(s.k8sClient.Update(context.TODO(), jenkins))
+	}
+
 	return done, nil
 }
 
@@ -173,6 +186,51 @@ func (s *SeedJobs) credentialValue(namespace string, seedJob v1alpha2.SeedJob) (
 		return string(secret.Data[UsernameSecretKey]) + string(secret.Data[PasswordSecretKey]), nil
 	}
 	return "", nil
+}
+
+func (s *SeedJobs) getAllSeedJobIDs(jenkins v1alpha2.Jenkins) []string {
+	var ids []string
+	for _, seedJob := range jenkins.Spec.SeedJobs {
+		ids = append(ids, seedJob.ID)
+	}
+	return ids
+}
+
+//TODO move to k8sClient
+func (s *SeedJobs) getJenkinsMasterPod(jenkins v1alpha2.Jenkins) (*corev1.Pod, error) {
+	jenkinsMasterPodName := resources.GetJenkinsMasterPodName(jenkins)
+	currentJenkinsMasterPod := &corev1.Pod{}
+	err := s.k8sClient.Get(context.TODO(), types.NamespacedName{Name: jenkinsMasterPodName, Namespace: jenkins.Namespace}, currentJenkinsMasterPod)
+	if err != nil {
+		return nil, err // don't wrap error
+	}
+	return currentJenkinsMasterPod, nil
+}
+
+//TODO move to k8sClient
+func (s *SeedJobs) restartJenkinsMasterPod(jenkins v1alpha2.Jenkins) error {
+	currentJenkinsMasterPod, err := s.getJenkinsMasterPod(jenkins)
+	if err != nil {
+		return err
+	}
+	s.logger.Info(fmt.Sprintf("Terminating Jenkins Master Pod %s/%s", currentJenkinsMasterPod.Namespace, currentJenkinsMasterPod.Name))
+	return stackerr.WithStack(s.k8sClient.Delete(context.TODO(), currentJenkinsMasterPod))
+}
+
+func (s *SeedJobs) isRecreatePodNeeded(jenkins v1alpha2.Jenkins) bool {
+	for _, createdSeedJob := range jenkins.Status.CreatedSeedJobs {
+		found := false
+		for _, seedJob := range jenkins.Spec.SeedJobs {
+			if createdSeedJob == seedJob.ID {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return true
+		}
+	}
+	return false
 }
 
 // seedJobConfigXML this is the XML representation of seed job

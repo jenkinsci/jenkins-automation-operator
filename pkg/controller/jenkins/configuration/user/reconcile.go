@@ -98,7 +98,7 @@ func (r *ReconcileUserConfiguration) ensureSeedJobs() (reconcile.Result, error) 
 	}
 	// build not finished yet - requeue reconciliation loop with timeout
 	if !done {
-		return reconcile.Result{Requeue: true, RequeueAfter: time.Second * 10}, nil
+		return reconcile.Result{Requeue: true, RequeueAfter: time.Second * 5}, nil
 	}
 	return reconcile.Result{}, nil
 }

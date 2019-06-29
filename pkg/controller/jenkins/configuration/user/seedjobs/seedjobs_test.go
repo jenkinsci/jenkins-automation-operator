@@ -105,7 +105,7 @@ func TestEnsureSeedJobs(t *testing.T) {
 
 		// second run - should update and finish job
 		if reconcileAttempt == 2 {
-			assert.True(t, done)
+			assert.False(t, done)
 			assert.Equal(t, string(v1alpha2.BuildSuccessStatus), string(build.Status))
 		}
 
@@ -150,4 +150,72 @@ func jenkinsCustomResource() *v1alpha2.Jenkins {
 			},
 		},
 	}
+}
+
+func TestSeedJobs_isRecreatePodNeeded(t *testing.T) {
+	seedJobsClient := New(nil, nil, nil)
+	t.Run("empty", func(t *testing.T) {
+		jenkins := v1alpha2.Jenkins{}
+
+		got := seedJobsClient.isRecreatePodNeeded(jenkins)
+
+		assert.False(t, got)
+	})
+	t.Run("same", func(t *testing.T) {
+		jenkins := v1alpha2.Jenkins{
+			Spec: v1alpha2.JenkinsSpec{
+				SeedJobs: []v1alpha2.SeedJob{
+					{
+						ID: "name",
+					},
+				},
+			},
+			Status: v1alpha2.JenkinsStatus{
+				CreatedSeedJobs: []string{"name"},
+			},
+		}
+
+		got := seedJobsClient.isRecreatePodNeeded(jenkins)
+
+		assert.False(t, got)
+	})
+	t.Run("removed one", func(t *testing.T) {
+		jenkins := v1alpha2.Jenkins{
+			Spec: v1alpha2.JenkinsSpec{
+				SeedJobs: []v1alpha2.SeedJob{
+					{
+						ID: "name1",
+					},
+				},
+			},
+			Status: v1alpha2.JenkinsStatus{
+				CreatedSeedJobs: []string{"name1", "name2"},
+			},
+		}
+
+		got := seedJobsClient.isRecreatePodNeeded(jenkins)
+
+		assert.True(t, got)
+	})
+	t.Run("renamed one", func(t *testing.T) {
+		jenkins := v1alpha2.Jenkins{
+			Spec: v1alpha2.JenkinsSpec{
+				SeedJobs: []v1alpha2.SeedJob{
+					{
+						ID: "name1",
+					},
+					{
+						ID: "name3",
+					},
+				},
+			},
+			Status: v1alpha2.JenkinsStatus{
+				CreatedSeedJobs: []string{"name1", "name2"},
+			},
+		}
+
+		got := seedJobsClient.isRecreatePodNeeded(jenkins)
+
+		assert.True(t, got)
+	})
 }
