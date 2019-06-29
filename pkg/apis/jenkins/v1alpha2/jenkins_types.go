@@ -135,7 +135,9 @@ type Container struct {
 
 // Plugin defines Jenkins plugin
 type Plugin struct {
-	Name    string `json:"name"`
+	// Name is the name of Jenkins plugin
+	Name string `json:"name"`
+	// Version is the version of Jenkins plugin
 	Version string `json:"version"`
 }
 

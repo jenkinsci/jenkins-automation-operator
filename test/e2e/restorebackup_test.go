@@ -72,6 +72,7 @@ func createPVC(t *testing.T, namespace string) {
 func createJenkinsWithBackupAndRestoreConfigured(t *testing.T, name, namespace string) *v1alpha2.Jenkins {
 	containerName := "backup"
 	jenkins := &v1alpha2.Jenkins{
+		TypeMeta: v1alpha2.JenkinsTypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,

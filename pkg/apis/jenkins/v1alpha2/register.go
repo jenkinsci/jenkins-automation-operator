@@ -4,6 +4,7 @@
 package v1alpha2
 
 import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/scheme"
 )
@@ -33,6 +34,13 @@ func (in *Jenkins) GroupVersionKind() schema.GroupVersionKind {
 		Group:   SchemeGroupVersion.Group,
 		Version: SchemeGroupVersion.Version,
 		Kind:    Kind,
+	}
+}
+
+func JenkinsTypeMeta() metav1.TypeMeta {
+	return metav1.TypeMeta{
+		Kind:       Kind,
+		APIVersion: SchemeGroupVersion.String(),
 	}
 }
 
