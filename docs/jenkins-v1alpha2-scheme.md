@@ -696,6 +696,25 @@ More info: <a href="https://kubernetes.io/docs/concepts/configuration/assign-pod
 </tr>
 <tr>
 <td>
+<code>securityContext</code></br>
+<em>
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.12/#podsecuritycontext-v1-core">
+Kubernetes core/v1.PodSecurityContext
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>SecurityContext that applies to all the containers of the Jenkins
+Master. As per kubernetes specification, it can be overridden
+for each container individually.
+Defaults to:
+runAsUser: 1000
+fsGroup: 1000</p>
+</td>
+</tr>
+<tr>
+<td>
 <code>containers</code></br>
 <em>
 <a href="#github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Container">
@@ -1046,6 +1065,30 @@ bool
 <p>BackupDoneBeforePodDeletion tells if backup before pod deletion has been made</p>
 </td>
 </tr>
+<tr>
+<td>
+<code>userAndPasswordHash</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>UserAndPasswordHash is a SHA256 hash made from user and password</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>createdSeedJobs</code></br>
+<em>
+[]string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>CreatedSeedJobs contains list of seed job id already created in Jenkins</p>
+</td>
+</tr>
 </tbody>
 </table>
 <h3 id="github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Plugin">Plugin
@@ -1073,6 +1116,7 @@ string
 </em>
 </td>
 <td>
+<p>Name is the name of Jenkins plugin</p>
 </td>
 </tr>
 <tr>
@@ -1083,6 +1127,7 @@ string
 </em>
 </td>
 <td>
+<p>Version is the version of Jenkins plugin</p>
 </td>
 </tr>
 </tbody>
@@ -1382,5 +1427,5 @@ This field will be ignored if the cloud-provider does not support the feature.</
 <hr/>
 <p><em>
 Generated with <code>gen-crd-api-reference-docs</code>
-on git commit <code>a5db6e9</code>.
+on git commit <code>37e531a</code>.
 </em></p>

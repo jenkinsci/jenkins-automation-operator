@@ -16,7 +16,7 @@ spec:
       serviceAccountName: jenkins-operator
       containers:
         - name: jenkins-operator
-          image: virtuslab/jenkins-operator:v0.1.0
+          image: virtuslab/jenkins-operator:v0.1.1
           command:
           - jenkins-operator
           args: []
