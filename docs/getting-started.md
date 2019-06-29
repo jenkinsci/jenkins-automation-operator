@@ -7,7 +7,8 @@ This document describes a getting started guide for **jenkins-operator** and an 
 3. [Configure Seed Jobs and Pipelines](#configure-seed-jobs-and-pipelines)
 4. [Install Plugins](#install-plugins)
 5. [Configure Backup & Restore](#configure-backup-and-restore)
-6. [Debugging](#debugging)
+6. [AKS](#aks)
+7. [Debugging](#debugging)
 
 ## First Steps
 
@@ -447,6 +448,24 @@ spec:
         - /home/user/bin/restore.sh # this command is invoked on "backup" container to make restore backup, for example /home/user/bin/restore.sh <backup_number>, <backup_number> is passed by operator
     #recoveryOnce: <backup_number> # if want to restore specific backup configure this field and then Jenkins will be restarted and desired backup will be restored
 ```
+
+## AKS
+
+Azure AKS managed Kubernetes service adds to every pod the following envs:
+
+```yaml
+- name: KUBERNETES_PORT_443_TCP_ADDR
+  value:
+- name: KUBERNETES_PORT
+  value: tcp://
+- name: KUBERNETES_PORT_443_TCP
+  value: tcp://
+- name: KUBERNETES_SERVICE_HOST
+  value:
+```
+
+The operator is aware of it and omits these envs when checking if Jenkins pod envs have been changed. It prevents 
+restart Jenkins pod over and over again.
 
 ## Debugging
 
