@@ -9,7 +9,8 @@ This document describes a getting started guide for **jenkins-operator** and an 
 5. [Configure Backup & Restore](#configure-backup-and-restore)
 6. [AKS](#aks)
 7. [Jenkins login credentials](#jenkins-login-credentials)
-8. [Debugging](#debugging)
+8. [Override default Jenkins container command](#override-default-Jenkins-container-command)
+9. [Debugging](#debugging)
 
 ## First Steps
 
@@ -488,6 +489,30 @@ data:
 
 If needed **jenkins-operator** will restart Jenkins master pod and then you can login with the new user and password 
 credentials.
+
+## Override default Jenkins container command
+
+The default command for the Jenkins master container `jenkins/jenkins:lts` looks like:
+
+```yaml
+command:
+- bash
+- -c
+- /var/jenkins/scripts/init.sh && /sbin/tini -s -- /usr/local/bin/jenkins.sh
+```
+
+The script`/var/jenkins/scripts/init.sh` is provided be the operator and configures init.groovy.d(creates Jenkins user) 
+and installs plugins.
+The `/sbin/tini -s -- /usr/local/bin/jenkins.sh` command runs the Jenkins master main process.
+
+You can overwrite it in the following pattern:
+
+```yaml
+command:
+- bash
+- -c
+- /var/jenkins/scripts/init.sh && <custom-code-here> && /sbin/tini -s -- /usr/local/bin/jenkins.sh
+```
 
 ## Debugging
 
