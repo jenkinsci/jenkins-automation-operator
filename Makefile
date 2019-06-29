@@ -267,7 +267,7 @@ docker-login: ## Log in into the Docker repository
 	@echo "+ $@"
 
 .PHONY: docker-build
-docker-build: build check-env build ## Build the container
+docker-build: check-env build ## Build the container
 	@echo "+ $@"
 	docker build . -t $(DOCKER_REGISTRY):$(GITCOMMIT) --file build/Dockerfile
 
@@ -295,7 +295,7 @@ docker-release-latest: ## Release image with latest tags (in addition to build t
 	docker push $(DOCKER_ORGANIZATION)/$(DOCKER_REGISTRY):$(LATEST_TAG)
 
 .PHONY: docker-release
-docker-release: docker-release-version docker-release-latest ## Release image with version and latest tags (in addition to build tag)
+docker-release: docker-build docker-release-version docker-release-latest ## Release image with version and latest tags (in addition to build tag)
 	@echo "+ $@"
 
 # if this session isn't interactive, then we don't want to allocate a
@@ -348,7 +348,7 @@ minikube-start: ## Start minikube
 
 .PHONY: bump-version
 BUMP := patch
-bump-version: prepare-all-in-one-deploy-file ## Bump the version in the version file. Set BUMP to [ patch | major | minor ]
+bump-version: scheme-doc-gen prepare-all-in-one-deploy-file ## Bump the version in the version file. Set BUMP to [ patch | major | minor ]
 	@echo "+ $@"
 	#@go get -u github.com/jessfraz/junk/sembump # update sembump tool FIXME
 	$(eval NEW_VERSION=$(shell sembump --kind $(BUMP) $(VERSION)))
