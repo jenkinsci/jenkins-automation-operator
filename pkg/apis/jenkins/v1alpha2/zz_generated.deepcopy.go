@@ -312,6 +312,11 @@ func (in *JenkinsStatus) DeepCopyInto(out *JenkinsStatus) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
+	if in.CreatedSeedJobs != nil {
+		in, out := &in.CreatedSeedJobs, &out.CreatedSeedJobs
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 
