@@ -325,6 +325,11 @@ func (r *ReconcileJenkins) setDefaults(jenkins *v1alpha2.Jenkins, logger logr.Lo
 			FailureThreshold:    int32(12),
 		}
 	}
+	if len(jenkinsContainer.Command) == 0 {
+		logger.Info("Setting default Jenkins container command")
+		changed = true
+		jenkinsContainer.Command = resources.GetJenkinsMasterContainerBaseCommand()
+	}
 	if len(jenkins.Spec.Master.BasePlugins) == 0 {
 		logger.Info("Setting default operator plugins")
 		changed = true
@@ -402,6 +407,17 @@ func (r *ReconcileJenkins) setDefaults(jenkins *v1alpha2.Jenkins, logger logr.Lo
 		containers := []v1alpha2.Container{jenkinsContainer}
 		containers = append(containers, noJenkinsContainers...)
 		jenkins.Spec.Master.Containers = containers
+	}
+
+	if jenkins.Spec.Master.SecurityContext == nil {
+		logger.Info("Setting default Jenkins master security context")
+		changed = true
+		var id int64 = 1000
+		securityContext := corev1.PodSecurityContext{
+			RunAsUser: &id,
+			FSGroup:   &id,
+		}
+		jenkins.Spec.Master.SecurityContext = &securityContext
 	}
 
 	if changed {

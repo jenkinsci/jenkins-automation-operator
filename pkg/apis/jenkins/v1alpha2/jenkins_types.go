@@ -156,10 +156,12 @@ type JenkinsMaster struct {
 	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
 
 	// SecurityContext that applies to all the containers of the Jenkins
-	// Master. As per kubernetes specification, it can be overidden
+	// Master. As per kubernetes specification, it can be overridden
 	// for each container individually.
 	// +optional
-	// Defaults to: nil
+	// Defaults to:
+	// runAsUser: 1000
+	// fsGroup: 1000
 	SecurityContext *corev1.PodSecurityContext `json:"securityContext,omitempty"`
 
 	// List of containers belonging to the pod.

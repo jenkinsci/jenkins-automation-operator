@@ -388,6 +388,11 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsMasterPod(meta metav1.O
 	currentJenkinsMasterPod, err := r.getJenkinsMasterPod(meta)
 	if err != nil && errors.IsNotFound(err) {
 		jenkinsMasterPod := resources.NewJenkinsMasterPod(meta, r.jenkins)
+		if !reflect.DeepEqual(jenkinsMasterPod.Spec.Containers[0].Command, resources.GetJenkinsMasterContainerBaseCommand()) {
+			r.logger.Info(fmt.Sprintf("spec.master.containers[%s].command has been overridden make sure the command looks like: '%v', otherwise the operator won't configure default user and install plugins",
+				resources.JenkinsMasterContainerName, []string{"bash", "-c", fmt.Sprintf("%s/%s && <custom-command-here> && /sbin/tini -s -- /usr/local/bin/jenkins.sh",
+					resources.JenkinsScriptsVolumePath, resources.InitScriptName)}))
+		}
 		r.logger.Info(fmt.Sprintf("Creating a new Jenkins Master Pod %s/%s", jenkinsMasterPod.Namespace, jenkinsMasterPod.Name))
 		err = r.createResource(jenkinsMasterPod)
 		if err != nil {
@@ -472,6 +477,12 @@ func (r *ReconcileJenkinsBaseConfiguration) isRecreatePodNeeded(currentJenkinsMa
 		currentJenkinsMasterPod.Status.Phase == corev1.PodSucceeded ||
 		currentJenkinsMasterPod.Status.Phase == corev1.PodUnknown {
 		r.logger.Info(fmt.Sprintf("Invalid Jenkins pod phase '%+v', recreating pod", currentJenkinsMasterPod.Status))
+		return true
+	}
+
+	if !reflect.DeepEqual(r.jenkins.Spec.Master.SecurityContext, currentJenkinsMasterPod.Spec.SecurityContext) {
+		r.logger.Info(fmt.Sprintf("Jenkins pod security context has changed, actual '%+v' required '%+v', recreating pod",
+			currentJenkinsMasterPod.Spec.SecurityContext, r.jenkins.Spec.Master.SecurityContext))
 		return true
 	}
 
@@ -572,10 +583,10 @@ func (r *ReconcileJenkinsBaseConfiguration) compareContainers(expected corev1.Co
 		r.logger.Info(fmt.Sprintf("Resources have changed to '%+v' in container '%s', recreating pod", expected.Resources, expected.Name))
 		return true
 	}
-/*	if !reflect.DeepEqual(expected.SecurityContext, actual.SecurityContext) {
+	if !reflect.DeepEqual(expected.SecurityContext, actual.SecurityContext) {
 		r.logger.Info(fmt.Sprintf("Security context has changed to '%+v' in container '%s', recreating pod", expected.SecurityContext, expected.Name))
 		return true
-	}*/
+	}
 	if !reflect.DeepEqual(expected.WorkingDir, actual.WorkingDir) {
 		r.logger.Info(fmt.Sprintf("Working directory has changed to '%+v' in container '%s', recreating pod", expected.WorkingDir, expected.Name))
 		return true

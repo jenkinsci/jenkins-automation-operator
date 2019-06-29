@@ -19,8 +19,10 @@ const (
 	jenkinsHomePath       = jenkinsPath + "/home"
 
 	jenkinsScriptsVolumeName = "scripts"
-	jenkinsScriptsVolumePath = jenkinsPath + "/scripts"
-	initScriptName           = "init.sh"
+	// JenkinsScriptsVolumePath is a path where are scripts used to configure Jenkins
+	JenkinsScriptsVolumePath = jenkinsPath + "/scripts"
+	// InitScriptName is the init script name which configures init.groovy.d, scripts and install plugins
+	InitScriptName = "init.sh"
 
 	jenkinsOperatorCredentialsVolumeName = "operator-credentials"
 	jenkinsOperatorCredentialsVolumePath = jenkinsPath + "/operator-credentials"
@@ -55,8 +57,18 @@ func buildPodTypeMeta() metav1.TypeMeta {
 	}
 }
 
-// GetJenkinsMasterPodBaseEnvs returns Jenkins master pod envs required by operator
-func GetJenkinsMasterPodBaseEnvs() []corev1.EnvVar {
+// GetJenkinsMasterContainerBaseCommand returns default Jenkins master container command
+func GetJenkinsMasterContainerBaseCommand() []string {
+	return []string{
+		"bash",
+		"-c",
+		fmt.Sprintf("%s/%s && /sbin/tini -s -- /usr/local/bin/jenkins.sh",
+			JenkinsScriptsVolumePath, InitScriptName),
+	}
+}
+
+// GetJenkinsMasterContainerBaseEnvs returns Jenkins master pod envs required by operator
+func GetJenkinsMasterContainerBaseEnvs() []corev1.EnvVar {
 	return []corev1.EnvVar{
 		{
 			Name:  "JENKINS_HOME",
@@ -77,6 +89,7 @@ func GetJenkinsMasterPodBaseEnvs() []corev1.EnvVar {
 func GetJenkinsMasterPodBaseVolumes(jenkins *v1alpha2.Jenkins) []corev1.Volume {
 	configMapVolumeSourceDefaultMode := corev1.ConfigMapVolumeSourceDefaultMode
 	secretVolumeSourceDefaultMode := corev1.SecretVolumeSourceDefaultMode
+	var scriptsVolumeDefaultMode int32 = 0777
 	return []corev1.Volume{
 		{
 			Name: JenkinsHomeVolumeName,
@@ -88,7 +101,7 @@ func GetJenkinsMasterPodBaseVolumes(jenkins *v1alpha2.Jenkins) []corev1.Volume {
 			Name: jenkinsScriptsVolumeName,
 			VolumeSource: corev1.VolumeSource{
 				ConfigMap: &corev1.ConfigMapVolumeSource{
-					DefaultMode: &configMapVolumeSourceDefaultMode,
+					DefaultMode: &scriptsVolumeDefaultMode,
 					LocalObjectReference: corev1.LocalObjectReference{
 						Name: getScriptsConfigMapName(jenkins),
 					},
@@ -159,7 +172,7 @@ func GetJenkinsMasterContainerBaseVolumeMounts() []corev1.VolumeMount {
 		},
 		{
 			Name:      jenkinsScriptsVolumeName,
-			MountPath: jenkinsScriptsVolumePath,
+			MountPath: JenkinsScriptsVolumePath,
 			ReadOnly:  true,
 		},
 		{
@@ -193,7 +206,7 @@ func GetJenkinsMasterContainerBaseVolumeMounts() []corev1.VolumeMount {
 // NewJenkinsMasterContainer returns Jenkins master Kubernetes container
 func NewJenkinsMasterContainer(jenkins *v1alpha2.Jenkins) corev1.Container {
 	jenkinsContainer := jenkins.Spec.Master.Containers[0]
-	envs := GetJenkinsMasterPodBaseEnvs()
+	envs := GetJenkinsMasterContainerBaseEnvs()
 	envs = append(envs, jenkinsContainer.Env...)
 
 	return corev1.Container{

@@ -211,7 +211,7 @@ run: build ## Run the executable, you can use EXTRA_ARGS
 	kubectl apply -f deploy/crds/jenkins_$(API_VERSION)_jenkins_crd.yaml
 	kubectl config use-context $(KUBECTL_CONTEXT)
 	@echo "Watching '$(WATCH_NAMESPACE)' namespace"
-	build/_output/bin/jenkins-operator $(EXTRA_ARGS)
+	build/_output/bin/jenkins-operator --local $(EXTRA_ARGS)
 
 .PHONY: clean
 clean: ## Cleanup any build binaries or packages

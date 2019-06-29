@@ -194,7 +194,7 @@ func (r *ReconcileJenkinsBaseConfiguration) validateContainerVolumeMounts(contai
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) validateJenkinsMasterPodEnvs() bool {
-	baseEnvs := resources.GetJenkinsMasterPodBaseEnvs()
+	baseEnvs := resources.GetJenkinsMasterContainerBaseEnvs()
 	baseEnvNames := map[string]string{}
 	for _, env := range baseEnvs {
 		baseEnvNames[env.Name] = env.Value

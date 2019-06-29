@@ -239,7 +239,7 @@ main() {
 main "$@"
 `
 
-var initBashTemplate = template.Must(template.New(initScriptName).Parse(`#!/usr/bin/env bash
+var initBashTemplate = template.Must(template.New(InitScriptName).Parse(`#!/usr/bin/env bash
 set -e
 set -x
 
@@ -261,8 +261,6 @@ echo "Installing plugins required by Operator - end"
 echo "Installing plugins required by user - begin"
 {{ $installPluginsCommand }} {{ range $index, $plugin := .UserPlugins }}{{ $plugin.Name }}:{{ $plugin.Version }} {{ end }}
 echo "Installing plugins required by user - end"
-
-/sbin/tini -s -- /usr/local/bin/jenkins.sh
 `))
 
 func buildConfigMapTypeMeta() metav1.TypeMeta {
@@ -286,7 +284,7 @@ func buildInitBashScript(jenkins *v1alpha2.Jenkins) (*string, error) {
 		BasePlugins:              jenkins.Spec.Master.BasePlugins,
 		UserPlugins:              jenkins.Spec.Master.Plugins,
 		InstallPluginsCommand:    installPluginsCommand,
-		JenkinsScriptsVolumePath: jenkinsScriptsVolumePath,
+		JenkinsScriptsVolumePath: JenkinsScriptsVolumePath,
 	}
 
 	output, err := render(initBashTemplate, data)
@@ -314,7 +312,7 @@ func NewScriptsConfigMap(meta metav1.ObjectMeta, jenkins *v1alpha2.Jenkins) (*co
 		TypeMeta:   buildConfigMapTypeMeta(),
 		ObjectMeta: meta,
 		Data: map[string]string{
-			initScriptName:        *initBashScript,
+			InitScriptName:        *initBashScript,
 			installPluginsCommand: fmt.Sprintf(installPluginsBashFmt, jenkinsHomePath),
 		},
 	}, nil
