@@ -407,15 +407,10 @@ metadata:
   name: <cr_name>
   namespace: <namespace>
 spec:
-  backup:
-    action:
-      exec:
-        command:
-        - /home/user/bin/backup.sh # this command is invoked on "backup" container to make backup, for example /home/user/bin/backup.sh <backup_number>, <backup_number> is passed by operator
-    containerName: backup # container name is responsible for backup
-    interval: 30 # how often make backup in seconds
-    makeBackupBeforePodDeletion: true # make backup before pod deletion
   master:
+    securityContext:
+      runAsUser: 1000
+      fsGroup: 1000
     containers:
     - name: jenkins-master
       image: jenkins/jenkins:lts
@@ -436,12 +431,20 @@ spec:
     - name: backup # PVC volume where backups will be stored
       persistentVolumeClaim:
         claimName: <pvc_name>
+  backup:
+    containerName: backup # container name is responsible for backup
+    action:
+      exec:
+        command:
+        - /home/user/bin/backup.sh # this command is invoked on "backup" container to make backup, for example /home/user/bin/backup.sh <backup_number>, <backup_number> is passed by operator
+    interval: 30 # how often make backup in seconds
+    makeBackupBeforePodDeletion: true # make backup before pod deletion
   restore:
+    containerName: backup # container name is responsible for restore backup
     action:
       exec:
         command:
         - /home/user/bin/restore.sh # this command is invoked on "backup" container to make restore backup, for example /home/user/bin/restore.sh <backup_number>, <backup_number> is passed by operator
-    containerName: backup # container name is responsible for restore backup
     #recoveryOnce: <backup_number> # if want to restore specific backup configure this field and then Jenkins will be restarted and desired backup will be restored
 ```
 
