@@ -40,6 +40,14 @@ type JenkinsSpec struct {
 	// More info: https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-backup-and-restore
 	// +optional
 	Restore Restore `json:"restore,omitempty"`
+
+	// GroovyScripts defines configuration of Jenkins customization via groovy scripts
+	// +optional
+	GroovyScripts GroovyScripts `json:"groovyScripts,omitempty"`
+
+	// ConfigurationAsCode defines configuration of Jenkins customization via Configuration as Code Jenkins plugin
+	// +optional
+	ConfigurationAsCode ConfigurationAsCode `json:"configurationAsCode,omitempty"`
 }
 
 // Container defines Kubernetes container attributes
@@ -313,7 +321,7 @@ type JenkinsStatus struct {
 	// +optional
 	UserConfigurationCompletedTime *metav1.Time `json:"userConfigurationCompletedTime,omitempty"`
 
-	// Builds contains Jenkins builds statues
+	// Builds contains Jenkins job builds statues
 	// +optional
 	Builds []Build `json:"builds,omitempty"`
 
@@ -340,6 +348,10 @@ type JenkinsStatus struct {
 	// CreatedSeedJobs contains list of seed job id already created in Jenkins
 	// +optional
 	CreatedSeedJobs []string `json:"createdSeedJobs,omitempty"`
+
+	// AppliedGroovyScripts is a list with all applied groovy scripts in Jenkins by the operator
+	// +optional
+	AppliedGroovyScripts []AppliedGroovyScript `json:"appliedGroovyScripts,omitempty"`
 }
 
 // BuildStatus defines type of Jenkins build job status
@@ -362,9 +374,8 @@ const (
 	BuildExpiredStatus BuildStatus = "expired"
 )
 
-// Build defines Jenkins Build status with corresponding metadata
+// Build defines Jenkins job build status with corresponding metadata
 type Build struct {
-
 	// JobName is the Jenkins job name
 	JobName string `json:"jobName,omitempty"`
 
@@ -492,4 +503,42 @@ type Restore struct {
 	// RecoveryOnce if want to restore specific backup set this field and then Jenkins will be restarted and desired backup will be restored
 	// +optional
 	RecoveryOnce uint64 `json:"recoveryOnce,omitempty"`
+}
+
+// AppliedGroovyScript is the applied groovy script in Jenkins by the operator
+type AppliedGroovyScript struct {
+	// ConfigurationType is the name of the configuration type(base-groovy, user-groovy, user-casc)
+	ConfigurationType string `json:"configurationType"`
+	// Source is the name of source where is located groovy script
+	Source string `json:"source"`
+	// Name is the name of the groovy script
+	Name string `json:"name"`
+	// Hash is the hash of the groovy script and secrets which it uses
+	Hash string
+}
+
+// SecretRef is reference to Kubernetes secret
+type SecretRef struct {
+	Name string `json:"name"`
+}
+
+// ConfigMapRef is reference to Kubernetes ConfigMap
+type ConfigMapRef struct {
+	Name string `json:"name"`
+}
+
+// Customization defines configuration of Jenkins customization
+type Customization struct {
+	Secret         SecretRef      `json:"secret"`
+	Configurations []ConfigMapRef `json:"configurations"`
+}
+
+// GroovyScripts defines configuration of Jenkins customization via groovy scripts
+type GroovyScripts struct {
+	Customization
+}
+
+// ConfigurationAsCode defines configuration of Jenkins customization via Configuration as Code Jenkins plugin
+type ConfigurationAsCode struct {
+	Customization
 }

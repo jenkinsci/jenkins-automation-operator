@@ -37,6 +37,7 @@ func (in *Jenkins) GroupVersionKind() schema.GroupVersionKind {
 	}
 }
 
+// JenkinsTypeMeta returns Jenkins type meta
 func JenkinsTypeMeta() metav1.TypeMeta {
 	return metav1.TypeMeta{
 		Kind:       Kind,
