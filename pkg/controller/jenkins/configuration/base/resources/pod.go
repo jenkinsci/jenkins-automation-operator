@@ -30,19 +30,12 @@ const (
 	jenkinsInitConfigurationVolumeName = "init-configuration"
 	jenkinsInitConfigurationVolumePath = jenkinsPath + "/init-configuration"
 
-	jenkinsBaseConfigurationVolumeName = "base-configuration"
-	// JenkinsBaseConfigurationVolumePath is a path where are groovy scripts used to configure Jenkins
-	// this scripts are provided by jenkins-operator
-	JenkinsBaseConfigurationVolumePath = jenkinsPath + "/base-configuration"
-
-	jenkinsUserConfigurationVolumeName = "user-configuration"
-	// JenkinsUserConfigurationVolumePath is a path where are groovy scripts and CasC configs used to configure Jenkins
-	// this script is provided by user
-	JenkinsUserConfigurationVolumePath = jenkinsPath + "/user-configuration"
-
-	userConfigurationSecretVolumeName = "user-configuration-secrets"
-	// UserConfigurationSecretVolumePath is a path where are secrets used for groovy scripts and CasC configs
-	UserConfigurationSecretVolumePath = jenkinsPath + "/user-configuration-secrets"
+	// GroovyScriptsSecretVolumePath is a path where are groovy scripts used to configure Jenkins
+	// This script is provided by user
+	GroovyScriptsSecretVolumePath = jenkinsPath + "/groovy-scripts-secrets"
+	// ConfigurationAsCodeSecretVolumePath is a path where are CasC configs used to configure Jenkins
+	// This script is provided by user
+	ConfigurationAsCodeSecretVolumePath = jenkinsPath + "/configuration-as-code-secrets"
 
 	httpPortName  = "http"
 	slavePortName = "slavelistener"
@@ -68,8 +61,8 @@ func GetJenkinsMasterContainerBaseCommand() []string {
 }
 
 // GetJenkinsMasterContainerBaseEnvs returns Jenkins master pod envs required by operator
-func GetJenkinsMasterContainerBaseEnvs() []corev1.EnvVar {
-	return []corev1.EnvVar{
+func GetJenkinsMasterContainerBaseEnvs(jenkins *v1alpha2.Jenkins) []corev1.EnvVar {
+	envVars := []corev1.EnvVar{
 		{
 			Name:  "JENKINS_HOME",
 			Value: jenkinsHomePath,
@@ -78,11 +71,16 @@ func GetJenkinsMasterContainerBaseEnvs() []corev1.EnvVar {
 			Name:  "JAVA_OPTS",
 			Value: "-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:MaxRAMFraction=1 -Djenkins.install.runSetupWizard=false -Djava.awt.headless=true",
 		},
-		{
-			Name:  "SECRETS", // https://github.com/jenkinsci/configuration-as-code-plugin/blob/master/demos/kubernetes-secrets/README.md
-			Value: UserConfigurationSecretVolumePath,
-		},
 	}
+
+	if len(jenkins.Spec.ConfigurationAsCode.Secret.Name) > 0 {
+		envVars = append(envVars, corev1.EnvVar{
+			Name:  "SECRETS", // https://github.com/jenkinsci/configuration-as-code-plugin/blob/master/demos/kubernetes-secrets/README.md
+			Value: ConfigurationAsCodeSecretVolumePath,
+		})
+	}
+
+	return envVars
 }
 
 // GetJenkinsMasterPodBaseVolumes returns Jenkins master pod volumes required by operator
@@ -90,7 +88,7 @@ func GetJenkinsMasterPodBaseVolumes(jenkins *v1alpha2.Jenkins) []corev1.Volume {
 	configMapVolumeSourceDefaultMode := corev1.ConfigMapVolumeSourceDefaultMode
 	secretVolumeSourceDefaultMode := corev1.SecretVolumeSourceDefaultMode
 	var scriptsVolumeDefaultMode int32 = 0777
-	return []corev1.Volume{
+	volumes := []corev1.Volume{
 		{
 			Name: JenkinsHomeVolumeName,
 			VolumeSource: corev1.VolumeSource{
@@ -120,28 +118,6 @@ func GetJenkinsMasterPodBaseVolumes(jenkins *v1alpha2.Jenkins) []corev1.Volume {
 			},
 		},
 		{
-			Name: jenkinsBaseConfigurationVolumeName,
-			VolumeSource: corev1.VolumeSource{
-				ConfigMap: &corev1.ConfigMapVolumeSource{
-					DefaultMode: &configMapVolumeSourceDefaultMode,
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: GetBaseConfigurationConfigMapName(jenkins),
-					},
-				},
-			},
-		},
-		{
-			Name: jenkinsUserConfigurationVolumeName,
-			VolumeSource: corev1.VolumeSource{
-				ConfigMap: &corev1.ConfigMapVolumeSource{
-					DefaultMode: &configMapVolumeSourceDefaultMode,
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: GetUserConfigurationConfigMapNameFromJenkins(jenkins),
-					},
-				},
-			},
-		},
-		{
 			Name: jenkinsOperatorCredentialsVolumeName,
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
@@ -150,21 +126,45 @@ func GetJenkinsMasterPodBaseVolumes(jenkins *v1alpha2.Jenkins) []corev1.Volume {
 				},
 			},
 		},
-		{
-			Name: userConfigurationSecretVolumeName,
+	}
+
+	if len(jenkins.Spec.GroovyScripts.Secret.Name) > 0 {
+		volumes = append(volumes, corev1.Volume{
+			Name: getGroovyScriptsSecretVolumeName(jenkins),
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
 					DefaultMode: &secretVolumeSourceDefaultMode,
-					SecretName:  GetUserConfigurationSecretNameFromJenkins(jenkins),
+					SecretName:  jenkins.Spec.GroovyScripts.Secret.Name,
 				},
 			},
-		},
+		})
 	}
+	if len(jenkins.Spec.ConfigurationAsCode.Secret.Name) > 0 {
+		volumes = append(volumes, corev1.Volume{
+			Name: getConfigurationAsCodeSecretVolumeName(jenkins),
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					DefaultMode: &secretVolumeSourceDefaultMode,
+					SecretName:  jenkins.Spec.ConfigurationAsCode.Secret.Name,
+				},
+			},
+		})
+	}
+
+	return volumes
+}
+
+func getGroovyScriptsSecretVolumeName(jenkins *v1alpha2.Jenkins) string {
+	return "gs-" + jenkins.Spec.GroovyScripts.Secret.Name
+}
+
+func getConfigurationAsCodeSecretVolumeName(jenkins *v1alpha2.Jenkins) string {
+	return "casc-" + jenkins.Spec.GroovyScripts.Secret.Name
 }
 
 // GetJenkinsMasterContainerBaseVolumeMounts returns Jenkins master pod volume mounts required by operator
-func GetJenkinsMasterContainerBaseVolumeMounts() []corev1.VolumeMount {
-	return []corev1.VolumeMount{
+func GetJenkinsMasterContainerBaseVolumeMounts(jenkins *v1alpha2.Jenkins) []corev1.VolumeMount {
+	volumeMounts := []corev1.VolumeMount{
 		{
 			Name:      JenkinsHomeVolumeName,
 			MountPath: jenkinsHomePath,
@@ -181,32 +181,34 @@ func GetJenkinsMasterContainerBaseVolumeMounts() []corev1.VolumeMount {
 			ReadOnly:  true,
 		},
 		{
-			Name:      jenkinsBaseConfigurationVolumeName,
-			MountPath: JenkinsBaseConfigurationVolumePath,
-			ReadOnly:  true,
-		},
-		{
-			Name:      jenkinsUserConfigurationVolumeName,
-			MountPath: JenkinsUserConfigurationVolumePath,
-			ReadOnly:  true,
-		},
-		{
 			Name:      jenkinsOperatorCredentialsVolumeName,
 			MountPath: jenkinsOperatorCredentialsVolumePath,
 			ReadOnly:  true,
 		},
-		{
-			Name:      userConfigurationSecretVolumeName,
-			MountPath: UserConfigurationSecretVolumePath,
-			ReadOnly:  true,
-		},
 	}
+
+	if len(jenkins.Spec.GroovyScripts.Secret.Name) > 0 {
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      getGroovyScriptsSecretVolumeName(jenkins),
+			MountPath: GroovyScriptsSecretVolumePath,
+			ReadOnly:  true,
+		})
+	}
+	if len(jenkins.Spec.ConfigurationAsCode.Secret.Name) > 0 {
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      getConfigurationAsCodeSecretVolumeName(jenkins),
+			MountPath: ConfigurationAsCodeSecretVolumePath,
+			ReadOnly:  true,
+		})
+	}
+
+	return volumeMounts
 }
 
 // NewJenkinsMasterContainer returns Jenkins master Kubernetes container
 func NewJenkinsMasterContainer(jenkins *v1alpha2.Jenkins) corev1.Container {
 	jenkinsContainer := jenkins.Spec.Master.Containers[0]
-	envs := GetJenkinsMasterContainerBaseEnvs()
+	envs := GetJenkinsMasterContainerBaseEnvs(jenkins)
 	envs = append(envs, jenkinsContainer.Env...)
 
 	return corev1.Container{
@@ -230,7 +232,7 @@ func NewJenkinsMasterContainer(jenkins *v1alpha2.Jenkins) corev1.Container {
 		},
 		Env:          envs,
 		Resources:    jenkinsContainer.Resources,
-		VolumeMounts: append(GetJenkinsMasterContainerBaseVolumeMounts(), jenkinsContainer.VolumeMounts...),
+		VolumeMounts: append(GetJenkinsMasterContainerBaseVolumeMounts(jenkins), jenkinsContainer.VolumeMounts...),
 	}
 }
 
@@ -272,7 +274,6 @@ func GetJenkinsMasterPodName(jenkins v1alpha2.Jenkins) string {
 
 // NewJenkinsMasterPod builds Jenkins Master Kubernetes Pod resource
 func NewJenkinsMasterPod(objectMeta metav1.ObjectMeta, jenkins *v1alpha2.Jenkins) *corev1.Pod {
-
 	serviceAccountName := objectMeta.Name
 	objectMeta.Annotations = jenkins.Spec.Master.Annotations
 	objectMeta.Name = GetJenkinsMasterPodName(*jenkins)
@@ -283,10 +284,10 @@ func NewJenkinsMasterPod(objectMeta metav1.ObjectMeta, jenkins *v1alpha2.Jenkins
 		Spec: corev1.PodSpec{
 			ServiceAccountName: serviceAccountName,
 			RestartPolicy:      corev1.RestartPolicyNever,
-			SecurityContext:    jenkins.Spec.Master.SecurityContext,
 			NodeSelector:       jenkins.Spec.Master.NodeSelector,
 			Containers:         newContainers(jenkins),
 			Volumes:            append(GetJenkinsMasterPodBaseVolumes(jenkins), jenkins.Spec.Master.Volumes...),
+			SecurityContext:    jenkins.Spec.Master.SecurityContext,
 		},
 	}
 }

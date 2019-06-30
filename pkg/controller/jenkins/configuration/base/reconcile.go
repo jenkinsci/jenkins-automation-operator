@@ -13,7 +13,6 @@ import (
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/backuprestore"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
-	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/groovy"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/plugins"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
@@ -149,15 +148,15 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureResourcesRequiredForJenkinsPod
 	}
 	r.logger.V(log.VDebug).Info("Base configuration config map is present")
 
-	if err := r.createUserConfigurationConfigMap(metaObject); err != nil {
+	if err := r.addLabelForWatchesResources(r.jenkins.Spec.GroovyScripts.Customization); err != nil {
 		return err
 	}
-	r.logger.V(log.VDebug).Info("User configuration config map is present")
+	r.logger.V(log.VDebug).Info("GroovyScripts Secret and ConfigMap added watched labels")
 
-	if err := r.createUserConfigurationSecret(metaObject); err != nil {
+	if err := r.addLabelForWatchesResources(r.jenkins.Spec.ConfigurationAsCode.Customization); err != nil {
 		return err
 	}
-	r.logger.V(log.VDebug).Info("User configuration secret is present")
+	r.logger.V(log.VDebug).Info("ConfigurationAsCode Secret and ConfigMap added watched labels")
 
 	if err := r.createRBAC(metaObject); err != nil {
 		return err
@@ -289,33 +288,49 @@ func (r *ReconcileJenkinsBaseConfiguration) createBaseConfigurationConfigMap(met
 	return stackerr.WithStack(r.createOrUpdateResource(configMap))
 }
 
-func (r *ReconcileJenkinsBaseConfiguration) createUserConfigurationConfigMap(meta metav1.ObjectMeta) error {
-	currentConfigMap := &corev1.ConfigMap{}
-	err := r.k8sClient.Get(context.TODO(), types.NamespacedName{Name: resources.GetUserConfigurationConfigMapNameFromJenkins(r.jenkins), Namespace: r.jenkins.Namespace}, currentConfigMap)
-	if err != nil && errors.IsNotFound(err) {
-		return stackerr.WithStack(r.k8sClient.Create(context.TODO(), resources.NewUserConfigurationConfigMap(r.jenkins)))
-	} else if err != nil {
-		return stackerr.WithStack(err)
-	}
-	if !resources.VerifyIfLabelsAreSet(currentConfigMap, resources.BuildLabelsForWatchedResources(*r.jenkins)) {
-		currentConfigMap.ObjectMeta.Labels = resources.BuildLabelsForWatchedResources(*r.jenkins)
-		return stackerr.WithStack(r.k8sClient.Update(context.TODO(), currentConfigMap))
+func (r *ReconcileJenkinsBaseConfiguration) addLabelForWatchesResources(customization v1alpha2.Customization) error {
+	labelsForWatchedResources := resources.BuildLabelsForWatchedResources(*r.jenkins)
+
+	if len(customization.Secret.Name) > 0 {
+		secret := &corev1.Secret{}
+		err := r.k8sClient.Get(context.TODO(), types.NamespacedName{Name: customization.Secret.Name, Namespace: r.jenkins.Namespace}, secret)
+		if err != nil {
+			return stackerr.WithStack(err)
+		}
+
+		if !resources.VerifyIfLabelsAreSet(secret, labelsForWatchedResources) {
+			if len(secret.ObjectMeta.Labels) == 0 {
+				secret.ObjectMeta.Labels = map[string]string{}
+			}
+			for key, value := range labelsForWatchedResources {
+				secret.ObjectMeta.Labels[key] = value
+			}
+
+			if err = r.k8sClient.Update(context.TODO(), secret); err != nil {
+				return stackerr.WithStack(r.k8sClient.Update(context.TODO(), secret))
+			}
+		}
 	}
 
-	return nil
-}
+	for _, configMapRef := range customization.Configurations {
+		configMap := &corev1.ConfigMap{}
+		err := r.k8sClient.Get(context.TODO(), types.NamespacedName{Name: configMapRef.Name, Namespace: r.jenkins.Namespace}, configMap)
+		if err != nil {
+			return stackerr.WithStack(err)
+		}
 
-func (r *ReconcileJenkinsBaseConfiguration) createUserConfigurationSecret(meta metav1.ObjectMeta) error {
-	currentSecret := &corev1.Secret{}
-	err := r.k8sClient.Get(context.TODO(), types.NamespacedName{Name: resources.GetUserConfigurationSecretNameFromJenkins(r.jenkins), Namespace: r.jenkins.Namespace}, currentSecret)
-	if err != nil && errors.IsNotFound(err) {
-		return stackerr.WithStack(r.k8sClient.Create(context.TODO(), resources.NewUserConfigurationSecret(r.jenkins)))
-	} else if err != nil {
-		return stackerr.WithStack(err)
-	}
-	if !resources.VerifyIfLabelsAreSet(currentSecret, resources.BuildLabelsForWatchedResources(*r.jenkins)) {
-		currentSecret.ObjectMeta.Labels = resources.BuildLabelsForWatchedResources(*r.jenkins)
-		return stackerr.WithStack(r.k8sClient.Update(context.TODO(), currentSecret))
+		if !resources.VerifyIfLabelsAreSet(configMap, labelsForWatchedResources) {
+			if len(configMap.ObjectMeta.Labels) == 0 {
+				configMap.ObjectMeta.Labels = map[string]string{}
+			}
+			for key, value := range labelsForWatchedResources {
+				configMap.ObjectMeta.Labels[key] = value
+			}
+
+			if err = r.k8sClient.Update(context.TODO(), configMap); err != nil {
+				return stackerr.WithStack(r.k8sClient.Update(context.TODO(), configMap))
+			}
+		}
 	}
 
 	return nil
