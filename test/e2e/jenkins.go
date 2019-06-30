@@ -17,6 +17,11 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
+const (
+	userConfigurationConfigMapName = "user-config"
+	userConfigurationSecretName    = "user-secret"
+)
+
 func getJenkins(t *testing.T, namespace, name string) *v1alpha2.Jenkins {
 	jenkins := &v1alpha2.Jenkins{}
 	namespaceName := types.NamespacedName{Namespace: namespace, Name: name}

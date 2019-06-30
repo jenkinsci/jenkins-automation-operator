@@ -46,7 +46,7 @@ func TestConfiguration(t *testing.T) {
 			VolumeSource: corev1.VolumeSource{
 				ConfigMap: &corev1.ConfigMapVolumeSource{
 					LocalObjectReference: corev1.LocalObjectReference{
-						Name: resources.GetUserConfigurationConfigMapName(jenkinsCRName),
+						Name: userConfigurationConfigMapName,
 					},
 				},
 			},
@@ -55,15 +55,15 @@ func TestConfiguration(t *testing.T) {
 			Name: "test-secret",
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
-					SecretName: resources.GetUserConfigurationSecretName(jenkinsCRName),
+					SecretName: userConfigurationSecretName,
 				},
 			},
 		},
 	}
 
 	// base
-	createUserConfigurationSecret(t, jenkinsCRName, namespace, systemMessageEnvName, systemMessage)
-	createUserConfigurationConfigMap(t, jenkinsCRName, namespace, numberOfExecutors, fmt.Sprintf("${%s}", systemMessageEnvName))
+	createUserConfigurationSecret(t, namespace, systemMessageEnvName, systemMessage)
+	createUserConfigurationConfigMap(t, namespace, numberOfExecutors, fmt.Sprintf("${%s}", systemMessageEnvName))
 	jenkins := createJenkinsCR(t, jenkinsCRName, namespace, &[]v1alpha2.SeedJob{mySeedJob.SeedJob}, volumes)
 	createDefaultLimitsForContainersInNamespace(t, namespace)
 	createKubernetesCredentialsProviderSecret(t, namespace, mySeedJob)
@@ -79,10 +79,10 @@ func TestConfiguration(t *testing.T) {
 	verifyJenkinsSeedJobs(t, client, []seedJobConfig{mySeedJob})
 }
 
-func createUserConfigurationSecret(t *testing.T, jenkinsCRName string, namespace string, systemMessageEnvName, systemMessage string) {
+func createUserConfigurationSecret(t *testing.T, namespace string, systemMessageEnvName, systemMessage string) {
 	userConfiguration := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      resources.GetUserConfigurationSecretName(jenkinsCRName),
+			Name:      userConfigurationSecretName,
 			Namespace: namespace,
 		},
 		StringData: map[string]string{
@@ -96,10 +96,10 @@ func createUserConfigurationSecret(t *testing.T, jenkinsCRName string, namespace
 	}
 }
 
-func createUserConfigurationConfigMap(t *testing.T, jenkinsCRName string, namespace string, numberOfExecutors int, systemMessage string) {
+func createUserConfigurationConfigMap(t *testing.T, namespace string, numberOfExecutors int, systemMessage string) {
 	userConfiguration := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      resources.GetUserConfigurationConfigMapName(jenkinsCRName),
+			Name:      userConfigurationConfigMapName,
 			Namespace: namespace,
 		},
 		Data: map[string]string{
