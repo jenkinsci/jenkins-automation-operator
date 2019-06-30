@@ -807,27 +807,20 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsClient(meta metav1.Obje
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) ensureBaseConfiguration(jenkinsClient jenkinsclient.Jenkins) (reconcile.Result, error) {
-	groovyClient := groovy.New(jenkinsClient, r.k8sClient, r.logger, fmt.Sprintf("%s-base-configuration", constants.OperatorName), resources.JenkinsBaseConfigurationVolumePath)
-
-	err := groovyClient.ConfigureJob()
-	if err != nil {
-		return reconcile.Result{}, err
+	customization := v1alpha2.GroovyScripts{
+		Customization: v1alpha2.Customization{
+			Secret:         v1alpha2.SecretRef{Name: ""},
+			Configurations: []v1alpha2.ConfigMapRef{{Name: resources.GetBaseConfigurationConfigMapName(r.jenkins)}},
+		},
 	}
 
-	configuration := &corev1.ConfigMap{}
-	namespaceName := types.NamespacedName{Namespace: r.jenkins.Namespace, Name: resources.GetBaseConfigurationConfigMapName(r.jenkins)}
-	err = r.k8sClient.Get(context.TODO(), namespaceName, configuration)
-	if err != nil {
-		return reconcile.Result{}, stackerr.WithStack(err)
-	}
+	groovyClient := groovy.New(jenkinsClient, r.k8sClient, r.logger, r.jenkins, "base-groovy", customization.Customization)
 
-	done, err := groovyClient.Ensure(configuration.Data, r.jenkins)
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-	if !done {
-		return reconcile.Result{Requeue: true, RequeueAfter: time.Second * 10}, nil
-	}
+	requeue, err := groovyClient.Ensure(func(name string) bool {
+		return strings.HasSuffix(name, ".groovy")
+	}, func(groovyScript string) string {
+		return groovyScript
+	})
 
-	return reconcile.Result{}, nil
+	return reconcile.Result{Requeue: requeue}, err
 }
