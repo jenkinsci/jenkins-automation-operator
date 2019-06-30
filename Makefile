@@ -208,8 +208,8 @@ run: export WATCH_NAMESPACE = $(NAMESPACE)
 run: export OPERATOR_NAME = $(NAME)
 run: build ## Run the executable, you can use EXTRA_ARGS
 	@echo "+ $@"
-	kubectl apply -f deploy/crds/jenkins_$(API_VERSION)_jenkins_crd.yaml
 	kubectl config use-context $(KUBECTL_CONTEXT)
+	kubectl apply -f deploy/crds/jenkins_$(API_VERSION)_jenkins_crd.yaml
 	@echo "Watching '$(WATCH_NAMESPACE)' namespace"
 	build/_output/bin/jenkins-operator --local $(EXTRA_ARGS)
 
