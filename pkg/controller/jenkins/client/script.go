@@ -10,6 +10,13 @@ import (
 	"github.com/pkg/errors"
 )
 
+// GroovyScriptExecutionFailed is custom error type which indicates passed groovy script is invalid
+type GroovyScriptExecutionFailed struct{}
+
+func (e GroovyScriptExecutionFailed) Error() string {
+	return "script execution failed"
+}
+
 func (jenkins *jenkins) ExecuteScript(script string) (string, error) {
 	now := time.Now().Unix()
 	verifier := fmt.Sprintf("verifier-%d", now)
@@ -38,7 +45,7 @@ func (jenkins *jenkins) executeScript(script string, verifier string) (string, e
 	}
 
 	if !strings.Contains(output, verifier) {
-		return output, errors.Errorf("script execution failed, logs '%s'", output)
+		return output, &GroovyScriptExecutionFailed{}
 	}
 
 	return output, nil
