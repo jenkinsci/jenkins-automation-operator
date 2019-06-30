@@ -10,6 +10,7 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"k8s.io/api/core/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -441,6 +442,125 @@ func TestValidateSecretVolume(t *testing.T) {
 			jenkins, false, false, nil, nil)
 
 		got, err := baseReconcileLoop.validateSecretVolume(volume)
+
+		assert.NoError(t, err)
+		assert.False(t, got)
+	})
+}
+
+func TestValidateCustomization(t *testing.T) {
+	namespace := "default"
+	secretName := "secretName"
+	configMapName := "configmap-name"
+	jenkins := &v1alpha2.Jenkins{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: namespace,
+		},
+	}
+	t.Run("empty", func(t *testing.T) {
+		customization := v1alpha2.Customization{}
+		fakeClient := fake.NewFakeClient()
+		baseReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false),
+			jenkins, false, false, nil, nil)
+
+		got, err := baseReconcileLoop.validateCustomization(customization, "spec.groovyScripts")
+
+		assert.NoError(t, err)
+		assert.True(t, got)
+	})
+	t.Run("secret set but configurations is empty", func(t *testing.T) {
+		customization := v1alpha2.Customization{
+			Secret:         v1alpha2.SecretRef{Name: secretName},
+			Configurations: []v1alpha2.ConfigMapRef{},
+		}
+		secret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      secretName,
+				Namespace: namespace,
+			},
+		}
+		fakeClient := fake.NewFakeClient()
+		baseReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false),
+			jenkins, false, false, nil, nil)
+		err := fakeClient.Create(context.TODO(), secret)
+		require.NoError(t, err)
+
+		got, err := baseReconcileLoop.validateCustomization(customization, "spec.groovyScripts")
+
+		assert.NoError(t, err)
+		assert.False(t, got)
+	})
+	t.Run("secret and configmap exists", func(t *testing.T) {
+		customization := v1alpha2.Customization{
+			Secret:         v1alpha2.SecretRef{Name: secretName},
+			Configurations: []v1alpha2.ConfigMapRef{{Name: configMapName}},
+		}
+		configMap := &corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      configMapName,
+				Namespace: namespace,
+			},
+		}
+		secret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      secretName,
+				Namespace: namespace,
+			},
+		}
+		fakeClient := fake.NewFakeClient()
+		baseReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false),
+			jenkins, false, false, nil, nil)
+		err := fakeClient.Create(context.TODO(), secret)
+		require.NoError(t, err)
+		err = fakeClient.Create(context.TODO(), configMap)
+		require.NoError(t, err)
+
+		got, err := baseReconcileLoop.validateCustomization(customization, "spec.groovyScripts")
+
+		assert.NoError(t, err)
+		assert.True(t, got)
+	})
+	t.Run("secret not exists and configmap exists", func(t *testing.T) {
+		configMapName := "configmap-name"
+		customization := v1alpha2.Customization{
+			Secret:         v1alpha2.SecretRef{Name: secretName},
+			Configurations: []v1alpha2.ConfigMapRef{{Name: configMapName}},
+		}
+		configMap := &corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      configMapName,
+				Namespace: namespace,
+			},
+		}
+		fakeClient := fake.NewFakeClient()
+		baseReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false),
+			jenkins, false, false, nil, nil)
+		err := fakeClient.Create(context.TODO(), configMap)
+		require.NoError(t, err)
+
+		got, err := baseReconcileLoop.validateCustomization(customization, "spec.groovyScripts")
+
+		assert.NoError(t, err)
+		assert.False(t, got)
+	})
+	t.Run("secret exists and configmap not exists", func(t *testing.T) {
+		customization := v1alpha2.Customization{
+			Secret:         v1alpha2.SecretRef{Name: secretName},
+			Configurations: []v1alpha2.ConfigMapRef{{Name: configMapName}},
+		}
+		secret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      secretName,
+				Namespace: namespace,
+			},
+		}
+		fakeClient := fake.NewFakeClient()
+		baseReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false),
+			jenkins, false, false, nil, nil)
+		err := fakeClient.Create(context.TODO(), secret)
+		require.NoError(t, err)
+
+		got, err := baseReconcileLoop.validateCustomization(customization, "spec.groovyScripts")
 
 		assert.NoError(t, err)
 		assert.False(t, got)
