@@ -70,12 +70,22 @@ func TestConfiguration(t *testing.T) {
 	verifyJenkinsMasterPodAttributes(t, jenkins)
 	client := verifyJenkinsAPIConnection(t, jenkins)
 	verifyPlugins(t, client, jenkins)
+	verifyPodPropagation(t, jenkins)
 
 	// user
 	waitForJenkinsUserConfigurationToComplete(t, jenkins)
 	verifyUserConfiguration(t, client, numberOfExecutors, systemMessage)
 	verifyJenkinsSeedJobs(t, client, []seedJobConfig{mySeedJob})
 }
+
+func verifyPodPropagation(t *testing.T, jenkins *v1alpha2.Jenkins) {
+	jenkinsPod := getJenkinsMasterPod(t, jenkins)
+	jenkins = getJenkins(t, jenkins.Namespace, jenkins.Name)
+
+	assert.Equal(t, jenkins.Spec.Master.SecurityContext, jenkinsPod.Spec.SecurityContext)
+	assert.Equal(t, jenkins.Spec.Master.Containers[0].Command, jenkinsPod.Spec.Containers[0].Command)
+}
+
 
 func createUserConfigurationSecret(t *testing.T, namespace string, systemMessageEnvName, systemMessage string) {
 	userConfiguration := &corev1.Secret{
