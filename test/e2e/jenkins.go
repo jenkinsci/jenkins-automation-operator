@@ -126,7 +126,6 @@ func createJenkinsCR(t *testing.T, name, namespace string, seedJob *[]v1alpha2.S
 					{Name: "simple-theme-plugin", Version: "0.5.1"},
 				},
 				NodeSelector: map[string]string{"kubernetes.io/hostname": "minikube"},
-				Volumes:      volumes,
 			},
 			SeedJobs: seedJobs,
 		},
