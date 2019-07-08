@@ -2,6 +2,19 @@
 SHELL := /bin/sh
 PATH  := $(GOPATH)/bin:$(PATH)
 
+OSFLAG 				:=
+ifeq ($(OS),Windows_NT)
+	OSFLAG = WIN32
+else
+	UNAME_S := $(shell uname -s)
+	ifeq ($(UNAME_S),Linux)
+		OSFLAG = LINUX
+	endif
+	ifeq ($(UNAME_S),Darwin)
+		OSFLAG = OSX
+	endif
+endif
+
 # Import config
 # You can change the default config with `make config="config_special.env" build`
 config ?= config.env
@@ -157,10 +170,20 @@ e2e: build docker-build ## Runs e2e tests, you can use EXTRA_ARGS
 	cat deploy/role.yaml >> deploy/namespace-init.yaml
 	cat deploy/role_binding.yaml >> deploy/namespace-init.yaml
 	cat deploy/operator.yaml >> deploy/namespace-init.yaml
+ifeq ($(OSFLAG), LINUX)
 	sed -i 's|\(image:\).*|\1 $(DOCKER_REGISTRY):$(GITCOMMIT)|g' deploy/namespace-init.yaml
 ifeq ($(KUBECTL_CONTEXT),minikube)
 	sed -i 's|\(imagePullPolicy\): IfNotPresent|\1: Never|g' deploy/namespace-init.yaml
 	sed -i 's|\(args:\).*|\1\ ["--minikube"\]|' deploy/namespace-init.yaml
+endif
+endif
+
+ifeq ($(OSFLAG), OSX)
+	sed -i '' 's|\(image:\).*|\1 $(DOCKER_REGISTRY):$(GITCOMMIT)|g' deploy/namespace-init.yaml
+ifeq ($(KUBECTL_CONTEXT),minikube)
+	sed -i '' 's|\(imagePullPolicy\): IfNotPresent|\1: Never|g' deploy/namespace-init.yaml
+	sed -i '' 's|\(args:\).*|\1\ ["--minikube"\]|' deploy/namespace-init.yaml
+endif
 endif
 
 	@RUNNING_TESTS=1 go test -parallel=1 "./test/e2e/" -tags "$(BUILDTAGS) cgo" -v -timeout 30m -run "$(E2E_TEST_SELECTOR)" \
