@@ -40,31 +40,29 @@ func TestConfiguration(t *testing.T) {
 			RepositoryURL:         "https://github.com/jenkinsci/kubernetes-operator.git",
 		},
 	}
-	volumes := []corev1.Volume{
-		{
-			Name: "test-configmap",
-			VolumeSource: corev1.VolumeSource{
-				ConfigMap: &corev1.ConfigMapVolumeSource{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: userConfigurationConfigMapName,
-					},
-				},
+	groovyScripts := v1alpha2.GroovyScripts{
+		Customization: v1alpha2.Customization{
+			Configurations: []v1alpha2.ConfigMapRef{
+				{userConfigurationConfigMapName},
 			},
+			Secret:v1alpha2.SecretRef{userConfigurationSecretName },
 		},
-		{
-			Name: "test-secret",
-			VolumeSource: corev1.VolumeSource{
-				Secret: &corev1.SecretVolumeSource{
-					SecretName: userConfigurationSecretName,
-				},
+	}
+
+
+	casc := v1alpha2.ConfigurationAsCode{
+		Customization: v1alpha2.Customization{
+			Configurations: []v1alpha2.ConfigMapRef{
+				{userConfigurationConfigMapName},
 			},
+			Secret:v1alpha2.SecretRef{userConfigurationSecretName },
 		},
 	}
 
 	// base
 	createUserConfigurationSecret(t, namespace, systemMessageEnvName, systemMessage)
 	createUserConfigurationConfigMap(t, namespace, numberOfExecutors, fmt.Sprintf("${%s}", systemMessageEnvName))
-	jenkins := createJenkinsCR(t, jenkinsCRName, namespace, &[]v1alpha2.SeedJob{mySeedJob.SeedJob}, volumes)
+	jenkins := createJenkinsCR(t, jenkinsCRName, namespace, &[]v1alpha2.SeedJob{mySeedJob.SeedJob}, groovyScripts, casc)
 	createDefaultLimitsForContainersInNamespace(t, namespace)
 	createKubernetesCredentialsProviderSecret(t, namespace, mySeedJob)
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
