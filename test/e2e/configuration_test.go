@@ -85,14 +85,6 @@ func TestConfiguration(t *testing.T) {
 	verifyJenkinsSeedJobs(t, client, []seedJobConfig{mySeedJob})
 }
 
-func verifyPodPropagation(t *testing.T, jenkins *v1alpha2.Jenkins) {
-	jenkinsPod := getJenkinsMasterPod(t, jenkins)
-	jenkins = getJenkins(t, jenkins.Namespace, jenkins.Name)
-
-	assert.Equal(t, jenkins.Spec.Master.SecurityContext, jenkinsPod.Spec.SecurityContext)
-	assert.Equal(t, jenkins.Spec.Master.Containers[0].Command, jenkinsPod.Spec.Containers[0].Command)
-}
-
 func createUserConfigurationSecret(t *testing.T, namespace string, systemMessageEnvName, systemMessage string) {
 	userConfiguration := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
@@ -176,6 +168,9 @@ func verifyJenkinsMasterPodAttributes(t *testing.T, jenkins *v1alpha2.Jenkins) {
 
 	assert.Equal(t, resources.JenkinsMasterContainerName, jenkinsPod.Spec.Containers[0].Name)
 	assert.Equal(t, len(jenkins.Spec.Master.Containers), len(jenkinsPod.Spec.Containers))
+	
+	assert.Equal(t, jenkins.Spec.Master.SecurityContext, jenkinsPod.Spec.SecurityContext)
+	assert.Equal(t, jenkins.Spec.Master.Containers[0].Command, jenkinsPod.Spec.Containers[0].Command)
 
 	for _, actualContainer := range jenkinsPod.Spec.Containers {
 		if actualContainer.Name == resources.JenkinsMasterContainerName {
