@@ -43,18 +43,26 @@ func TestConfiguration(t *testing.T) {
 	groovyScripts := v1alpha2.GroovyScripts{
 		Customization: v1alpha2.Customization{
 			Configurations: []v1alpha2.ConfigMapRef{
-				{userConfigurationConfigMapName},
+				{
+					Name: userConfigurationConfigMapName,
+				},
 			},
-			Secret: v1alpha2.SecretRef{userConfigurationSecretName},
+			Secret: v1alpha2.SecretRef{
+				Name: userConfigurationSecretName,
+			},
 		},
 	}
 
 	casc := v1alpha2.ConfigurationAsCode{
 		Customization: v1alpha2.Customization{
 			Configurations: []v1alpha2.ConfigMapRef{
-				{userConfigurationConfigMapName},
+				{
+					Name: userConfigurationConfigMapName,
+				},
 			},
-			Secret: v1alpha2.SecretRef{userConfigurationSecretName},
+			Secret: v1alpha2.SecretRef{
+				Name: userConfigurationSecretName,
+			},
 		},
 	}
 
