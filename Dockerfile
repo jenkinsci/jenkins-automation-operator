@@ -42,7 +42,6 @@ RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s
 RUN export GO111MODULE=auto
 
 RUN mkdir -p $GOPATH/src/github.com/jenkinsci/kubernetes-operator
-ADD . $GOPATH/src/github.com/jenkinsci/kubernetes-operator
 WORKDIR $GOPATH/src/github.com/jenkinsci/kubernetes-operator
 
 RUN mkdir -p /home/builder
