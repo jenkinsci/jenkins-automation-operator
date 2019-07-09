@@ -340,7 +340,7 @@ docker-run: ## Run the container in docker, you can use EXTRA_ARGS
 .PHONY: minikube-run
 minikube-run: export WATCH_NAMESPACE = $(NAMESPACE)
 minikube-run: export OPERATOR_NAME = $(NAME)
-minikube-run: minikube-start build ## Run the operator locally and use minikube as Kubernetes cluster, you can use EXTRA_ARGS
+minikube-run: minikube-start ## Run the operator locally and use minikube as Kubernetes cluster, you can use EXTRA_ARGS
 	@echo "+ $@"
 	kubectl config use-context minikube
 	kubectl apply -f deploy/crds/jenkins_$(API_VERSION)_jenkins_crd.yaml
