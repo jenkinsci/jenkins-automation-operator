@@ -45,17 +45,16 @@ func TestConfiguration(t *testing.T) {
 			Configurations: []v1alpha2.ConfigMapRef{
 				{userConfigurationConfigMapName},
 			},
-			Secret:v1alpha2.SecretRef{userConfigurationSecretName },
+			Secret: v1alpha2.SecretRef{userConfigurationSecretName},
 		},
 	}
-
 
 	casc := v1alpha2.ConfigurationAsCode{
 		Customization: v1alpha2.Customization{
 			Configurations: []v1alpha2.ConfigMapRef{
 				{userConfigurationConfigMapName},
 			},
-			Secret:v1alpha2.SecretRef{userConfigurationSecretName },
+			Secret: v1alpha2.SecretRef{userConfigurationSecretName},
 		},
 	}
 
@@ -85,7 +84,6 @@ func verifyPodPropagation(t *testing.T, jenkins *v1alpha2.Jenkins) {
 	assert.Equal(t, jenkins.Spec.Master.SecurityContext, jenkinsPod.Spec.SecurityContext)
 	assert.Equal(t, jenkins.Spec.Master.Containers[0].Command, jenkinsPod.Spec.Containers[0].Command)
 }
-
 
 func createUserConfigurationSecret(t *testing.T, namespace string, systemMessageEnvName, systemMessage string) {
 	userConfiguration := &corev1.Secret{

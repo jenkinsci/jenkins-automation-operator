@@ -78,8 +78,8 @@ func createJenkinsCR(t *testing.T, name, namespace string, seedJob *[]v1alpha2.S
 			Namespace: namespace,
 		},
 		Spec: v1alpha2.JenkinsSpec{
-			GroovyScripts:groovyScripts,
-			ConfigurationAsCode:casc,
+			GroovyScripts:       groovyScripts,
+			ConfigurationAsCode: casc,
 			Master: v1alpha2.JenkinsMaster{
 				Annotations: map[string]string{"test": "label"},
 				Containers: []v1alpha2.Container{

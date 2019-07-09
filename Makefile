@@ -196,13 +196,14 @@ vet: ## Verifies `go vet` passes
 
 .PHONY: staticcheck
 HAS_STATICCHECK := $(shell which staticcheck)
+PLATFORM  = $(shell echo $(UNAME_S) | tr A-Z a-z)
 staticcheck: ## Verifies `staticcheck` passes
 	@echo "+ $@"
 ifndef HAS_STATICCHECK
-	wget https://github.com/dominikh/go-tools/releases/download/2019.1.1/staticcheck_linux_amd64
-	chmod +x staticcheck_linux_amd64
-	mkdir -p $(HOME)/bin
-	mv staticcheck_linux_amd64 $(HOME)/bin/staticcheck
+	wget https://github.com/dominikh/go-tools/releases/download/2019.1.1/staticcheck_$(PLATFORM)_amd64
+	chmod +x staticcheck_$(PLATFORM)_amd64
+	mkdir -p $(GOPATH)/bin
+	mv staticcheck_$(PLATFORM)_amd64 $(GOPATH)/bin/staticcheck
 endif
 	@staticcheck $(PACKAGES)
 
