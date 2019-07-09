@@ -77,7 +77,6 @@ func TestConfiguration(t *testing.T) {
 	verifyJenkinsMasterPodAttributes(t, jenkins)
 	client := verifyJenkinsAPIConnection(t, jenkins)
 	verifyPlugins(t, client, jenkins)
-	verifyPodPropagation(t, jenkins)
 
 	// user
 	waitForJenkinsUserConfigurationToComplete(t, jenkins)

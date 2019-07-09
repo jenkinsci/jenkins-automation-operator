@@ -162,7 +162,7 @@ prepare-all-in-one-deploy-file: ## Prepares all in one deploy file
 
 .PHONY: e2e
 CURRENT_DIRECTORY := $(shell pwd)
-e2e: build docker-build ## Runs e2e tests, you can use EXTRA_ARGS
+e2e: docker-build ## Runs e2e tests, you can use EXTRA_ARGS
 	@echo "+ $@"
 	@echo "Docker image: $(DOCKER_REGISTRY):$(GITCOMMIT)"
 	kubectl config use-context $(KUBECTL_CONTEXT)
@@ -291,7 +291,7 @@ docker-login: ## Log in into the Docker repository
 	@echo "+ $@"
 
 .PHONY: docker-build
-docker-build: check-env build ## Build the container
+docker-build: check-env ## Build the container
 	@echo "+ $@"
 	docker build . -t $(DOCKER_REGISTRY):$(GITCOMMIT) --file build/Dockerfile
 
@@ -428,7 +428,7 @@ image: ## Create the docker image from the Dockerfile. This image is used to bui
 PWD := $(shell pwd)
 DOCKER_HOST_IP := $(shell minikube docker-env | grep DOCKER_HOST | cut -d '"' -f 2)
 MINIKUBE_IP := $(shell minikube ip)
-indocker: minikube-run image ## Run make in a docker container
+indocker: minikube-start image ## Run make in a docker container
 	@echo "+ $@"
 	docker run --rm -it $(DOCKER_FLAGS) \
 		-v /var/run/docker.sock:/var/run/docker.sock \
