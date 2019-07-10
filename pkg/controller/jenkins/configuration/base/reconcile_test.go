@@ -15,40 +15,81 @@ import (
 )
 
 func TestGetJenkinsOpts(t *testing.T) {
-	envs := []corev1.EnvVar{
-		{Name: "JENKINS_OPTS", Value: "--prefix=/jenkins --httpPort=8080"},
-	}
-
-	jenkins := &v1alpha2.Jenkins{
-		Spec: v1alpha2.JenkinsSpec{
-			Master: v1alpha2.JenkinsMaster{
-				Containers: []v1alpha2.Container{
-					{
-						Env: envs,
+	t.Run("JENKINS_OPTS is empty", func(t *testing.T) {
+		jenkins := &v1alpha2.Jenkins{
+			Spec: v1alpha2.JenkinsSpec{
+				Master: v1alpha2.JenkinsMaster{
+					Containers: []v1alpha2.Container{
+						{
+							Env: []corev1.EnvVar{
+								{Name: "JENKINS_OPTS", Value: ""},
+							},
+						},
 					},
 				},
 			},
-		},
-	}
+		}
 
-	opts := GetJenkinsOpts(jenkins)
-
-	t.Run("equal env vars", func(t *testing.T) {
-		assert.Equal(t, opts["prefix"], "/jenkins")
-		assert.Equal(t, opts["httpPort"], "8080")
+		opts := GetJenkinsOpts(jenkins)
+		assert.Equal(t, 0, len(opts))
 	})
 
-	t.Run("not equal env vars", func(t *testing.T) {
-		assert.NotEqual(t, opts["prefix"], "/jenkins_not_equal")
-		assert.NotEqual(t, opts["httpPort"], "80808")
+	t.Run("JENKINS_OPTS have --prefix argument ", func(t *testing.T) {
+		jenkins := &v1alpha2.Jenkins{
+			Spec: v1alpha2.JenkinsSpec{
+				Master: v1alpha2.JenkinsMaster{
+					Containers: []v1alpha2.Container{
+						{
+							Env: []corev1.EnvVar{
+								{Name: "JENKINS_OPTS", Value: "--prefix=/jenkins"},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		opts := GetJenkinsOpts(jenkins)
+
+		assert.Equal(t, 1, len(opts))
+
+		t.Run("ensure that JENKINS_OPTS not contains --httpPort", func(t *testing.T) {
+			assert.NotContains(t, opts, "httpPort")
+		})
+
+		t.Run("ensure that argument is --prefix", func(t *testing.T) {
+			assert.Contains(t, opts, "prefix")
+		})
 	})
 
-	t.Run("should exists", func(t *testing.T) {
-		assert.Contains(t, opts, "httpPort")
-	})
+	t.Run("JENKINS_OPTS have --prefix and --httpPort argument", func(t *testing.T) {
+		jenkins := &v1alpha2.Jenkins{
+			Spec: v1alpha2.JenkinsSpec{
+				Master: v1alpha2.JenkinsMaster{
+					Containers: []v1alpha2.Container{
+						{
+							Env: []corev1.EnvVar{
+								{Name: "JENKINS_OPTS", Value: "--prefix=/jenkins --httpPort=8080"},
+							},
+						},
+					},
+				},
+			},
+		}
 
-	t.Run("should exists", func(t *testing.T) {
-		assert.NotContains(t, opts, "should_not_exists")
+		opts := GetJenkinsOpts(jenkins)
+
+		assert.Equal(t, 2, len(opts))
+
+		t.Run("ensure that argument is --prefix with value /jenkins", func(t *testing.T) {
+			assert.Contains(t, opts, "prefix")
+			assert.Equal(t, opts["prefix"], "/jenkins")
+		})
+
+		t.Run("ensure that argument is --httpPort with value 8080", func(t *testing.T) {
+			assert.Contains(t, opts, "httpPort")
+			assert.Equal(t, opts["httpPort"], "8080")
+		})
 	})
 }
 

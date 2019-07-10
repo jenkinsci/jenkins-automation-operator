@@ -136,12 +136,15 @@ func GetJenkinsOpts(jenkins *v1alpha2.Jenkins) map[string]string {
 		if v.Name == "JENKINS_OPTS" {
 			jenkinsOptsEnv := envs[k]
 			jenkinsOptsWithDashes := jenkinsOptsEnv.Value
-			jenkinsOptsWithDashes = strings.ReplaceAll(jenkinsOptsWithDashes, "--", "") // Remove dashes
+			if len(jenkinsOptsWithDashes) == 0 {
+				return nil
+			}
+			
 			jenkinsOptsWithEqOperators := strings.Split(jenkinsOptsWithDashes, " ")
 
 			for _, vx := range jenkinsOptsWithEqOperators {
 				opt := strings.Split(vx, "=")
-				jenkinsOpts[opt[0]] = opt[1]
+				jenkinsOpts[strings.ReplaceAll(opt[0], "--", "")] = opt[1]
 			}
 
 			return jenkinsOpts
