@@ -15,6 +15,25 @@ import (
 )
 
 func TestGetJenkinsOpts(t *testing.T) {
+	t.Run("JENKINS_OPTS is uninitialized", func(t *testing.T) {
+		jenkins := &v1alpha2.Jenkins{
+			Spec: v1alpha2.JenkinsSpec{
+				Master: v1alpha2.JenkinsMaster{
+					Containers: []v1alpha2.Container{
+						{
+							Env: []corev1.EnvVar{
+								{Name: "", Value: ""},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		opts := GetJenkinsOpts(jenkins)
+		assert.Equal(t, 0, len(opts))
+	})
+
 	t.Run("JENKINS_OPTS is empty", func(t *testing.T) {
 		jenkins := &v1alpha2.Jenkins{
 			Spec: v1alpha2.JenkinsSpec{
@@ -52,14 +71,9 @@ func TestGetJenkinsOpts(t *testing.T) {
 		opts := GetJenkinsOpts(jenkins)
 
 		assert.Equal(t, 1, len(opts))
-
-		t.Run("ensure that JENKINS_OPTS not contains --httpPort", func(t *testing.T) {
-			assert.NotContains(t, opts, "httpPort")
-		})
-
-		t.Run("ensure that argument is --prefix", func(t *testing.T) {
-			assert.Contains(t, opts, "prefix")
-		})
+		assert.NotContains(t, opts, "httpPort")
+		assert.Contains(t, opts, "prefix")
+		assert.Equal(t, opts["prefix"], "/jenkins")
 	})
 
 	t.Run("JENKINS_OPTS have --prefix and --httpPort argument", func(t *testing.T) {
@@ -81,15 +95,34 @@ func TestGetJenkinsOpts(t *testing.T) {
 
 		assert.Equal(t, 2, len(opts))
 
-		t.Run("ensure that argument is --prefix with value /jenkins", func(t *testing.T) {
-			assert.Contains(t, opts, "prefix")
-			assert.Equal(t, opts["prefix"], "/jenkins")
-		})
+		assert.Contains(t, opts, "prefix")
+		assert.Equal(t, opts["prefix"], "/jenkins")
 
-		t.Run("ensure that argument is --httpPort with value 8080", func(t *testing.T) {
-			assert.Contains(t, opts, "httpPort")
-			assert.Equal(t, opts["httpPort"], "8080")
-		})
+		assert.Contains(t, opts, "httpPort")
+		assert.Equal(t, opts["httpPort"], "8080")
+	})
+
+	t.Run("JENKINS_OPTS have --httpPort argument", func(t *testing.T) {
+		jenkins := &v1alpha2.Jenkins{
+			Spec: v1alpha2.JenkinsSpec{
+				Master: v1alpha2.JenkinsMaster{
+					Containers: []v1alpha2.Container{
+						{
+							Env: []corev1.EnvVar{
+								{Name: "JENKINS_OPTS", Value: "--httpPort=8080"},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		opts := GetJenkinsOpts(jenkins)
+
+		assert.Equal(t, 2, len(opts))
+		assert.NotContains(t, opts, "prefix")
+		assert.Contains(t, opts, "httpPort")
+		assert.Equal(t, opts["httpPort"], "8080")
 	})
 }
 

@@ -139,7 +139,7 @@ func GetJenkinsOpts(jenkins *v1alpha2.Jenkins) map[string]string {
 			if len(jenkinsOptsWithDashes) == 0 {
 				return nil
 			}
-			
+
 			jenkinsOptsWithEqOperators := strings.Split(jenkinsOptsWithDashes, " ")
 
 			for _, vx := range jenkinsOptsWithEqOperators {
