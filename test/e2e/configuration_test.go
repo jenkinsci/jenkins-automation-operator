@@ -40,23 +40,28 @@ func TestConfiguration(t *testing.T) {
 			RepositoryURL:         "https://github.com/jenkinsci/kubernetes-operator.git",
 		},
 	}
-	volumes := []corev1.Volume{
-		{
-			Name: "test-configmap",
-			VolumeSource: corev1.VolumeSource{
-				ConfigMap: &corev1.ConfigMapVolumeSource{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: userConfigurationConfigMapName,
-					},
+	groovyScripts := v1alpha2.GroovyScripts{
+		Customization: v1alpha2.Customization{
+			Configurations: []v1alpha2.ConfigMapRef{
+				{
+					Name: userConfigurationConfigMapName,
 				},
 			},
+			Secret: v1alpha2.SecretRef{
+				Name: userConfigurationSecretName,
+			},
 		},
-		{
-			Name: "test-secret",
-			VolumeSource: corev1.VolumeSource{
-				Secret: &corev1.SecretVolumeSource{
-					SecretName: userConfigurationSecretName,
+	}
+
+	casc := v1alpha2.ConfigurationAsCode{
+		Customization: v1alpha2.Customization{
+			Configurations: []v1alpha2.ConfigMapRef{
+				{
+					Name: userConfigurationConfigMapName,
 				},
+			},
+			Secret: v1alpha2.SecretRef{
+				Name: userConfigurationSecretName,
 			},
 		},
 	}
@@ -64,7 +69,7 @@ func TestConfiguration(t *testing.T) {
 	// base
 	createUserConfigurationSecret(t, namespace, systemMessageEnvName, systemMessage)
 	createUserConfigurationConfigMap(t, namespace, numberOfExecutors, fmt.Sprintf("${%s}", systemMessageEnvName))
-	jenkins := createJenkinsCR(t, jenkinsCRName, namespace, &[]v1alpha2.SeedJob{mySeedJob.SeedJob}, volumes)
+	jenkins := createJenkinsCR(t, jenkinsCRName, namespace, &[]v1alpha2.SeedJob{mySeedJob.SeedJob}, groovyScripts, casc)
 	createDefaultLimitsForContainersInNamespace(t, namespace)
 	createKubernetesCredentialsProviderSecret(t, namespace, mySeedJob)
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
@@ -162,6 +167,9 @@ func verifyJenkinsMasterPodAttributes(t *testing.T, jenkins *v1alpha2.Jenkins) {
 
 	assert.Equal(t, resources.JenkinsMasterContainerName, jenkinsPod.Spec.Containers[0].Name)
 	assert.Equal(t, len(jenkins.Spec.Master.Containers), len(jenkinsPod.Spec.Containers))
+	
+	assert.Equal(t, jenkins.Spec.Master.SecurityContext, jenkinsPod.Spec.SecurityContext)
+	assert.Equal(t, jenkins.Spec.Master.Containers[0].Command, jenkinsPod.Spec.Containers[0].Command)
 
 	for _, actualContainer := range jenkinsPod.Spec.Containers {
 		if actualContainer.Name == resources.JenkinsMasterContainerName {
