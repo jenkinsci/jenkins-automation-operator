@@ -14,6 +14,44 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
+func TestGetJenkinsOpts(t *testing.T) {
+	envs := []corev1.EnvVar{
+		{Name: "JENKINS_OPTS", Value: "--prefix=/jenkins --httpPort=8080"},
+	}
+
+	jenkins := &v1alpha2.Jenkins{
+		Spec: v1alpha2.JenkinsSpec{
+			Master: v1alpha2.JenkinsMaster{
+				Containers: []v1alpha2.Container{
+					{
+						Env: envs,
+					},
+				},
+			},
+		},
+	}
+
+	opts := GetJenkinsOpts(jenkins)
+
+	t.Run("equal env vars", func(t *testing.T) {
+		assert.Equal(t, opts["prefix"], "/jenkins")
+		assert.Equal(t, opts["httpPort"], "8080")
+	})
+
+	t.Run("not equal env vars", func(t *testing.T) {
+		assert.NotEqual(t, opts["prefix"], "/jenkins_not_equal")
+		assert.NotEqual(t, opts["httpPort"], "80808")
+	})
+
+	t.Run("should exists", func(t *testing.T) {
+		assert.Contains(t, opts, "httpPort")
+	})
+
+	t.Run("should exists", func(t *testing.T) {
+		assert.NotContains(t, opts, "should_not_exists")
+	})
+}
+
 func TestCompareContainerVolumeMounts(t *testing.T) {
 	t.Run("happy with service account", func(t *testing.T) {
 		expectedContainer := corev1.Container{
