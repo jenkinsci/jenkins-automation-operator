@@ -119,7 +119,7 @@ func TestGetJenkinsOpts(t *testing.T) {
 
 		opts := GetJenkinsOpts(jenkins)
 
-		assert.Equal(t, 2, len(opts))
+		assert.Equal(t, 1, len(opts))
 		assert.NotContains(t, opts, "prefix")
 		assert.Contains(t, opts, "httpPort")
 		assert.Equal(t, opts["httpPort"], "8080")
