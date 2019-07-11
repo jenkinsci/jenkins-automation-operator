@@ -6,6 +6,11 @@ set -eo pipefail
 [[ -z "${BACKUP_DIR}" ]] && echo "Required 'BACKUP_DIR' env not set" && exit 1;
 [[ -z "${JENKINS_HOME}" ]] && echo "Required 'JENKINS_HOME' env not set" && exit 1;
 
+if [[ ! -z "${BACKUP_COUNT}" ]]; then
+  echo "Trimming to only $((BACKUP_COUNT-1)) recent backups in preparation for new backup"
+  ls -1t ${BACKUP_DIR} | tail -n +${BACKUP_COUNT} | xargs -I '{}' rm -f ${BACKUP_DIR}/'{}'
+fi
+
 backup_number=$1
 echo "Running backup"
 
