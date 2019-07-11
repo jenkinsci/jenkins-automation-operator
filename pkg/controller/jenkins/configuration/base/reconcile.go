@@ -127,6 +127,32 @@ func (r *ReconcileJenkinsBaseConfiguration) Reconcile() (reconcile.Result, jenki
 	return result, jenkinsClient, err
 }
 
+// GetJenkinsOpts put container JENKINS_OPTS env parameters in map and returns it
+func GetJenkinsOpts(jenkins *v1alpha2.Jenkins) map[string]string {
+	envs := jenkins.Spec.Master.Containers[0].Env
+	jenkinsOpts := make(map[string]string)
+
+	for k, v := range envs {
+		if v.Name == "JENKINS_OPTS" {
+			jenkinsOptsEnv := envs[k]
+			jenkinsOptsWithDashes := jenkinsOptsEnv.Value
+			if len(jenkinsOptsWithDashes) == 0 {
+				return nil
+			}
+
+			jenkinsOptsWithEqOperators := strings.Split(jenkinsOptsWithDashes, " ")
+
+			for _, vx := range jenkinsOptsWithEqOperators {
+				opt := strings.Split(vx, "=")
+				jenkinsOpts[strings.ReplaceAll(opt[0], "--", "")] = opt[1]
+			}
+
+			return jenkinsOpts
+		}
+	}
+	return nil
+}
+
 func (r *ReconcileJenkinsBaseConfiguration) ensureResourcesRequiredForJenkinsPod(metaObject metav1.ObjectMeta) error {
 	if err := r.createOperatorCredentialsSecret(metaObject); err != nil {
 		return err
@@ -748,6 +774,11 @@ func (r *ReconcileJenkinsBaseConfiguration) waitForJenkins(meta metav1.ObjectMet
 func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsClient(meta metav1.ObjectMeta) (jenkinsclient.Jenkins, error) {
 	jenkinsURL, err := jenkinsclient.BuildJenkinsAPIUrl(
 		r.jenkins.ObjectMeta.Namespace, resources.GetJenkinsHTTPServiceName(r.jenkins), r.jenkins.Spec.Service.Port, r.local, r.minikube)
+
+	if prefix, ok := GetJenkinsOpts(r.jenkins)["prefix"]; ok {
+		jenkinsURL = jenkinsURL + prefix
+	}
+
 	if err != nil {
 		return nil, err
 	}
