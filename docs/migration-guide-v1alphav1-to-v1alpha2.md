@@ -308,7 +308,7 @@ To use default CRD file:
 kubectl -n <namespace> apply -f https://github.com/jenkinsci/kubernetes-operator/blob/master/deploy/crds/jenkins_v1alpha2_jenkins_crd.yaml
 ```
 
-## Update RBAC to new verison
+## Update RBAC to new version
 
 New operator version requires updated RBAC permissions:
 

@@ -5,12 +5,13 @@ This document describes a getting started guide for **jenkins-operator** and an 
 1. [First Steps](#first-steps)
 2. [Deploy Jenkins](#deploy-jenkins)
 3. [Configure Seed Jobs and Pipelines](#configure-seed-jobs-and-pipelines)
-4. [Install Plugins](#install-plugins)
-5. [Configure Backup & Restore](#configure-backup-and-restore)
-6. [AKS](#aks)
-7. [Jenkins login credentials](#jenkins-login-credentials)
-8. [Override default Jenkins container command](#override-default-Jenkins-container-command)
-9. [Debugging](#debugging)
+4. [Pulling custom Jenkins image from Docker Registry](#Pulling custom Jenkins image from Docker Registry)
+5. [Install Plugins](#install-plugins)
+6. [Configure Backup & Restore](#configure-backup-and-restore)
+7. [AKS](#aks)
+8. [Jenkins login credentials](#jenkins-login-credentials)
+9. [Override default Jenkins container command](#override-default-Jenkins-container-command)
+10. [Debugging](#debugging)
 
 ## First Steps
 
@@ -291,6 +292,79 @@ metadata:
 data:
   username: github_user_name
   password: password_or_token
+```
+
+## Pulling custom Jenkins image from Docker Registry
+Since **0.2.0** version it's possible to use custom prebuilt Jenkins Docker Image using `imagePullSecrets` annotation support.
+
+Please follow the instructions on [creating a secret with a docker config](https://kubernetes.io/docs/concepts/containers/images/?origin_team=T42NTAGHM#creating-a-secret-with-a-docker-config).
+
+### Docker Hub Configuration
+To use Docker Hub additional steps are required.
+
+Edit the previously created secret:
+```bash
+kubectl edit secret <name>
+```
+
+The `data..dockerconfigjson` key's value needs to be replaced with a modified version.
+
+After modifications it needs to be encoded as Base64 value before setting the `.dockerconfigjson` key:q.
+
+Example config file to modify and use:
+```
+{
+    "auths":{
+        "https://index.docker.io/v1/":{
+            "username":"user",
+            "password":"password",
+            "email":"yourdockeremail@gmail.com",
+            "auth":"base64 of string user:password"
+        },
+        "auth.docker.io":{
+            "username":"user",
+            "password":"password",
+            "email":"yourdockeremail@gmail.com",
+            "auth":"base64 of string user:password"
+        },
+        "registry.docker.io":{
+            "username":"user",
+            "password":"password",
+            "email":"yourdockeremail@gmail.com",
+            "auth":"base64 of string user:password"
+        },
+        "docker.io":{
+            "username":"user",
+            "password":"password",
+            "email":"yourdockeremail@gmail.com",
+            "auth":"base64 of string user:password"
+        },
+        "https://registry-1.docker.io/v2/": {
+            "username":"user",
+            "password":"password",
+            "email":"yourdockeremail@gmail.com",
+            "auth":"base64 of string user:password"
+        },
+        "registry-1.docker.io/v2/": {
+            "username":"user",
+            "password":"password",
+            "email":"yourdockeremail@gmail.com",
+            "auth":"base64 of string user:password"
+        },
+        "registry-1.docker.io": {
+            "username":"user",
+            "password":"password",
+            "email":"yourdockeremail@gmail.com",
+            "auth":"base64 of string user:password"
+        },
+        "https://registry-1.docker.io": {
+            "username":"user",
+            "password":"password",
+            "email":"yourdockeremail@gmail.com",
+            "auth":"base64 of string user:password"
+        }
+    }
+}
 ```
 
 ## Jenkins Customisation
