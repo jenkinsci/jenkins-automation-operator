@@ -5,7 +5,7 @@ This document describes a getting started guide for **jenkins-operator** and an 
 1. [First Steps](#first-steps)
 2. [Deploy Jenkins](#deploy-jenkins)
 3. [Configure Seed Jobs and Pipelines](#configure-seed-jobs-and-pipelines)
-4. [Pulling custom Jenkins image from Docker Registry](#Pulling custom Jenkins image from Docker Registry)
+4. [Pulling Docker images from private repositories](#Pulling Docker images from private repositories)
 5. [Install Plugins](#install-plugins)
 6. [Configure Backup & Restore](#configure-backup-and-restore)
 7. [AKS](#aks)
@@ -294,8 +294,8 @@ data:
   password: password_or_token
 ```
 
-## Pulling custom Jenkins image from Docker Registry
-Since **0.2.0** version it's possible to use custom prebuilt Jenkins Docker Image using `imagePullSecrets` annotation support.
+## Pulling Docker images from private repositories
+To pull Docker Image from private repository you can use `imagePullSecrets`.
 
 Please follow the instructions on [creating a secret with a docker config](https://kubernetes.io/docs/concepts/containers/images/?origin_team=T42NTAGHM#creating-a-secret-with-a-docker-config).
 
@@ -304,10 +304,10 @@ To use Docker Hub additional steps are required.
 
 Edit the previously created secret:
 ```bash
-kubectl edit secret <name>
+kubectl -n <namespace> edit secret <name>
 ```
 
-The `data..dockerconfigjson` key's value needs to be replaced with a modified version.
+The `.dockerconfigjson` key's value needs to be replaced with a modified version.
 
 After modifications it needs to be encoded as Base64 value before setting the `.dockerconfigjson` key:q.
 

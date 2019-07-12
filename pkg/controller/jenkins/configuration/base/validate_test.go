@@ -134,7 +134,7 @@ func TestValidatePlugins(t *testing.T) {
 
 func TestReconcileJenkinsBaseConfiguration_validateImagePullSecrets(t *testing.T) {
 	t.Run("happy", func(t *testing.T) {
-		lor := &corev1.Secret{
+		secret := &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "test-ref",
 			},
@@ -150,14 +150,14 @@ func TestReconcileJenkinsBaseConfiguration_validateImagePullSecrets(t *testing.T
 			Spec: v1alpha2.JenkinsSpec{
 				Master: v1alpha2.JenkinsMaster{
 					ImagePullSecrets: []corev1.LocalObjectReference{
-						{Name: lor.ObjectMeta.Name},
+						{Name: secret.ObjectMeta.Name},
 					},
 				},
 			},
 		}
 
 		fakeClient := fake.NewFakeClient()
-		err := fakeClient.Create(context.TODO(), lor)
+		err := fakeClient.Create(context.TODO(), secret)
 		assert.NoError(t, err)
 
 		baseReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false),
@@ -189,7 +189,7 @@ func TestReconcileJenkinsBaseConfiguration_validateImagePullSecrets(t *testing.T
 	})
 
 	t.Run("no docker email", func(t *testing.T) {
-		lor := &corev1.Secret{
+		secret := &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "test-ref",
 			},
@@ -204,14 +204,14 @@ func TestReconcileJenkinsBaseConfiguration_validateImagePullSecrets(t *testing.T
 			Spec: v1alpha2.JenkinsSpec{
 				Master: v1alpha2.JenkinsMaster{
 					ImagePullSecrets: []corev1.LocalObjectReference{
-						{Name: lor.ObjectMeta.Name},
+						{Name: secret.ObjectMeta.Name},
 					},
 				},
 			},
 		}
 
 		fakeClient := fake.NewFakeClient()
-		err := fakeClient.Create(context.TODO(), lor)
+		err := fakeClient.Create(context.TODO(), secret)
 		assert.NoError(t, err)
 
 		baseReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false),
@@ -223,7 +223,7 @@ func TestReconcileJenkinsBaseConfiguration_validateImagePullSecrets(t *testing.T
 	})
 
 	t.Run("no docker password", func(t *testing.T) {
-		lor := &corev1.Secret{
+		secret := &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "test-ref",
 			},
@@ -238,14 +238,14 @@ func TestReconcileJenkinsBaseConfiguration_validateImagePullSecrets(t *testing.T
 			Spec: v1alpha2.JenkinsSpec{
 				Master: v1alpha2.JenkinsMaster{
 					ImagePullSecrets: []corev1.LocalObjectReference{
-						{Name: lor.ObjectMeta.Name},
+						{Name: secret.ObjectMeta.Name},
 					},
 				},
 			},
 		}
 
 		fakeClient := fake.NewFakeClient()
-		err := fakeClient.Create(context.TODO(), lor)
+		err := fakeClient.Create(context.TODO(), secret)
 		assert.NoError(t, err)
 
 		baseReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false),
@@ -257,7 +257,7 @@ func TestReconcileJenkinsBaseConfiguration_validateImagePullSecrets(t *testing.T
 	})
 
 	t.Run("no docker username", func(t *testing.T) {
-		lor := &corev1.Secret{
+		secret := &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "test-ref",
 			},
@@ -272,14 +272,14 @@ func TestReconcileJenkinsBaseConfiguration_validateImagePullSecrets(t *testing.T
 			Spec: v1alpha2.JenkinsSpec{
 				Master: v1alpha2.JenkinsMaster{
 					ImagePullSecrets: []corev1.LocalObjectReference{
-						{Name: lor.ObjectMeta.Name},
+						{Name: secret.ObjectMeta.Name},
 					},
 				},
 			},
 		}
 
 		fakeClient := fake.NewFakeClient()
-		err := fakeClient.Create(context.TODO(), lor)
+		err := fakeClient.Create(context.TODO(), secret)
 		assert.NoError(t, err)
 
 		baseReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false),
@@ -291,7 +291,7 @@ func TestReconcileJenkinsBaseConfiguration_validateImagePullSecrets(t *testing.T
 	})
 
 	t.Run("no docker server", func(t *testing.T) {
-		lor := &corev1.Secret{
+		secret := &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "test-ref",
 			},
@@ -306,14 +306,14 @@ func TestReconcileJenkinsBaseConfiguration_validateImagePullSecrets(t *testing.T
 			Spec: v1alpha2.JenkinsSpec{
 				Master: v1alpha2.JenkinsMaster{
 					ImagePullSecrets: []corev1.LocalObjectReference{
-						{Name: lor.ObjectMeta.Name},
+						{Name: secret.ObjectMeta.Name},
 					},
 				},
 			},
 		}
 
 		fakeClient := fake.NewFakeClient()
-		err := fakeClient.Create(context.TODO(), lor)
+		err := fakeClient.Create(context.TODO(), secret)
 		assert.NoError(t, err)
 
 		baseReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false),
