@@ -1,7 +1,7 @@
 #!/bin/bash
 set -eo pipefail
 
-[ "${DEBUG}" ] && set -x
+[[ "${DEBUG}" ]] && set -x
 
 # set current working directory to the directory of the script
 cd "$(dirname "$0")"
