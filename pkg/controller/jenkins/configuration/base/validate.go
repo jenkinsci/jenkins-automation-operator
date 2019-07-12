@@ -2,6 +2,7 @@ package base
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"regexp"
 
@@ -55,6 +56,46 @@ func (r *ReconcileJenkinsBaseConfiguration) Validate(jenkins *v1alpha2.Jenkins) 
 		return false, err
 	} else if !valid {
 		return false, nil
+	}
+
+	return true, nil
+}
+
+func (r *ReconcileJenkinsBaseConfiguration) validateImagePullSecrets() (bool, error) {
+	var err error
+	valid := true
+	ips := r.jenkins.Spec.Master.ImagePullSecrets
+	for _, sr := range ips {
+		valid, err = r.validateImagePullSecret(sr.Name)
+		if err != nil || !valid {
+			return valid, err
+		}
+	}
+
+	return valid, err
+}
+
+func (r *ReconcileJenkinsBaseConfiguration) validateImagePullSecret(name string) (bool, error) {
+	secret := &corev1.Secret{}
+	err := r.k8sClient.Get(context.TODO(), types.NamespacedName{Name: name, Namespace: r.jenkins.ObjectMeta.Namespace}, secret)
+	if err != nil && apierrors.IsNotFound(err) {
+		r.logger.V(log.VWarn).Info(fmt.Sprintf("Secret '%s' not found", name))
+		return false, nil
+	} else if err != nil && !apierrors.IsNotFound(err) {
+		return false, stackerr.WithStack(err)
+	}
+
+	if secret.Data["docker-server"] == nil {
+		return false, errors.New("docker server not set")
+	}
+	if secret.Data["docker-username"] == nil {
+		return false, errors.New("docker username not set")
+	}
+	if secret.Data["docker-password"] == nil {
+		return false, errors.New("docker password not set")
+	}
+	if secret.Data["docker-email"] == nil {
+		return false, errors.New("docker email not set")
 	}
 
 	return true, nil
