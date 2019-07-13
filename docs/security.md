@@ -34,6 +34,8 @@ Kubernetes API permissions are limited by the following roles:
 - [jenkins-operator role](../deploy/role.yaml)  
 - [Jenkins Master role](../pkg/controller/jenkins/configuration/base/resources/rbac.go)
 
+Since **jenkins-operator** must be able to grant permission for its' deployed Jenkins masters to spawn pods (the `Jenkins Master role` above), the operator itself requires permission to create RBAC resources (the `jenkins-operator role` above). Deployed this way, any subject which may create a Pod (including a Jenkins job) may assume the `jenkins-operator` role by using its' ServiceAccount, create RBAC rules, and thus escape its granted permissions. Any namespace to which the `jenkins-operator` is deployed must be considered to implicitly grant all possible permissions to any subject which can create a Pod in that namespace.
+
 ## Report a Security Vulnerability
 
 If you find a vulnerability or any misconfiguration in Jenkins, please report it in the [issues](https://github.com/jenkinsci/kubernetes-operator/issues). 
