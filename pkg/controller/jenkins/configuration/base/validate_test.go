@@ -217,7 +217,7 @@ func TestReconcileJenkinsBaseConfiguration_validateImagePullSecrets(t *testing.T
 		baseReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false),
 			&jenkins, false, false, nil, nil)
 
-		got, err := baseReconcileLoop.validateImagePullSecrets()
+		got, _ := baseReconcileLoop.validateImagePullSecrets()
 		assert.Equal(t, got, false)
 	})
 
@@ -250,7 +250,7 @@ func TestReconcileJenkinsBaseConfiguration_validateImagePullSecrets(t *testing.T
 		baseReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false),
 			&jenkins, false, false, nil, nil)
 
-		got, err := baseReconcileLoop.validateImagePullSecrets()
+		got, _ := baseReconcileLoop.validateImagePullSecrets()
 		assert.Equal(t, got, false)
 	})
 
@@ -283,7 +283,7 @@ func TestReconcileJenkinsBaseConfiguration_validateImagePullSecrets(t *testing.T
 		baseReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false),
 			&jenkins, false, false, nil, nil)
 
-		got, err := baseReconcileLoop.validateImagePullSecrets()
+		got, _ := baseReconcileLoop.validateImagePullSecrets()
 		assert.Equal(t, got, false)
 	})
 
@@ -316,7 +316,7 @@ func TestReconcileJenkinsBaseConfiguration_validateImagePullSecrets(t *testing.T
 		baseReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false),
 			&jenkins, false, false, nil, nil)
 
-		got, err := baseReconcileLoop.validateImagePullSecrets()
+		got, _ := baseReconcileLoop.validateImagePullSecrets()
 		assert.Equal(t, got, false)
 	})
 }

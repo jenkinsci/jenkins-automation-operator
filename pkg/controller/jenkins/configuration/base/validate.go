@@ -93,7 +93,7 @@ func (r *ReconcileJenkinsBaseConfiguration) validateImagePullSecret(name string)
 		r.logger.V(log.VWarn).Info("Docker Password is empty")
 		return false, nil
 	}
-	if secret.Data["docker-email"] == nil  {
+	if secret.Data["docker-email"] == nil {
 		r.logger.V(log.VWarn).Info("Docker Email is empty")
 		return false, nil
 	}
