@@ -52,19 +52,13 @@ $ kubectl create ns jenkins-operator
 $ kubectl create ns jenkins
 ```
 
-Next, apply the RBAC manifests
+Next, apply the RBAC manifests for **jenkins-operator** namespace
 ```bash
-$ kubectl -n jenkins apply -f deploy/role.yaml
-$ kubectl -n jenkins -n jenkins-operator apply -f deploy/service_account.yaml
-$ kubectl -n jenkins -n jenkins apply -f deploy/role_binding.yaml
+$ kubectl -n jenkins-operator apply -f deploy/service_account.yaml
+$ kubectl -n jenkins-operator apply -f deploy/role_binding.yaml
 ```
 
-Then, you must create operator pod by:
-```bash
-$ kubectl -n jenkins -n jenkins-operator apply -f deploy/operator.yaml
-```
-
-To combine pods, you must modify RoleBindings. You can use this example YAML to bind:
+Create file role_binding_jenkins.yaml in `deploy` folder:
 ```yaml
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
@@ -79,7 +73,19 @@ roleRef:
   kind: Role
   name: jenkins-operator
   apiGroup: rbac.authorization.k8s.io
-  ```
+```
+
+Then, apply RBAC rules for **jenkins** namespace
+```bash
+$ kubectl -n jenkins apply -f deploy/role.yaml
+$ kubectl -n jenkins apply -f role_binding_jenkins.yaml
+```
+
+Finally, you must create operator pod by:
+```bash
+$ kubectl -n jenkins -n jenkins-operator apply -f deploy/operator.yaml
+```
+
 
 ## Report a Security Vulnerability
 
