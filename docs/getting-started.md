@@ -5,7 +5,7 @@ This document describes a getting started guide for **jenkins-operator** and an 
 1. [First Steps](#first-steps)
 2. [Deploy Jenkins](#deploy-jenkins)
 3. [Configure Seed Jobs and Pipelines](#configure-seed-jobs-and-pipelines)
-4. [Pulling Docker images from private repositories](#Pulling Docker images from private repositories)
+4. [Pulling Docker images from private repositories](#pulling-docker-images-from-private-repositories)
 5. [Install Plugins](#install-plugins)
 6. [Configure Backup & Restore](#configure-backup-and-restore)
 7. [AKS](#aks)

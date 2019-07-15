@@ -82,19 +82,19 @@ func (r *ReconcileJenkinsBaseConfiguration) validateImagePullSecret(name string)
 	}
 
 	if secret.Data["docker-server"] == nil {
-		r.logger.V(log.VWarn).Info("Docker Server is empty")
+		r.logger.V(log.VWarn).Info(fmt.Sprintf("Secret '%s' defined in spec.master.imagePullSecrets doesn't have 'docker-server' key.", name))
 		return false, nil
 	}
 	if secret.Data["docker-username"] == nil {
-		r.logger.V(log.VWarn).Info("Docker Username is empty")
+		r.logger.V(log.VWarn).Info(fmt.Sprintf("Secret '%s' defined in spec.master.imagePullSecrets doesn't have 'docker-username' key.", name))
 		return false, nil
 	}
 	if secret.Data["docker-password"] == nil {
-		r.logger.V(log.VWarn).Info("Docker Password is empty")
+		r.logger.V(log.VWarn).Info(fmt.Sprintf("Secret '%s' defined in spec.master.imagePullSecrets doesn't have 'docker-password' key.", name))
 		return false, nil
 	}
 	if secret.Data["docker-email"] == nil {
-		r.logger.V(log.VWarn).Info("Docker Email is empty")
+		r.logger.V(log.VWarn).Info(fmt.Sprintf("Secret '%s' defined in spec.master.imagePullSecrets doesn't have 'docker-email' key.", name))
 		return false, nil
 	}
 
