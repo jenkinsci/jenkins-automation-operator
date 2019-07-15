@@ -132,6 +132,195 @@ func TestValidatePlugins(t *testing.T) {
 	})
 }
 
+func TestReconcileJenkinsBaseConfiguration_validateImagePullSecrets(t *testing.T) {
+	t.Run("happy", func(t *testing.T) {
+		secret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "test-ref",
+			},
+			Data: map[string][]byte{
+				"docker-server":   []byte("test_server"),
+				"docker-username": []byte("test_user"),
+				"docker-password": []byte("test_password"),
+				"docker-email":    []byte("test_email"),
+			},
+		}
+
+		jenkins := v1alpha2.Jenkins{
+			Spec: v1alpha2.JenkinsSpec{
+				Master: v1alpha2.JenkinsMaster{
+					ImagePullSecrets: []corev1.LocalObjectReference{
+						{Name: secret.ObjectMeta.Name},
+					},
+				},
+			},
+		}
+
+		fakeClient := fake.NewFakeClient()
+		err := fakeClient.Create(context.TODO(), secret)
+		assert.NoError(t, err)
+
+		baseReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false),
+			&jenkins, false, false, nil, nil)
+
+		got, err := baseReconcileLoop.validateImagePullSecrets()
+		assert.Equal(t, got, true)
+		assert.NoError(t, err)
+	})
+
+	t.Run("no secret", func(t *testing.T) {
+		jenkins := v1alpha2.Jenkins{
+			Spec: v1alpha2.JenkinsSpec{
+				Master: v1alpha2.JenkinsMaster{
+					ImagePullSecrets: []corev1.LocalObjectReference{
+						{Name: "test-ref"},
+					},
+				},
+			},
+		}
+
+		fakeClient := fake.NewFakeClient()
+
+		baseReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false),
+			&jenkins, false, false, nil, nil)
+
+		got, _ := baseReconcileLoop.validateImagePullSecrets()
+		assert.Equal(t, got, false)
+	})
+
+	t.Run("no docker email", func(t *testing.T) {
+		secret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "test-ref",
+			},
+			Data: map[string][]byte{
+				"docker-server":   []byte("test_server"),
+				"docker-username": []byte("test_user"),
+				"docker-password": []byte("test_password"),
+			},
+		}
+
+		jenkins := v1alpha2.Jenkins{
+			Spec: v1alpha2.JenkinsSpec{
+				Master: v1alpha2.JenkinsMaster{
+					ImagePullSecrets: []corev1.LocalObjectReference{
+						{Name: secret.ObjectMeta.Name},
+					},
+				},
+			},
+		}
+
+		fakeClient := fake.NewFakeClient()
+		err := fakeClient.Create(context.TODO(), secret)
+		assert.NoError(t, err)
+
+		baseReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false),
+			&jenkins, false, false, nil, nil)
+
+		got, _ := baseReconcileLoop.validateImagePullSecrets()
+		assert.Equal(t, got, false)
+	})
+
+	t.Run("no docker password", func(t *testing.T) {
+		secret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "test-ref",
+			},
+			Data: map[string][]byte{
+				"docker-server":   []byte("test_server"),
+				"docker-username": []byte("test_user"),
+				"docker-email":    []byte("test_email"),
+			},
+		}
+
+		jenkins := v1alpha2.Jenkins{
+			Spec: v1alpha2.JenkinsSpec{
+				Master: v1alpha2.JenkinsMaster{
+					ImagePullSecrets: []corev1.LocalObjectReference{
+						{Name: secret.ObjectMeta.Name},
+					},
+				},
+			},
+		}
+
+		fakeClient := fake.NewFakeClient()
+		err := fakeClient.Create(context.TODO(), secret)
+		assert.NoError(t, err)
+
+		baseReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false),
+			&jenkins, false, false, nil, nil)
+
+		got, _ := baseReconcileLoop.validateImagePullSecrets()
+		assert.Equal(t, got, false)
+	})
+
+	t.Run("no docker username", func(t *testing.T) {
+		secret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "test-ref",
+			},
+			Data: map[string][]byte{
+				"docker-server":   []byte("test_server"),
+				"docker-password": []byte("test_password"),
+				"docker-email":    []byte("test_email"),
+			},
+		}
+
+		jenkins := v1alpha2.Jenkins{
+			Spec: v1alpha2.JenkinsSpec{
+				Master: v1alpha2.JenkinsMaster{
+					ImagePullSecrets: []corev1.LocalObjectReference{
+						{Name: secret.ObjectMeta.Name},
+					},
+				},
+			},
+		}
+
+		fakeClient := fake.NewFakeClient()
+		err := fakeClient.Create(context.TODO(), secret)
+		assert.NoError(t, err)
+
+		baseReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false),
+			&jenkins, false, false, nil, nil)
+
+		got, _ := baseReconcileLoop.validateImagePullSecrets()
+		assert.Equal(t, got, false)
+	})
+
+	t.Run("no docker server", func(t *testing.T) {
+		secret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "test-ref",
+			},
+			Data: map[string][]byte{
+				"docker-username": []byte("test_user"),
+				"docker-password": []byte("test_password"),
+				"docker-email":    []byte("test_email"),
+			},
+		}
+
+		jenkins := v1alpha2.Jenkins{
+			Spec: v1alpha2.JenkinsSpec{
+				Master: v1alpha2.JenkinsMaster{
+					ImagePullSecrets: []corev1.LocalObjectReference{
+						{Name: secret.ObjectMeta.Name},
+					},
+				},
+			},
+		}
+
+		fakeClient := fake.NewFakeClient()
+		err := fakeClient.Create(context.TODO(), secret)
+		assert.NoError(t, err)
+
+		baseReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false),
+			&jenkins, false, false, nil, nil)
+
+		got, _ := baseReconcileLoop.validateImagePullSecrets()
+		assert.Equal(t, got, false)
+	})
+}
+
 func TestValidateJenkinsMasterPodEnvs(t *testing.T) {
 	t.Run("happy", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{

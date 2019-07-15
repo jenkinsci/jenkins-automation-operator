@@ -60,6 +60,47 @@ func (r *ReconcileJenkinsBaseConfiguration) Validate(jenkins *v1alpha2.Jenkins) 
 	return true, nil
 }
 
+func (r *ReconcileJenkinsBaseConfiguration) validateImagePullSecrets() (bool, error) {
+	var err error
+	for _, sr := range r.jenkins.Spec.Master.ImagePullSecrets {
+		valid, err := r.validateImagePullSecret(sr.Name)
+		if err != nil || !valid {
+			return false, nil
+		}
+	}
+	return true, err
+}
+
+func (r *ReconcileJenkinsBaseConfiguration) validateImagePullSecret(name string) (bool, error) {
+	secret := &corev1.Secret{}
+	err := r.k8sClient.Get(context.TODO(), types.NamespacedName{Name: name, Namespace: r.jenkins.ObjectMeta.Namespace}, secret)
+	if err != nil && apierrors.IsNotFound(err) {
+		r.logger.V(log.VWarn).Info(fmt.Sprintf("Secret %s not found defined in spec.master.imagePullSecrets", name))
+		return false, nil
+	} else if err != nil && !apierrors.IsNotFound(err) {
+		return false, stackerr.WithStack(err)
+	}
+
+	if secret.Data["docker-server"] == nil {
+		r.logger.V(log.VWarn).Info(fmt.Sprintf("Secret '%s' defined in spec.master.imagePullSecrets doesn't have 'docker-server' key.", name))
+		return false, nil
+	}
+	if secret.Data["docker-username"] == nil {
+		r.logger.V(log.VWarn).Info(fmt.Sprintf("Secret '%s' defined in spec.master.imagePullSecrets doesn't have 'docker-username' key.", name))
+		return false, nil
+	}
+	if secret.Data["docker-password"] == nil {
+		r.logger.V(log.VWarn).Info(fmt.Sprintf("Secret '%s' defined in spec.master.imagePullSecrets doesn't have 'docker-password' key.", name))
+		return false, nil
+	}
+	if secret.Data["docker-email"] == nil {
+		r.logger.V(log.VWarn).Info(fmt.Sprintf("Secret '%s' defined in spec.master.imagePullSecrets doesn't have 'docker-email' key.", name))
+		return false, nil
+	}
+
+	return true, nil
+}
+
 func (r *ReconcileJenkinsBaseConfiguration) validateVolumes() (bool, error) {
 	valid := true
 	for _, volume := range r.jenkins.Spec.Master.Volumes {

@@ -124,6 +124,29 @@ func TestGetJenkinsOpts(t *testing.T) {
 		assert.Contains(t, opts, "httpPort")
 		assert.Equal(t, opts["httpPort"], "8080")
 	})
+
+	t.Run("JENKINS_OPTS have --httpPort=--8080 argument", func(t *testing.T) {
+		jenkins := &v1alpha2.Jenkins{
+			Spec: v1alpha2.JenkinsSpec{
+				Master: v1alpha2.JenkinsMaster{
+					Containers: []v1alpha2.Container{
+						{
+							Env: []corev1.EnvVar{
+								{Name: "JENKINS_OPTS", Value: "--httpPort=--8080"},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		opts := GetJenkinsOpts(jenkins)
+
+		assert.Equal(t, 1, len(opts))
+		assert.NotContains(t, opts, "prefix")
+		assert.Contains(t, opts, "httpPort")
+		assert.Equal(t, opts["httpPort"], "--8080")
+	})
 }
 
 func TestCompareContainerVolumeMounts(t *testing.T) {

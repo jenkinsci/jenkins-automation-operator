@@ -288,6 +288,7 @@ func NewJenkinsMasterPod(objectMeta metav1.ObjectMeta, jenkins *v1alpha2.Jenkins
 			Containers:         newContainers(jenkins),
 			Volumes:            append(GetJenkinsMasterPodBaseVolumes(jenkins), jenkins.Spec.Master.Volumes...),
 			SecurityContext:    jenkins.Spec.Master.SecurityContext,
+			ImagePullSecrets:   jenkins.Spec.Master.ImagePullSecrets,
 		},
 	}
 }
