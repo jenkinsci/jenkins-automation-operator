@@ -98,7 +98,7 @@ func BuildJenkinsAPIUrl(namespace, serviceName string, portNumber int32, local, 
 	}
 
 	// Connect through Kubernetes service, operator has to be run inside cluster
-	return fmt.Sprintf("http://%s:%d", serviceName, portNumber), nil
+	return fmt.Sprintf("http://%s.%s:%d", serviceName, namespace, portNumber), nil
 }
 
 // New creates Jenkins API client
