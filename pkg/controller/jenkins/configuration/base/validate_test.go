@@ -219,7 +219,6 @@ func TestReconcileJenkinsBaseConfiguration_validateImagePullSecrets(t *testing.T
 
 		got, err := baseReconcileLoop.validateImagePullSecrets()
 		assert.Equal(t, got, false)
-		assert.Error(t, err)
 	})
 
 	t.Run("no docker password", func(t *testing.T) {
@@ -253,7 +252,6 @@ func TestReconcileJenkinsBaseConfiguration_validateImagePullSecrets(t *testing.T
 
 		got, err := baseReconcileLoop.validateImagePullSecrets()
 		assert.Equal(t, got, false)
-		assert.Error(t, err)
 	})
 
 	t.Run("no docker username", func(t *testing.T) {
@@ -287,7 +285,6 @@ func TestReconcileJenkinsBaseConfiguration_validateImagePullSecrets(t *testing.T
 
 		got, err := baseReconcileLoop.validateImagePullSecrets()
 		assert.Equal(t, got, false)
-		assert.Error(t, err)
 	})
 
 	t.Run("no docker server", func(t *testing.T) {
@@ -321,7 +318,6 @@ func TestReconcileJenkinsBaseConfiguration_validateImagePullSecrets(t *testing.T
 
 		got, err := baseReconcileLoop.validateImagePullSecrets()
 		assert.Equal(t, got, false)
-		assert.Error(t, err)
 	})
 }
 

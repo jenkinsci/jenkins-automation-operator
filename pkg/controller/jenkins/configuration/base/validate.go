@@ -61,13 +61,14 @@ func (r *ReconcileJenkinsBaseConfiguration) Validate(jenkins *v1alpha2.Jenkins) 
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) validateImagePullSecrets() (bool, error) {
+	var err error
 	for _, sr := range r.jenkins.Spec.Master.ImagePullSecrets {
 		valid, err := r.validateImagePullSecret(sr.Name)
 		if err != nil || !valid {
-			return true, err
+			return false, nil
 		}
 	}
-	return false, nil
+	return true, err
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) validateImagePullSecret(name string) (bool, error) {
@@ -92,7 +93,7 @@ func (r *ReconcileJenkinsBaseConfiguration) validateImagePullSecret(name string)
 		r.logger.V(log.VWarn).Info("Docker Password is empty")
 		return false, nil
 	}
-	if secret.Data["docker-email"] == nil {
+	if secret.Data["docker-email"] == nil  {
 		r.logger.V(log.VWarn).Info("Docker Email is empty")
 		return false, nil
 	}
