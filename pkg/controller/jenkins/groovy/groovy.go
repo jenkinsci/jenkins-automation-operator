@@ -187,9 +187,8 @@ func AddSecretsLoaderToGroovyScript(secretsPath string) func(groovyScript string
 				break
 			}
 		}
-		asdf := strings.Join(lines[:importIndex], "\n") + "\n\n" + fmt.Sprintf(secretsLoaderGroovyScriptFmt, secretsPath) + "\n\n" + strings.Join(lines[importIndex:], "\n")
 
-		return asdf
+		return strings.Join(lines[:importIndex], "\n") + "\n\n" + fmt.Sprintf(secretsLoaderGroovyScriptFmt, secretsPath) + "\n\n" + strings.Join(lines[importIndex:], "\n")
 	}
 }
 

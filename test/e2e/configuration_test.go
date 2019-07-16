@@ -171,6 +171,8 @@ func verifyJenkinsMasterPodAttributes(t *testing.T, jenkins *v1alpha2.Jenkins) {
 	assert.Equal(t, jenkins.Spec.Master.SecurityContext, jenkinsPod.Spec.SecurityContext)
 	assert.Equal(t, jenkins.Spec.Master.Containers[0].Command, jenkinsPod.Spec.Containers[0].Command)
 
+	assert.Equal(t, jenkins.Spec.Master.ImagePullSecrets, jenkinsPod.Spec.ImagePullSecrets)
+
 	for _, actualContainer := range jenkinsPod.Spec.Containers {
 		if actualContainer.Name == resources.JenkinsMasterContainerName {
 			verifyContainer(t, resources.NewJenkinsMasterContainer(jenkins), actualContainer)
