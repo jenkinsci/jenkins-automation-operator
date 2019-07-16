@@ -48,9 +48,9 @@ make run NAMESPACE=default KUBECTL_CONTEXT=remote-k8s EXTRA_ARGS='--kubeconfig ~
 Once minikube and **jenkins-operator** are up and running, apply Jenkins custom resource:
 
 ```bash
-kubectl --context remote-k8s --namespace defaut apply -f deploy/crds/jenkins_v1alpha2_jenkins_cr.yaml
-kubectl --context remote-k8s --namespace defaut get jenkins -o yaml
-kubectl --context remote-k8s --namespace defaut get po
+kubectl --context remote-k8s --namespace default apply -f deploy/crds/jenkins_v1alpha2_jenkins_cr.yaml
+kubectl --context remote-k8s --namespace default get jenkins -o yaml
+kubectl --context remote-k8s --namespace default get po
 ```
 
 ## Testing
