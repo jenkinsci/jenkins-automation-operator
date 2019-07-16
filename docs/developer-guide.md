@@ -4,7 +4,7 @@ This document explains how to setup your development environment.
 
 ## Prerequisites
 
-- [operator_sdk][operator_sdk]
+- [operator_sdk][operator_sdk] version v0.8.1
 - [git][git_tool]
 - [go][go_tool] version v1.12+
 - [goimports, golint, checkmake and staticcheck][install_dev_tools]
