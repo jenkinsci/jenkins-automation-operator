@@ -112,10 +112,7 @@ func (r *ReconcileUserConfiguration) ensureUserConfiguration(jenkinsClient jenki
 	}
 	requeue, err = groovyClient.Ensure(func(name string) bool {
 		return strings.HasSuffix(name, ".groovy")
-	}, func(groovyScript string) string {
-		// TODO load secrets to variables
-		return groovyScript
-	})
+	}, groovy.AddSecretsLoaderToGroovyScript(resources.GroovyScriptsSecretVolumePath))
 	if err != nil {
 		return reconcile.Result{}, err
 	}

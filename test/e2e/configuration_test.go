@@ -3,15 +3,15 @@ package e2e
 import (
 	"context"
 	"fmt"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/groovy"
 	"testing"
 
+	"github.com/bndr/gojenkins"
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/plugins"
-
-	"github.com/bndr/gojenkins"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
@@ -73,7 +73,6 @@ func TestConfiguration(t *testing.T) {
 	createDefaultLimitsForContainersInNamespace(t, namespace)
 	createKubernetesCredentialsProviderSecret(t, namespace, mySeedJob)
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
-
 	verifyJenkinsMasterPodAttributes(t, jenkins)
 	client := verifyJenkinsAPIConnection(t, jenkins)
 	verifyPlugins(t, client, jenkins)
@@ -92,6 +91,7 @@ func createUserConfigurationSecret(t *testing.T, namespace string, systemMessage
 		},
 		StringData: map[string]string{
 			systemMessageEnvName: systemMessage,
+			"numberOfExecutors": "3",
 		},
 	}
 
@@ -273,6 +273,15 @@ if (!new Integer(%d).equals(Jenkins.instance.numExecutors)) {
 	throw new Exception("Configuration via groovy scripts failed")
 }`, amountOfExecutors)
 	logs, err := jenkinsClient.ExecuteScript(checkConfigurationViaGroovyScript)
+	assert.NoError(t, err, logs)
+
+	checkSecretLoaderViaGroovyScript := fmt.Sprintf(`
+if (new Integer(%d).equals(secrets['numberOfExecutors'])) {
+	throw new Exception("Falied")
+}`, amountOfExecutors)
+
+	loader := groovy.AddSecretsLoaderToGroovyScript("/var/jenkins/groovy-scripts-secrets")
+	logs, err = jenkinsClient.ExecuteScript(loader(checkSecretLoaderViaGroovyScript))
 	assert.NoError(t, err, logs)
 
 	checkConfigurationAsCode := fmt.Sprintf(`
