@@ -74,7 +74,7 @@ func TestConfiguration(t *testing.T) {
 
 	// base
 	createUserConfigurationSecret(t, namespace, stringData)
-	createUserConfigurationConfigMap(t, namespace, numberOfExecutors, fmt.Sprintf("${%s}", systemMessageEnvName))
+	createUserConfigurationConfigMap(t, namespace, numberOfExecutorsEnvName, fmt.Sprintf("${%s}", systemMessageEnvName))
 	jenkins := createJenkinsCR(t, jenkinsCRName, namespace, &[]v1alpha2.SeedJob{mySeedJob.SeedJob}, groovyScripts, casc)
 	createDefaultLimitsForContainersInNamespace(t, namespace)
 	createKubernetesCredentialsProviderSecret(t, namespace, mySeedJob)
@@ -104,7 +104,7 @@ func createUserConfigurationSecret(t *testing.T, namespace string, stringData ma
 	}
 }
 
-func createUserConfigurationConfigMap(t *testing.T, namespace string, numberOfExecutors int, systemMessage string) {
+func createUserConfigurationConfigMap(t *testing.T, namespace string, numberOfExecutorsSecretKeyName string, systemMessage string) {
 	userConfiguration := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      userConfigurationConfigMapName,
@@ -114,8 +114,8 @@ func createUserConfigurationConfigMap(t *testing.T, namespace string, numberOfEx
 			"1-set-executors.groovy": fmt.Sprintf(`
 import jenkins.model.Jenkins
 
-Jenkins.instance.setNumExecutors(%d)
-Jenkins.instance.save()`, numberOfExecutors),
+Jenkins.instance.setNumExecutors(new Integer(secrets['%s']))
+Jenkins.instance.save()`, numberOfExecutorsSecretKeyName),
 			"1-casc.yaml": fmt.Sprintf(`
 jenkins:
   systemMessage: "%s"`, systemMessage),
@@ -280,7 +280,7 @@ if (!new Integer(%d).equals(Jenkins.instance.numExecutors)) {
 
 	checkSecretLoaderViaGroovyScript := fmt.Sprintf(`
 if (!new Integer(%d).equals(new Integer(secrets['NUMBER_OF_EXECUTORS']))) {
-	throw new Exception("Falied to check secrets by groovy secret loader")
+	throw new Exception("Secret not found by given key: NUMBER_OF_EXECUTORS")
 }`, amountOfExecutors)
 
 	loader := groovy.AddSecretsLoaderToGroovyScript("/var/jenkins/groovy-scripts-secrets")
