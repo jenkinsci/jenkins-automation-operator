@@ -6,17 +6,18 @@ import (
 	"testing"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/groovy"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/plugins"
 
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"github.com/bndr/gojenkins"
+	"k8s.io/apimachinery/pkg/api/resource"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/stretchr/testify/assert"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestConfiguration(t *testing.T) {
@@ -27,6 +28,7 @@ func TestConfiguration(t *testing.T) {
 
 	jenkinsCRName := "e2e"
 	numberOfExecutors := 6
+	numberOfExecutorsEnvName := "NUMBER_OF_EXECUTORS"
 	systemMessage := "Configuration as Code integration works!!!"
 	systemMessageEnvName := "SYSTEM_MESSAGE"
 	mySeedJob := seedJobConfig{
@@ -66,14 +68,17 @@ func TestConfiguration(t *testing.T) {
 		},
 	}
 
+	stringData := make(map[string]string)
+	stringData[systemMessageEnvName] = systemMessage
+	stringData[numberOfExecutorsEnvName] = fmt.Sprintf("%d", numberOfExecutors)
+
 	// base
-	createUserConfigurationSecret(t, namespace, systemMessageEnvName, systemMessage)
-	createUserConfigurationConfigMap(t, namespace, numberOfExecutors, fmt.Sprintf("${%s}", systemMessageEnvName))
+	createUserConfigurationSecret(t, namespace, stringData)
+	createUserConfigurationConfigMap(t, namespace, numberOfExecutorsEnvName, fmt.Sprintf("${%s}", systemMessageEnvName))
 	jenkins := createJenkinsCR(t, jenkinsCRName, namespace, &[]v1alpha2.SeedJob{mySeedJob.SeedJob}, groovyScripts, casc)
 	createDefaultLimitsForContainersInNamespace(t, namespace)
 	createKubernetesCredentialsProviderSecret(t, namespace, mySeedJob)
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
-
 	verifyJenkinsMasterPodAttributes(t, jenkins)
 	client := verifyJenkinsAPIConnection(t, jenkins)
 	verifyPlugins(t, client, jenkins)
@@ -84,15 +89,13 @@ func TestConfiguration(t *testing.T) {
 	verifyJenkinsSeedJobs(t, client, []seedJobConfig{mySeedJob})
 }
 
-func createUserConfigurationSecret(t *testing.T, namespace string, systemMessageEnvName, systemMessage string) {
+func createUserConfigurationSecret(t *testing.T, namespace string, stringData map[string]string) {
 	userConfiguration := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      userConfigurationSecretName,
 			Namespace: namespace,
 		},
-		StringData: map[string]string{
-			systemMessageEnvName: systemMessage,
-		},
+		StringData: stringData,
 	}
 
 	t.Logf("User configuration secret %+v", *userConfiguration)
@@ -101,7 +104,7 @@ func createUserConfigurationSecret(t *testing.T, namespace string, systemMessage
 	}
 }
 
-func createUserConfigurationConfigMap(t *testing.T, namespace string, numberOfExecutors int, systemMessage string) {
+func createUserConfigurationConfigMap(t *testing.T, namespace string, numberOfExecutorsSecretKeyName string, systemMessage string) {
 	userConfiguration := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      userConfigurationConfigMapName,
@@ -111,8 +114,8 @@ func createUserConfigurationConfigMap(t *testing.T, namespace string, numberOfEx
 			"1-set-executors.groovy": fmt.Sprintf(`
 import jenkins.model.Jenkins
 
-Jenkins.instance.setNumExecutors(%d)
-Jenkins.instance.save()`, numberOfExecutors),
+Jenkins.instance.setNumExecutors(new Integer(secrets['%s']))
+Jenkins.instance.save()`, numberOfExecutorsSecretKeyName),
 			"1-casc.yaml": fmt.Sprintf(`
 jenkins:
   systemMessage: "%s"`, systemMessage),
@@ -273,6 +276,15 @@ if (!new Integer(%d).equals(Jenkins.instance.numExecutors)) {
 	throw new Exception("Configuration via groovy scripts failed")
 }`, amountOfExecutors)
 	logs, err := jenkinsClient.ExecuteScript(checkConfigurationViaGroovyScript)
+	assert.NoError(t, err, logs)
+
+	checkSecretLoaderViaGroovyScript := fmt.Sprintf(`
+if (!new Integer(%d).equals(new Integer(secrets['NUMBER_OF_EXECUTORS']))) {
+	throw new Exception("Secret not found by given key: NUMBER_OF_EXECUTORS")
+}`, amountOfExecutors)
+
+	loader := groovy.AddSecretsLoaderToGroovyScript("/var/jenkins/groovy-scripts-secrets")
+	logs, err = jenkinsClient.ExecuteScript(loader(checkSecretLoaderViaGroovyScript))
 	assert.NoError(t, err, logs)
 
 	checkConfigurationAsCode := fmt.Sprintf(`
