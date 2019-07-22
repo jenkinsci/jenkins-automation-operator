@@ -47,6 +47,13 @@ func (g *Groovy) EnsureSingle(source, name, hash, groovyScript string) (requeue 
 		return false, nil
 	}
 
+	for i, ags := range g.jenkins.Status.AppliedGroovyScripts {
+		if ags.ConfigurationType == g.configurationType && ags.Name == name && ags.Source == source {
+			g.jenkins.Status.AppliedGroovyScripts = append(g.jenkins.Status.AppliedGroovyScripts[:i],
+				g.jenkins.Status.AppliedGroovyScripts[i+1:]...)
+		}
+	}
+
 	logs, err := g.jenkinsClient.ExecuteScript(groovyScript)
 	if err != nil {
 		if _, ok := err.(*jenkinsclient.GroovyScriptExecutionFailed); ok {
