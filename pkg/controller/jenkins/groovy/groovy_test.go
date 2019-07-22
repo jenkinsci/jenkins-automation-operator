@@ -114,6 +114,7 @@ func TestGroovy_EnsureSingle(t *testing.T) {
 		assert.Equal(t, groovyScriptName, jenkins.Status.AppliedGroovyScripts[0].Name)
 	})
 	t.Run("execute script with new version", func(t *testing.T) {
+		anotherHash := "hash1"
 		// given
 		jenkins := &v1alpha2.Jenkins{
 			ObjectMeta: metav1.ObjectMeta{
@@ -137,11 +138,11 @@ func TestGroovy_EnsureSingle(t *testing.T) {
 		groovyClient := New(jenkinsClient, fakeClient, log.Log, jenkins, configurationType, emptyCustomization)
 
 		// when
-		_, err = groovyClient.EnsureSingle(source, groovyScriptName, hash, groovyScript)
+		requeue, err := groovyClient.EnsureSingle(source, groovyScriptName, hash, groovyScript)
 
 		// then
 		require.NoError(t, err)
-
+		assert.True(t, requeue)
 		err = fakeClient.Get(ctx, types.NamespacedName{Name: jenkins.Name, Namespace: jenkins.Namespace}, jenkins)
 		require.NoError(t, err)
 		assert.Equal(t, 1, len(jenkins.Status.AppliedGroovyScripts))
@@ -151,14 +152,15 @@ func TestGroovy_EnsureSingle(t *testing.T) {
 		assert.Equal(t, groovyScriptName, jenkins.Status.AppliedGroovyScripts[0].Name)
 
 		// Update with new hash
-		_, err = groovyClient.EnsureSingle(source, groovyScriptName, "hash1", groovyScript)
+		requeue, err = groovyClient.EnsureSingle(source, groovyScriptName, anotherHash, groovyScript)
 		require.NoError(t, err)
+		assert.True(t, requeue)
 
 		err = fakeClient.Get(ctx, types.NamespacedName{Name: jenkins.Name, Namespace: jenkins.Namespace}, jenkins)
 		require.NoError(t, err)
 		assert.Equal(t, 1, len(jenkins.Status.AppliedGroovyScripts))
 		assert.Equal(t, configurationType, jenkins.Status.AppliedGroovyScripts[0].ConfigurationType)
-		assert.Equal(t, "hash1", jenkins.Status.AppliedGroovyScripts[0].Hash)
+		assert.Equal(t, anotherHash, jenkins.Status.AppliedGroovyScripts[0].Hash)
 		assert.Equal(t, source, jenkins.Status.AppliedGroovyScripts[0].Source)
 		assert.Equal(t, groovyScriptName, jenkins.Status.AppliedGroovyScripts[0].Name)
 	})
