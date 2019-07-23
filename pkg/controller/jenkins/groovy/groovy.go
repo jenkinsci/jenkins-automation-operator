@@ -55,12 +55,22 @@ func (g *Groovy) EnsureSingle(source, name, hash, groovyScript string) (requeue 
 		return true, err
 	}
 
-	g.jenkins.Status.AppliedGroovyScripts = append(g.jenkins.Status.AppliedGroovyScripts, v1alpha2.AppliedGroovyScript{
+	var appliedGroovyScripts []v1alpha2.AppliedGroovyScript
+
+	for _, ags := range g.jenkins.Status.AppliedGroovyScripts {
+		if ags.ConfigurationType != g.configurationType && ags.Source != source && ags.Name != name {
+			appliedGroovyScripts = append(appliedGroovyScripts, ags)
+		}
+	}
+	appliedGroovyScripts = append(appliedGroovyScripts, v1alpha2.AppliedGroovyScript{
 		ConfigurationType: g.configurationType,
 		Source:            source,
 		Name:              name,
 		Hash:              hash,
 	})
+
+	g.jenkins.Status.AppliedGroovyScripts = appliedGroovyScripts
+
 	return true, g.k8sClient.Update(context.TODO(), g.jenkins)
 }
 
