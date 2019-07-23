@@ -134,6 +134,7 @@ func TestGroovy_EnsureSingle(t *testing.T) {
 
 		jenkinsClient.EXPECT().ExecuteScript(groovyScript).Return("logs", nil)
 		jenkinsClient.EXPECT().ExecuteScript(groovyScript).Return("logs", nil)
+		jenkinsClient.EXPECT().ExecuteScript(groovyScript).Return("logs", nil)
 
 		groovyClient := New(jenkinsClient, fakeClient, log.Log, jenkins, configurationType, emptyCustomization)
 
@@ -161,6 +162,18 @@ func TestGroovy_EnsureSingle(t *testing.T) {
 		assert.Equal(t, 1, len(jenkins.Status.AppliedGroovyScripts))
 		assert.Equal(t, configurationType, jenkins.Status.AppliedGroovyScripts[0].ConfigurationType)
 		assert.Equal(t, anotherHash, jenkins.Status.AppliedGroovyScripts[0].Hash)
+		assert.Equal(t, source, jenkins.Status.AppliedGroovyScripts[0].Source)
+		assert.Equal(t, groovyScriptName, jenkins.Status.AppliedGroovyScripts[0].Name)
+
+		requeue, err = groovyClient.EnsureSingle(source, groovyScriptName, hash, groovyScript)
+		require.NoError(t, err)
+		assert.True(t, requeue)
+
+		err = fakeClient.Get(ctx, types.NamespacedName{Name: jenkins.Name, Namespace: jenkins.Namespace}, jenkins)
+		require.NoError(t, err)
+		assert.Equal(t, 1, len(jenkins.Status.AppliedGroovyScripts))
+		assert.Equal(t, configurationType, jenkins.Status.AppliedGroovyScripts[0].ConfigurationType)
+		assert.Equal(t, hash, jenkins.Status.AppliedGroovyScripts[0].Hash)
 		assert.Equal(t, source, jenkins.Status.AppliedGroovyScripts[0].Source)
 		assert.Equal(t, groovyScriptName, jenkins.Status.AppliedGroovyScripts[0].Name)
 	})
