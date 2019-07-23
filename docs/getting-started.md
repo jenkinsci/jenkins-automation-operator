@@ -369,33 +369,34 @@ Example config file to modify and use:
 
 ## Jenkins Customisation
 
-Jenkins can be customized using groovy scripts or configuration as code plugin. All custom configuration is stored in
-the **jenkins-operator-user-configuration-<cr_name>** ConfigMap which is automatically created by **jenkins-operator**.
+Jenkins can be customized using groovy scripts or [configuration as code plugin](https://github.com/jenkinsci/configuration-as-code-plugin). 
+By using [ConfigMap](https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/) you can create own **Jenkins** customized configuration.
+Then you must reference the *ConfigMap* in **Jenkins** pod customization file in `spec.groovyScripts` or `spec.configurationAsCode`
 
-**jenkins-operator** creates **jenkins-operator-user-configuration-<cr_name>** secret where user can store sensitive 
-information used for custom configuration. If you have entry in secret named `PASSWORD` then you can use it in 
-Configuration as Plugin as `adminAddress: "${PASSWORD}"`.
+For example create *ConfigMap* with name `jenkins-operator-user-configuration`. Then, modify the **Jenkins** manifest to look like this:
 
-```
-kubectl get secret jenkins-operator-user-configuration-<cr_name> -o yaml
-
-kind: Secret
-apiVersion: v1
-type: Opaque
+```yaml
+apiVersion: jenkins.io/v1alpha2
+kind: Jenkins
 metadata:
-  name: jenkins-operator-user-configuration-<cr_name>
-  namespace: default
-data:
-  SECRET_JENKINS_ADMIN_ADDRESS: YXNkZgo=
-
+  name: example
+spec:
+  configurationAsCode:
+    configurations: 
+    - name: jenkins-operator-user-configuration
+  groovyScripts:
+    configurations:
+    - name: jenkins-operator-user-configuration
 ```
 
-```
-kubectl get configmap jenkins-operator-user-configuration-<cr_name> -o yaml
-
+Here is example of `jenkins-operator-user-configuration`:
+```yaml
 apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jenkins-operator-user-configuration
 data:
-  1-configure-theme.groovy: |2
+  1-configure-theme.groovy: | 
     import jenkins.*
     import jenkins.model.*
     import hudson.*
@@ -415,19 +416,88 @@ data:
     decorator.save();
 
     jenkins.save()
-  1-system-message.yaml: |2
+  1-system-message.yaml: |
     jenkins:
       systemMessage: "Configuration as Code integration works!!!"
-      adminAddress: "${SECRET_JENKINS_ADMIN_ADDRESS}"
+```
+
+* *.groovy is Groovy script configuration
+* *.yaml is configuration as code
+
+If you want to correct your configuration you can edit it while **jenkins-operator** is running. 
+Jenkins will reconcile and apply new configuration.
+
+### Using secrets inside Groovy script
+
+If you configured `spec.groovyScripts.secret.name`, then this secret is available to use inside map Groovy scripts.
+The secrets are loaded to `secrets` map.
+
+Create a [secret](https://kubernetes.io/docs/concepts/configuration/secret/) with for eg. `jenkins-conf-secrets` name.
+
+```yaml
+kind: Secret
+apiVersion: v1
+type: Opaque
+metadata:
+  name: jenkins-conf-secrets
+  namespace: default
+data:
+  SYSTEM_MESSAGE: SGVsbG8gd29ybGQ=
+```
+
+Then modify the **Jenkins** pod manifest by changing `spec.groovyScripts.secret.name` to `jenkins-conf-secrets`.
+
+```yaml
+apiVersion: jenkins.io/v1alpha2
+kind: Jenkins
+metadata:
+  name: example
+spec:
+  configurationAsCode:
+    configurations: 
+    - name: jenkins-operator-user-configuration
+    secret:
+      name: jenkins-conf-secrets
+  groovyScripts:
+    configurations:
+    - name: jenkins-operator-user-configuration
+    secret:
+      name: jenkins-conf-secrets
+```
+
+Now you can test that the secret is mounted by applying this ConfigMap for Groovy script:
+
+```yaml
+apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: jenkins-operator-user-configuration-<cr_name>
-  namespace: default
-``` 
+  name: jenkins-operator-user-configuration
+data:
+  1-system-message.groovy: | 
+    import jenkins.*
+    import jenkins.model.*
+    import hudson.*
+    import hudson.model.*
+    Jenkins jenkins = Jenkins.getInstance()
+    
+    jenkins.setSystemMessage(secrets["SYSTEM_MESSAGE"])
+    jenkins.save()
+```
 
-When **jenkins-operator-user-configuration-<cr_name>** ConfigMap is updated Jenkins automatically 
-runs the **jenkins-operator-user-configuration** Jenkins Job which executes all scripts then
-runs the **jenkins-operator-user-configuration-casc** Jenkins Job which applies Configuration as Code configuration.
+Or by applying configuration as code:
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jenkins-operator-user-configuration
+data:
+  1-system-message.yaml: |
+    jenkins:
+      systemMessage: ${SYSTEM_MESSAGE}
+```
+
+
+After this, you should see the `Hello world` system message at **Jenkins** homepage.
 
 ## Install Plugins
 
