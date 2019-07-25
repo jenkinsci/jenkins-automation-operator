@@ -177,6 +177,109 @@ func TestGroovy_EnsureSingle(t *testing.T) {
 		assert.Equal(t, source, jenkins.Status.AppliedGroovyScripts[0].Source)
 		assert.Equal(t, groovyScriptName, jenkins.Status.AppliedGroovyScripts[0].Name)
 	})
+	t.Run("execute three groovy scripts with another hash", func(t *testing.T) {
+		// given
+		firstGroovyScriptName := "testGroovy1"
+		firstGroovyScriptHash := "testHash1"
+
+		secondGroovyScriptName := "testGroovy2"
+		secondGroovyScriptHash := "testHash2"
+
+		thirdGroovyScriptName := "testGroovy3"
+		thirdGroovyScriptHash := "testHash3"
+
+		jenkins := &v1alpha2.Jenkins{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      jenkinsName,
+				Namespace: namespace,
+			},
+		}
+		err := v1alpha2.SchemeBuilder.AddToScheme(scheme.Scheme)
+		require.NoError(t, err)
+		fakeClient := fake.NewFakeClient()
+		err = fakeClient.Create(ctx, jenkins)
+		require.NoError(t, err)
+
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+		jenkinsClient := jenkinsclient.NewMockJenkins(ctrl)
+
+		jenkinsClient.EXPECT().ExecuteScript(groovyScript).Return("logs", nil)
+		jenkinsClient.EXPECT().ExecuteScript(groovyScript).Return("logs", nil)
+		jenkinsClient.EXPECT().ExecuteScript(groovyScript).Return("logs", nil)
+
+		groovyClient := New(jenkinsClient, fakeClient, log.Log, jenkins, configurationType, emptyCustomization)
+
+		requeue, err := groovyClient.EnsureSingle(source, firstGroovyScriptName, firstGroovyScriptHash, groovyScript)
+
+		// then
+		require.NoError(t, err)
+		assert.True(t, requeue)
+		err = fakeClient.Get(ctx, types.NamespacedName{Name: jenkins.Name, Namespace: jenkins.Namespace}, jenkins)
+		require.NoError(t, err)
+		assert.Equal(t, 1, len(jenkins.Status.AppliedGroovyScripts))
+		assert.Equal(t, configurationType, jenkins.Status.AppliedGroovyScripts[0].ConfigurationType)
+		assert.Equal(t, firstGroovyScriptHash, jenkins.Status.AppliedGroovyScripts[0].Hash)
+		assert.Equal(t, source, jenkins.Status.AppliedGroovyScripts[0].Source)
+		assert.Equal(t, firstGroovyScriptName, jenkins.Status.AppliedGroovyScripts[0].Name)
+
+		requeue, err = groovyClient.EnsureSingle(source, secondGroovyScriptName, secondGroovyScriptHash, groovyScript)
+		// then
+		require.NoError(t, err)
+		assert.True(t, requeue)
+		err = fakeClient.Get(ctx, types.NamespacedName{Name: jenkins.Name, Namespace: jenkins.Namespace}, jenkins)
+		require.NoError(t, err)
+		assert.Equal(t, 2, len(jenkins.Status.AppliedGroovyScripts))
+		assert.Equal(t, configurationType, jenkins.Status.AppliedGroovyScripts[1].ConfigurationType)
+		assert.Equal(t, secondGroovyScriptHash, jenkins.Status.AppliedGroovyScripts[1].Hash)
+		assert.Equal(t, source, jenkins.Status.AppliedGroovyScripts[1].Source)
+		assert.Equal(t, secondGroovyScriptName, jenkins.Status.AppliedGroovyScripts[1].Name)
+
+		requeue, err = groovyClient.EnsureSingle(source, thirdGroovyScriptName, thirdGroovyScriptHash, groovyScript)
+		// then
+		require.NoError(t, err)
+		assert.True(t, requeue)
+		err = fakeClient.Get(ctx, types.NamespacedName{Name: jenkins.Name, Namespace: jenkins.Namespace}, jenkins)
+		require.NoError(t, err)
+		assert.Equal(t, 3, len(jenkins.Status.AppliedGroovyScripts))
+		assert.Equal(t, configurationType, jenkins.Status.AppliedGroovyScripts[2].ConfigurationType)
+		assert.Equal(t, thirdGroovyScriptHash, jenkins.Status.AppliedGroovyScripts[2].Hash)
+		assert.Equal(t, source, jenkins.Status.AppliedGroovyScripts[2].Source)
+		assert.Equal(t, thirdGroovyScriptName, jenkins.Status.AppliedGroovyScripts[2].Name)
+
+	})
+	t.Run("execute two groovy scripts with same names in two config maps", func(t *testing.T) {
+		jenkins := &v1alpha2.Jenkins{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      jenkinsName,
+				Namespace: namespace,
+			},
+		}
+		err := v1alpha2.SchemeBuilder.AddToScheme(scheme.Scheme)
+		require.NoError(t, err)
+		fakeClient := fake.NewFakeClient()
+		err = fakeClient.Create(ctx, jenkins)
+		require.NoError(t, err)
+
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+		jenkinsClient := jenkinsclient.NewMockJenkins(ctrl)
+
+		jenkinsClient.EXPECT().ExecuteScript(groovyScript).Return("logs", nil)
+		jenkinsClient.EXPECT().ExecuteScript(groovyScript).Return("logs", nil)
+
+		groovyClient := New(jenkinsClient, fakeClient, log.Log, jenkins, configurationType, emptyCustomization)
+
+		requeue, err := groovyClient.EnsureSingle("test-conf1", "test.groovy", hash, groovyScript)
+		require.NoError(t, err)
+		assert.True(t, requeue)
+
+		requeue, err = groovyClient.EnsureSingle("test-conf2", "test.groovy", "anotherHash", groovyScript)
+		require.NoError(t, err)
+		assert.True(t, requeue)
+
+		assert.Equal(t, 2, len(jenkins.Status.AppliedGroovyScripts))
+	})
 	t.Run("execute script fails", func(t *testing.T) {
 		// given
 		jenkins := &v1alpha2.Jenkins{
