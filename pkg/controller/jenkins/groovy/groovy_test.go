@@ -280,6 +280,40 @@ func TestGroovy_EnsureSingle(t *testing.T) {
 
 		assert.Equal(t, 2, len(jenkins.Status.AppliedGroovyScripts))
 	})
+	t.Run("execute two groovy scripts with different configuration types", func(t *testing.T) {
+		jenkins := &v1alpha2.Jenkins{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      jenkinsName,
+				Namespace: namespace,
+			},
+		}
+		err := v1alpha2.SchemeBuilder.AddToScheme(scheme.Scheme)
+		require.NoError(t, err)
+		fakeClient := fake.NewFakeClient()
+		err = fakeClient.Create(ctx, jenkins)
+		require.NoError(t, err)
+
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+		jenkinsClient := jenkinsclient.NewMockJenkins(ctrl)
+
+		jenkinsClient.EXPECT().ExecuteScript(groovyScript).Return("logs", nil)
+		jenkinsClient.EXPECT().ExecuteScript(groovyScript).Return("logs", nil)
+
+		groovyClient := New(jenkinsClient, fakeClient, log.Log, jenkins, configurationType, emptyCustomization)
+
+		requeue, err := groovyClient.EnsureSingle("test-conf1", "test.groovy", hash, groovyScript)
+		require.NoError(t, err)
+		assert.True(t, requeue)
+
+		groovyClient = New(jenkinsClient, fakeClient, log.Log, jenkins, "another-test-configuration-type", emptyCustomization)
+
+		requeue, err = groovyClient.EnsureSingle("test-conf2", "test.groovy", "anotherHash", groovyScript)
+		require.NoError(t, err)
+		assert.True(t, requeue)
+
+		assert.Equal(t, 2, len(jenkins.Status.AppliedGroovyScripts))
+	})
 	t.Run("execute script fails", func(t *testing.T) {
 		// given
 		jenkins := &v1alpha2.Jenkins{
