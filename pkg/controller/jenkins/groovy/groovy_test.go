@@ -296,19 +296,18 @@ func TestGroovy_EnsureSingle(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 		jenkinsClient := jenkinsclient.NewMockJenkins(ctrl)
-
 		jenkinsClient.EXPECT().ExecuteScript(groovyScript).Return("logs", nil)
 		jenkinsClient.EXPECT().ExecuteScript(groovyScript).Return("logs", nil)
 
 		groovyClient := New(jenkinsClient, fakeClient, log.Log, jenkins, configurationType, emptyCustomization)
 
-		requeue, err := groovyClient.EnsureSingle("test-conf1", "test.groovy", hash, groovyScript)
+		requeue, err := groovyClient.EnsureSingle(source, "test.groovy", hash, groovyScript)
 		require.NoError(t, err)
 		assert.True(t, requeue)
 
 		groovyClient = New(jenkinsClient, fakeClient, log.Log, jenkins, "another-test-configuration-type", emptyCustomization)
 
-		requeue, err = groovyClient.EnsureSingle("test-conf2", "test.groovy", "anotherHash", groovyScript)
+		requeue, err = groovyClient.EnsureSingle(source, "test.groovy", "anotherHash", groovyScript)
 		require.NoError(t, err)
 		assert.True(t, requeue)
 

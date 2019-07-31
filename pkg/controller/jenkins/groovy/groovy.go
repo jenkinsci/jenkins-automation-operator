@@ -58,7 +58,7 @@ func (g *Groovy) EnsureSingle(source, name, hash, groovyScript string) (requeue 
 	var appliedGroovyScripts []v1alpha2.AppliedGroovyScript
 
 	for _, ags := range g.jenkins.Status.AppliedGroovyScripts {
-		if ags.Source != source || ags.Name != name {
+		if g.configurationType != ags.ConfigurationType || ags.Source != source || ags.Name != name {
 			appliedGroovyScripts = append(appliedGroovyScripts, ags)
 		}
 	}
