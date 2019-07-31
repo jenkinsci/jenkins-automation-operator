@@ -9,6 +9,8 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/spdystream v0.0.0-20181023171402-6480d4af844c // indirect
+	github.com/elazarl/goproxy v0.0.0-20190711103511-473e67f1d7d2 // indirect
+	github.com/elazarl/goproxy/ext v0.0.0-20190711103511-473e67f1d7d2 // indirect
 	github.com/emicklei/go-restful v2.8.1+incompatible // indirect
 	github.com/go-logr/logr v0.1.0
 	github.com/go-logr/zapr v0.1.0
@@ -22,12 +24,14 @@ require (
 	github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7 // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.8.5 // indirect
 	github.com/imdario/mergo v0.3.6 // indirect
+	github.com/mailgun/mailgun-go/v3 v3.6.0
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/operator-framework/operator-sdk v0.8.2-0.20190522220659-031d71ef8154
 	github.com/pborman/uuid v0.0.0-20180906182336-adf5a7427709 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pkg/errors v0.8.1
+	github.com/sergi/go-diff v1.0.0 // indirect
 	github.com/spf13/pflag v1.0.3
 	github.com/stretchr/testify v1.3.0
 	go.opencensus.io v0.19.2 // indirect

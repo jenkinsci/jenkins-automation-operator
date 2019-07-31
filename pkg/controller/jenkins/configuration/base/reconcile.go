@@ -4,7 +4,9 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/base64"
+	er "errors"
 	"fmt"
+	"github.com/jenkinsci/kubernetes-operator/internal/notifier"
 	"reflect"
 	"strings"
 	"time"
@@ -124,6 +126,20 @@ func (r *ReconcileJenkinsBaseConfiguration) Reconcile() (reconcile.Result, jenki
 	}
 
 	result, err = r.ensureBaseConfiguration(jenkinsClient)
+	notificationChannel := make(chan *notifier.Notification)
+	go notifier.Listen(notificationChannel)
+
+	notificationChannel <- &notifier.Notification{
+		K8sClient: r.k8sClient,
+		Jenkins:   r.jenkins,
+		Logger:    r.logger,
+		Information: &notifier.Information{
+			CrName:            r.jenkins.Name,
+			ConfigurationType: "base",
+			Status:            notifier.StatusError,
+			Error:             er.New("failed to do something"),
+		},
+	}
 	return result, jenkinsClient, err
 }
 

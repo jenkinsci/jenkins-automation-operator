@@ -17,6 +17,9 @@ type JenkinsSpec struct {
 	// +optional
 	SeedJobs []SeedJob `json:"seedJobs,omitempty"`
 
+	// Notification defines services which are used to inform about Jenkins behavior
+	Notification []Notification `json:"notification,omitempty"`
+
 	// Service is Kubernetes service of Jenkins master HTTP pod
 	// Defaults to :
 	// port: 8080
@@ -48,6 +51,44 @@ type JenkinsSpec struct {
 	// ConfigurationAsCode defines configuration of Jenkins customization via Configuration as Code Jenkins plugin
 	// +optional
 	ConfigurationAsCode ConfigurationAsCode `json:"configurationAsCode,omitempty"`
+}
+
+// Notification is info sending service about Jenkins Operator
+type Notification struct {
+	LoggingLevel JenkinsNotificationLogLevel `json:"loggingLevel"`
+	Verbose      bool                        `json:"verbose"`
+	Name         string                      `json:"name"`
+	Slack        Slack                       `json:"slack,omitempty"`
+	Teams        Teams                       `json:"teams,omitempty"`
+	Mailgun      Mailgun                     `json:"mailgun,omitempty"`
+}
+
+// Slack is handler for Slack
+type Slack struct {
+	// The web hook url to Slack App
+	URLSecretKeySelector SecretKeySelector `json:"urlSecretKeySelector"`
+}
+
+// Teams is handler for Microsoft Teams
+type Teams struct {
+	// The web hook url to Teams App
+	URLSecretKeySelector SecretKeySelector `json:"urlSecretKeySelector"`
+}
+
+// Mailgun is handler for Mailgun email service
+type Mailgun struct {
+	Domain                  string            `json:"domain"`
+	APIKeySecretKeySelector SecretKeySelector `json:"apiKeySecretKeySelector"`
+	Recipient               string            `json:"recipient"`
+	From                    string            `json:"from"`
+}
+
+// SecretKeySelector selects a key of a Secret.
+type SecretKeySelector struct {
+	// The name of the secret in the pod's namespace to select from.
+	corev1.LocalObjectReference `json:",inline" protobuf:"bytes,1,opt,name=localObjectReference"`
+	// The key of the secret to select from.  Must be a valid secret key.
+	Key string `json:"key" protobuf:"bytes,2,opt,name=key"`
 }
 
 // Container defines Kubernetes container attributes
@@ -441,6 +482,20 @@ const (
 	BasicSSHCredentialType JenkinsCredentialType = "basicSSHUserPrivateKey"
 	// UsernamePasswordCredentialType define username & password Jenkins credential type
 	UsernamePasswordCredentialType JenkinsCredentialType = "usernamePassword"
+)
+
+// JenkinsNotificationLogLevel defines type of Notification feature frequency of sending logger entries
+type JenkinsNotificationLogLevel string
+
+const (
+	// LogLevelNone - No logs
+	LogLevelNone JenkinsNotificationLogLevel = ""
+
+	// LogLevelWarning - Only Warnings
+	LogLevelWarning JenkinsNotificationLogLevel = "warning"
+
+	// LogLevelInfo - Only info
+	LogLevelInfo JenkinsNotificationLogLevel = "info"
 )
 
 // AllowedJenkinsCredentialMap contains all allowed Jenkins credentials types
