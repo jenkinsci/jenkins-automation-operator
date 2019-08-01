@@ -2,20 +2,25 @@ package notifier
 
 import (
 	"encoding/json"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestTeams_Send(t *testing.T) {
-	teams := Teams{}
-
 	i := &Information{
 		ConfigurationType: testConfigurationType,
 		CrName:            testCrName,
-		Status:            testStatus,
-		Error:             testError,
+		Message:           testMessage,
+		MessageVerbose:    testMessageVerbose,
+		Namespace:         testNamespace,
+		LogLevel:          testLoggingLevel,
+	}
+
+	notification := &Notification{
+		Information: i,
 	}
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -28,32 +33,28 @@ func TestTeams_Send(t *testing.T) {
 		}
 
 		assert.Equal(t, message.Title, titleText)
-		assert.Equal(t, message.ThemeColor, getStatusColor(i.Status, teams))
+		assert.Equal(t, message.ThemeColor, getStatusColor(i.LogLevel, Teams{}))
 
 		mainSection := message.Sections[0]
 
-		assert.Equal(t, mainSection.Text, noErrorMessage)
+		assert.Equal(t, mainSection.Text, i.Message)
 
 		for _, fact := range mainSection.Facts {
 			switch fact.Name {
 			case configurationTypeFieldName:
-				if fact.Value != i.ConfigurationType {
-					t.Fatalf("%s is not equal! Must be %s", configurationTypeFieldName, i.ConfigurationType)
-				}
+				assert.Equal(t, fact.Value, i.ConfigurationType)
 			case crNameFieldName:
-				if fact.Value != i.CrName {
-					t.Fatalf("%s is not equal! Must be %s", crNameFieldName, i.CrName)
-				}
-			case statusFieldName:
-				if fact.Value != getStatusName(i.Status) {
-					t.Fatalf("%s is not equal! Must be %s", statusFieldName, getStatusName(i.Status))
-				}
+				assert.Equal(t, fact.Value, i.CrName)
+			case messageFieldName:
+				assert.Equal(t, fact.Value, i.Message)
+			case loggingLevelFieldName:
+				assert.Equal(t, fact.Value, string(i.LogLevel))
 			}
 		}
 	}))
 
+	teams := Teams{apiURL: server.URL}
+
 	defer server.Close()
-	if err := teams.Send(server.URL, i); err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, teams.Send(notification))
 }

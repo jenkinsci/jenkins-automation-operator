@@ -2,20 +2,25 @@ package notifier
 
 import (
 	"encoding/json"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSlack_Send(t *testing.T) {
-	slack := Slack{}
-
 	i := &Information{
 		ConfigurationType: testConfigurationType,
 		CrName:            testCrName,
-		Status:            testStatus,
-		Error:             testError,
+		Message:           testMessage,
+		MessageVerbose:    testMessageVerbose,
+		Namespace:         testNamespace,
+		LogLevel:          testLoggingLevel,
+	}
+
+	notification := &Notification{
+		Information: i,
 	}
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -34,27 +39,23 @@ func TestSlack_Send(t *testing.T) {
 		for _, field := range mainAttachment.Fields {
 			switch field.Title {
 			case configurationTypeFieldName:
-				if field.Value != i.ConfigurationType {
-					t.Fatalf("%s is not equal! Must be %s", configurationTypeFieldName, i.ConfigurationType)
-				}
+				assert.Equal(t, field.Value, i.ConfigurationType)
 			case crNameFieldName:
-				if field.Value != i.CrName {
-					t.Fatalf("%s is not equal! Must be %s", crNameFieldName, i.CrName)
-				}
-			case statusMessageFieldName:
-				if field.Value != noErrorMessage {
-					t.Fatalf("Error thrown but not expected")
-				}
+				assert.Equal(t, field.Value, i.CrName)
+			case messageFieldName:
+				assert.Equal(t, field.Value, i.Message)
+			case loggingLevelFieldName:
+				assert.Equal(t, field.Value, string(i.LogLevel))
 			}
 		}
 
 		assert.Equal(t, mainAttachment.Footer, footerContent)
-		assert.Equal(t, mainAttachment.Color, getStatusColor(i.Status, slack))
+		assert.Equal(t, mainAttachment.Color, getStatusColor(i.LogLevel, Slack{}))
 	}))
 
 	defer server.Close()
 
-	if err := slack.Send(server.URL, i); err != nil {
-		t.Fatal(err)
-	}
+	slack := Slack{apiURL: server.URL}
+
+	assert.NoError(t, slack.Send(notification))
 }

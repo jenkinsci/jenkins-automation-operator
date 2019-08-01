@@ -2,12 +2,22 @@ package notifier
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
+
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
+	"github.com/jenkinsci/kubernetes-operator/pkg/log"
+
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 // Slack is messaging service
-type Slack struct{}
+type Slack struct {
+	apiURL string
+}
 
 // SlackMessage is representation of json message
 type SlackMessage struct {
@@ -34,26 +44,31 @@ type SlackField struct {
 }
 
 // Send is function for sending directly to API
-func (s Slack) Send(secret string, i *Information) error {
-	err := i.Error
-	var errMessage string
+func (s Slack) Send(n *Notification) error {
+	var selector v1alpha2.SecretKeySelector
+	secret := &corev1.Secret{}
 
-	if err != nil {
-		errMessage = err.Error()
-	} else {
-		errMessage = noErrorMessage
+	i := n.Information
+
+	if s.apiURL == "" {
+		err := n.K8sClient.Get(context.TODO(), types.NamespacedName{Name: selector.Name, Namespace: n.Jenkins.Namespace}, secret)
+		if err != nil {
+			n.Logger.V(log.VWarn).Info(fmt.Sprintf("Failed to get secret with name `%s`. %+v", selector.Name, err))
+		}
+
+		s.apiURL = secret.StringData[selector.Name]
 	}
 
 	slackMessage, err := json.Marshal(SlackMessage{
 		Attachments: []SlackAttachment{
 			{
 				Fallback: "",
-				Color:    getStatusColor(i.Status, s),
+				Color:    getStatusColor(i.LogLevel, s),
 				Text:     titleText,
 				Fields: []SlackField{
 					{
-						Title: statusMessageFieldName,
-						Value: errMessage,
+						Title: messageFieldName,
+						Value: i.Message,
 						Short: false,
 					},
 					{
@@ -66,6 +81,16 @@ func (s Slack) Send(secret string, i *Information) error {
 						Value: i.ConfigurationType,
 						Short: true,
 					},
+					{
+						Title: loggingLevelFieldName,
+						Value: string(i.LogLevel),
+						Short: true,
+					},
+					{
+						Title: namespaceFieldName,
+						Value: i.Namespace,
+						Short: true,
+					},
 				},
 				Footer: footerContent,
 			},
@@ -76,7 +101,7 @@ func (s Slack) Send(secret string, i *Information) error {
 		return err
 	}
 
-	request, err := http.NewRequest("POST", secret, bytes.NewBuffer(slackMessage))
+	request, err := http.NewRequest("POST", s.apiURL, bytes.NewBuffer(slackMessage))
 	if err != nil {
 		return err
 	}
@@ -86,10 +111,6 @@ func (s Slack) Send(secret string, i *Information) error {
 		return err
 	}
 
-	err = resp.Body.Close()
-	if err != nil {
-		return err
-	}
-
+	defer func() { _ = resp.Body.Close() }()
 	return nil
 }
