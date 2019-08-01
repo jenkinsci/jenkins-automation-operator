@@ -1,16 +1,26 @@
 package notifier
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
+
 	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 func TestSlack_Send(t *testing.T) {
-	i := &Information{
+	fakeClient := fake.NewFakeClient()
+	testURLSelectorKeyName := "test-url-selector"
+	testSecretName := "test-secret"
+
+	i := Information{
 		ConfigurationType: testConfigurationType,
 		CrName:            testCrName,
 		Message:           testMessage,
@@ -20,6 +30,7 @@ func TestSlack_Send(t *testing.T) {
 	}
 
 	notification := &Notification{
+		K8sClient:   fakeClient,
 		Information: i,
 	}
 
@@ -35,7 +46,6 @@ func TestSlack_Send(t *testing.T) {
 		mainAttachment := message.Attachments[0]
 
 		assert.Equal(t, mainAttachment.Text, titleText)
-
 		for _, field := range mainAttachment.Fields {
 			switch field.Title {
 			case configurationTypeFieldName:
@@ -46,6 +56,10 @@ func TestSlack_Send(t *testing.T) {
 				assert.Equal(t, field.Value, i.Message)
 			case loggingLevelFieldName:
 				assert.Equal(t, field.Value, string(i.LogLevel))
+			case namespaceFieldName:
+				assert.Equal(t, field.Value, i.Namespace)
+			default:
+				t.Fail()
 			}
 		}
 
@@ -55,7 +69,29 @@ func TestSlack_Send(t *testing.T) {
 
 	defer server.Close()
 
-	slack := Slack{apiURL: server.URL}
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: testSecretName,
+		},
 
-	assert.NoError(t, slack.Send(notification))
+		Data: map[string][]byte{
+			testURLSelectorKeyName: []byte(server.URL),
+		},
+	}
+
+	err := notification.K8sClient.Create(context.TODO(), secret)
+	assert.NoError(t, err)
+
+	slack := Slack{}
+
+	assert.NoError(t, slack.Send(notification, v1alpha2.Notification{
+		Slack: v1alpha2.Slack{
+			URLSecretKeySelector: v1alpha2.SecretKeySelector{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: testSecretName,
+				},
+				Key: testURLSelectorKeyName,
+			},
+		},
+	}))
 }

@@ -15,9 +15,7 @@ import (
 )
 
 // Slack is messaging service
-type Slack struct {
-	apiURL string
-}
+type Slack struct{}
 
 // SlackMessage is representation of json message
 type SlackMessage struct {
@@ -44,19 +42,16 @@ type SlackField struct {
 }
 
 // Send is function for sending directly to API
-func (s Slack) Send(n *Notification) error {
+func (s Slack) Send(n *Notification, config v1alpha2.Notification) error {
 	var selector v1alpha2.SecretKeySelector
 	secret := &corev1.Secret{}
-
 	i := n.Information
 
-	if s.apiURL == "" {
-		err := n.K8sClient.Get(context.TODO(), types.NamespacedName{Name: selector.Name, Namespace: n.Jenkins.Namespace}, secret)
-		if err != nil {
-			n.Logger.V(log.VWarn).Info(fmt.Sprintf("Failed to get secret with name `%s`. %+v", selector.Name, err))
-		}
+	selector = config.Slack.URLSecretKeySelector
 
-		s.apiURL = secret.StringData[selector.Name]
+	err := n.K8sClient.Get(context.TODO(), types.NamespacedName{Name: selector.Name, Namespace: n.Jenkins.Namespace}, secret)
+	if err != nil {
+		n.Logger.V(log.VWarn).Info(fmt.Sprintf("Failed to get secret with name `%s`. %+v", selector.Name, err))
 	}
 
 	slackMessage, err := json.Marshal(SlackMessage{
@@ -97,11 +92,16 @@ func (s Slack) Send(n *Notification) error {
 		},
 	})
 
+	secretValue := string(secret.Data[selector.Key])
+	if secretValue == "" {
+		return fmt.Errorf("SecretValue %s is empty", selector.Name)
+	}
+
 	if err != nil {
 		return err
 	}
 
-	request, err := http.NewRequest("POST", s.apiURL, bytes.NewBuffer(slackMessage))
+	request, err := http.NewRequest("POST", secretValue, bytes.NewBuffer(slackMessage))
 	if err != nil {
 		return err
 	}

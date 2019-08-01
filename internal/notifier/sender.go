@@ -56,48 +56,41 @@ type Information struct {
 
 // Notification contains message which will be sent
 type Notification struct {
-	Jenkins     *v1alpha2.Jenkins
+	Jenkins     v1alpha2.Jenkins
 	K8sClient   k8sclient.Client
 	Logger      logr.Logger
-	Information *Information
+	Information Information
 }
 
 // Service is skeleton for additional services
 type service interface {
-	Send(i *Notification) error
+	Send(i *Notification, config v1alpha2.Notification) error
 }
 
 // Listen is goroutine that listens for incoming messages and sends it
 func Listen(notification chan *Notification) {
-	<-notification
 	for n := range notification {
-		if len(n.Jenkins.Spec.Notification) > 0 {
-			for _, endpoint := range n.Jenkins.Spec.Notification {
-				var err error
-				var svc service
+		notificationConfig := n.Jenkins.Spec.Notification
+		var err error
+		var svc service
 
-				if endpoint.Slack != (v1alpha2.Slack{}) {
-					svc = Slack{}
-				} else if endpoint.Teams != (v1alpha2.Teams{}) {
-					svc = Teams{}
-				} else if endpoint.Mailgun != (v1alpha2.Mailgun{}) {
-					svc = Mailgun{
-						Domain:    endpoint.Mailgun.Domain,
-						Recipient: endpoint.Mailgun.Recipient,
-						From:      endpoint.Mailgun.From,
-					}
-				} else {
-					n.Logger.V(log.VWarn).Info("Notification service not found or not defined")
-				}
+		if notificationConfig.Slack != (v1alpha2.Slack{}) {
+			svc = Slack{}
+		} else if notificationConfig.Teams != (v1alpha2.Teams{}) {
+			svc = Teams{}
+		} else if notificationConfig.Mailgun != (v1alpha2.Mailgun{}) {
+			svc = Mailgun{}
+		} else {
+			n.Logger.V(log.VWarn).Info(fmt.Sprintf("Notification service in `%s` not found or not defined", notificationConfig.Name))
+			continue
+		}
 
-				err = notify(svc, n)
+		err = notify(svc, n, notificationConfig)
 
-				if err != nil {
-					n.Logger.V(log.VWarn).Info(fmt.Sprintf("Failed to send notifications. %+v", err))
-				} else {
-					n.Logger.V(log.VDebug).Info("Sent notification")
-				}
-			}
+		if err != nil {
+			n.Logger.V(log.VWarn).Info(fmt.Sprintf("Failed to send notifications. %+v", err))
+		} else {
+			n.Logger.V(log.VDebug).Info("Sent notification")
 		}
 	}
 }
@@ -136,15 +129,15 @@ func getStatusColor(logLevel LoggingLevel, svc service) StatusColor {
 	}
 }
 
-func notify(svc service, n *Notification) error {
+func notify(svc service, n *Notification, nc v1alpha2.Notification) error {
 	var err error
 	switch s := svc.(type) {
 	case Slack:
-		err = s.Send(n)
+		err = s.Send(n, nc)
 	case Teams:
-		err = s.Send(n)
+		err = s.Send(n, nc)
 	case Mailgun:
-		err = s.Send(n)
+		err = s.Send(n, nc)
 	}
 
 	return err

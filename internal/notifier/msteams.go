@@ -15,9 +15,7 @@ import (
 )
 
 // Teams is Microsoft Teams Service
-type Teams struct {
-	apiURL string
-}
+type Teams struct{}
 
 // TeamsMessage is representation of json message structure
 type TeamsMessage struct {
@@ -41,11 +39,17 @@ type TeamsFact struct {
 }
 
 // Send is function for sending directly to API
-func (t Teams) Send(n *Notification) error {
+func (t Teams) Send(n *Notification, config v1alpha2.Notification) error {
 	var selector v1alpha2.SecretKeySelector
 	secret := &corev1.Secret{}
-
 	i := n.Information
+
+	selector = config.Teams.URLSecretKeySelector
+
+	err := n.K8sClient.Get(context.TODO(), types.NamespacedName{Name: selector.Name, Namespace: n.Jenkins.Namespace}, secret)
+	if err != nil {
+		n.Logger.V(log.VWarn).Info(fmt.Sprintf("Failed to get secret with name `%s`. %+v", selector.Name, err))
+	}
 
 	msg, err := json.Marshal(TeamsMessage{
 		Type:       "MessageCard",
@@ -77,20 +81,16 @@ func (t Teams) Send(n *Notification) error {
 		},
 	})
 
-	if t.apiURL == "" {
-		err := n.K8sClient.Get(context.TODO(), types.NamespacedName{Name: selector.Name, Namespace: n.Jenkins.Namespace}, secret)
-		if err != nil {
-			n.Logger.V(log.VWarn).Info(fmt.Sprintf("Failed to get secret with name `%s`. %+v", selector.Name, err))
-		}
-
-		t.apiURL = secret.StringData[selector.Name]
+	secretValue := string(secret.Data[selector.Key])
+	if secretValue == "" {
+		return fmt.Errorf("SecretValue %s is empty", selector.Name)
 	}
 
 	if err != nil {
 		return err
 	}
 
-	request, err := http.NewRequest("POST", t.apiURL, bytes.NewBuffer(msg))
+	request, err := http.NewRequest("POST", secretValue, bytes.NewBuffer(msg))
 	if err != nil {
 		return err
 	}
