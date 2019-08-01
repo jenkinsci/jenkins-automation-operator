@@ -18,7 +18,8 @@ type JenkinsSpec struct {
 	SeedJobs []SeedJob `json:"seedJobs,omitempty"`
 
 	// Notification defines services which are used to inform about Jenkins behavior
-	Notification []Notification `json:"notification,omitempty"`
+	// Can be used to integrate chat services like Slack or Email services like Mailgun
+	Notification Notification `json:"notifications,omitempty"`
 
 	// Service is Kubernetes service of Jenkins master HTTP pod
 	// Defaults to :
@@ -488,9 +489,6 @@ const (
 type JenkinsNotificationLogLevel string
 
 const (
-	// LogLevelNone - No logs
-	LogLevelNone JenkinsNotificationLogLevel = ""
-
 	// LogLevelWarning - Only Warnings
 	LogLevelWarning JenkinsNotificationLogLevel = "warning"
 
