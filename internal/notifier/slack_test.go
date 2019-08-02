@@ -84,7 +84,7 @@ func TestSlack_Send(t *testing.T) {
 
 	slack := Slack{}
 
-	err := slack.Send(notification, v1alpha2.Notification{
+	err = slack.Send(notification, v1alpha2.Notification{
 		Slack: v1alpha2.Slack{
 			URLSecretKeySelector: v1alpha2.SecretKeySelector{
 				LocalObjectReference: corev1.LocalObjectReference{

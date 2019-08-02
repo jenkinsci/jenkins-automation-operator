@@ -85,7 +85,7 @@ func TestTeams_Send(t *testing.T) {
 	err := notification.K8sClient.Create(context.TODO(), secret)
 	assert.NoError(t, err)
 
-	err := teams.Send(notification, v1alpha2.Notification{
+	err = teams.Send(notification, v1alpha2.Notification{
 		Teams: v1alpha2.Teams{
 			URLSecretKeySelector: v1alpha2.SecretKeySelector{
 				LocalObjectReference: corev1.LocalObjectReference{
