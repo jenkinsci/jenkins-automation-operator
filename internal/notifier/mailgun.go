@@ -3,11 +3,10 @@ package notifier
 import (
 	"context"
 	"fmt"
+	"github.com/pkg/errors"
 	"time"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
-	"github.com/jenkinsci/kubernetes-operator/pkg/log"
-
 	"github.com/mailgun/mailgun-go/v3"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -44,21 +43,19 @@ type Mailgun struct{}
 
 // Send is function for sending directly to API
 func (m Mailgun) Send(n *Notification, config v1alpha2.Notification) error {
-	var selector v1alpha2.SecretKeySelector
 	secret := &corev1.Secret{}
 	i := n.Information
 
-	selector = config.Mailgun.APIKeySecretKeySelector
+	selector := config.Mailgun.APIKeySecretKeySelector
 
 	err := n.K8sClient.Get(context.TODO(), types.NamespacedName{Name: selector.Name, Namespace: n.Jenkins.Namespace}, secret)
 	if err != nil {
-		n.Logger.V(log.VWarn).Info(fmt.Sprintf("Failed to get secret with name `%s`. %+v", selector.Name, err))
 		return err
 	}
 
 	secretValue := string(secret.Data[selector.Name])
 	if secretValue == "" {
-		return fmt.Errorf("SecretValue %s is empty", selector.Name)
+		return errors.Errorf("SecretValue %s is empty", selector.Name)
 	}
 
 	mg := mailgun.NewMailgun(config.Mailgun.Domain, secretValue)

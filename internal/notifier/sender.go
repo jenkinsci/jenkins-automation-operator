@@ -2,9 +2,9 @@ package notifier
 
 import (
 	"fmt"
-	"github.com/go-logr/logr"
 	"net/http"
 
+	"github.com/go-logr/logr"
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
 
@@ -70,27 +70,30 @@ type service interface {
 // Listen is goroutine that listens for incoming messages and sends it
 func Listen(notification chan *Notification) {
 	for n := range notification {
-		notificationConfig := n.Jenkins.Spec.Notification
-		var err error
-		var svc service
+		if len(n.Jenkins.Spec.Notifications) > 0 {
+			for _, notificationConfig := range n.Jenkins.Spec.Notifications {
+				var err error
+				var svc service
 
-		if notificationConfig.Slack != (v1alpha2.Slack{}) {
-			svc = Slack{}
-		} else if notificationConfig.Teams != (v1alpha2.Teams{}) {
-			svc = Teams{}
-		} else if notificationConfig.Mailgun != (v1alpha2.Mailgun{}) {
-			svc = Mailgun{}
-		} else {
-			n.Logger.V(log.VWarn).Info(fmt.Sprintf("Notification service in `%s` not found or not defined", notificationConfig.Name))
-			continue
-		}
+				if notificationConfig.Slack != (v1alpha2.Slack{}) {
+					svc = Slack{}
+				} else if notificationConfig.Teams != (v1alpha2.Teams{}) {
+					svc = Teams{}
+				} else if notificationConfig.Mailgun != (v1alpha2.Mailgun{}) {
+					svc = Mailgun{}
+				} else {
+					n.Logger.V(log.VWarn).Info(fmt.Sprintf("Notification service in `%s` not found or not defined", notificationConfig.Name))
+					continue
+				}
 
-		err = notify(svc, n, notificationConfig)
+				err = notify(svc, n, notificationConfig)
 
-		if err != nil {
-			n.Logger.V(log.VWarn).Info(fmt.Sprintf("Failed to send notifications. %+v", err))
-		} else {
-			n.Logger.V(log.VDebug).Info("Sent notification")
+				if err != nil {
+					n.Logger.V(log.VWarn).Info(fmt.Sprintf("Failed to send notifications. %+v", err))
+				} else {
+					n.Logger.V(log.VDebug).Info("Sent notification")
+				}
+			}
 		}
 	}
 }
@@ -129,16 +132,10 @@ func getStatusColor(logLevel LoggingLevel, svc service) StatusColor {
 	}
 }
 
-func notify(svc service, n *Notification, nc v1alpha2.Notification) error {
-	var err error
-	switch s := svc.(type) {
-	case Slack:
-		err = s.Send(n, nc)
-	case Teams:
-		err = s.Send(n, nc)
-	case Mailgun:
-		err = s.Send(n, nc)
+func notify(svc service, n *Notification, manifest v1alpha2.Notification) error {
+	if n.Information.LogLevel == LogInfo && string(manifest.LoggingLevel) == string(LogWarn) {
+		return nil
 	}
 
-	return err
+	return svc.Send(n, manifest)
 }

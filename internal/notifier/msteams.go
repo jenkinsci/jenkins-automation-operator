@@ -4,12 +4,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
+	"github.com/pkg/errors"
 	"net/http"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
-	"github.com/jenkinsci/kubernetes-operator/pkg/log"
-
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
@@ -40,15 +38,14 @@ type TeamsFact struct {
 
 // Send is function for sending directly to API
 func (t Teams) Send(n *Notification, config v1alpha2.Notification) error {
-	var selector v1alpha2.SecretKeySelector
 	secret := &corev1.Secret{}
 	i := n.Information
 
-	selector = config.Teams.URLSecretKeySelector
+	selector := config.Teams.URLSecretKeySelector
 
 	err := n.K8sClient.Get(context.TODO(), types.NamespacedName{Name: selector.Name, Namespace: n.Jenkins.Namespace}, secret)
 	if err != nil {
-		n.Logger.V(log.VWarn).Info(fmt.Sprintf("Failed to get secret with name `%s`. %+v", selector.Name, err))
+		return err
 	}
 
 	msg, err := json.Marshal(TeamsMessage{
@@ -83,7 +80,7 @@ func (t Teams) Send(n *Notification, config v1alpha2.Notification) error {
 
 	secretValue := string(secret.Data[selector.Key])
 	if secretValue == "" {
-		return fmt.Errorf("SecretValue %s is empty", selector.Name)
+		return errors.Errorf("SecretValue %s is empty", selector.Name)
 	}
 
 	if err != nil {

@@ -17,9 +17,9 @@ type JenkinsSpec struct {
 	// +optional
 	SeedJobs []SeedJob `json:"seedJobs,omitempty"`
 
-	// Notification defines services which are used to inform about Jenkins behavior
+	// Notifications defines services which are used to inform about Jenkins status
 	// Can be used to integrate chat services like Slack or Email services like Mailgun
-	Notification Notification `json:"notifications,omitempty"`
+	Notifications []Notification `json:"notifications,omitempty"`
 
 	// Service is Kubernetes service of Jenkins master HTTP pod
 	// Defaults to :
@@ -66,13 +66,13 @@ type Notification struct {
 
 // Slack is handler for Slack
 type Slack struct {
-	// The web hook url to Slack App
+	// The web hook URL to Slack App
 	URLSecretKeySelector SecretKeySelector `json:"urlSecretKeySelector"`
 }
 
 // Teams is handler for Microsoft Teams
 type Teams struct {
-	// The web hook url to Teams App
+	// The web hook URL to Teams App
 	URLSecretKeySelector SecretKeySelector `json:"urlSecretKeySelector"`
 }
 
