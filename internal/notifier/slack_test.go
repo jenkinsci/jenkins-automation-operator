@@ -84,7 +84,7 @@ func TestSlack_Send(t *testing.T) {
 
 	slack := Slack{}
 
-	assert.NoError(t, slack.Send(notification, v1alpha2.Notification{
+	err := slack.Send(notification, v1alpha2.Notification{
 		Slack: v1alpha2.Slack{
 			URLSecretKeySelector: v1alpha2.SecretKeySelector{
 				LocalObjectReference: corev1.LocalObjectReference{
@@ -93,5 +93,7 @@ func TestSlack_Send(t *testing.T) {
 				Key: testURLSelectorKeyName,
 			},
 		},
-	}))
+	})
+
+	assert.NoError(t, err)
 }
