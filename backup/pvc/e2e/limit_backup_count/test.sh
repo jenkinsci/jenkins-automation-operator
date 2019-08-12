@@ -17,6 +17,7 @@ JENKINS_HOME="$(pwd)/jenkins_home"
 BACKUP_DIR="$(pwd)/backup"
 mkdir -p ${BACKUP_DIR}
 
+mkdir -p ${BACKUP_DIR}/lost+found
 touch ${BACKUP_DIR}/1.tar.gz
 touch ${BACKUP_DIR}/2.tar.gz
 touch ${BACKUP_DIR}/3.tar.gz
@@ -46,7 +47,7 @@ if [[ "${DEBUG}" ]]; then
 fi
 
 # only two latest backup should exists
-[[ $(ls -1 ${BACKUP_DIR} | wc -l) -eq 2 ]] || exit 1
+[[ $(ls -1 ${BACKUP_DIR} | grep 'tar.gz' | wc -l) -eq 2 ]] || exit 1
 [[ -f ${BACKUP_DIR}/11.tar.gz ]] || exit 2
 [[ -f ${BACKUP_DIR}/12.tar.gz ]] || exit 3
 echo PASS
