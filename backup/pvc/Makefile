@@ -130,16 +130,11 @@ docker-run: docker-build ## Run the container in docker, you can use EXTRA_ARGS
 BUMP := patch
 bump-version: ## Bump the version in the version file. Set BUMP to [ patch | major | minor ]
 	@echo "+ $@"
-	@go get -u github.com/jessfraz/junk/sembump # update sembump tool
 	$(eval NEW_VERSION=$(shell sembump --kind $(BUMP) $(VERSION)))
 	@echo "Bumping VERSION.txt from $(VERSION) to $(NEW_VERSION)"
 	echo $(NEW_VERSION) > VERSION.txt
-	@echo "Updating version from $(VERSION) to $(NEW_VERSION) in README.md"
-	sed -i s/$(VERSION)/$(NEW_VERSION)/g README.md
-	sed -i s/$(VERSION)/$(NEW_VERSION)/g deploy/operator.yaml
-	git add VERSION.txt README.md deploy/operator.yaml
-	git commit -vaem "Bump version to $(NEW_VERSION)"
-	@echo "Run make tag to create and push the tag for new version $(NEW_VERSION)"
+	git add VERSION.txt
+	git commit -vaem "Bump backup PVC version to $(NEW_VERSION)"
 
 .PHONY: tag
 tag: ## Create a new git tag to prepare to build a release
