@@ -32,6 +32,18 @@ func TestVerifyDependencies(t *testing.T) {
 		got := VerifyDependencies(basePlugins)
 		assert.Equal(t, true, got)
 	})
+	t.Run("happy, two plugin names with names with underscores", func(t *testing.T) {
+		basePlugins := map[Plugin][]Plugin{
+			Must(New("first_root_plugin:1.0.0")): {
+				Must(New("first_plugin:0.0.1")),
+			},
+			Must(New("second_root_plugin:1.0.0")): {
+				Must(New("first_plugin:0.0.1")),
+			},
+		}
+		got := VerifyDependencies(basePlugins)
+		assert.Equal(t, true, got)
+	})
 	t.Run("fail, two root plugins have different versions", func(t *testing.T) {
 		basePlugins := map[Plugin][]Plugin{
 			Must(New("first-root-plugin:1.0.0")): {
