@@ -1,4 +1,4 @@
-package notifier
+package notifications
 
 import (
 	"context"
@@ -15,27 +15,27 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-func TestTeams_Send(t *testing.T) {
+func TestSlack_Send(t *testing.T) {
 	fakeClient := fake.NewFakeClient()
 	testURLSelectorKeyName := "test-url-selector"
 	testSecretName := "test-secret"
 
-	i := Information{
+	event := Event{
+		Jenkins: v1alpha2.Jenkins{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      testCrName,
+				Namespace: testNamespace,
+			},
+		},
 		ConfigurationType: testConfigurationType,
-		CrName:            testCrName,
 		Message:           testMessage,
 		MessageVerbose:    testMessageVerbose,
-		Namespace:         testNamespace,
 		LogLevel:          testLoggingLevel,
 	}
-
-	notification := &Notification{
-		K8sClient:   fakeClient,
-		Information: i,
-	}
+	slack := Slack{k8sClient: fakeClient}
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var message TeamsMessage
+		var message SlackMessage
 		decoder := json.NewDecoder(r.Body)
 		err := decoder.Decode(&message)
 
@@ -43,38 +43,36 @@ func TestTeams_Send(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		assert.Equal(t, message.Title, titleText)
-		assert.Equal(t, message.ThemeColor, getStatusColor(i.LogLevel, Teams{}))
+		mainAttachment := message.Attachments[0]
 
-		mainSection := message.Sections[0]
-
-		assert.Equal(t, mainSection.Text, i.Message)
-
-		for _, fact := range mainSection.Facts {
-			switch fact.Name {
+		assert.Equal(t, mainAttachment.Text, titleText)
+		for _, field := range mainAttachment.Fields {
+			switch field.Title {
 			case configurationTypeFieldName:
-				assert.Equal(t, fact.Value, i.ConfigurationType)
+				assert.Equal(t, field.Value, event.ConfigurationType)
 			case crNameFieldName:
-				assert.Equal(t, fact.Value, i.CrName)
+				assert.Equal(t, field.Value, event.Jenkins.Name)
 			case messageFieldName:
-				assert.Equal(t, fact.Value, i.Message)
+				assert.Equal(t, field.Value, event.Message)
 			case loggingLevelFieldName:
-				assert.Equal(t, fact.Value, string(i.LogLevel))
+				assert.Equal(t, field.Value, string(event.LogLevel))
 			case namespaceFieldName:
-				assert.Equal(t, fact.Value, i.Namespace)
+				assert.Equal(t, field.Value, event.Jenkins.Namespace)
 			default:
 				t.Fail()
 			}
 		}
-	}))
 
-	teams := Teams{}
+		assert.Equal(t, mainAttachment.Footer, footerContent)
+		assert.Equal(t, mainAttachment.Color, slack.getStatusColor(event.LogLevel))
+	}))
 
 	defer server.Close()
 
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: testSecretName,
+			Name:      testSecretName,
+			Namespace: testNamespace,
 		},
 
 		Data: map[string][]byte{
@@ -82,11 +80,11 @@ func TestTeams_Send(t *testing.T) {
 		},
 	}
 
-	err := notification.K8sClient.Create(context.TODO(), secret)
+	err := fakeClient.Create(context.TODO(), secret)
 	assert.NoError(t, err)
 
-	err = teams.Send(notification, v1alpha2.Notification{
-		Teams: v1alpha2.Teams{
+	err = slack.Send(event, v1alpha2.Notification{
+		Slack: v1alpha2.Slack{
 			URLSecretKeySelector: v1alpha2.SecretKeySelector{
 				LocalObjectReference: corev1.LocalObjectReference{
 					Name: testSecretName,
@@ -95,5 +93,6 @@ func TestTeams_Send(t *testing.T) {
 			},
 		},
 	})
+
 	assert.NoError(t, err)
 }

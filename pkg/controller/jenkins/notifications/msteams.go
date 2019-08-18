@@ -1,20 +1,23 @@
-package notifier
+package notifications
 
 import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"github.com/pkg/errors"
 	"net/http"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 
+	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
+	k8sclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // Teams is Microsoft Teams Service
-type Teams struct{}
+type Teams struct {
+	k8sClient k8sclient.Client
+}
 
 // TeamsMessage is representation of json message structure
 type TeamsMessage struct {
@@ -37,65 +40,74 @@ type TeamsFact struct {
 	Value string `json:"value"`
 }
 
+func (t Teams) getStatusColor(logLevel LoggingLevel) StatusColor {
+	switch logLevel {
+	case LogInfo:
+		return "439FE0"
+	case LogWarn:
+		return "E81123"
+	default:
+		return "C8C8C8"
+	}
+}
+
 // Send is function for sending directly to API
-func (t Teams) Send(n *Notification, config v1alpha2.Notification) error {
+func (t Teams) Send(event Event, config v1alpha2.Notification) error {
 	secret := &corev1.Secret{}
-	i := n.Information
 
 	selector := config.Teams.URLSecretKeySelector
 
-	err := n.K8sClient.Get(context.TODO(), types.NamespacedName{Name: selector.Name, Namespace: n.Jenkins.Namespace}, secret)
+	err := t.k8sClient.Get(context.TODO(), types.NamespacedName{Name: selector.Name, Namespace: event.Jenkins.Namespace}, secret)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
+	}
+
+	secretValue := string(secret.Data[selector.Key])
+	if secretValue == "" {
+		return errors.Errorf("Microsoft Teams webhook URL is empty in secret '%s/%s[%s]", event.Jenkins.Namespace, selector.Name, selector.Key)
 	}
 
 	msg, err := json.Marshal(TeamsMessage{
 		Type:       "MessageCard",
 		Context:    "https://schema.org/extensions",
-		ThemeColor: getStatusColor(i.LogLevel, t),
+		ThemeColor: t.getStatusColor(event.LogLevel),
 		Title:      titleText,
 		Sections: []TeamsSection{
 			{
 				Facts: []TeamsFact{
 					{
 						Name:  crNameFieldName,
-						Value: i.CrName,
+						Value: event.Jenkins.Name,
 					},
 					{
 						Name:  configurationTypeFieldName,
-						Value: i.ConfigurationType,
+						Value: event.ConfigurationType,
 					},
 					{
 						Name:  loggingLevelFieldName,
-						Value: string(i.LogLevel),
+						Value: string(event.LogLevel),
 					},
 					{
 						Name:  namespaceFieldName,
-						Value: i.Namespace,
+						Value: event.Jenkins.Namespace,
 					},
 				},
-				Text: i.Message,
+				Text: event.Message,
 			},
 		},
 	})
-
-	secretValue := string(secret.Data[selector.Key])
-	if secretValue == "" {
-		return errors.Errorf("SecretValue %s is empty", selector.Name)
-	}
-
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	request, err := http.NewRequest("POST", secretValue, bytes.NewBuffer(msg))
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	resp, err := client.Do(request)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	defer func() { _ = resp.Body.Close() }()

@@ -1,4 +1,4 @@
-package notifier
+package notifications
 
 import (
 	"bytes"
@@ -11,10 +11,13 @@ import (
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
+	k8sclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // Slack is messaging service
-type Slack struct{}
+type Slack struct {
+	k8sClient k8sclient.Client
+}
 
 // SlackMessage is representation of json message
 type SlackMessage struct {
@@ -40,14 +43,23 @@ type SlackField struct {
 	Short bool   `json:"short"`
 }
 
-// Send is function for sending directly to API
-func (s Slack) Send(n *Notification, config v1alpha2.Notification) error {
-	secret := &corev1.Secret{}
-	i := n.Information
+func (s Slack) getStatusColor(logLevel LoggingLevel) StatusColor {
+	switch logLevel {
+	case LogInfo:
+		return "#439FE0"
+	case LogWarn:
+		return "danger"
+	default:
+		return "#c8c8c8"
+	}
+}
 
+// Send is function for sending directly to API
+func (s Slack) Send(event Event, config v1alpha2.Notification) error {
+	secret := &corev1.Secret{}
 	selector := config.Slack.URLSecretKeySelector
 
-	err := n.K8sClient.Get(context.TODO(), types.NamespacedName{Name: selector.Name, Namespace: n.Jenkins.Namespace}, secret)
+	err := s.k8sClient.Get(context.TODO(), types.NamespacedName{Name: selector.Name, Namespace: event.Jenkins.Namespace}, secret)
 	if err != nil {
 		return err
 	}
@@ -56,32 +68,32 @@ func (s Slack) Send(n *Notification, config v1alpha2.Notification) error {
 		Attachments: []SlackAttachment{
 			{
 				Fallback: "",
-				Color:    getStatusColor(i.LogLevel, s),
+				Color:    s.getStatusColor(event.LogLevel),
 				Text:     titleText,
 				Fields: []SlackField{
 					{
 						Title: messageFieldName,
-						Value: i.Message,
+						Value: event.Message,
 						Short: false,
 					},
 					{
 						Title: crNameFieldName,
-						Value: i.CrName,
+						Value: event.Jenkins.Name,
 						Short: true,
 					},
 					{
 						Title: configurationTypeFieldName,
-						Value: i.ConfigurationType,
+						Value: event.ConfigurationType,
 						Short: true,
 					},
 					{
 						Title: loggingLevelFieldName,
-						Value: string(i.LogLevel),
+						Value: string(event.LogLevel),
 						Short: true,
 					},
 					{
 						Title: namespaceFieldName,
-						Value: i.Namespace,
+						Value: event.Jenkins.Namespace,
 						Short: true,
 					},
 				},

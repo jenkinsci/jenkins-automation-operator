@@ -1,16 +1,17 @@
-package notifier
+package notifications
 
 import (
 	"context"
 	"fmt"
-	"github.com/pkg/errors"
 	"time"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 
 	"github.com/mailgun/mailgun-go/v3"
+	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
+	k8sclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const content = `
@@ -39,29 +40,41 @@ const content = `
 </body>
 </html>`
 
-// Mailgun is service for sending emails
-type Mailgun struct{}
+// MailGun is service for sending emails
+type MailGun struct {
+	k8sClient k8sclient.Client
+}
+
+func (m MailGun) getStatusColor(logLevel LoggingLevel) StatusColor {
+	switch logLevel {
+	case LogInfo:
+		return "blue"
+	case LogWarn:
+		return "red"
+	default:
+		return "gray"
+	}
+}
 
 // Send is function for sending directly to API
-func (m Mailgun) Send(n *Notification, config v1alpha2.Notification) error {
+func (m MailGun) Send(event Event, config v1alpha2.Notification) error {
 	secret := &corev1.Secret{}
-	i := n.Information
 
 	selector := config.Mailgun.APIKeySecretKeySelector
 
-	err := n.K8sClient.Get(context.TODO(), types.NamespacedName{Name: selector.Name, Namespace: n.Jenkins.Namespace}, secret)
+	err := m.k8sClient.Get(context.TODO(), types.NamespacedName{Name: selector.Name, Namespace: event.Jenkins.Namespace}, secret)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
-	secretValue := string(secret.Data[selector.Name])
+	secretValue := string(secret.Data[selector.Key])
 	if secretValue == "" {
-		return errors.Errorf("SecretValue %s is empty", selector.Name)
+		return errors.Errorf("Mailgun API is empty in secret '%s/%s[%s]", event.Jenkins.Namespace, selector.Name, selector.Key)
 	}
 
 	mg := mailgun.NewMailgun(config.Mailgun.Domain, secretValue)
 
-	htmlMessage := fmt.Sprintf(content, getStatusColor(i.LogLevel, m), i.CrName, i.ConfigurationType, getStatusColor(i.LogLevel, m), string(i.LogLevel))
+	htmlMessage := fmt.Sprintf(content, m.getStatusColor(event.LogLevel), event.Jenkins.Name, event.ConfigurationType, m.getStatusColor(event.LogLevel), string(event.LogLevel))
 
 	msg := mg.NewMessage(fmt.Sprintf("Jenkins Operator Notifier <%s>", config.Mailgun.From), "Jenkins Operator Status", "", config.Mailgun.Recipient)
 	msg.SetHtml(htmlMessage)
