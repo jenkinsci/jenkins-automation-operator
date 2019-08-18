@@ -51,9 +51,9 @@ Feel free to file [issues](https://github.com/jenkinsci/kubernetes-operator/issu
 
 This project was originally developed by [VirtusLab](https://virtuslab.com/) and the following [CONTRIBUTORS](https://github.com/jenkinsci/kubernetes-operator/graphs/contributors).
 
-[installation]:docs/installation.md
-[getting_started]:docs/getting-started.md
-[how_it_works]:docs/how-it-works.md
-[security]:docs/security.md
-[developer_guide]:docs/developer-guide.md
-[jenkins_scheme]:docs/jenkins-v1alpha2-scheme.md
+[installation]:documentation/installation.md
+[getting_started]:documentation/v0.1.1/getting-started.md
+[how_it_works]:documentation/how-it-works.md
+[security]:documentation/security.md
+[developer_guide]:documentation/developer-guide.md
+[jenkins_scheme]:documentation/v0.1.1/jenkins-v1alpha2-scheme.md

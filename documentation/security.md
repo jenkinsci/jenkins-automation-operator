@@ -6,7 +6,7 @@ By default **jenkins-operator** performs an initial security hardening of Jenkin
 
 Currently **jenkins-operator** generates a username and random password and stores them in a Kubernetes Secret.
 However any other authorization mechanisms are possible and can be done via groovy scripts or configuration as code plugin.
-For more information take a look at [getting-started#jenkins-customization](getting-started.md#jenkins-customisation).
+For more information take a look at [getting-started#jenkins-customization](v0.1.1/getting-started.md#jenkins-customisation).
 
 Any change to Security Realm or Authorization requires that user called `jenkins-operator` must have admin rights 
 because **jenkins-operator** calls Jenkins API.

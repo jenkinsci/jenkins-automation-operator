@@ -6,17 +6,18 @@ This document describes a getting started guide for **jenkins-operator** and an 
 2. [Deploy Jenkins](#deploy-jenkins)
 3. [Configure Seed Jobs and Pipelines](#configure-seed-jobs-and-pipelines)
 4. [Pulling Docker images from private repositories](#pulling-docker-images-from-private-repositories)
-5. [Install Plugins](#install-plugins)
-6. [Configure Backup & Restore](#configure-backup-and-restore)
-7. [AKS](#aks)
-8. [Jenkins login credentials](#jenkins-login-credentials)
-9. [Override default Jenkins container command](#override-default-Jenkins-container-command)
-10. [Debugging](#debugging)
+5. [Jenkins Customisation](#jenkins-customisation)
+6. [Install Plugins](#install-plugins)
+7. [Configure Backup & Restore](#configure-backup-and-restore)
+8. [AKS](#aks)
+9. [Jenkins login credentials](#jenkins-login-credentials)
+10. [Override default Jenkins container command](#override-default-Jenkins-container-command)
+11. [Debugging](#debugging)
 
 ## First Steps
 
 Prepare your Kubernetes cluster and set up access.
-Once you have running Kubernetes cluster you can focus on installing **jenkins-operator** according to the [Installation](installation.md) guide.
+Once you have running Kubernetes cluster you can focus on installing **jenkins-operator** according to the [Installation](../installation.md) guide.
 
 ## Deploy Jenkins
 
@@ -99,7 +100,7 @@ Connect to Jenkins (actual Kubernetes cluster):
 kubectl port-forward jenkins-<cr_name> 8080:8080
 ```
 Then open browser with address `http://localhost:8080`.
-![jenkins](../assets/jenkins.png)
+![jenkins](../../assets/jenkins.png)
 
 ## Configure Seed Jobs and Pipelines
 
@@ -218,11 +219,11 @@ spec:
 
 You can verify if deploy keys were successfully configured in Jenkins **Credentials** tab.
 
-![jenkins](../assets/jenkins-credentials.png)
+![jenkins](../../assets/jenkins-credentials.png)
 
 You can verify if your pipelines were successfully configured in Jenkins Seed Job console output.
 
-![jenkins](../assets/jenkins-seed.png)
+![jenkins](../../assets/jenkins-seed.png)
 
 If your GitHub repository is **private** you have to configure SSH or username/password authentication.
 

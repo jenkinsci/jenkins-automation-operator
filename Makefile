@@ -362,7 +362,7 @@ ifndef HAS_GEN_CRD_API_REFERENCE_DOCS
 	@tar -C $(GEN_CRD_API) -zxf $(GEN_CRD_API)_linux_amd64.tar.gz
 	@rm $(GEN_CRD_API)_linux_amd64.tar.gz
 endif
-	$(GEN_CRD_API)/$(GEN_CRD_API) -config gen-crd-api-config.json -api-dir github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/$(API_VERSION) -template-dir $(GEN_CRD_API)/template -out-file docs/jenkins-$(API_VERSION)-scheme.md
+	$(GEN_CRD_API)/$(GEN_CRD_API) -config gen-crd-api-config.json -api-dir github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/$(API_VERSION) -template-dir $(GEN_CRD_API)/template -out-file documentation/$(VERSION)/jenkins-$(API_VERSION)-scheme.md
 
 .PHONY: minikube-start
 minikube-start: ## Start minikube

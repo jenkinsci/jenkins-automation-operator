@@ -112,5 +112,5 @@ kubectl get secret jenkins-operator-credentials-<cr_name> -o 'jsonpath={.data.pa
 [minikube]:https://kubernetes.io/docs/tasks/tools/install-minikube/
 [virtualbox]:https://www.virtualbox.org/wiki/Downloads
 [jenkins-operator]:../README.md
-[install_dev_tools]:./install_dev_tools.md
+[install_dev_tools]:install_dev_tools.md
 

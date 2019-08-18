@@ -85,7 +85,7 @@ spec:
 ```
 
 See also the examples bellow for more details. For even more details please look at the source code.
-Code that defines the data structures can be found [here](jenkins-v1alpha2-scheme.md)
+Code that defines the data structures can be found [here](v0.1.1/jenkins-v1alpha2-scheme.md)
 
 ### Examples
 
