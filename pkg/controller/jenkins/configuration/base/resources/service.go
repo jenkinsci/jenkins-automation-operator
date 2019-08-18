@@ -7,15 +7,7 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
 
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
-func buildServiceTypeMeta() metav1.TypeMeta {
-	return metav1.TypeMeta{
-		Kind:       "Service",
-		APIVersion: "v1",
-	}
-}
 
 // UpdateService returns new service with override fields from config
 func UpdateService(actual corev1.Service, config v1alpha2.Service) corev1.Service {

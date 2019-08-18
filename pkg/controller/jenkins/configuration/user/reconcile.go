@@ -1,7 +1,7 @@
 package user
 
 import (
-	"context"
+	"strings"
 	"time"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
@@ -10,14 +10,11 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/user/casc"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/user/seedjobs"
-	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/groovy"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/jobs"
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	k8s "sigs.k8s.io/controller-runtime/pkg/client"
@@ -104,37 +101,32 @@ func (r *ReconcileUserConfiguration) ensureSeedJobs() (reconcile.Result, error) 
 }
 
 func (r *ReconcileUserConfiguration) ensureUserConfiguration(jenkinsClient jenkinsclient.Jenkins) (reconcile.Result, error) {
-	configuration := &corev1.ConfigMap{}
-	namespaceName := types.NamespacedName{Namespace: r.jenkins.Namespace, Name: resources.GetUserConfigurationConfigMapNameFromJenkins(r.jenkins)}
-	err := r.k8sClient.Get(context.TODO(), namespaceName, configuration)
+	groovyClient := groovy.New(jenkinsClient, r.k8sClient, r.logger, r.jenkins, "user-groovy", r.jenkins.Spec.GroovyScripts.Customization)
+
+	requeue, err := groovyClient.WaitForSecretSynchronization(resources.GroovyScriptsSecretVolumePath)
 	if err != nil {
-		return reconcile.Result{}, errors.WithStack(err)
+		return reconcile.Result{}, err
+	}
+	if requeue {
+		return reconcile.Result{Requeue: true}, nil
+	}
+	requeue, err = groovyClient.Ensure(func(name string) bool {
+		return strings.HasSuffix(name, ".groovy")
+	}, groovy.AddSecretsLoaderToGroovyScript(resources.GroovyScriptsSecretVolumePath))
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+	if requeue {
+		return reconcile.Result{Requeue: true}, nil
 	}
 
-	groovyClient := groovy.New(jenkinsClient, r.k8sClient, r.logger, constants.UserConfigurationJobName, resources.JenkinsUserConfigurationVolumePath)
-	err = groovyClient.ConfigureJob()
+	configurationAsCodeClient := casc.New(jenkinsClient, r.k8sClient, r.logger, r.jenkins)
+	requeue, err = configurationAsCodeClient.Ensure(r.jenkins)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
-	done, err := groovyClient.Ensure(configuration.Data, r.jenkins)
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-	if !done {
-		return reconcile.Result{Requeue: true, RequeueAfter: time.Second * 10}, nil
-	}
-
-	configurationAsCodeClient := casc.New(jenkinsClient, r.k8sClient, r.logger, constants.UserConfigurationCASCJobName)
-	err = configurationAsCodeClient.ConfigureJob()
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-	done, err = configurationAsCodeClient.Ensure(r.jenkins)
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-	if !done {
-		return reconcile.Result{Requeue: true, RequeueAfter: time.Second * 10}, nil
+	if requeue {
+		return reconcile.Result{Requeue: true}, nil
 	}
 
 	return reconcile.Result{}, nil

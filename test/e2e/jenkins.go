@@ -17,6 +17,11 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
+const (
+	userConfigurationConfigMapName = "user-config"
+	userConfigurationSecretName    = "user-secret"
+)
+
 func getJenkins(t *testing.T, namespace, name string) *v1alpha2.Jenkins {
 	jenkins := &v1alpha2.Jenkins{}
 	namespaceName := types.NamespacedName{Namespace: namespace, Name: name}
@@ -60,7 +65,7 @@ func createJenkinsAPIClient(jenkins *v1alpha2.Jenkins) (jenkinsclient.Jenkins, e
 	)
 }
 
-func createJenkinsCR(t *testing.T, name, namespace string, seedJob *[]v1alpha2.SeedJob, volumes []corev1.Volume) *v1alpha2.Jenkins {
+func createJenkinsCR(t *testing.T, name, namespace string, seedJob *[]v1alpha2.SeedJob, groovyScripts v1alpha2.GroovyScripts, casc v1alpha2.ConfigurationAsCode) *v1alpha2.Jenkins {
 	var seedJobs []v1alpha2.SeedJob
 	if seedJob != nil {
 		seedJobs = append(seedJobs, *seedJob...)
@@ -73,6 +78,8 @@ func createJenkinsCR(t *testing.T, name, namespace string, seedJob *[]v1alpha2.S
 			Namespace: namespace,
 		},
 		Spec: v1alpha2.JenkinsSpec{
+			GroovyScripts:       groovyScripts,
+			ConfigurationAsCode: casc,
 			Master: v1alpha2.JenkinsMaster{
 				Annotations: map[string]string{"test": "label"},
 				Containers: []v1alpha2.Container{
@@ -119,7 +126,6 @@ func createJenkinsCR(t *testing.T, name, namespace string, seedJob *[]v1alpha2.S
 					{Name: "simple-theme-plugin", Version: "0.5.1"},
 				},
 				NodeSelector: map[string]string{"kubernetes.io/hostname": "minikube"},
-				Volumes:      volumes,
 			},
 			SeedJobs: seedJobs,
 		},

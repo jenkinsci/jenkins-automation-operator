@@ -2,6 +2,19 @@
 SHELL := /bin/sh
 PATH  := $(GOPATH)/bin:$(PATH)
 
+OSFLAG 				:=
+ifeq ($(OS),Windows_NT)
+	OSFLAG = WIN32
+else
+	UNAME_S := $(shell uname -s)
+	ifeq ($(UNAME_S),Linux)
+		OSFLAG = LINUX
+	endif
+	ifeq ($(UNAME_S),Darwin)
+		OSFLAG = OSX
+	endif
+endif
+
 # Import config
 # You can change the default config with `make config="config_special.env" build`
 config ?= config.env
@@ -149,7 +162,7 @@ prepare-all-in-one-deploy-file: ## Prepares all in one deploy file
 
 .PHONY: e2e
 CURRENT_DIRECTORY := $(shell pwd)
-e2e: build docker-build ## Runs e2e tests, you can use EXTRA_ARGS
+e2e: docker-build ## Runs e2e tests, you can use EXTRA_ARGS
 	@echo "+ $@"
 	@echo "Docker image: $(DOCKER_REGISTRY):$(GITCOMMIT)"
 	kubectl config use-context $(KUBECTL_CONTEXT)
@@ -157,10 +170,20 @@ e2e: build docker-build ## Runs e2e tests, you can use EXTRA_ARGS
 	cat deploy/role.yaml >> deploy/namespace-init.yaml
 	cat deploy/role_binding.yaml >> deploy/namespace-init.yaml
 	cat deploy/operator.yaml >> deploy/namespace-init.yaml
+ifeq ($(OSFLAG), LINUX)
 	sed -i 's|\(image:\).*|\1 $(DOCKER_REGISTRY):$(GITCOMMIT)|g' deploy/namespace-init.yaml
 ifeq ($(KUBECTL_CONTEXT),minikube)
 	sed -i 's|\(imagePullPolicy\): IfNotPresent|\1: Never|g' deploy/namespace-init.yaml
 	sed -i 's|\(args:\).*|\1\ ["--minikube"\]|' deploy/namespace-init.yaml
+endif
+endif
+
+ifeq ($(OSFLAG), OSX)
+	sed -i '' 's|\(image:\).*|\1 $(DOCKER_REGISTRY):$(GITCOMMIT)|g' deploy/namespace-init.yaml
+ifeq ($(KUBECTL_CONTEXT),minikube)
+	sed -i '' 's|\(imagePullPolicy\): IfNotPresent|\1: Never|g' deploy/namespace-init.yaml
+	sed -i '' 's|\(args:\).*|\1\ ["--minikube"\]|' deploy/namespace-init.yaml
+endif
 endif
 
 	@RUNNING_TESTS=1 go test -parallel=1 "./test/e2e/" -tags "$(BUILDTAGS) cgo" -v -timeout 30m -run "$(E2E_TEST_SELECTOR)" \
@@ -173,13 +196,14 @@ vet: ## Verifies `go vet` passes
 
 .PHONY: staticcheck
 HAS_STATICCHECK := $(shell which staticcheck)
+PLATFORM  = $(shell echo $(UNAME_S) | tr A-Z a-z)
 staticcheck: ## Verifies `staticcheck` passes
 	@echo "+ $@"
 ifndef HAS_STATICCHECK
-	wget https://github.com/dominikh/go-tools/releases/download/2019.1.1/staticcheck_linux_amd64
-	chmod +x staticcheck_linux_amd64
-	mkdir -p $(HOME)/bin
-	mv staticcheck_linux_amd64 $(HOME)/bin/staticcheck
+	wget https://github.com/dominikh/go-tools/releases/download/2019.1.1/staticcheck_$(PLATFORM)_amd64
+	chmod +x staticcheck_$(PLATFORM)_amd64
+	mkdir -p $(GOPATH)/bin
+	mv staticcheck_$(PLATFORM)_amd64 $(GOPATH)/bin/staticcheck
 endif
 	@staticcheck $(PACKAGES)
 
@@ -208,8 +232,8 @@ run: export WATCH_NAMESPACE = $(NAMESPACE)
 run: export OPERATOR_NAME = $(NAME)
 run: build ## Run the executable, you can use EXTRA_ARGS
 	@echo "+ $@"
-	kubectl apply -f deploy/crds/jenkins_$(API_VERSION)_jenkins_crd.yaml
 	kubectl config use-context $(KUBECTL_CONTEXT)
+	kubectl apply -f deploy/crds/jenkins_$(API_VERSION)_jenkins_crd.yaml
 	@echo "Watching '$(WATCH_NAMESPACE)' namespace"
 	build/_output/bin/jenkins-operator --local $(EXTRA_ARGS)
 
@@ -267,7 +291,7 @@ docker-login: ## Log in into the Docker repository
 	@echo "+ $@"
 
 .PHONY: docker-build
-docker-build: check-env build ## Build the container
+docker-build: check-env ## Build the container
 	@echo "+ $@"
 	docker build . -t $(DOCKER_REGISTRY):$(GITCOMMIT) --file build/Dockerfile
 
@@ -316,7 +340,7 @@ docker-run: ## Run the container in docker, you can use EXTRA_ARGS
 .PHONY: minikube-run
 minikube-run: export WATCH_NAMESPACE = $(NAMESPACE)
 minikube-run: export OPERATOR_NAME = $(NAME)
-minikube-run: minikube-start build ## Run the operator locally and use minikube as Kubernetes cluster, you can use EXTRA_ARGS
+minikube-run: minikube-start ## Run the operator locally and use minikube as Kubernetes cluster, you can use EXTRA_ARGS
 	@echo "+ $@"
 	kubectl config use-context minikube
 	kubectl apply -f deploy/crds/jenkins_$(API_VERSION)_jenkins_crd.yaml
@@ -390,3 +414,27 @@ endif
 	@echo "Dependencies:"
 	go mod vendor -v
 	@echo
+
+.PHONY: image
+image: ## Create the docker image from the Dockerfile. This image is used to build linux binary regardless of the system on the host
+	@echo "+ $@"
+	docker build --rm --force-rm --no-cache \
+	--build-arg GO_VERSION=$(GO_VERSION) \
+	--build-arg MINIKUBE_VERSION=$(MINIKUBE_VERSION) \
+	--build-arg OPERATOR_SDK_VERSION=$(OPERATOR_SDK_VERSION) \
+	-t jenkins-operator/runner .
+
+.PHONY: indocker
+PWD := $(shell pwd)
+DOCKER_HOST_IP := $(shell minikube docker-env | grep DOCKER_HOST | cut -d '"' -f 2)
+MINIKUBE_IP := $(shell minikube ip)
+indocker: minikube-start image ## Run make in a docker container
+	@echo "+ $@"
+	docker run --rm -it $(DOCKER_FLAGS) \
+		-v /var/run/docker.sock:/var/run/docker.sock \
+		--mount type=bind,source=$(PWD),target=/go/src/github.com/jenkinsci/kubernetes-operator \
+		--mount type=bind,source=$(HOME)/.minikube,target=/minikube \
+		--mount type=bind,source=$(HOME)/.kube,target=/home/builder/.kube \
+		-e DOCKER_HOST=$(DOCKER_HOST_IP) \
+		-e MINIKUBE_IP=$(MINIKUBE_IP) \
+		jenkins-operator/runner

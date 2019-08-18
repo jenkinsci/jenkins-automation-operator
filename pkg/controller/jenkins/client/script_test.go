@@ -62,7 +62,7 @@ func Test_ExecuteScript(t *testing.T) {
 
 		script := "some groovy code"
 		logs, err := jenkinsClient.executeScript(script, verifier)
-		assert.EqualError(t, err, "script execution failed, logs 'some exception stack trace without verifier'", logs)
+		assert.EqualError(t, err, "script execution failed", logs)
 		assert.Equal(t, response, logs)
 	})
 	t.Run("throw 500", func(t *testing.T) {

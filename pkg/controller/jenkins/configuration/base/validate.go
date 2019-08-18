@@ -46,6 +46,58 @@ func (r *ReconcileJenkinsBaseConfiguration) Validate(jenkins *v1alpha2.Jenkins) 
 		return false, nil
 	}
 
+	if valid, err := r.validateCustomization(r.jenkins.Spec.GroovyScripts.Customization, "spec.groovyScripts"); err != nil {
+		return false, err
+	} else if !valid {
+		return false, nil
+	}
+	if valid, err := r.validateCustomization(r.jenkins.Spec.ConfigurationAsCode.Customization, "spec.configurationAsCode"); err != nil {
+		return false, err
+	} else if !valid {
+		return false, nil
+	}
+
+	return true, nil
+}
+
+func (r *ReconcileJenkinsBaseConfiguration) validateImagePullSecrets() (bool, error) {
+	var err error
+	for _, sr := range r.jenkins.Spec.Master.ImagePullSecrets {
+		valid, err := r.validateImagePullSecret(sr.Name)
+		if err != nil || !valid {
+			return false, nil
+		}
+	}
+	return true, err
+}
+
+func (r *ReconcileJenkinsBaseConfiguration) validateImagePullSecret(name string) (bool, error) {
+	secret := &corev1.Secret{}
+	err := r.k8sClient.Get(context.TODO(), types.NamespacedName{Name: name, Namespace: r.jenkins.ObjectMeta.Namespace}, secret)
+	if err != nil && apierrors.IsNotFound(err) {
+		r.logger.V(log.VWarn).Info(fmt.Sprintf("Secret %s not found defined in spec.master.imagePullSecrets", name))
+		return false, nil
+	} else if err != nil && !apierrors.IsNotFound(err) {
+		return false, stackerr.WithStack(err)
+	}
+
+	if secret.Data["docker-server"] == nil {
+		r.logger.V(log.VWarn).Info(fmt.Sprintf("Secret '%s' defined in spec.master.imagePullSecrets doesn't have 'docker-server' key.", name))
+		return false, nil
+	}
+	if secret.Data["docker-username"] == nil {
+		r.logger.V(log.VWarn).Info(fmt.Sprintf("Secret '%s' defined in spec.master.imagePullSecrets doesn't have 'docker-username' key.", name))
+		return false, nil
+	}
+	if secret.Data["docker-password"] == nil {
+		r.logger.V(log.VWarn).Info(fmt.Sprintf("Secret '%s' defined in spec.master.imagePullSecrets doesn't have 'docker-password' key.", name))
+		return false, nil
+	}
+	if secret.Data["docker-email"] == nil {
+		r.logger.V(log.VWarn).Info(fmt.Sprintf("Secret '%s' defined in spec.master.imagePullSecrets doesn't have 'docker-email' key.", name))
+		return false, nil
+	}
+
 	return true, nil
 }
 
@@ -194,7 +246,7 @@ func (r *ReconcileJenkinsBaseConfiguration) validateContainerVolumeMounts(contai
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) validateJenkinsMasterPodEnvs() bool {
-	baseEnvs := resources.GetJenkinsMasterContainerBaseEnvs()
+	baseEnvs := resources.GetJenkinsMasterContainerBaseEnvs(r.jenkins)
 	baseEnvNames := map[string]string{}
 	for _, env := range baseEnvs {
 		baseEnvNames[env.Name] = env.Value
@@ -268,4 +320,46 @@ func (r *ReconcileJenkinsBaseConfiguration) verifyBasePlugins(requiredBasePlugin
 	}
 
 	return valid
+}
+
+func (r *ReconcileJenkinsBaseConfiguration) validateCustomization(customization v1alpha2.Customization, name string) (bool, error) {
+	valid := true
+	if len(customization.Secret.Name) == 0 && len(customization.Configurations) == 0 {
+		return true, nil
+	}
+	if len(customization.Secret.Name) > 0 && len(customization.Configurations) == 0 {
+		valid = false
+		r.logger.V(log.VWarn).Info(fmt.Sprintf("%s.secret.name is set but %s.configurations is empty", name, name))
+	}
+
+	if len(customization.Secret.Name) > 0 {
+		secret := &corev1.Secret{}
+		err := r.k8sClient.Get(context.TODO(), types.NamespacedName{Name: customization.Secret.Name, Namespace: r.jenkins.ObjectMeta.Namespace}, secret)
+		if err != nil && apierrors.IsNotFound(err) {
+			valid = false
+			r.logger.V(log.VWarn).Info(fmt.Sprintf("Secret '%s' configured in %s.secret.name not found", customization.Secret.Name, name))
+		} else if err != nil && !apierrors.IsNotFound(err) {
+			return false, stackerr.WithStack(err)
+		}
+	}
+
+	for index, configMapRef := range customization.Configurations {
+		if len(configMapRef.Name) == 0 {
+			r.logger.V(log.VWarn).Info(fmt.Sprintf("%s.configurations[%d] name is empty", name, index))
+			valid = false
+			continue
+		}
+
+		configMap := &corev1.ConfigMap{}
+		err := r.k8sClient.Get(context.TODO(), types.NamespacedName{Name: configMapRef.Name, Namespace: r.jenkins.ObjectMeta.Namespace}, configMap)
+		if err != nil && apierrors.IsNotFound(err) {
+			valid = false
+			r.logger.V(log.VWarn).Info(fmt.Sprintf("ConfigMap '%s' configured in %s.configurations[%d] not found", configMapRef.Name, name, index))
+			return false, nil
+		} else if err != nil && !apierrors.IsNotFound(err) {
+			return false, stackerr.WithStack(err)
+		}
+	}
+
+	return valid, nil
 }

@@ -17,6 +17,10 @@ type JenkinsSpec struct {
 	// +optional
 	SeedJobs []SeedJob `json:"seedJobs,omitempty"`
 
+	// Notifications defines services which are used to inform about Jenkins status
+	// Can be used to integrate chat services like Slack or Email services like Mailgun
+	Notifications []Notification `json:"notifications,omitempty"`
+
 	// Service is Kubernetes service of Jenkins master HTTP pod
 	// Defaults to :
 	// port: 8080
@@ -40,6 +44,52 @@ type JenkinsSpec struct {
 	// More info: https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-backup-and-restore
 	// +optional
 	Restore Restore `json:"restore,omitempty"`
+
+	// GroovyScripts defines configuration of Jenkins customization via groovy scripts
+	// +optional
+	GroovyScripts GroovyScripts `json:"groovyScripts,omitempty"`
+
+	// ConfigurationAsCode defines configuration of Jenkins customization via Configuration as Code Jenkins plugin
+	// +optional
+	ConfigurationAsCode ConfigurationAsCode `json:"configurationAsCode,omitempty"`
+}
+
+// Notification is info sending service about Jenkins Operator
+type Notification struct {
+	LoggingLevel JenkinsNotificationLogLevel `json:"loggingLevel"`
+	Verbose      bool                        `json:"verbose"`
+	Name         string                      `json:"name"`
+	Slack        Slack                       `json:"slack,omitempty"`
+	Teams        Teams                       `json:"teams,omitempty"`
+	Mailgun      Mailgun                     `json:"mailgun,omitempty"`
+}
+
+// Slack is handler for Slack
+type Slack struct {
+	// The web hook URL to Slack App
+	URLSecretKeySelector SecretKeySelector `json:"urlSecretKeySelector"`
+}
+
+// Teams is handler for Microsoft Teams
+type Teams struct {
+	// The web hook URL to Teams App
+	URLSecretKeySelector SecretKeySelector `json:"urlSecretKeySelector"`
+}
+
+// Mailgun is handler for Mailgun email service
+type Mailgun struct {
+	Domain                  string            `json:"domain"`
+	APIKeySecretKeySelector SecretKeySelector `json:"apiKeySecretKeySelector"`
+	Recipient               string            `json:"recipient"`
+	From                    string            `json:"from"`
+}
+
+// SecretKeySelector selects a key of a Secret.
+type SecretKeySelector struct {
+	// The name of the secret in the pod's namespace to select from.
+	corev1.LocalObjectReference `json:",inline" protobuf:"bytes,1,opt,name=localObjectReference"`
+	// The key of the secret to select from.  Must be a valid secret key.
+	Key string `json:"key" protobuf:"bytes,2,opt,name=key"`
 }
 
 // Container defines Kubernetes container attributes
@@ -202,6 +252,13 @@ type JenkinsMaster struct {
 	//       memory: 600Mi
 	Containers []Container `json:"containers,omitempty"`
 
+	// ImagePullSecrets is an optional list of references to secrets in the same namespace to use for pulling any of the images used by this PodSpec.
+	// If specified, these secrets will be passed to individual puller implementations for them to use. For example,
+	// in the case of docker, only DockerConfig type secrets are honored.
+	// More info: https://kubernetes.io/docs/concepts/containers/images#specifying-imagepullsecrets-on-a-pod
+	// +optional
+	ImagePullSecrets []corev1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
+
 	// List of volumes that can be mounted by containers belonging to the pod.
 	// More info: https://kubernetes.io/docs/concepts/storage/volumes
 	// +optional
@@ -313,7 +370,7 @@ type JenkinsStatus struct {
 	// +optional
 	UserConfigurationCompletedTime *metav1.Time `json:"userConfigurationCompletedTime,omitempty"`
 
-	// Builds contains Jenkins builds statues
+	// Builds contains Jenkins job builds statues
 	// +optional
 	Builds []Build `json:"builds,omitempty"`
 
@@ -340,6 +397,10 @@ type JenkinsStatus struct {
 	// CreatedSeedJobs contains list of seed job id already created in Jenkins
 	// +optional
 	CreatedSeedJobs []string `json:"createdSeedJobs,omitempty"`
+
+	// AppliedGroovyScripts is a list with all applied groovy scripts in Jenkins by the operator
+	// +optional
+	AppliedGroovyScripts []AppliedGroovyScript `json:"appliedGroovyScripts,omitempty"`
 }
 
 // BuildStatus defines type of Jenkins build job status
@@ -362,9 +423,8 @@ const (
 	BuildExpiredStatus BuildStatus = "expired"
 )
 
-// Build defines Jenkins Build status with corresponding metadata
+// Build defines Jenkins job build status with corresponding metadata
 type Build struct {
-
 	// JobName is the Jenkins job name
 	JobName string `json:"jobName,omitempty"`
 
@@ -423,6 +483,17 @@ const (
 	BasicSSHCredentialType JenkinsCredentialType = "basicSSHUserPrivateKey"
 	// UsernamePasswordCredentialType define username & password Jenkins credential type
 	UsernamePasswordCredentialType JenkinsCredentialType = "usernamePassword"
+)
+
+// JenkinsNotificationLogLevel defines type of Notification feature frequency of sending logger entries
+type JenkinsNotificationLogLevel string
+
+const (
+	// LogLevelWarning - Only Warnings
+	LogLevelWarning JenkinsNotificationLogLevel = "warning"
+
+	// LogLevelInfo - Only info
+	LogLevelInfo JenkinsNotificationLogLevel = "info"
 )
 
 // AllowedJenkinsCredentialMap contains all allowed Jenkins credentials types
@@ -492,4 +563,42 @@ type Restore struct {
 	// RecoveryOnce if want to restore specific backup set this field and then Jenkins will be restarted and desired backup will be restored
 	// +optional
 	RecoveryOnce uint64 `json:"recoveryOnce,omitempty"`
+}
+
+// AppliedGroovyScript is the applied groovy script in Jenkins by the operator
+type AppliedGroovyScript struct {
+	// ConfigurationType is the name of the configuration type(base-groovy, user-groovy, user-casc)
+	ConfigurationType string `json:"configurationType"`
+	// Source is the name of source where is located groovy script
+	Source string `json:"source"`
+	// Name is the name of the groovy script
+	Name string `json:"name"`
+	// Hash is the hash of the groovy script and secrets which it uses
+	Hash string
+}
+
+// SecretRef is reference to Kubernetes secret
+type SecretRef struct {
+	Name string `json:"name"`
+}
+
+// ConfigMapRef is reference to Kubernetes ConfigMap
+type ConfigMapRef struct {
+	Name string `json:"name"`
+}
+
+// Customization defines configuration of Jenkins customization
+type Customization struct {
+	Secret         SecretRef      `json:"secret"`
+	Configurations []ConfigMapRef `json:"configurations"`
+}
+
+// GroovyScripts defines configuration of Jenkins customization via groovy scripts
+type GroovyScripts struct {
+	Customization
+}
+
+// ConfigurationAsCode defines configuration of Jenkins customization via Configuration as Code Jenkins plugin
+type ConfigurationAsCode struct {
+	Customization
 }

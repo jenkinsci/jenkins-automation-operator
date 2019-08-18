@@ -6,7 +6,6 @@ import (
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
-	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/stretchr/testify/require"
@@ -21,7 +20,7 @@ func TestJenkinsMasterPodRestart(t *testing.T) {
 	// Deletes test namespace
 	defer ctx.Cleanup()
 
-	jenkins := createJenkinsCR(t, "e2e", namespace, nil, []corev1.Volume{})
+	jenkins := createJenkinsCR(t, "e2e", namespace, nil, v1alpha2.GroovyScripts{}, v1alpha2.ConfigurationAsCode{})
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
 	restartJenkinsMasterPod(t, jenkins)
 	waitForRecreateJenkinsMasterPod(t, jenkins)
@@ -36,8 +35,8 @@ func TestSafeRestart(t *testing.T) {
 	defer ctx.Cleanup()
 
 	jenkinsCRName := "e2e"
-	configureAuthorizationToUnSecure(t, jenkinsCRName, namespace)
-	jenkins := createJenkinsCR(t, jenkinsCRName, namespace, nil, []corev1.Volume{})
+	configureAuthorizationToUnSecure(t, namespace)
+	jenkins := createJenkinsCR(t, jenkinsCRName, namespace, nil, v1alpha2.GroovyScripts{}, v1alpha2.ConfigurationAsCode{})
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
 	waitForJenkinsUserConfigurationToComplete(t, jenkins)
 	jenkinsClient := verifyJenkinsAPIConnection(t, jenkins)
@@ -50,10 +49,10 @@ func TestSafeRestart(t *testing.T) {
 	checkIfAuthorizationStrategyUnsecuredIsSet(t, jenkinsClient)
 }
 
-func configureAuthorizationToUnSecure(t *testing.T, jenkinsCRName, namespace string) {
+func configureAuthorizationToUnSecure(t *testing.T, namespace string) {
 	limitRange := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      resources.GetUserConfigurationConfigMapName(jenkinsCRName),
+			Name:      userConfigurationConfigMapName,
 			Namespace: namespace,
 		},
 		Data: map[string]string{

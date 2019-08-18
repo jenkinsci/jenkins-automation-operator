@@ -34,7 +34,58 @@ Kubernetes API permissions are limited by the following roles:
 - [jenkins-operator role](../deploy/role.yaml)  
 - [Jenkins Master role](../pkg/controller/jenkins/configuration/base/resources/rbac.go)
 
-Since **jenkins-operator** must be able to grant permission for its' deployed Jenkins masters to spawn pods (the `Jenkins Master role` above), the operator itself requires permission to create RBAC resources (the `jenkins-operator role` above). Deployed this way, any subject which may create a Pod (including a Jenkins job) may assume the `jenkins-operator` role by using its' ServiceAccount, create RBAC rules, and thus escape its granted permissions. Any namespace to which the `jenkins-operator` is deployed must be considered to implicitly grant all possible permissions to any subject which can create a Pod in that namespace.
+Since **jenkins-operator** must be able to grant permission for its' deployed Jenkins masters to spawn pods (the `Jenkins Master role` above), 
+the operator itself requires permission to create RBAC resources (the `jenkins-operator role` above). 
+Deployed this way, any subject which may create a Pod (including a Jenkins job) may 
+assume the `jenkins-operator` role by using its' ServiceAccount, create RBAC rules, and thus escape its granted permissions. 
+Any namespace to which the `jenkins-operator` is deployed must be considered to implicitly grant all 
+possible permissions to any subject which can create a Pod in that namespace.
+
+To mitigate this issue **jenkins-operator** should be deployed in one namespace and the Jenkins CR should be created in separate namespace. 
+To achieve it change watch namespace in https://github.com/jenkinsci/kubernetes-operator/blob/master/deploy/operator.yaml#L25
+
+## Setup Jenkins Operator and Jenkins in separated namespaces
+
+You need to create two namespaces, for example we'll call them **jenkins** for Jenkins and **jenkins-operator** for Jenkins Operator.
+```bash
+$ kubectl create ns jenkins-operator
+$ kubectl create ns jenkins
+```
+
+Next, apply the RBAC manifests for **jenkins-operator** namespace
+```bash
+$ kubectl -n jenkins-operator apply -f deploy/service_account.yaml
+$ kubectl -n jenkins-operator apply -f deploy/role_binding.yaml
+```
+
+Create file role_binding_jenkins.yaml in `deploy` folder:
+```yaml
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: jenkins-operator
+  namespace: jenkins
+subjects:
+- kind: ServiceAccount
+  name: jenkins-operator
+  namespace: jenkins-operator
+roleRef:
+  kind: Role
+  name: jenkins-operator
+  apiGroup: rbac.authorization.k8s.io
+```
+
+Then, apply RBAC rules for **jenkins** namespace
+```bash
+$ kubectl -n jenkins apply -f deploy/role.yaml
+$ kubectl -n jenkins apply -f role_binding_jenkins.yaml
+```
+
+Finally, you must create operator pod by:
+```bash
+$ kubectl -n jenkins -n jenkins-operator apply -f deploy/operator.yaml
+```
+
 
 ## Report a Security Vulnerability
 

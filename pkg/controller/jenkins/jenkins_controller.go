@@ -6,6 +6,7 @@ import (
 	"reflect"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
+	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/user"
@@ -169,6 +170,9 @@ func (r *ReconcileJenkins) Reconcile(request reconcile.Request) (reconcile.Resul
 		}
 
 		if err == jobs.ErrorUnrecoverableBuildFailed {
+			return reconcile.Result{Requeue: false}, nil
+		}
+		if _, ok := err.(*jenkinsclient.GroovyScriptExecutionFailed); ok {
 			return reconcile.Result{Requeue: false}, nil
 		}
 		return reconcile.Result{Requeue: true}, nil
@@ -344,10 +348,6 @@ func (r *ReconcileJenkins) setDefaults(jenkins *v1alpha2.Jenkins, logger logr.Lo
 		logger.Info("Setting operator version")
 		changed = true
 		jenkins.Status.OperatorVersion = version.Version
-	}
-	if len(jenkins.Spec.Master.Plugins) == 0 {
-		changed = true
-		jenkins.Spec.Master.Plugins = []v1alpha2.Plugin{{Name: "simple-theme-plugin", Version: "0.5.1"}}
 	}
 	if isResourceRequirementsNotSet(jenkinsContainer.Resources) {
 		logger.Info("Setting default Jenkins master container resource requirements")
