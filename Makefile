@@ -426,8 +426,8 @@ image: ## Create the docker image from the Dockerfile. This image is used to bui
 
 .PHONY: indocker
 PWD := $(shell pwd)
-DOCKER_HOST_IP := $(shell minikube docker-env | grep DOCKER_HOST | cut -d '"' -f 2)
-MINIKUBE_IP := $(shell minikube ip)
+DOCKER_HOST_IP := $(shell minikube docker-env | grep DOCKER_HOST | cut -d '"' -f 2 2> /dev/null)
+MINIKUBE_IP := $(shell minikube ip 2> /dev/null)
 indocker: minikube-start image ## Run make in a docker container
 	@echo "+ $@"
 	docker run --rm -it $(DOCKER_FLAGS) \
