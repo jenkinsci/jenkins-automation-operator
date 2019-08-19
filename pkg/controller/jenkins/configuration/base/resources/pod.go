@@ -230,6 +230,7 @@ func NewJenkinsMasterContainer(jenkins *v1alpha2.Jenkins) corev1.Container {
 				Protocol:      corev1.ProtocolTCP,
 			},
 		},
+		SecurityContext: jenkinsContainer.SecurityContext,
 		Env:          envs,
 		Resources:    jenkinsContainer.Resources,
 		VolumeMounts: append(GetJenkinsMasterContainerBaseVolumeMounts(jenkins), jenkinsContainer.VolumeMounts...),
