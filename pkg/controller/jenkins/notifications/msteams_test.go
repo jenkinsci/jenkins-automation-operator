@@ -84,8 +84,8 @@ func TestTeams_Send(t *testing.T) {
 	assert.NoError(t, err)
 
 	err = teams.Send(event, v1alpha2.Notification{
-		Teams: v1alpha2.Teams{
-			URLSecretKeySelector: v1alpha2.SecretKeySelector{
+		Teams: &v1alpha2.MicrosoftTeams{
+			WebHookURLSecretKeySelector: v1alpha2.SecretKeySelector{
 				LocalObjectReference: corev1.LocalObjectReference{
 					Name: testSecretName,
 				},

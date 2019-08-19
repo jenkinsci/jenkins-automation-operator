@@ -14,7 +14,7 @@ import (
 	k8sclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// Slack is messaging service
+// Slack is a Slack notification service
 type Slack struct {
 	k8sClient k8sclient.Client
 }
@@ -43,11 +43,11 @@ type SlackField struct {
 	Short bool   `json:"short"`
 }
 
-func (s Slack) getStatusColor(logLevel LoggingLevel) StatusColor {
+func (s Slack) getStatusColor(logLevel v1alpha2.NotificationLogLevel) StatusColor {
 	switch logLevel {
-	case LogInfo:
+	case v1alpha2.NotificationLogLevelInfo:
 		return "#439FE0"
-	case LogWarn:
+	case v1alpha2.NotificationLogLevelWarning:
 		return "danger"
 	default:
 		return "#c8c8c8"
@@ -57,7 +57,7 @@ func (s Slack) getStatusColor(logLevel LoggingLevel) StatusColor {
 // Send is function for sending directly to API
 func (s Slack) Send(event Event, config v1alpha2.Notification) error {
 	secret := &corev1.Secret{}
-	selector := config.Slack.URLSecretKeySelector
+	selector := config.Slack.WebHookURLSecretKeySelector
 
 	err := s.k8sClient.Get(context.TODO(), types.NamespacedName{Name: selector.Name, Namespace: event.Jenkins.Namespace}, secret)
 	if err != nil {

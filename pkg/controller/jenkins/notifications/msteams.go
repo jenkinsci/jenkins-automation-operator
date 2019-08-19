@@ -14,7 +14,7 @@ import (
 	k8sclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// Teams is Microsoft Teams Service
+// Teams is a Microsoft MicrosoftTeams notification service
 type Teams struct {
 	k8sClient k8sclient.Client
 }
@@ -40,11 +40,11 @@ type TeamsFact struct {
 	Value string `json:"value"`
 }
 
-func (t Teams) getStatusColor(logLevel LoggingLevel) StatusColor {
+func (t Teams) getStatusColor(logLevel v1alpha2.NotificationLogLevel) StatusColor {
 	switch logLevel {
-	case LogInfo:
+	case v1alpha2.NotificationLogLevelInfo:
 		return "439FE0"
-	case LogWarn:
+	case v1alpha2.NotificationLogLevelWarning:
 		return "E81123"
 	default:
 		return "C8C8C8"
@@ -55,7 +55,7 @@ func (t Teams) getStatusColor(logLevel LoggingLevel) StatusColor {
 func (t Teams) Send(event Event, config v1alpha2.Notification) error {
 	secret := &corev1.Secret{}
 
-	selector := config.Teams.URLSecretKeySelector
+	selector := config.Teams.WebHookURLSecretKeySelector
 
 	err := t.k8sClient.Get(context.TODO(), types.NamespacedName{Name: selector.Name, Namespace: event.Jenkins.Namespace}, secret)
 	if err != nil {

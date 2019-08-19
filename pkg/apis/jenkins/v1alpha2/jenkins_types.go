@@ -17,8 +17,8 @@ type JenkinsSpec struct {
 	// +optional
 	SeedJobs []SeedJob `json:"seedJobs,omitempty"`
 
-	// Notifications defines services which are used to inform about Jenkins status
-	// Can be used to integrate chat services like Slack or Email services like Mailgun
+	// Notifications defines list of a services which are used to inform about Jenkins status
+	// Can be used to integrate chat services like Slack, Microsoft MicrosoftTeams or Mailgun
 	Notifications []Notification `json:"notifications,omitempty"`
 
 	// Service is Kubernetes service of Jenkins master HTTP pod
@@ -54,29 +54,40 @@ type JenkinsSpec struct {
 	ConfigurationAsCode ConfigurationAsCode `json:"configurationAsCode,omitempty"`
 }
 
-// Notification is info sending service about Jenkins Operator
+// NotificationLogLevel defines logging level of Notification
+type NotificationLogLevel string
+
+const (
+	// NotificationLogLevelWarning - Only Warnings
+	NotificationLogLevelWarning NotificationLogLevel = "warning"
+
+	// NotificationLogLevelInfo - Only info
+	NotificationLogLevelInfo NotificationLogLevel = "info"
+)
+
+// Notification is a service configuration used to send notifications about Jenkins status
 type Notification struct {
-	LoggingLevel JenkinsNotificationLogLevel `json:"loggingLevel"`
-	Verbose      bool                        `json:"verbose"`
-	Name         string                      `json:"name"`
-	Slack        Slack                       `json:"slack,omitempty"`
-	Teams        Teams                       `json:"teams,omitempty"`
-	Mailgun      Mailgun                     `json:"mailgun,omitempty"`
+	LoggingLevel NotificationLogLevel `json:"loggingLevel"`
+	Verbose      bool                 `json:"verbose"`
+	Name         string               `json:"name"`
+	Slack        *Slack               `json:"slack,omitempty"`
+	Teams        *MicrosoftTeams      `json:"teams,omitempty"`
+	Mailgun      *Mailgun             `json:"mailgun,omitempty"`
 }
 
-// Slack is handler for Slack
+// Slack is handler for Slack notification channel
 type Slack struct {
 	// The web hook URL to Slack App
-	URLSecretKeySelector SecretKeySelector `json:"urlSecretKeySelector"`
+	WebHookURLSecretKeySelector SecretKeySelector `json:"webHookURLSecretKeySelector"`
 }
 
-// Teams is handler for Microsoft Teams
-type Teams struct {
-	// The web hook URL to Teams App
-	URLSecretKeySelector SecretKeySelector `json:"urlSecretKeySelector"`
+// MicrosoftTeams is handler for Microsoft MicrosoftTeams notification channel
+type MicrosoftTeams struct {
+	// The web hook URL to MicrosoftTeams App
+	WebHookURLSecretKeySelector SecretKeySelector `json:"webHookURLSecretKeySelector"`
 }
 
-// Mailgun is handler for Mailgun email service
+// Mailgun is handler for Mailgun email service notification channel
 type Mailgun struct {
 	Domain                  string            `json:"domain"`
 	APIKeySecretKeySelector SecretKeySelector `json:"apiKeySecretKeySelector"`
@@ -87,9 +98,9 @@ type Mailgun struct {
 // SecretKeySelector selects a key of a Secret.
 type SecretKeySelector struct {
 	// The name of the secret in the pod's namespace to select from.
-	corev1.LocalObjectReference `json:",inline" protobuf:"bytes,1,opt,name=localObjectReference"`
+	corev1.LocalObjectReference `json:"secret"`
 	// The key of the secret to select from.  Must be a valid secret key.
-	Key string `json:"key" protobuf:"bytes,2,opt,name=key"`
+	Key string `json:"key"`
 }
 
 // Container defines Kubernetes container attributes
@@ -483,17 +494,6 @@ const (
 	BasicSSHCredentialType JenkinsCredentialType = "basicSSHUserPrivateKey"
 	// UsernamePasswordCredentialType define username & password Jenkins credential type
 	UsernamePasswordCredentialType JenkinsCredentialType = "usernamePassword"
-)
-
-// JenkinsNotificationLogLevel defines type of Notification feature frequency of sending logger entries
-type JenkinsNotificationLogLevel string
-
-const (
-	// LogLevelWarning - Only Warnings
-	LogLevelWarning JenkinsNotificationLogLevel = "warning"
-
-	// LogLevelInfo - Only info
-	LogLevelInfo JenkinsNotificationLogLevel = "info"
 )
 
 // AllowedJenkinsCredentialMap contains all allowed Jenkins credentials types

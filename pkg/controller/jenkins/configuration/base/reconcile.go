@@ -127,14 +127,14 @@ func (r *ReconcileJenkinsBaseConfiguration) Reconcile() (reconcile.Result, jenki
 	return result, jenkinsClient, err
 }
 
-// GetJenkinsOpts put container JENKINS_OPTS env parameters in map and returns it
-func GetJenkinsOpts(jenkins *v1alpha2.Jenkins) map[string]string {
+// GetJenkinsOpts gets JENKINS_OPTS env parameter, parses it's values and returns it as a map`
+func GetJenkinsOpts(jenkins v1alpha2.Jenkins) map[string]string {
 	envs := jenkins.Spec.Master.Containers[0].Env
 	jenkinsOpts := make(map[string]string)
 
-	for k, v := range envs {
-		if v.Name == "JENKINS_OPTS" {
-			jenkinsOptsEnv := envs[k]
+	for key, value := range envs {
+		if value.Name == "JENKINS_OPTS" {
+			jenkinsOptsEnv := envs[key]
 			jenkinsOptsWithDashes := jenkinsOptsEnv.Value
 			if len(jenkinsOptsWithDashes) == 0 {
 				return nil
@@ -781,7 +781,7 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsClient(meta metav1.Obje
 	jenkinsURL, err := jenkinsclient.BuildJenkinsAPIUrl(
 		r.jenkins.ObjectMeta.Namespace, resources.GetJenkinsHTTPServiceName(r.jenkins), r.jenkins.Spec.Service.Port, r.local, r.minikube)
 
-	if prefix, ok := GetJenkinsOpts(r.jenkins)["prefix"]; ok {
+	if prefix, ok := GetJenkinsOpts(*r.jenkins)["prefix"]; ok {
 		jenkinsURL = jenkinsURL + prefix
 	}
 

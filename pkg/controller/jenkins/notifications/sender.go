@@ -12,12 +12,6 @@ import (
 )
 
 const (
-	// LogWarn is warning log entry
-	LogWarn LoggingLevel = "warn"
-
-	// LogInfo is info log entry
-	LogInfo LoggingLevel = "info"
-
 	titleText                  = "Operator reconciled."
 	messageFieldName           = "Message"
 	loggingLevelFieldName      = "Logging Level"
@@ -33,7 +27,7 @@ var (
 	testNamespace         = "default"
 	testMessage           = "test-message"
 	testMessageVerbose    = "detail-test-message"
-	testLoggingLevel      = LogWarn
+	testLoggingLevel      = v1alpha2.NotificationLogLevelWarning
 
 	client = http.Client{}
 )
@@ -48,7 +42,7 @@ type LoggingLevel string
 type Event struct {
 	Jenkins           v1alpha2.Jenkins
 	ConfigurationType string
-	LogLevel          LoggingLevel
+	LogLevel          v1alpha2.NotificationLogLevel
 	Message           string
 	MessageVerbose    string
 }
@@ -65,11 +59,11 @@ func Listen(events chan Event, k8sClient k8sclient.Client) {
 			var err error
 			var svc service
 
-			if notificationConfig.Slack != (v1alpha2.Slack{}) {
+			if notificationConfig.Slack != nil {
 				svc = Slack{k8sClient: k8sClient}
-			} else if notificationConfig.Teams != (v1alpha2.Teams{}) {
+			} else if notificationConfig.Teams != nil {
 				svc = Teams{k8sClient: k8sClient}
-			} else if notificationConfig.Mailgun != (v1alpha2.Mailgun{}) {
+			} else if notificationConfig.Mailgun != nil {
 				svc = MailGun{k8sClient: k8sClient}
 			} else {
 				logger.V(log.VWarn).Info(fmt.Sprintf("Unexpected notification `%+v`", notificationConfig))
@@ -93,7 +87,7 @@ func Listen(events chan Event, k8sClient k8sclient.Client) {
 }
 
 func notify(svc service, event Event, manifest v1alpha2.Notification) error {
-	if event.LogLevel == LogInfo && string(manifest.LoggingLevel) == string(LogWarn) {
+	if event.LogLevel == v1alpha2.NotificationLogLevelInfo && manifest.LoggingLevel == v1alpha2.NotificationLogLevelWarning {
 		return nil
 	}
 

@@ -424,7 +424,7 @@ spec:
       - name: JENKINS_HOME
         value: /jenkins-home
       - name: BACKUP_COUNT
-        value: "2" # keep only the 2 most recent backups
+        value: "3" # keep only the 2 most recent backups
       image: virtuslab/jenkins-operator-backup-pvc:v0.0.5 # look at backup/pvc directory
       imagePullPolicy: IfNotPresent
       volumeMounts:

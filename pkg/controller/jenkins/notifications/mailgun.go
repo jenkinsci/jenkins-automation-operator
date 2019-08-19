@@ -40,16 +40,16 @@ const content = `
 </body>
 </html>`
 
-// MailGun is service for sending emails
+// MailGun is a sending emails notification service
 type MailGun struct {
 	k8sClient k8sclient.Client
 }
 
-func (m MailGun) getStatusColor(logLevel LoggingLevel) StatusColor {
+func (m MailGun) getStatusColor(logLevel v1alpha2.NotificationLogLevel) StatusColor {
 	switch logLevel {
-	case LogInfo:
+	case v1alpha2.NotificationLogLevelInfo:
 		return "blue"
-	case LogWarn:
+	case v1alpha2.NotificationLogLevelWarning:
 		return "red"
 	default:
 		return "gray"
