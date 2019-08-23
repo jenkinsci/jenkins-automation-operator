@@ -231,9 +231,9 @@ func NewJenkinsMasterContainer(jenkins *v1alpha2.Jenkins) corev1.Container {
 			},
 		},
 		SecurityContext: jenkinsContainer.SecurityContext,
-		Env:          envs,
-		Resources:    jenkinsContainer.Resources,
-		VolumeMounts: append(GetJenkinsMasterContainerBaseVolumeMounts(jenkins), jenkinsContainer.VolumeMounts...),
+		Env:             envs,
+		Resources:       jenkinsContainer.Resources,
+		VolumeMounts:    append(GetJenkinsMasterContainerBaseVolumeMounts(jenkins), jenkinsContainer.VolumeMounts...),
 	}
 }
 

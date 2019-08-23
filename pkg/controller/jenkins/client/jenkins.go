@@ -14,7 +14,7 @@ import (
 
 var (
 	errorNotFound = errors.New("404")
-	regex = regexp.MustCompile("(<application-desc main-class=\"hudson.remoting.jnlp.Main\"><argument>)(?P<secret>[a-z0-9]*)")
+	regex         = regexp.MustCompile("(<application-desc main-class=\"hudson.remoting.jnlp.Main\"><argument>)(?P<secret>[a-z0-9]*)")
 )
 
 // Jenkins defines Jenkins API

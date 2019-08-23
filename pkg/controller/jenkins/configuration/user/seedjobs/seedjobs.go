@@ -8,21 +8,21 @@ import (
 	"reflect"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
+	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/jobs"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
-	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 
 	"github.com/go-logr/logr"
 	stackerr "github.com/pkg/errors"
+	apps "k8s.io/api/apps/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/types"
-	k8s "sigs.k8s.io/controller-runtime/pkg/client"
-	apps "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	k8s "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -47,8 +47,10 @@ const (
 	// credential type
 	JenkinsCredentialTypeLabelName = "jenkins.io/credentials-type"
 
-	// AgentName is the name of seed job
+	// AgentName is the name of seed job agent
 	AgentName = "seed-job-agent"
+
+	// AgentNamespace is the namespace of seed job agent
 	AgentNamespace = "default"
 )
 
@@ -105,7 +107,7 @@ func (s *SeedJobs) EnsureSeedJobs(jenkins *v1alpha2.Jenkins) (done bool, err err
 		err := s.k8sClient.Delete(context.TODO(), &appsv1.Deployment{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: AgentNamespace,
-				Name: fmt.Sprintf("%s-deployment", AgentName),
+				Name:      fmt.Sprintf("%s-deployment", AgentName),
 			},
 		})
 
@@ -259,6 +261,7 @@ func (s *SeedJobs) isRecreatePodNeeded(jenkins v1alpha2.Jenkins) bool {
 	return false
 }
 
+// CreateAgent deploys Jenkins agent to Kubernetes cluster
 func CreateAgent(jenkinsClient jenkinsclient.Jenkins, k8sClient client.Client, jenkinsManifest *v1alpha2.Jenkins, namespace string, agentName string) error {
 	var exists bool
 
@@ -291,7 +294,7 @@ func CreateAgent(jenkinsClient jenkinsclient.Jenkins, k8sClient client.Client, j
 	}
 
 	deployment := agentDeployment(jenkinsManifest, namespace, agentName, secret)
-	err = k8sClient.List(context.TODO(),  &client.ListOptions{}, deployments)
+	err = k8sClient.List(context.TODO(), &client.ListOptions{}, deployments)
 	if err != nil {
 		return err
 	}
@@ -317,8 +320,8 @@ func CreateAgent(jenkinsClient jenkinsclient.Jenkins, k8sClient client.Client, j
 func agentDeployment(jenkinsManifest *v1alpha2.Jenkins, namespace string, agentName string, secret string) *apps.Deployment {
 	return &apps.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:                       fmt.Sprintf("%s-deployment", agentName),
-			Namespace:                  namespace,
+			Name:      fmt.Sprintf("%s-deployment", agentName),
+			Namespace: namespace,
 		},
 		Spec: apps.DeploymentSpec{
 			Template: corev1.PodTemplateSpec{
@@ -336,11 +339,11 @@ func agentDeployment(jenkinsManifest *v1alpha2.Jenkins, namespace string, agentN
 										jenkinsManifest.Spec.SlaveService.Port),
 								},
 								{
-									Name: "JENKINS_SECRET",
+									Name:  "JENKINS_SECRET",
 									Value: secret,
 								},
 								{
-									Name: "JENKINS_AGENT_NAME",
+									Name:  "JENKINS_AGENT_NAME",
 									Value: agentName,
 								},
 								{
@@ -352,7 +355,7 @@ func agentDeployment(jenkinsManifest *v1alpha2.Jenkins, namespace string, agentN
 									),
 								},
 								{
-									Name: "JENKINS_AGENT_WORKDIR",
+									Name:  "JENKINS_AGENT_WORKDIR",
 									Value: "/home/jenkins/agent",
 								},
 							},
@@ -470,7 +473,7 @@ jobRef.getBuildersList().add(executeDslScripts)
 jobRef.setDisplayName(&quot;${params.` + displayNameParameterName + `}&quot;)
 jobRef.setScm(scm)
 // TODO don't use master executors
-jobRef.setAssignedLabel(new LabelAtom(&quot;`+AgentName+`&quot;))
+jobRef.setAssignedLabel(new LabelAtom(&quot;` + AgentName + `&quot;))
 
 jenkins.getQueue().schedule(jobRef)
 </script>

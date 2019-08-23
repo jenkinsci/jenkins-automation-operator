@@ -39,6 +39,19 @@ func TestEnsureSeedJobs(t *testing.T) {
 	assert.NoError(t, err)
 	buildNumber := int64(1)
 
+	agentName := "seed-job-agent"
+	secret := "test-secret"
+	testNode := &gojenkins.Node{
+		Raw: &gojenkins.NodeResponse{
+			DisplayName: agentName,
+		},
+	}
+
+	jenkinsClient.EXPECT().GetNodeSecret(agentName).Return(secret, nil)
+	jenkinsClient.EXPECT().GetAllNodes().Return([]*gojenkins.Node{}, nil)
+	jenkinsClient.EXPECT().CreateNode(agentName, 1, "The jenkins-operator generated agent", "/home/jenkins", agentName).Return(testNode, nil)
+	jenkinsClient.EXPECT().GetNode(agentName).Return(testNode, nil).AnyTimes()
+
 	for reconcileAttempt := 1; reconcileAttempt <= 2; reconcileAttempt++ {
 		logger.Info(fmt.Sprintf("Reconcile attempt #%d", reconcileAttempt))
 
@@ -235,7 +248,7 @@ func TestCreateAgent(t *testing.T) {
 		jenkinsCustomRes := jenkinsCustomResource()
 		testNode := &gojenkins.Node{
 			Raw: &gojenkins.NodeResponse{
-				DisplayName:  agentName,
+				DisplayName: agentName,
 			},
 		}
 
@@ -262,7 +275,7 @@ func TestCreateAgent(t *testing.T) {
 
 		assert.Equal(t, node.Raw.DisplayName, testNode.Raw.DisplayName)
 	})
-	
+
 	t.Run("not fail when deployment is available", func(t *testing.T) {
 		// given
 		ctrl := gomock.NewController(t)
@@ -285,8 +298,8 @@ func TestCreateAgent(t *testing.T) {
 		// when
 		err = fakeClient.Create(ctx, &appsv1.Deployment{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: fmt.Sprintf("%s-deployment", agentName),
-				Namespace:namespace,
+				Name:      fmt.Sprintf("%s-deployment", agentName),
+				Namespace: namespace,
 			},
 		})
 
