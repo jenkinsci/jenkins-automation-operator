@@ -16,6 +16,19 @@ type MockJenkins struct {
 	recorder *MockJenkinsMockRecorder
 }
 
+func (m *MockJenkins) GetNodeSecret(name string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetNodeSecret", name)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+func (mr *MockJenkinsMockRecorder) GetNodeSecret(name string) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNodeSecret", reflect.TypeOf((*MockJenkins)(nil).GetNodeSecret), name)
+}
+
 // MockJenkinsMockRecorder is the mock recorder for MockJenkins
 type MockJenkinsMockRecorder struct {
 	mock *MockJenkins

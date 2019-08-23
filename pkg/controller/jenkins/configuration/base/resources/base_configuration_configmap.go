@@ -168,7 +168,6 @@ import jenkins.model.GlobalConfiguration
 GlobalConfiguration.all().get(GlobalJobDslSecurityConfiguration.class).useScriptSecurity=false
 GlobalConfiguration.all().get(GlobalJobDslSecurityConfiguration.class).save()
 `
-
 // GetBaseConfigurationConfigMapName returns name of Kubernetes config map used to base configuration
 func GetBaseConfigurationConfigMapName(jenkins *v1alpha2.Jenkins) string {
 	return fmt.Sprintf("%s-base-configuration-%s", constants.OperatorName, jenkins.ObjectMeta.Name)

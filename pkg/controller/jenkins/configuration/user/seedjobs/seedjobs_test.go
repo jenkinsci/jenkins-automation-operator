@@ -6,12 +6,13 @@ import (
 	"testing"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
-	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
+	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 
 	"github.com/bndr/gojenkins"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -28,7 +29,7 @@ func TestEnsureSeedJobs(t *testing.T) {
 	ctx := context.TODO()
 	defer ctrl.Finish()
 
-	jenkinsClient := client.NewMockJenkins(ctrl)
+	jenkinsClient := jenkinsclient.NewMockJenkins(ctrl)
 	fakeClient := fake.NewFakeClient()
 	err := v1alpha2.SchemeBuilder.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
@@ -217,5 +218,82 @@ func TestSeedJobs_isRecreatePodNeeded(t *testing.T) {
 		got := seedJobsClient.isRecreatePodNeeded(jenkins)
 
 		assert.True(t, got)
+	})
+}
+
+func TestCreateAgent(t *testing.T) {
+	t.Run("happy", func(t *testing.T) {
+		// given
+		//logger := logf.ZapLogger(false)
+		ctrl := gomock.NewController(t)
+		ctx := context.TODO()
+		defer ctrl.Finish()
+
+		namespace := "test-namespace"
+		agentName := "test-agent"
+		secret := "test-secret"
+		jenkinsCustomRes := jenkinsCustomResource()
+		testNode := &gojenkins.Node{
+			Raw: &gojenkins.NodeResponse{
+				DisplayName:  agentName,
+			},
+		}
+
+		jenkinsClient := jenkinsclient.NewMockJenkins(ctrl)
+		fakeClient := fake.NewFakeClient()
+		err := v1alpha2.SchemeBuilder.AddToScheme(scheme.Scheme)
+		assert.NoError(t, err)
+
+		jenkinsClient.EXPECT().GetNode(agentName).Return(testNode, nil)
+		jenkinsClient.EXPECT().GetNodeSecret(agentName).Return(secret, nil)
+		jenkinsClient.EXPECT().GetAllNodes().Return([]*gojenkins.Node{}, nil)
+		jenkinsClient.EXPECT().CreateNode(agentName, 1, "The jenkins-operator generated agent", "/home/jenkins", agentName).Return(testNode, nil)
+
+		// when
+		err = CreateAgent(jenkinsClient, fakeClient, jenkinsCustomRes, namespace, agentName)
+		assert.NoError(t, err)
+
+		//then
+		err = fakeClient.Get(ctx, types.NamespacedName{Name: fmt.Sprintf("%s-deployment", agentName), Namespace: namespace}, &appsv1.Deployment{})
+		assert.NoError(t, err)
+
+		node, err := jenkinsClient.GetNode(agentName)
+		assert.NoError(t, err)
+
+		assert.Equal(t, node.Raw.DisplayName, testNode.Raw.DisplayName)
+	})
+	
+	t.Run("not fail when deployment is available", func(t *testing.T) {
+		// given
+		ctrl := gomock.NewController(t)
+		ctx := context.TODO()
+		defer ctrl.Finish()
+
+		namespace := "test-namespace"
+		agentName := "test-agent"
+		secret := "test-secret"
+
+		jenkinsClient := jenkinsclient.NewMockJenkins(ctrl)
+		fakeClient := fake.NewFakeClient()
+		err := v1alpha2.SchemeBuilder.AddToScheme(scheme.Scheme)
+		assert.NoError(t, err)
+
+		jenkinsClient.EXPECT().GetNodeSecret(agentName).Return(secret, nil)
+		jenkinsClient.EXPECT().GetAllNodes().Return([]*gojenkins.Node{}, nil)
+		jenkinsClient.EXPECT().CreateNode(agentName, 1, "The jenkins-operator generated agent", "/home/jenkins", agentName)
+
+		// when
+		err = fakeClient.Create(ctx, &appsv1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: fmt.Sprintf("%s-deployment", agentName),
+				Namespace:namespace,
+			},
+		})
+
+		assert.NoError(t, err)
+
+		// then
+		err = CreateAgent(jenkinsClient, fakeClient, jenkinsCustomResource(), namespace, agentName)
+		assert.NoError(t, err)
 	})
 }

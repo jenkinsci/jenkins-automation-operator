@@ -5,20 +5,24 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
-	"reflect"
-
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/jobs"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
+	"reflect"
 
 	"github.com/go-logr/logr"
 	stackerr "github.com/pkg/errors"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	k8s "sigs.k8s.io/controller-runtime/pkg/client"
+
+	apps "k8s.io/api/apps/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -42,6 +46,10 @@ const (
 	// JenkinsCredentialTypeLabelName is label for kubernetes-credentials-provider-plugin which determine Jenkins
 	// credential type
 	JenkinsCredentialTypeLabelName = "jenkins.io/credentials-type"
+
+	// AgentName is the name of seed job
+	AgentName = "seed-job-agent"
+	AgentNamespace = "default"
 )
 
 // SeedJobs defines API for configuring and ensuring Jenkins Seed Jobs and Deploy Keys
@@ -86,6 +94,24 @@ func (s *SeedJobs) EnsureSeedJobs(jenkins *v1alpha2.Jenkins) (done bool, err err
 	if done && !reflect.DeepEqual(seedJobIDs, jenkins.Status.CreatedSeedJobs) {
 		jenkins.Status.CreatedSeedJobs = seedJobIDs
 		return false, stackerr.WithStack(s.k8sClient.Update(context.TODO(), jenkins))
+	}
+
+	if len(seedJobIDs) > 0 {
+		err := CreateAgent(s.jenkinsClient, s.k8sClient, jenkins, jenkins.Namespace, AgentName)
+		if err != nil {
+			panic(err)
+		}
+	} else if len(seedJobIDs) == 0 {
+		err := s.k8sClient.Delete(context.TODO(), &appsv1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: AgentNamespace,
+				Name: fmt.Sprintf("%s-deployment", AgentName),
+			},
+		})
+
+		if err != nil {
+			return done, err
+		}
 	}
 
 	return done, nil
@@ -233,6 +259,122 @@ func (s *SeedJobs) isRecreatePodNeeded(jenkins v1alpha2.Jenkins) bool {
 	return false
 }
 
+func CreateAgent(jenkinsClient jenkinsclient.Jenkins, k8sClient client.Client, jenkinsManifest *v1alpha2.Jenkins, namespace string, agentName string) error {
+	var exists bool
+
+	nodes, err := jenkinsClient.GetAllNodes()
+	if err != nil {
+		return err
+	}
+
+	if len(nodes) != 0 {
+		for _, node := range nodes {
+			if node.GetName() == agentName {
+				exists = true
+			}
+		}
+	}
+
+	// Create node if not exists
+	if !exists {
+		_, err = jenkinsClient.CreateNode(agentName, 1, "The jenkins-operator generated agent", "/home/jenkins", agentName)
+		if err != nil {
+			return err
+		}
+	}
+
+	deployments := &apps.DeploymentList{}
+	exists = false
+	secret, err := jenkinsClient.GetNodeSecret(agentName)
+	if err != nil {
+		return err
+	}
+
+	deployment := agentDeployment(jenkinsManifest, namespace, agentName, secret)
+	err = k8sClient.List(context.TODO(),  &client.ListOptions{}, deployments)
+	if err != nil {
+		return err
+	}
+
+	if len(deployments.Items) > 0 {
+		for _, deployment := range deployments.Items {
+			if deployment.ObjectMeta.Name == fmt.Sprintf("%s-deployment", agentName) {
+				exists = true
+			}
+		}
+	}
+
+	// Create deployment if not exists
+	if !exists {
+		err = k8sClient.Create(context.TODO(), deployment)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func agentDeployment(jenkinsManifest *v1alpha2.Jenkins, namespace string, agentName string, secret string) *apps.Deployment {
+	return &apps.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:                       fmt.Sprintf("%s-deployment", agentName),
+			Namespace:                  namespace,
+		},
+		Spec: apps.DeploymentSpec{
+			Template: corev1.PodTemplateSpec{
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  fmt.Sprintf("%s-container", agentName),
+							Image: "jenkins/jnlp-slave:alpine",
+							Env: []corev1.EnvVar{
+								{
+									Name: "JENKINS_TUNNEL",
+									Value: fmt.Sprintf("%s.%s:%d",
+										resources.GetJenkinsSlavesServiceName(jenkinsManifest),
+										jenkinsManifest.ObjectMeta.Namespace,
+										jenkinsManifest.Spec.SlaveService.Port),
+								},
+								{
+									Name: "JENKINS_SECRET",
+									Value: secret,
+								},
+								{
+									Name: "JENKINS_AGENT_NAME",
+									Value: agentName,
+								},
+								{
+									Name: "JENKINS_URL",
+									Value: fmt.Sprintf("http://%s.%s:%d",
+										resources.GetJenkinsHTTPServiceName(jenkinsManifest),
+										jenkinsManifest.ObjectMeta.Namespace,
+										jenkinsManifest.Spec.Service.Port,
+									),
+								},
+								{
+									Name: "JENKINS_AGENT_WORKDIR",
+									Value: "/home/jenkins/agent",
+								},
+							},
+						},
+					},
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						"app": fmt.Sprintf("%s-selector", agentName),
+					},
+				},
+			},
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"app": fmt.Sprintf("%s-selector", agentName),
+				},
+			},
+		},
+		Status: apps.DeploymentStatus{},
+	}
+}
+
 // seedJobConfigXML this is the XML representation of seed job
 var seedJobConfigXML = `
 <flow-definition plugin="workflow-job@2.30">
@@ -319,7 +461,6 @@ executeDslScripts.setSandbox(false)
 executeDslScripts.setRemovedJobAction(RemovedJobAction.DELETE)
 executeDslScripts.setRemovedViewAction(RemovedViewAction.DELETE)
 executeDslScripts.setLookupStrategy(LookupStrategy.SEED_JOB)
-executeDslScripts.setAdditionalClasspath(&quot;src&quot;)
 
 if (jobRef == null) {
         jobRef = jenkins.createProject(FreeStyleProject, jobDslSeedName)
@@ -329,7 +470,7 @@ jobRef.getBuildersList().add(executeDslScripts)
 jobRef.setDisplayName(&quot;${params.` + displayNameParameterName + `}&quot;)
 jobRef.setScm(scm)
 // TODO don't use master executors
-jobRef.setAssignedLabel(new LabelAtom(&quot;master&quot;))
+jobRef.setAssignedLabel(new LabelAtom(&quot;`+AgentName+`&quot;))
 
 jenkins.getQueue().schedule(jobRef)
 </script>

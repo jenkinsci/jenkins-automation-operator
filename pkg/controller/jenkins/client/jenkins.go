@@ -3,15 +3,18 @@ package client
 import (
 	"bytes"
 	"fmt"
-	"net/http"
-	"os/exec"
-	"strings"
-
 	"github.com/bndr/gojenkins"
 	"github.com/pkg/errors"
+	"net/http"
+	"os/exec"
+	"regexp"
+	"strings"
 )
 
-var errorNotFound = errors.New("404")
+var (
+	errorNotFound = errors.New("404")
+	regex = regexp.MustCompile("(<application-desc main-class=\"hudson.remoting.jnlp.Main\"><argument>)(?P<secret>[a-z0-9]*)")
+)
 
 // Jenkins defines Jenkins API
 type Jenkins interface {
@@ -52,6 +55,7 @@ type Jenkins interface {
 	CreateView(name string, viewType string) (*gojenkins.View, error)
 	Poll() (int, error)
 	ExecuteScript(groovyScript string) (logs string, err error)
+	GetNodeSecret(name string) (string, error)
 }
 
 type jenkins struct {
@@ -135,4 +139,24 @@ func isNotFoundError(err error) bool {
 		return err.Error() == errorNotFound.Error()
 	}
 	return false
+}
+
+func (jenkins *jenkins) GetNodeSecret(name string) (string, error) {
+	var content string
+	_, err := jenkins.Requester.GetXML(fmt.Sprintf("/computer/%s/slave-agent.jnlp", name), &content, nil)
+
+	if err != nil {
+		return "", err
+	}
+
+	match := regex.FindStringSubmatch(content)
+	result := make(map[string]string)
+
+	for i, name := range regex.SubexpNames() {
+		if i != 0 && name != "" {
+			result[name] = match[i]
+		}
+	}
+
+	return result["secret"], nil
 }
