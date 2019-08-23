@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/plugins"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
 
@@ -254,11 +256,34 @@ func (r *ReconcileJenkinsBaseConfiguration) validateJenkinsMasterPodEnvs() bool 
 		baseEnvNames[env.Name] = env.Value
 	}
 
+	javaOpts := corev1.EnvVar{}
 	valid := true
 	for _, userEnv := range r.jenkins.Spec.Master.Containers[0].Env {
+		if userEnv.Name == constants.JavaOpsVariableName {
+			javaOpts = userEnv
+		}
 		if _, overriding := baseEnvNames[userEnv.Name]; overriding {
-			r.logger.V(log.VWarn).Info(fmt.Sprintf("Jenkins Master pod env '%s' cannot be overridden", userEnv.Name))
+			r.logger.V(log.VWarn).Info(fmt.Sprintf("Jenkins Master container env '%s' cannot be overridden", userEnv.Name))
 			valid = false
+		}
+	}
+
+	requiredFlags := map[string]bool{
+		"-Djenkins.install.runSetupWizard=false": false,
+		"-Djava.awt.headless=true":               false,
+	}
+	for _, setFlag := range strings.Split(javaOpts.Value, " ") {
+		for requiredFlag := range requiredFlags {
+			if setFlag == requiredFlag {
+				requiredFlags[requiredFlag] = true
+				break
+			}
+		}
+	}
+	for requiredFlag, set := range requiredFlags {
+		if !set {
+			valid = false
+			r.logger.V(log.VWarn).Info(fmt.Sprintf("Jenkins Master container env '%s' doesn't have required flag '%s'", constants.JavaOpsVariableName, requiredFlag))
 		}
 	}
 

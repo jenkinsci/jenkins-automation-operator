@@ -6,6 +6,7 @@ import (
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/plugins"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
 
@@ -322,6 +323,7 @@ func TestReconcileJenkinsBaseConfiguration_validateImagePullSecrets(t *testing.T
 }
 
 func TestValidateJenkinsMasterPodEnvs(t *testing.T) {
+	validJenkinsOps := "-Djenkins.install.runSetupWizard=false -Djava.awt.headless=true"
 	t.Run("happy", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
 			Spec: v1alpha2.JenkinsSpec{
@@ -332,6 +334,10 @@ func TestValidateJenkinsMasterPodEnvs(t *testing.T) {
 								{
 									Name:  "SOME_VALUE",
 									Value: "",
+								},
+								{
+									Name:  constants.JavaOpsVariableName,
+									Value: validJenkinsOps,
 								},
 							},
 						},
@@ -354,6 +360,54 @@ func TestValidateJenkinsMasterPodEnvs(t *testing.T) {
 								{
 									Name:  "JENKINS_HOME",
 									Value: "",
+								},
+								{
+									Name:  constants.JavaOpsVariableName,
+									Value: validJenkinsOps,
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+		baseReconcileLoop := New(nil, nil, logf.ZapLogger(false),
+			&jenkins, false, false, nil, nil)
+		got := baseReconcileLoop.validateJenkinsMasterPodEnvs()
+		assert.Equal(t, false, got)
+	})
+	t.Run("missing -Djava.awt.headless=true in JAVA_OPTS env", func(t *testing.T) {
+		jenkins := v1alpha2.Jenkins{
+			Spec: v1alpha2.JenkinsSpec{
+				Master: v1alpha2.JenkinsMaster{
+					Containers: []v1alpha2.Container{
+						{
+							Env: []v1.EnvVar{
+								{
+									Name:  constants.JavaOpsVariableName,
+									Value: "-Djenkins.install.runSetupWizard=false",
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+		baseReconcileLoop := New(nil, nil, logf.ZapLogger(false),
+			&jenkins, false, false, nil, nil)
+		got := baseReconcileLoop.validateJenkinsMasterPodEnvs()
+		assert.Equal(t, false, got)
+	})
+	t.Run("missing -Djenkins.install.runSetupWizard=false in JAVA_OPTS env", func(t *testing.T) {
+		jenkins := v1alpha2.Jenkins{
+			Spec: v1alpha2.JenkinsSpec{
+				Master: v1alpha2.JenkinsMaster{
+					Containers: []v1alpha2.Container{
+						{
+							Env: []v1.EnvVar{
+								{
+									Name:  constants.JavaOpsVariableName,
+									Value: "-Djava.awt.headless=true",
 								},
 							},
 						},

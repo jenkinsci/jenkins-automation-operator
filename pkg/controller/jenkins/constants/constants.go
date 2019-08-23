@@ -17,4 +17,6 @@ const (
 	DefaultHTTPPortInt32 = int32(8080)
 	// DefaultSlavePortInt32 is the default Jenkins port for slaves
 	DefaultSlavePortInt32 = int32(50000)
+	// JavaOpsVariableName is the name of environment variable which consists Jenkins Java options
+	JavaOpsVariableName = "JAVA_OPTS"
 )

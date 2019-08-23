@@ -334,6 +334,14 @@ func (r *ReconcileJenkins) setDefaults(jenkins *v1alpha2.Jenkins, logger logr.Lo
 		changed = true
 		jenkinsContainer.Command = resources.GetJenkinsMasterContainerBaseCommand()
 	}
+	if isJavaOpsVariableNotSet(jenkinsContainer) {
+		logger.Info("Setting default Jenkins container JAVA_OPTS environment variable")
+		changed = true
+		jenkinsContainer.Env = append(jenkinsContainer.Env, corev1.EnvVar{
+			Name:  constants.JavaOpsVariableName,
+			Value: "-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:MaxRAMFraction=1 -Djenkins.install.runSetupWizard=false -Djava.awt.headless=true",
+		})
+	}
 	if len(jenkins.Spec.Master.BasePlugins) == 0 {
 		logger.Info("Setting default operator plugins")
 		changed = true
@@ -424,6 +432,15 @@ func (r *ReconcileJenkins) setDefaults(jenkins *v1alpha2.Jenkins, logger logr.Lo
 		return errors.WithStack(r.client.Update(context.TODO(), jenkins))
 	}
 	return nil
+}
+
+func isJavaOpsVariableNotSet(container v1alpha2.Container) bool {
+	for _, env := range container.Env {
+		if env.Name == constants.JavaOpsVariableName {
+			return false
+		}
+	}
+	return true
 }
 
 func setDefaultsForContainer(jenkins *v1alpha2.Jenkins, containerIndex int, logger logr.Logger) bool {

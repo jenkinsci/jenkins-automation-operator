@@ -67,10 +67,6 @@ func GetJenkinsMasterContainerBaseEnvs(jenkins *v1alpha2.Jenkins) []corev1.EnvVa
 			Name:  "JENKINS_HOME",
 			Value: jenkinsHomePath,
 		},
-		{
-			Name:  "JAVA_OPTS",
-			Value: "-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:MaxRAMFraction=1 -Djenkins.install.runSetupWizard=false -Djava.awt.headless=true",
-		},
 	}
 
 	if len(jenkins.Spec.ConfigurationAsCode.Secret.Name) > 0 {
