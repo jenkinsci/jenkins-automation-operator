@@ -3,12 +3,13 @@ package client
 import (
 	"bytes"
 	"fmt"
-	"github.com/bndr/gojenkins"
-	"github.com/pkg/errors"
 	"net/http"
 	"os/exec"
 	"regexp"
 	"strings"
+
+	"github.com/bndr/gojenkins"
+	"github.com/pkg/errors"
 )
 
 var (

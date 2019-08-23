@@ -5,13 +5,14 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
+	"reflect"
+
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
-	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/jobs"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
-	"reflect"
+	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 
 	"github.com/go-logr/logr"
 	stackerr "github.com/pkg/errors"
@@ -19,7 +20,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	k8s "sigs.k8s.io/controller-runtime/pkg/client"
-
 	apps "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
