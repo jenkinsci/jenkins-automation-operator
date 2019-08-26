@@ -5,12 +5,13 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
+	"reflect"
+	
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/groovy"
-	"reflect"
 
 	"github.com/go-logr/logr"
 	stackerr "github.com/pkg/errors"
