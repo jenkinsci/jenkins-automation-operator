@@ -151,6 +151,10 @@ func (jenkins *jenkins) GetNodeSecret(name string) (string, error) {
 	}
 
 	match := regex.FindStringSubmatch(content)
+	if match == nil {
+		return "", errors.New("Node secret cannot be parsed")
+	}
+
 	result := make(map[string]string)
 
 	for i, name := range regex.SubexpNames() {

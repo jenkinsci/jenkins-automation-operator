@@ -16,7 +16,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
@@ -37,7 +36,6 @@ func TestEnsureSeedJobs(t *testing.T) {
 	jenkins := jenkinsCustomResource()
 	err = fakeClient.Create(ctx, jenkins)
 	assert.NoError(t, err)
-	buildNumber := int64(1)
 
 	agentName := "seed-job-agent"
 	secret := "test-secret"
@@ -52,78 +50,12 @@ func TestEnsureSeedJobs(t *testing.T) {
 	jenkinsClient.EXPECT().CreateNode(agentName, 1, "The jenkins-operator generated agent", "/home/jenkins", agentName).Return(testNode, nil)
 	jenkinsClient.EXPECT().GetNode(agentName).Return(testNode, nil).AnyTimes()
 
-	for reconcileAttempt := 1; reconcileAttempt <= 2; reconcileAttempt++ {
-		logger.Info(fmt.Sprintf("Reconcile attempt #%d", reconcileAttempt))
+	jenkinsClient.EXPECT().ExecuteScript(seedJobCreatingGroovyScript(jenkins.Spec.SeedJobs[0])).AnyTimes()
 
-		seedJobs := New(jenkinsClient, fakeClient, logger)
+	seedJobClient := New(jenkinsClient, fakeClient, logger)
 
-		// first run - should create job and schedule build
-		if reconcileAttempt == 1 {
-			jenkinsClient.
-				EXPECT().
-				CreateOrUpdateJob(seedJobConfigXML, ConfigureSeedJobsName).
-				Return(nil, true, nil)
-
-			jenkinsClient.
-				EXPECT().
-				GetJob(ConfigureSeedJobsName).
-				Return(&gojenkins.Job{
-					Raw: &gojenkins.JobResponse{
-						NextBuildNumber: buildNumber,
-					},
-				}, nil)
-
-			jenkinsClient.
-				EXPECT().
-				BuildJob(ConfigureSeedJobsName, gomock.Any()).
-				Return(int64(0), nil)
-		}
-
-		// second run - should update and finish job
-		if reconcileAttempt == 2 {
-			jenkinsClient.
-				EXPECT().
-				CreateOrUpdateJob(seedJobConfigXML, ConfigureSeedJobsName).
-				Return(nil, false, nil)
-
-			jenkinsClient.
-				EXPECT().
-				GetBuild(ConfigureSeedJobsName, gomock.Any()).
-				Return(&gojenkins.Build{
-					Raw: &gojenkins.BuildResponse{
-						Result: string(v1alpha2.BuildSuccessStatus),
-					},
-				}, nil)
-		}
-
-		done, err := seedJobs.EnsureSeedJobs(jenkins)
-		assert.NoError(t, err)
-
-		err = fakeClient.Get(ctx, types.NamespacedName{Name: jenkins.Name, Namespace: jenkins.Namespace}, jenkins)
-		assert.NoError(t, err)
-
-		assert.Equal(t, 1, len(jenkins.Status.Builds), "There is one running job")
-		build := jenkins.Status.Builds[0]
-		assert.Equal(t, buildNumber, build.Number)
-		assert.Equal(t, ConfigureSeedJobsName, build.JobName)
-		assert.NotNil(t, build.CreateTime)
-		assert.NotEmpty(t, build.Hash)
-		assert.NotNil(t, build.LastUpdateTime)
-		assert.Equal(t, 0, build.Retires)
-
-		// first run - should create job and schedule build
-		if reconcileAttempt == 1 {
-			assert.False(t, done)
-			assert.Equal(t, string(v1alpha2.BuildRunningStatus), string(build.Status))
-		}
-
-		// second run - should update and finish job
-		if reconcileAttempt == 2 {
-			assert.False(t, done)
-			assert.Equal(t, string(v1alpha2.BuildSuccessStatus), string(build.Status))
-		}
-
-	}
+	_, err = seedJobClient.EnsureSeedJobs(jenkins)
+	assert.NoError(t, err)
 }
 
 func jenkinsCustomResource() *v1alpha2.Jenkins {
@@ -235,47 +167,6 @@ func TestSeedJobs_isRecreatePodNeeded(t *testing.T) {
 }
 
 func TestCreateAgent(t *testing.T) {
-	t.Run("happy", func(t *testing.T) {
-		// given
-		//logger := logf.ZapLogger(false)
-		ctrl := gomock.NewController(t)
-		ctx := context.TODO()
-		defer ctrl.Finish()
-
-		namespace := "test-namespace"
-		agentName := "test-agent"
-		secret := "test-secret"
-		jenkinsCustomRes := jenkinsCustomResource()
-		testNode := &gojenkins.Node{
-			Raw: &gojenkins.NodeResponse{
-				DisplayName: agentName,
-			},
-		}
-
-		jenkinsClient := jenkinsclient.NewMockJenkins(ctrl)
-		fakeClient := fake.NewFakeClient()
-		err := v1alpha2.SchemeBuilder.AddToScheme(scheme.Scheme)
-		assert.NoError(t, err)
-
-		jenkinsClient.EXPECT().GetNode(agentName).Return(testNode, nil)
-		jenkinsClient.EXPECT().GetNodeSecret(agentName).Return(secret, nil)
-		jenkinsClient.EXPECT().GetAllNodes().Return([]*gojenkins.Node{}, nil)
-		jenkinsClient.EXPECT().CreateNode(agentName, 1, "The jenkins-operator generated agent", "/home/jenkins", agentName).Return(testNode, nil)
-
-		// when
-		err = CreateAgent(jenkinsClient, fakeClient, jenkinsCustomRes, namespace, agentName)
-		assert.NoError(t, err)
-
-		//then
-		err = fakeClient.Get(ctx, types.NamespacedName{Name: fmt.Sprintf("%s-deployment", agentName), Namespace: namespace}, &appsv1.Deployment{})
-		assert.NoError(t, err)
-
-		node, err := jenkinsClient.GetNode(agentName)
-		assert.NoError(t, err)
-
-		assert.Equal(t, node.Raw.DisplayName, testNode.Raw.DisplayName)
-	})
-
 	t.Run("not fail when deployment is available", func(t *testing.T) {
 		// given
 		ctrl := gomock.NewController(t)
@@ -295,6 +186,8 @@ func TestCreateAgent(t *testing.T) {
 		jenkinsClient.EXPECT().GetAllNodes().Return([]*gojenkins.Node{}, nil)
 		jenkinsClient.EXPECT().CreateNode(agentName, 1, "The jenkins-operator generated agent", "/home/jenkins", agentName)
 
+		seedJobsClient := New(jenkinsClient, fakeClient, nil)
+
 		// when
 		err = fakeClient.Create(ctx, &appsv1.Deployment{
 			ObjectMeta: metav1.ObjectMeta{
@@ -306,7 +199,7 @@ func TestCreateAgent(t *testing.T) {
 		assert.NoError(t, err)
 
 		// then
-		err = CreateAgent(jenkinsClient, fakeClient, jenkinsCustomResource(), namespace, agentName)
+		err = seedJobsClient.createAgent(jenkinsClient, fakeClient, jenkinsCustomResource(), namespace, agentName)
 		assert.NoError(t, err)
 	})
 }
