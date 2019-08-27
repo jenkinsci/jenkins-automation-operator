@@ -48,6 +48,10 @@ func TestEnsureSeedJobs(t *testing.T) {
 			},
 		}
 
+		jobID := jenkins.Spec.SeedJobs[0].ID
+
+		jenkinsClient.EXPECT().IsNotFoundError(nil).AnyTimes()
+		jenkinsClient.EXPECT().GetJob(jobID).AnyTimes()
 		jenkinsClient.EXPECT().GetNodeSecret(agentName).Return(secret, nil).AnyTimes()
 		jenkinsClient.EXPECT().GetAllNodes().Return([]*gojenkins.Node{}, nil).AnyTimes()
 		jenkinsClient.EXPECT().CreateNode(agentName, 1, "The jenkins-operator generated agent", "/home/jenkins", agentName).Return(testNode, nil).AnyTimes()
@@ -59,6 +63,10 @@ func TestEnsureSeedJobs(t *testing.T) {
 
 		_, err = seedJobClient.EnsureSeedJobs(jenkins)
 		assert.NoError(t, err)
+
+		_, err = jenkinsClient.GetJob(jobID)
+
+		assert.False(t, jenkinsClient.IsNotFoundError(err))
 	})
 
 	t.Run("delete pod when no seed jobs", func(t *testing.T) {
@@ -78,12 +86,22 @@ func TestEnsureSeedJobs(t *testing.T) {
 		err := v1alpha2.SchemeBuilder.AddToScheme(scheme.Scheme)
 		assert.NoError(t, err)
 
+		jenkinsClient.EXPECT().IsNotFoundError(nil).AnyTimes()
 		jenkinsClient.EXPECT().GetNode(agentName).AnyTimes()
 		jenkinsClient.EXPECT().GetNodeSecret(agentName).Return(secret, nil).AnyTimes()
 		jenkinsClient.EXPECT().GetAllNodes().Return([]*gojenkins.Node{}, nil).AnyTimes()
 		jenkinsClient.EXPECT().CreateNode(agentName, 1, "The jenkins-operator generated agent", "/home/jenkins", agentName).AnyTimes()
 
 		seedJobsClient := New(jenkinsClient, fakeClient, nil)
+
+		err = fakeClient.Create(ctx, &appsv1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      fmt.Sprintf("%s-deployment", agentName),
+				Namespace: namespace,
+			},
+		})
+
+		assert.NoError(t, err)
 
 		// when
 		_, err = seedJobsClient.EnsureSeedJobs(jenkinsCustomRes)
@@ -223,6 +241,7 @@ func TestCreateAgent(t *testing.T) {
 		err := v1alpha2.SchemeBuilder.AddToScheme(scheme.Scheme)
 		assert.NoError(t, err)
 
+		jenkinsClient.EXPECT().IsNotFoundError(nil).AnyTimes()
 		jenkinsClient.EXPECT().GetNode(agentName).AnyTimes()
 		jenkinsClient.EXPECT().GetNodeSecret(agentName).Return(secret, nil).AnyTimes()
 		jenkinsClient.EXPECT().GetAllNodes().Return([]*gojenkins.Node{}, nil).AnyTimes()

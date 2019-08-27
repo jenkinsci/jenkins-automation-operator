@@ -57,6 +57,7 @@ type Jenkins interface {
 	Poll() (int, error)
 	ExecuteScript(groovyScript string) (logs string, err error)
 	GetNodeSecret(name string) (string, error)
+	IsNotFoundError(err error) bool
 }
 
 type jenkins struct {
@@ -67,7 +68,7 @@ type jenkins struct {
 func (jenkins *jenkins) CreateOrUpdateJob(config, jobName string) (job *gojenkins.Job, created bool, err error) {
 	// create or update
 	job, err = jenkins.GetJob(jobName)
-	if isNotFoundError(err) {
+	if jenkins.IsNotFoundError(err) {
 		job, err = jenkins.CreateJob(config, jobName)
 		created = true
 		return job, true, errors.WithStack(err)
@@ -135,7 +136,7 @@ func New(url, user, passwordOrToken string) (Jenkins, error) {
 	return jenkinsClient, nil
 }
 
-func isNotFoundError(err error) bool {
+func (jenkins *jenkins) IsNotFoundError(err error) bool {
 	if err != nil {
 		return err.Error() == errorNotFound.Error()
 	}

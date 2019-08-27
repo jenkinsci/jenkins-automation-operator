@@ -227,11 +227,13 @@ func (s SeedJobs) createAgent(jenkinsClient jenkinsclient.Jenkins, k8sClient cli
 	_, err := jenkinsClient.GetNode(agentName)
 
 	// Create node if not exists
-	if err != nil {
+	if jenkinsClient.IsNotFoundError(err) {
 		_, err = jenkinsClient.CreateNode(agentName, 1, "The jenkins-operator generated agent", "/home/jenkins", agentName)
 		if err != nil {
 			return err
 		}
+	} else if err != nil {
+		return err
 	}
 
 	secret, err := jenkinsClient.GetNodeSecret(agentName)
@@ -242,13 +244,13 @@ func (s SeedJobs) createAgent(jenkinsClient jenkinsclient.Jenkins, k8sClient cli
 	deployment := agentDeployment(jenkinsManifest, namespace, agentName, secret)
 
 	err = k8sClient.Create(context.TODO(), deployment)
-	if err != nil {
+	if apierrors.IsAlreadyExists(err) {
 		err := k8sClient.Update(context.TODO(), deployment)
-		if err != nil && apierrors.IsAlreadyExists(err) {
-			return err
-		} else if err != nil {
+		if err != nil {
 			return err
 		}
+	} else if err != nil {
+		return err
 	}
 
 	return nil
@@ -265,7 +267,7 @@ func agentDeployment(jenkinsManifest *v1alpha2.Jenkins, namespace string, agentN
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
 						{
-							Name:  fmt.Sprintf("%s-container", agentName),
+							Name:  "jnlp",
 							Image: "jenkins/jnlp-slave:alpine",
 							Env: []corev1.EnvVar{
 								{
