@@ -138,20 +138,6 @@ func (m *MockJenkins) CreateFolder(name string, parents ...string) (*gojenkins.F
 	return ret0, ret1
 }
 
-// IsNotFoundError mocks base method
-func (m *MockJenkins) IsNotFoundError(err error) bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsNotFoundError", err)
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// IsNotFoundError indicates an expected call of IsNotFoundError
-func (mr *MockJenkinsMockRecorder) IsNotFoundError(err error) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsNotFoundError", reflect.TypeOf((*MockJenkins)(nil).IsNotFoundError), err)
-}
-
 // CreateFolder indicates an expected call of CreateFolder
 func (mr *MockJenkinsMockRecorder) CreateFolder(name interface{}, parents ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
