@@ -48,7 +48,7 @@ func TestEnsureSeedJobs(t *testing.T) {
 			},
 		}
 
-		jenkinsClient.EXPECT().GetNodeSecret(agentName).Return(secret, nil)
+		jenkinsClient.EXPECT().GetNodeSecret(agentName).Return(secret, nil).AnyTimes()
 		jenkinsClient.EXPECT().GetAllNodes().Return([]*gojenkins.Node{}, nil).AnyTimes()
 		jenkinsClient.EXPECT().CreateNode(agentName, 1, "The jenkins-operator generated agent", "/home/jenkins", agentName).Return(testNode, nil).AnyTimes()
 		jenkinsClient.EXPECT().GetNode(agentName).Return(testNode, nil).AnyTimes()
@@ -223,9 +223,10 @@ func TestCreateAgent(t *testing.T) {
 		err := v1alpha2.SchemeBuilder.AddToScheme(scheme.Scheme)
 		assert.NoError(t, err)
 
-		jenkinsClient.EXPECT().GetNodeSecret(agentName).Return(secret, nil)
-		jenkinsClient.EXPECT().GetAllNodes().Return([]*gojenkins.Node{}, nil)
-		jenkinsClient.EXPECT().CreateNode(agentName, 1, "The jenkins-operator generated agent", "/home/jenkins", agentName)
+		jenkinsClient.EXPECT().GetNode(agentName).AnyTimes()
+		jenkinsClient.EXPECT().GetNodeSecret(agentName).Return(secret, nil).AnyTimes()
+		jenkinsClient.EXPECT().GetAllNodes().Return([]*gojenkins.Node{}, nil).AnyTimes()
+		jenkinsClient.EXPECT().CreateNode(agentName, 1, "The jenkins-operator generated agent", "/home/jenkins", agentName).AnyTimes()
 
 		seedJobsClient := New(jenkinsClient, fakeClient, nil)
 
