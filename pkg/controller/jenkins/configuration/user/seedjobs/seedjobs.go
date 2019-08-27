@@ -6,7 +6,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"reflect"
-	
+
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
@@ -18,6 +18,7 @@ import (
 	apps "k8s.io/api/apps/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -37,7 +38,7 @@ const (
 	JenkinsCredentialTypeLabelName = "jenkins.io/credentials-type"
 
 	// AgentName is the name of seed job agent
-	AgentName = "seed-job-agent"
+	AgentName = "jnlp"
 )
 
 // SeedJobs defines API for configuring and ensuring Jenkins Seed Jobs and Deploy Keys
@@ -72,11 +73,11 @@ func (s *SeedJobs) EnsureSeedJobs(jenkins *v1alpha2.Jenkins) (done bool, err err
 		err := s.k8sClient.Delete(context.TODO(), &appsv1.Deployment{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: jenkins.Namespace,
-				Name:      fmt.Sprintf("%s-deployment", AgentName),
+				Name:      AgentName,
 			},
 		})
 
-		if err != nil {
+		if err != nil && !apierrors.IsNotFound(err) {
 			return false, err
 		}
 	}
@@ -103,7 +104,7 @@ func (s *SeedJobs) EnsureSeedJobs(jenkins *v1alpha2.Jenkins) (done bool, err err
 }
 
 // createJob is responsible for creating jenkins job which configures jenkins seed jobs and deploy keys
-func (s *SeedJobs) createJobs(jenkins *v1alpha2.Jenkins) (bool, error) {
+func (s *SeedJobs) createJobs(jenkins *v1alpha2.Jenkins) (requeue bool, err error) {
 	groovyClient := groovy.New(s.jenkinsClient, s.k8sClient, s.logger, jenkins, "user-groovy", jenkins.Spec.GroovyScripts.Customization)
 	for _, seedJob := range jenkins.Spec.SeedJobs {
 		credentialValue, err := s.credentialValue(jenkins.Namespace, seedJob)
@@ -221,25 +222,12 @@ func (s *SeedJobs) isRecreatePodNeeded(jenkins v1alpha2.Jenkins) bool {
 	return false
 }
 
-// CreateAgent deploys Jenkins agent to Kubernetes cluster
+// createAgent deploys Jenkins agent to Kubernetes cluster
 func (s SeedJobs) createAgent(jenkinsClient jenkinsclient.Jenkins, k8sClient client.Client, jenkinsManifest *v1alpha2.Jenkins, namespace string, agentName string) error {
-	var exists bool
-
-	nodes, err := jenkinsClient.GetAllNodes()
-	if err != nil {
-		return err
-	}
-
-	if len(nodes) != 0 {
-		for _, node := range nodes {
-			if node.GetName() == agentName {
-				exists = true
-			}
-		}
-	}
+	_, err := jenkinsClient.GetNode(agentName)
 
 	// Create node if not exists
-	if !exists {
+	if err != nil {
 		_, err = jenkinsClient.CreateNode(agentName, 1, "The jenkins-operator generated agent", "/home/jenkins", agentName)
 		if err != nil {
 			return err
@@ -256,7 +244,9 @@ func (s SeedJobs) createAgent(jenkinsClient jenkinsclient.Jenkins, k8sClient cli
 	err = k8sClient.Create(context.TODO(), deployment)
 	if err != nil {
 		err := k8sClient.Update(context.TODO(), deployment)
-		if err != nil {
+		if err != nil && apierrors.IsAlreadyExists(err) {
+			return err
+		} else if err != nil {
 			return err
 		}
 	}
@@ -267,7 +257,7 @@ func (s SeedJobs) createAgent(jenkinsClient jenkinsclient.Jenkins, k8sClient cli
 func agentDeployment(jenkinsManifest *v1alpha2.Jenkins, namespace string, agentName string, secret string) *apps.Deployment {
 	return &apps.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "jnlp",
+			Name:      agentName,
 			Namespace: namespace,
 		},
 		Spec: apps.DeploymentSpec{

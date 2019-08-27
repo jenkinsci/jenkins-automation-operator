@@ -3,6 +3,7 @@ package seedjobs
 import (
 	"context"
 	"fmt"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"testing"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
@@ -16,46 +17,86 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
 func TestEnsureSeedJobs(t *testing.T) {
-	// given
-	logger := logf.ZapLogger(false)
-	ctrl := gomock.NewController(t)
-	ctx := context.TODO()
-	defer ctrl.Finish()
+	t.Run("happy", func(t *testing.T) {
+		// given
+		logger := logf.ZapLogger(false)
+		ctrl := gomock.NewController(t)
+		ctx := context.TODO()
+		defer ctrl.Finish()
 
-	jenkinsClient := jenkinsclient.NewMockJenkins(ctrl)
-	fakeClient := fake.NewFakeClient()
-	err := v1alpha2.SchemeBuilder.AddToScheme(scheme.Scheme)
-	assert.NoError(t, err)
+		jenkinsClient := jenkinsclient.NewMockJenkins(ctrl)
+		fakeClient := fake.NewFakeClient()
+		err := v1alpha2.SchemeBuilder.AddToScheme(scheme.Scheme)
+		assert.NoError(t, err)
 
-	jenkins := jenkinsCustomResource()
-	err = fakeClient.Create(ctx, jenkins)
-	assert.NoError(t, err)
+		jenkins := jenkinsCustomResource()
+		err = fakeClient.Create(ctx, jenkins)
+		assert.NoError(t, err)
 
-	agentName := "seed-job-agent"
-	secret := "test-secret"
-	testNode := &gojenkins.Node{
-		Raw: &gojenkins.NodeResponse{
-			DisplayName: agentName,
-		},
-	}
+		agentName := "jnlp"
+		secret := "test-secret"
+		testNode := &gojenkins.Node{
+			Raw: &gojenkins.NodeResponse{
+				DisplayName: agentName,
+			},
+		}
 
-	jenkinsClient.EXPECT().GetNodeSecret(agentName).Return(secret, nil)
-	jenkinsClient.EXPECT().GetAllNodes().Return([]*gojenkins.Node{}, nil)
-	jenkinsClient.EXPECT().CreateNode(agentName, 1, "The jenkins-operator generated agent", "/home/jenkins", agentName).Return(testNode, nil)
-	jenkinsClient.EXPECT().GetNode(agentName).Return(testNode, nil).AnyTimes()
+		jenkinsClient.EXPECT().GetNodeSecret(agentName).Return(secret, nil)
+		jenkinsClient.EXPECT().GetAllNodes().Return([]*gojenkins.Node{}, nil).AnyTimes()
+		jenkinsClient.EXPECT().CreateNode(agentName, 1, "The jenkins-operator generated agent", "/home/jenkins", agentName).Return(testNode, nil).AnyTimes()
+		jenkinsClient.EXPECT().GetNode(agentName).Return(testNode, nil).AnyTimes()
 
-	jenkinsClient.EXPECT().ExecuteScript(seedJobCreatingGroovyScript(jenkins.Spec.SeedJobs[0])).AnyTimes()
+		jenkinsClient.EXPECT().ExecuteScript(seedJobCreatingGroovyScript(jenkins.Spec.SeedJobs[0])).AnyTimes()
 
-	seedJobClient := New(jenkinsClient, fakeClient, logger)
+		seedJobClient := New(jenkinsClient, fakeClient, logger)
 
-	_, err = seedJobClient.EnsureSeedJobs(jenkins)
-	assert.NoError(t, err)
+		_, err = seedJobClient.EnsureSeedJobs(jenkins)
+		assert.NoError(t, err)
+	})
+
+	t.Run("delete pod when no seed jobs", func(t *testing.T) {
+		// given
+		ctrl := gomock.NewController(t)
+		ctx := context.TODO()
+		defer ctrl.Finish()
+
+		namespace := "test-namespace"
+		agentName := "test-agent"
+		secret := "test-secret"
+		jenkinsCustomRes := jenkinsCustomResource()
+		jenkinsCustomRes.Spec.SeedJobs = []v1alpha2.SeedJob{}
+
+		jenkinsClient := jenkinsclient.NewMockJenkins(ctrl)
+		fakeClient := fake.NewFakeClient()
+		err := v1alpha2.SchemeBuilder.AddToScheme(scheme.Scheme)
+		assert.NoError(t, err)
+
+		jenkinsClient.EXPECT().GetNode(agentName).AnyTimes()
+		jenkinsClient.EXPECT().GetNodeSecret(agentName).Return(secret, nil).AnyTimes()
+		jenkinsClient.EXPECT().GetAllNodes().Return([]*gojenkins.Node{}, nil).AnyTimes()
+		jenkinsClient.EXPECT().CreateNode(agentName, 1, "The jenkins-operator generated agent", "/home/jenkins", agentName).AnyTimes()
+
+		seedJobsClient := New(jenkinsClient, fakeClient, nil)
+
+		// when
+		_, err = seedJobsClient.EnsureSeedJobs(jenkinsCustomRes)
+		assert.NoError(t, err)
+
+		// then
+		var deployment appsv1.Deployment
+		err = fakeClient.Get(ctx, types.NamespacedName{Name: agentName, Namespace: namespace}, &deployment)
+
+		if !errors.IsNotFound(err) {
+			t.Fatal("deployment not removed")
+		}
+	})
 }
 
 func jenkinsCustomResource() *v1alpha2.Jenkins {
