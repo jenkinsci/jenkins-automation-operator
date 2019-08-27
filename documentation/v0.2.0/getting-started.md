@@ -254,7 +254,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: k8s-ssh
-data:
+stringData:
   privateKey: |
     -----BEGIN RSA PRIVATE KEY-----
     MIIJKAIBAAKCAgEAxxDpleJjMCN5nusfW/AtBAZhx8UVVlhhhIKXvQ+dFODQIdzO
@@ -290,7 +290,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: k8s-user-pass
-data:
+stringData:
   username: github_user_name
   password: password_or_token
 ```
