@@ -229,6 +229,25 @@ If your GitHub repository is **private** you have to configure SSH or username/p
 
 ### SSH authentication
 
+#### Generate SSH Keys
+
+There are two methods of SSH private key generation:
+
+```bash
+$ openssl genrsa -out <filename> 2048
+```
+
+or
+
+```bash
+$ ssh-keygen -t rsa -b 2048
+$ ssh-keygen -p -f <filename> -m pem
+```
+
+Then copy content from generated file.
+
+#### Configure SSH authentication
+
 Configure seed job like:
 
 ```
