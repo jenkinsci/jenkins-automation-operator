@@ -2,6 +2,7 @@ package resources
 
 import (
 	"fmt"
+	"github.com/jenkinsci/kubernetes-operator/internal/render"
 	"text/template"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
@@ -287,7 +288,7 @@ func buildInitBashScript(jenkins *v1alpha2.Jenkins) (*string, error) {
 		JenkinsScriptsVolumePath: JenkinsScriptsVolumePath,
 	}
 
-	output, err := render(initBashTemplate, data)
+	output, err := render.Render(initBashTemplate, data)
 	if err != nil {
 		return nil, err
 	}

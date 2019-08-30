@@ -87,10 +87,13 @@ func TestEnsureSeedJobs(t *testing.T) {
 			},
 		}
 
+		seedJobCreatingScript, err := seedJobCreatingGroovyScript(jenkins.Spec.SeedJobs[0])
+		assert.NoError(t, err)
+
 		jenkinsClient.EXPECT().GetNode(agentName).Return(nil, nil).AnyTimes()
 		jenkinsClient.EXPECT().CreateNode(agentName, 1, "The jenkins-operator generated agent", "/home/jenkins", agentName).Return(testNode, nil).AnyTimes()
 		jenkinsClient.EXPECT().GetNodeSecret(agentName).Return(agentSecret, nil).AnyTimes()
-		jenkinsClient.EXPECT().ExecuteScript(seedJobCreatingGroovyScript(jenkins.Spec.SeedJobs[0])).AnyTimes()
+		jenkinsClient.EXPECT().ExecuteScript(seedJobCreatingScript).AnyTimes()
 
 		seedJobClient := New(jenkinsClient, fakeClient, logger)
 

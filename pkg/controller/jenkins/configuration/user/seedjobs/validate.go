@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	"github.com/robfig/cron"
 	"strings"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
@@ -87,8 +88,58 @@ func (r *SeedJobs) ValidateSeedJobs(jenkins v1alpha2.Jenkins) (bool, error) {
 				}
 			}
 		}
+
+		if len(seedJob.BuildPeriodically) > 0 {
+			if ok := r.validateSchedule(seedJob, seedJob.BuildPeriodically, "buildPeriodically"); !ok {
+				valid = false
+			}
+		}
+
+		if len(seedJob.PollSCM) > 0 {
+			if ok := r.validateSchedule(seedJob, seedJob.PollSCM, "pollSCM"); !ok {
+				valid = false
+			}
+		}
+
+		if seedJob.GitHubPushTrigger {
+			if !r.validateGitHubPushTrigger(jenkins) {
+				valid = false
+			}
+		}
 	}
+
 	return valid, nil
+}
+
+func (r *SeedJobs) validateSchedule(job v1alpha2.SeedJob, str string, key string) bool {
+	_, err := cron.Parse(str)
+	if err != nil {
+		r.logger.V(log.VWarn).Info(fmt.Sprintf("`%s` schedule '%s' is invalid cron spec in `%s`", key, str, job.ID))
+		return false
+	}
+	return true
+}
+
+func (r *SeedJobs) validateGitHubPushTrigger(jenkins v1alpha2.Jenkins) bool {
+	exists := false
+	for _, plugin := range jenkins.Spec.Master.BasePlugins {
+		if plugin.Name == "github" {
+			exists = true
+		}
+	}
+
+	userExists := false
+	for _, plugin := range jenkins.Spec.Master.Plugins {
+		if plugin.Name == "github" {
+			userExists = true
+		}
+	}
+
+	if !exists && !userExists {
+		r.logger.V(log.VWarn).Info("githubPushTrigger is set. This function requires `github` plugin installed in jenkins.Spec.Master.Plugins")
+		return false
+	}
+	return true
 }
 
 func (r *SeedJobs) validateIfIDIsUnique(seedJobs []v1alpha2.SeedJob) bool {

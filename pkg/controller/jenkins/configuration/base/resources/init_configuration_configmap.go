@@ -2,6 +2,7 @@ package resources
 
 import (
 	"fmt"
+	"github.com/jenkinsci/kubernetes-operator/internal/render"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
 	"text/template"
 
@@ -48,7 +49,7 @@ func buildCreateJenkinsOperatorUserGroovyScript() (*string, error) {
 		OperatorUserCreatedFilePath: jenkinsHomePath + "/operatorUserCreated",
 	}
 
-	output, err := render(createOperatorUserGroovyFmtTemplate, data)
+	output, err := render.Render(createOperatorUserGroovyFmtTemplate, data)
 	if err != nil {
 		return nil, err
 	}
