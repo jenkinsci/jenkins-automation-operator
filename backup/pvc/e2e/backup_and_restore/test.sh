@@ -24,7 +24,7 @@ cid="$(docker run -e JENKINS_HOME=${JENKINS_HOME} -v ${JENKINS_HOME}:${JENKINS_H
 echo "Docker container ID '${cid}'"
 
 # Remove test directory and container afterwards
-trap "docker rm -vf $cid > /dev/null;rm -rf ${BACKUP_DIR}" EXIT
+trap "docker rm -vf $cid > /dev/null;rm -rf ${BACKUP_DIR};rm -rf ${RESTORE_FOLDER}" EXIT
 
 backup_number=1
 docker exec -it ${cid} /home/user/bin/backup.sh ${backup_number}
@@ -37,3 +37,4 @@ docker exec -it ${cid} /bin/bash -c "JENKINS_HOME=${RESTORE_FOLDER};/home/user/b
 echo "Compare directories"
 diff --brief --recursive ${JENKINS_HOME} ${RESTORE_FOLDER}
 echo "Directories are the same"
+echo PASS
