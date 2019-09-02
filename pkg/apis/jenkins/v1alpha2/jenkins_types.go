@@ -533,27 +533,27 @@ type SeedJob struct {
 	// +optional
 	GitHubPushTrigger bool `json:"githubPushTrigger,omitempty"`
 
-	// BuildPeriodically is setting build trigger
+	// BuildPeriodically is setting for scheduled trigger
 	// +optional
 	BuildPeriodically string `json:"buildPeriodically,omitempty"`
 
-	// PollSCM is setting build trigger
+	// PollSCM is setting for polling changes in SCM
 	// +optional
 	PollSCM string `json:"pollSCM,omitempty"`
 
-	// IgnoreMissingFiles is setting for Job DSL API plugin
+	// IgnoreMissingFiles is setting for Job DSL API plugin to ignore files that miss
 	// +optional
 	IgnoreMissingFiles bool `json:"ignoreMissingFiles,omitempty"`
 
-	// AdditionalClasspath is setting for Job DSL API plugin
+	// AdditionalClasspath is setting for Job DSL API plugin to set Additional Classpath
 	// +optional
 	AdditionalClasspath string `json:"additionalClasspath,omitempty"`
 
-	// FailOnMissingPlugin is setting for Job DSL API plugin
+	// FailOnMissingPlugin is setting for Job DSL API plugin that fails job if required plugin is missing
 	// +optional
 	FailOnMissingPlugin bool `json:"failOnMissingPlugin,omitempty"`
 
-	// UnstableOnDeprecation is setting for Job DSL API plugin
+	// UnstableOnDeprecation is setting for Job DSL API plugin that sets build status as unstable if build using deprecated features
 	// +optional
 	UnstableOnDeprecation bool `json:"unstableOnDeprecation,omitempty"`
 }
