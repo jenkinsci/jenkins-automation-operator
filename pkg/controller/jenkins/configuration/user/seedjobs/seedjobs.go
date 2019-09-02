@@ -6,7 +6,9 @@ import (
 	"encoding/base64"
 	"fmt"
 	"reflect"
+	"text/template"
 
+	"github.com/jenkinsci/kubernetes-operator/internal/render"
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
@@ -39,7 +41,93 @@ const (
 
 	// AgentName is the name of seed job agent
 	AgentName = "jnlp"
+
+	creatingGroovyScriptName = "seed-job-groovy-script.groovy"
 )
+
+var seedJobGroovyScriptTemplate = template.Must(template.New(creatingGroovyScriptName).Parse(`
+import hudson.model.FreeStyleProject;
+import hudson.plugins.git.GitSCM;
+import hudson.plugins.git.BranchSpec;
+import hudson.triggers.SCMTrigger;
+import hudson.triggers.TimerTrigger;
+import hudson.util.Secret;
+import javaposse.jobdsl.plugin.*;
+import jenkins.model.Jenkins;
+import jenkins.model.JenkinsLocationConfiguration;
+import com.cloudbees.plugins.credentials.CredentialsScope;
+import com.cloudbees.plugins.credentials.domains.Domain;
+import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
+import jenkins.model.JenkinsLocationConfiguration;
+import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+import org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition;
+{{ if .GitHubPushTrigger }}
+import com.cloudbees.jenkins.GitHubPushTrigger;
+{{ end }}
+import hudson.model.FreeStyleProject;
+import hudson.model.labels.LabelAtom;
+import hudson.plugins.git.BranchSpec;
+import hudson.plugins.git.GitSCM;
+import hudson.plugins.git.SubmoduleConfig;
+import hudson.plugins.git.extensions.impl.CloneOption;
+import javaposse.jobdsl.plugin.ExecuteDslScripts;
+import javaposse.jobdsl.plugin.LookupStrategy;
+import javaposse.jobdsl.plugin.RemovedJobAction;
+import javaposse.jobdsl.plugin.RemovedViewAction;
+
+import static com.google.common.collect.Lists.newArrayList;
+
+Jenkins jenkins = Jenkins.instance
+
+def jobDslSeedName = "{{ .ID }} - {{ .SeedJobSuffix }}";
+def jobRef = jenkins.getItem(jobDslSeedName)
+
+def repoList = GitSCM.createRepoList("{{ .RepositoryURL }}", "{{ .CredentialID }}")
+def gitExtensions = [new CloneOption(true, true, ";", 10)]
+def scm = new GitSCM(
+        repoList,
+        newArrayList(new BranchSpec("{{ .RepositoryBranch }}")),
+        false,
+        Collections.<SubmoduleConfig>emptyList(),
+        null,
+        null,
+        gitExtensions
+)
+
+def executeDslScripts = new ExecuteDslScripts()
+executeDslScripts.setTargets("{{ .Targets }}")
+executeDslScripts.setSandbox(false)
+executeDslScripts.setRemovedJobAction(RemovedJobAction.DELETE)
+executeDslScripts.setRemovedViewAction(RemovedViewAction.DELETE)
+executeDslScripts.setLookupStrategy(LookupStrategy.SEED_JOB)
+executeDslScripts.setAdditionalClasspath("{{ .AdditionalClasspath }}")
+executeDslScripts.setFailOnMissingPlugin({{ .FailOnMissingPlugin }})
+executeDslScripts.setUnstableOnDeprecation({{ .UnstableOnDeprecation }})
+executeDslScripts.setIgnoreMissingFiles({{ .IgnoreMissingFiles }})
+
+if (jobRef == null) {
+        jobRef = jenkins.createProject(FreeStyleProject, jobDslSeedName)
+}
+
+jobRef.getBuildersList().clear()
+jobRef.getBuildersList().add(executeDslScripts)
+jobRef.setDisplayName("Seed Job from {{ .ID }}")
+jobRef.setScm(scm)
+
+{{ if .PollSCM }}
+jobRef.addTrigger(new SCMTrigger("{{ .PollSCM }}"))
+{{ end }}
+
+{{ if .GitHubPushTrigger }}
+jobRef.addTrigger(new GitHubPushTrigger())
+{{ end }}
+
+{{ if .BuildPeriodically }}
+jobRef.addTrigger(new TimerTrigger("{{ .BuildPeriodically }}"))
+{{ end}}
+jobRef.setAssignedLabel(new LabelAtom("{{ .AgentName }}"))
+jenkins.getQueue().schedule(jobRef)
+`))
 
 // SeedJobs defines API for configuring and ensuring Jenkins Seed Jobs and Deploy Keys
 type SeedJobs struct {
@@ -112,7 +200,10 @@ func (s *SeedJobs) createJobs(jenkins *v1alpha2.Jenkins) (requeue bool, err erro
 			return true, err
 		}
 
-		groovyScript := seedJobCreatingGroovyScript(seedJob)
+		groovyScript, err := seedJobCreatingGroovyScript(seedJob)
+		if err != nil {
+			return true, err
+		}
 
 		hash := sha256.New()
 		hash.Write([]byte(groovyScript))
@@ -316,72 +407,43 @@ func agentDeployment(jenkinsManifest *v1alpha2.Jenkins, namespace string, agentN
 	}
 }
 
-func seedJobCreatingGroovyScript(s v1alpha2.SeedJob) string {
-	return `
-import hudson.model.FreeStyleProject;
-import hudson.plugins.git.GitSCM;
-import hudson.plugins.git.BranchSpec;
-import hudson.triggers.SCMTrigger;
-import hudson.util.Secret;
-import javaposse.jobdsl.plugin.*;
-import jenkins.model.Jenkins;
-import jenkins.model.JenkinsLocationConfiguration;
-import com.cloudbees.plugins.credentials.CredentialsScope;
-import com.cloudbees.plugins.credentials.domains.Domain;
-import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
-import jenkins.model.JenkinsLocationConfiguration;
-import org.jenkinsci.plugins.workflow.job.WorkflowJob;
-import org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition;
+func seedJobCreatingGroovyScript(seedJob v1alpha2.SeedJob) (string, error) {
+	data := struct {
+		ID                    string
+		CredentialID          string
+		Targets               string
+		RepositoryBranch      string
+		RepositoryURL         string
+		GitHubPushTrigger     bool
+		BuildPeriodically     string
+		PollSCM               string
+		IgnoreMissingFiles    bool
+		AdditionalClasspath   string
+		FailOnMissingPlugin   bool
+		UnstableOnDeprecation bool
+		SeedJobSuffix         string
+		AgentName             string
+	}{
+		ID:                    seedJob.ID,
+		CredentialID:          seedJob.CredentialID,
+		Targets:               seedJob.Targets,
+		RepositoryBranch:      seedJob.RepositoryBranch,
+		RepositoryURL:         seedJob.RepositoryURL,
+		GitHubPushTrigger:     seedJob.GitHubPushTrigger,
+		BuildPeriodically:     seedJob.BuildPeriodically,
+		PollSCM:               seedJob.PollSCM,
+		IgnoreMissingFiles:    seedJob.IgnoreMissingFiles,
+		AdditionalClasspath:   seedJob.AdditionalClasspath,
+		FailOnMissingPlugin:   seedJob.FailOnMissingPlugin,
+		UnstableOnDeprecation: seedJob.UnstableOnDeprecation,
+		SeedJobSuffix:         constants.SeedJobSuffix,
+		AgentName:             AgentName,
+	}
 
-import hudson.model.FreeStyleProject
-import hudson.model.labels.LabelAtom
-import hudson.plugins.git.BranchSpec
-import hudson.plugins.git.GitSCM
-import hudson.plugins.git.SubmoduleConfig
-import hudson.plugins.git.extensions.impl.CloneOption
-import javaposse.jobdsl.plugin.ExecuteDslScripts
-import javaposse.jobdsl.plugin.LookupStrategy
-import javaposse.jobdsl.plugin.RemovedJobAction
-import javaposse.jobdsl.plugin.RemovedViewAction
+	output, err := render.Render(seedJobGroovyScriptTemplate, data)
+	if err != nil {
+		return "", err
+	}
 
-import static com.google.common.collect.Lists.newArrayList
-
-Jenkins jenkins = Jenkins.instance
-
-def jobDslSeedName = "` + s.ID + `-` + constants.SeedJobSuffix + `";
-def jobRef = jenkins.getItem(jobDslSeedName)
-
-def repoList = GitSCM.createRepoList("` + s.RepositoryURL + `", "` + s.CredentialID + `")
-def gitExtensions = [new CloneOption(true, true, ";", 10)]
-def scm = new GitSCM(
-        repoList,
-        newArrayList(new BranchSpec("` + s.RepositoryBranch + `")),
-        false,
-        Collections.<SubmoduleConfig>emptyList(),
-        null,
-        null,
-        gitExtensions
-)
-
-def executeDslScripts = new ExecuteDslScripts()
-executeDslScripts.setTargets("` + s.Targets + `")
-executeDslScripts.setSandbox(false)
-executeDslScripts.setRemovedJobAction(RemovedJobAction.DELETE)
-executeDslScripts.setRemovedViewAction(RemovedViewAction.DELETE)
-executeDslScripts.setLookupStrategy(LookupStrategy.SEED_JOB)
-
-if (jobRef == null) {
-        jobRef = jenkins.createProject(FreeStyleProject, jobDslSeedName)
-}
-
-jobRef.getBuildersList().clear()
-jobRef.getBuildersList().add(executeDslScripts)
-jobRef.setDisplayName("` + fmt.Sprintf("Seed Job from %s", s.ID) + `")
-jobRef.setScm(scm)
-
-jobRef.setAssignedLabel(new LabelAtom("` + AgentName + `"))
-
-jenkins.getQueue().schedule(jobRef)
-
-`
+	return output, nil
 }

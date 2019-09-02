@@ -528,6 +528,34 @@ type SeedJob struct {
 	// JenkinsCredentialType is the https://jenkinsci.github.io/kubernetes-credentials-provider-plugin/ credential type
 	// +optional
 	JenkinsCredentialType JenkinsCredentialType `json:"credentialType,omitempty"`
+
+	// GitHubPushTrigger is used for GitHub web hooks
+	// +optional
+	GitHubPushTrigger bool `json:"githubPushTrigger,omitempty"`
+
+	// BuildPeriodically is setting for scheduled trigger
+	// +optional
+	BuildPeriodically string `json:"buildPeriodically,omitempty"`
+
+	// PollSCM is setting for polling changes in SCM
+	// +optional
+	PollSCM string `json:"pollSCM,omitempty"`
+
+	// IgnoreMissingFiles is setting for Job DSL API plugin to ignore files that miss
+	// +optional
+	IgnoreMissingFiles bool `json:"ignoreMissingFiles,omitempty"`
+
+	// AdditionalClasspath is setting for Job DSL API plugin to set Additional Classpath
+	// +optional
+	AdditionalClasspath string `json:"additionalClasspath,omitempty"`
+
+	// FailOnMissingPlugin is setting for Job DSL API plugin that fails job if required plugin is missing
+	// +optional
+	FailOnMissingPlugin bool `json:"failOnMissingPlugin,omitempty"`
+
+	// UnstableOnDeprecation is setting for Job DSL API plugin that sets build status as unstable if build using deprecated features
+	// +optional
+	UnstableOnDeprecation bool `json:"unstableOnDeprecation,omitempty"`
 }
 
 // Handler defines a specific action that should be taken

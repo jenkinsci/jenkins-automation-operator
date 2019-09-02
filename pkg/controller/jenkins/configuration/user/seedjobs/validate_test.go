@@ -442,6 +442,104 @@ func TestValidateSeedJobs(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, false, result)
 	})
+	t.Run("Invalid with wrong cron spec", func(t *testing.T) {
+		jenkins := v1alpha2.Jenkins{
+			Spec: v1alpha2.JenkinsSpec{
+				SeedJobs: []v1alpha2.SeedJob{
+					{
+						ID:                    "example",
+						CredentialID:          "jenkins-operator-e2e",
+						JenkinsCredentialType: v1alpha2.NoJenkinsCredentialCredentialType,
+						Targets:               "cicd/jobs/*.jenkins",
+						RepositoryBranch:      "master",
+						RepositoryURL:         "https://github.com/jenkinsci/kubernetes-operator.git",
+						BuildPeriodically:     "invalid-cron-spec",
+					},
+				},
+			},
+		}
+
+		seedJobs := New(nil, fake.NewFakeClient(), logf.ZapLogger(false))
+		result, err := seedJobs.ValidateSeedJobs(jenkins)
+
+		assert.NoError(t, err)
+		assert.False(t, result)
+	})
+	t.Run("Valid with good cron spec", func(t *testing.T) {
+		jenkins := v1alpha2.Jenkins{
+			Spec: v1alpha2.JenkinsSpec{
+				SeedJobs: []v1alpha2.SeedJob{
+					{
+						ID:                    "example",
+						CredentialID:          "jenkins-operator-e2e",
+						JenkinsCredentialType: v1alpha2.NoJenkinsCredentialCredentialType,
+						Targets:               "cicd/jobs/*.jenkins",
+						RepositoryBranch:      "master",
+						RepositoryURL:         "https://github.com/jenkinsci/kubernetes-operator.git",
+						BuildPeriodically:     "1 2 3 4 5",
+						PollSCM:               "1 2 3 4 5",
+					},
+				},
+			},
+		}
+
+		seedJobs := New(nil, fake.NewFakeClient(), logf.ZapLogger(false))
+		result, err := seedJobs.ValidateSeedJobs(jenkins)
+
+		assert.NoError(t, err)
+		assert.True(t, result)
+	})
+	t.Run("Invalid with set githubPushTrigger and not installed github plugin", func(t *testing.T) {
+		jenkins := v1alpha2.Jenkins{
+			Spec: v1alpha2.JenkinsSpec{
+				SeedJobs: []v1alpha2.SeedJob{
+					{
+						ID:                    "example",
+						CredentialID:          "jenkins-operator-e2e",
+						JenkinsCredentialType: v1alpha2.NoJenkinsCredentialCredentialType,
+						Targets:               "cicd/jobs/*.jenkins",
+						RepositoryBranch:      "master",
+						RepositoryURL:         "https://github.com/jenkinsci/kubernetes-operator.git",
+						GitHubPushTrigger:     true,
+					},
+				},
+			},
+		}
+
+		seedJobs := New(nil, fake.NewFakeClient(), logf.ZapLogger(false))
+		result, err := seedJobs.ValidateSeedJobs(jenkins)
+
+		assert.NoError(t, err)
+		assert.False(t, result)
+	})
+	t.Run("Invalid with set githubPushTrigger and not installed github plugin", func(t *testing.T) {
+		jenkins := v1alpha2.Jenkins{
+			Spec: v1alpha2.JenkinsSpec{
+				SeedJobs: []v1alpha2.SeedJob{
+					{
+						ID:                    "example",
+						CredentialID:          "jenkins-operator-e2e",
+						JenkinsCredentialType: v1alpha2.NoJenkinsCredentialCredentialType,
+						Targets:               "cicd/jobs/*.jenkins",
+						RepositoryBranch:      "master",
+						RepositoryURL:         "https://github.com/jenkinsci/kubernetes-operator.git",
+						GitHubPushTrigger:     true,
+					},
+				},
+				Master: v1alpha2.JenkinsMaster{
+					Plugins: []v1alpha2.Plugin{
+						{Name: "github", Version: "latest"},
+					},
+				},
+			},
+		}
+
+		seedJobs := New(nil, fake.NewFakeClient(), logf.ZapLogger(false))
+		result, err := seedJobs.ValidateSeedJobs(jenkins)
+
+		assert.NoError(t, err)
+		assert.True(t, result)
+	})
 }
 
 func TestValidateIfIDIsUnique(t *testing.T) {

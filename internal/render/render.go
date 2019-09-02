@@ -1,4 +1,4 @@
-package resources
+package render
 
 import (
 	"bytes"
@@ -7,8 +7,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-// render executes a parsed template (go-template) with configuration from data
-func render(template *template.Template, data interface{}) (string, error) {
+// Render executes a parsed template (go-template) with configuration from data
+func Render(template *template.Template, data interface{}) (string, error) {
 	var buffer bytes.Buffer
 	if err := template.Execute(&buffer, data); err != nil {
 		return "", errors.WithStack(err)
