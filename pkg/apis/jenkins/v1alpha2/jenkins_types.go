@@ -530,24 +530,31 @@ type SeedJob struct {
 	JenkinsCredentialType JenkinsCredentialType `json:"credentialType,omitempty"`
 
 	// GitHubPushTrigger is used for GitHub web hooks
+	// +optional
 	GitHubPushTrigger bool `json:"githubPushTrigger,omitempty"`
 
 	// BuildPeriodically is setting build trigger
+	// +optional
 	BuildPeriodically string `json:"buildPeriodically,omitempty"`
 
 	// PollSCM is setting build trigger
+	// +optional
 	PollSCM string `json:"pollSCM,omitempty"`
 
 	// IgnoreMissingFiles is setting for Job DSL API plugin
+	// +optional
 	IgnoreMissingFiles bool `json:"ignoreMissingFiles,omitempty"`
 
 	// AdditionalClasspath is setting for Job DSL API plugin
+	// +optional
 	AdditionalClasspath string `json:"additionalClasspath,omitempty"`
 
 	// FailOnMissingPlugin is setting for Job DSL API plugin
+	// +optional
 	FailOnMissingPlugin bool `json:"failOnMissingPlugin,omitempty"`
 
 	// UnstableOnDeprecation is setting for Job DSL API plugin
+	// +optional
 	UnstableOnDeprecation bool `json:"unstableOnDeprecation,omitempty"`
 }
 

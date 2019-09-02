@@ -2,11 +2,11 @@ package resources
 
 import (
 	"fmt"
-	"github.com/jenkinsci/kubernetes-operator/internal/render"
-	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
 	"text/template"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
+	"github.com/jenkinsci/kubernetes-operator/internal/render"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

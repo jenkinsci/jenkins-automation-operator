@@ -5,7 +5,6 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"github.com/robfig/cron"
 	"strings"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/go-logr/logr"
 	stackerr "github.com/pkg/errors"
+	"github.com/robfig/cron"
 	"k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -90,13 +90,13 @@ func (r *SeedJobs) ValidateSeedJobs(jenkins v1alpha2.Jenkins) (bool, error) {
 		}
 
 		if len(seedJob.BuildPeriodically) > 0 {
-			if ok := r.validateSchedule(seedJob, seedJob.BuildPeriodically, "buildPeriodically"); !ok {
+			if !r.validateSchedule(seedJob, seedJob.BuildPeriodically, "buildPeriodically") {
 				valid = false
 			}
 		}
 
 		if len(seedJob.PollSCM) > 0 {
-			if ok := r.validateSchedule(seedJob, seedJob.PollSCM, "pollSCM"); !ok {
+			if !r.validateSchedule(seedJob, seedJob.PollSCM, "pollSCM") {
 				valid = false
 			}
 		}
@@ -136,7 +136,7 @@ func (r *SeedJobs) validateGitHubPushTrigger(jenkins v1alpha2.Jenkins) bool {
 	}
 
 	if !exists && !userExists {
-		r.logger.V(log.VWarn).Info("githubPushTrigger is set. This function requires `github` plugin installed in jenkins.Spec.Master.Plugins")
+		r.logger.V(log.VWarn).Info("githubPushTrigger is set. This function requires `github` plugin installed in .Spec.Master.Plugins because seed jobs Push Trigger function needs it")
 		return false
 	}
 	return true

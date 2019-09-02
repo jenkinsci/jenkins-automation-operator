@@ -45,7 +45,7 @@ const (
 	creatingGroovyScriptName = "seed-job-groovy-script.groovy"
 )
 
-var seedJobGroovyScript = template.Must(template.New(creatingGroovyScriptName).Parse(`
+var seedJobGroovyScriptTemplate = template.Must(template.New(creatingGroovyScriptName).Parse(`
 import hudson.model.FreeStyleProject;
 import hudson.plugins.git.GitSCM;
 import hudson.plugins.git.BranchSpec;
@@ -79,14 +79,14 @@ import static com.google.common.collect.Lists.newArrayList;
 
 Jenkins jenkins = Jenkins.instance
 
-def jobDslSeedName = " {{ .ID }} - {{ .SeedJobSuffix }}";
+def jobDslSeedName = "{{ .ID }} - {{ .SeedJobSuffix }}";
 def jobRef = jenkins.getItem(jobDslSeedName)
 
-def repoList = GitSCM.createRepoList(" {{ .RepositoryURL }} ", " {{ .CredentialID }} ")
+def repoList = GitSCM.createRepoList("{{ .RepositoryURL }}", "{{ .CredentialID }}")
 def gitExtensions = [new CloneOption(true, true, ";", 10)]
 def scm = new GitSCM(
         repoList,
-        newArrayList(new BranchSpec(" {{ .RepositoryBranch }} ")),
+        newArrayList(new BranchSpec("{{ .RepositoryBranch }}")),
         false,
         Collections.<SubmoduleConfig>emptyList(),
         null,
@@ -95,15 +95,15 @@ def scm = new GitSCM(
 )
 
 def executeDslScripts = new ExecuteDslScripts()
-executeDslScripts.setTargets(" {{ .Targets }} ")
+executeDslScripts.setTargets("{{ .Targets }}")
 executeDslScripts.setSandbox(false)
 executeDslScripts.setRemovedJobAction(RemovedJobAction.DELETE)
 executeDslScripts.setRemovedViewAction(RemovedViewAction.DELETE)
 executeDslScripts.setLookupStrategy(LookupStrategy.SEED_JOB)
-executeDslScripts.setAdditionalClasspath(" {{ .AdditionalClasspath }} ")
-executeDslScripts.setFailOnMissingPlugin( {{ .FailOnMissingPlugin }} )
-executeDslScripts.setUnstableOnDeprecation( {{ .UnstableOnDeprecation }} )
-executeDslScripts.setIgnoreMissingFiles( {{ .IgnoreMissingFiles }} )
+executeDslScripts.setAdditionalClasspath("{{ .AdditionalClasspath }}")
+executeDslScripts.setFailOnMissingPlugin({{ .FailOnMissingPlugin }})
+executeDslScripts.setUnstableOnDeprecation({{ .UnstableOnDeprecation }})
+executeDslScripts.setIgnoreMissingFiles({{ .IgnoreMissingFiles }})
 
 if (jobRef == null) {
         jobRef = jenkins.createProject(FreeStyleProject, jobDslSeedName)
@@ -114,16 +114,16 @@ jobRef.getBuildersList().add(executeDslScripts)
 jobRef.setDisplayName("Seed Job from {{ .ID }}")
 jobRef.setScm(scm)
 
-{{ $length := len .PollSCM }} {{ if gt $length 0 }}
-jobRef.addTrigger(new SCMTrigger(" {{ .PollSCM }} "))
+{{ if .PollSCM }}
+jobRef.addTrigger(new SCMTrigger("{{ .PollSCM }}"))
 {{ end }}
 
 {{ if .GitHubPushTrigger }}
 jobRef.addTrigger(new GitHubPushTrigger())
 {{ end }}
 
-{{ $length := len .BuildPeriodically }} {{ if gt $length 0 }}
-jobRef.addTrigger(new TimerTrigger(" {{ .BuildPeriodically }} "))
+{{ if .BuildPeriodically }}
+jobRef.addTrigger(new TimerTrigger("{{ .BuildPeriodically }}"))
 {{ end}}
 jobRef.setAssignedLabel(new LabelAtom("{{ .AgentName }}"))
 jenkins.getQueue().schedule(jobRef)
@@ -440,7 +440,7 @@ func seedJobCreatingGroovyScript(seedJob v1alpha2.SeedJob) (string, error) {
 		AgentName:             AgentName,
 	}
 
-	output, err := render.Render(seedJobGroovyScript, data)
+	output, err := render.Render(seedJobGroovyScriptTemplate, data)
 	if err != nil {
 		return "", err
 	}
