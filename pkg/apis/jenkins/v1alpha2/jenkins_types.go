@@ -17,9 +17,9 @@ type JenkinsSpec struct {
 	// +optional
 	SeedJobs []SeedJob `json:"seedJobs,omitempty"`
 
-	// Notifications defines list of a services which are used to inform about Jenkins status
-	// Can be used to integrate chat services like Slack, Microsoft MicrosoftTeams or Mailgun
-	Notifications []Notification `json:"notifications,omitempty"`
+	/*	// Notifications defines list of a services which are used to inform about Jenkins status
+		// Can be used to integrate chat services like Slack, Microsoft MicrosoftTeams or Mailgun
+		Notifications []Notification `json:"notifications,omitempty"`*/
 
 	// Service is Kubernetes service of Jenkins master HTTP pod
 	// Defaults to :

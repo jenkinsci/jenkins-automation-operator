@@ -342,13 +342,6 @@ func (in *JenkinsSpec) DeepCopyInto(out *JenkinsSpec) {
 		*out = make([]SeedJob, len(*in))
 		copy(*out, *in)
 	}
-	if in.Notifications != nil {
-		in, out := &in.Notifications, &out.Notifications
-		*out = make([]Notification, len(*in))
-		for i := range *in {
-			(*in)[i].DeepCopyInto(&(*out)[i])
-		}
-	}
 	in.Service.DeepCopyInto(&out.Service)
 	in.SlaveService.DeepCopyInto(&out.SlaveService)
 	in.Backup.DeepCopyInto(&out.Backup)

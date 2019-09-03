@@ -1,14 +1,9 @@
 package notifications
 
 import (
-	"fmt"
-	"github.com/pkg/errors"
 	"net/http"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
-	"github.com/jenkinsci/kubernetes-operator/pkg/log"
-
-	k8sclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -47,7 +42,7 @@ type Event struct {
 	MessageVerbose    string
 }
 
-type service interface {
+/*type service interface {
 	Send(event Event, notificationConfig v1alpha2.Notification) error
 }
 
@@ -92,4 +87,4 @@ func notify(svc service, event Event, manifest v1alpha2.Notification) error {
 	}
 
 	return svc.Send(event, manifest)
-}
+}*/
