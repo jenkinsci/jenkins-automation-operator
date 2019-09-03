@@ -381,10 +381,6 @@ type JenkinsStatus struct {
 	// +optional
 	UserConfigurationCompletedTime *metav1.Time `json:"userConfigurationCompletedTime,omitempty"`
 
-	// Builds contains Jenkins job builds statues
-	// +optional
-	Builds []Build `json:"builds,omitempty"`
-
 	// RestoredBackup is the restored backup number after Jenkins master pod restart
 	// +optional
 	RestoredBackup uint64 `json:"restoredBackup,omitempty"`
@@ -412,50 +408,6 @@ type JenkinsStatus struct {
 	// AppliedGroovyScripts is a list with all applied groovy scripts in Jenkins by the operator
 	// +optional
 	AppliedGroovyScripts []AppliedGroovyScript `json:"appliedGroovyScripts,omitempty"`
-}
-
-// BuildStatus defines type of Jenkins build job status
-type BuildStatus string
-
-const (
-	// BuildSuccessStatus - the build had no errors
-	BuildSuccessStatus BuildStatus = "success"
-	// BuildUnstableStatus - the build had some errors but they were not fatal. For example, some tests failed
-	BuildUnstableStatus BuildStatus = "unstable"
-	// BuildNotBuildStatus - this status code is used in a multi-stage build (like maven2) where a problem in earlier stage prevented later stages from building
-	BuildNotBuildStatus BuildStatus = "not_build"
-	// BuildFailureStatus - the build had a fatal error
-	BuildFailureStatus BuildStatus = "failure"
-	// BuildAbortedStatus - the build was manually aborted
-	BuildAbortedStatus BuildStatus = "aborted"
-	// BuildRunningStatus - this is custom build status for running build, not present in jenkins build result
-	BuildRunningStatus BuildStatus = "running"
-	// BuildExpiredStatus - this is custom build status for expired build, not present in jenkins build result
-	BuildExpiredStatus BuildStatus = "expired"
-)
-
-// Build defines Jenkins job build status with corresponding metadata
-type Build struct {
-	// JobName is the Jenkins job name
-	JobName string `json:"jobName,omitempty"`
-
-	// Hash is the unique data identifier used in build
-	Hash string `json:"hash,omitempty"`
-
-	// Number is the Jenkins build number
-	Number int64 `json:"number,omitempty"`
-
-	// Status is the status of Jenkins build
-	Status BuildStatus `json:"status,omitempty"`
-
-	// Retires is the amount of Jenkins job build retries
-	Retires int `json:"retries,omitempty"`
-
-	// CreateTime is the time when the first build has been created
-	CreateTime *metav1.Time `json:"createTime,omitempty"`
-
-	// LastUpdateTime is the last update status time
-	LastUpdateTime *metav1.Time `json:"lastUpdateTime,omitempty"`
 }
 
 // +genclient
