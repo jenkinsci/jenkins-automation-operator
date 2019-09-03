@@ -19,15 +19,15 @@ import (
 )
 
 // ValidateSeedJobs verify seed jobs configuration
-func (r *SeedJobs) ValidateSeedJobs(jenkins v1alpha2.Jenkins) (bool, error) {
+func (s *SeedJobs) ValidateSeedJobs(jenkins v1alpha2.Jenkins) (bool, error) {
 	valid := true
 
-	if !r.validateIfIDIsUnique(jenkins.Spec.SeedJobs) {
+	if !s.validateIfIDIsUnique(jenkins.Spec.SeedJobs) {
 		valid = false
 	}
 
 	for _, seedJob := range jenkins.Spec.SeedJobs {
-		logger := r.logger.WithValues("seedJob", fmt.Sprintf("%+v", seedJob)).V(log.VWarn)
+		logger := s.logger.WithValues("seedJob", seedJob.ID).V(log.VWarn)
 
 		if len(seedJob.ID) == 0 {
 			logger.Info("id can't be empty")
@@ -69,7 +69,7 @@ func (r *SeedJobs) ValidateSeedJobs(jenkins v1alpha2.Jenkins) (bool, error) {
 		if seedJob.JenkinsCredentialType == v1alpha2.BasicSSHCredentialType || seedJob.JenkinsCredentialType == v1alpha2.UsernamePasswordCredentialType {
 			secret := &v1.Secret{}
 			namespaceName := types.NamespacedName{Namespace: jenkins.Namespace, Name: seedJob.CredentialID}
-			err := r.k8sClient.Get(context.TODO(), namespaceName, secret)
+			err := s.k8sClient.Get(context.TODO(), namespaceName, secret)
 			if err != nil && apierrors.IsNotFound(err) {
 				logger.Info(fmt.Sprintf("required secret '%s' with Jenkins credential not found", seedJob.CredentialID))
 				return false, nil
@@ -90,19 +90,19 @@ func (r *SeedJobs) ValidateSeedJobs(jenkins v1alpha2.Jenkins) (bool, error) {
 		}
 
 		if len(seedJob.BuildPeriodically) > 0 {
-			if !r.validateSchedule(seedJob, seedJob.BuildPeriodically, "buildPeriodically") {
+			if !s.validateSchedule(seedJob, seedJob.BuildPeriodically, "buildPeriodically") {
 				valid = false
 			}
 		}
 
 		if len(seedJob.PollSCM) > 0 {
-			if !r.validateSchedule(seedJob, seedJob.PollSCM, "pollSCM") {
+			if !s.validateSchedule(seedJob, seedJob.PollSCM, "pollSCM") {
 				valid = false
 			}
 		}
 
 		if seedJob.GitHubPushTrigger {
-			if !r.validateGitHubPushTrigger(jenkins) {
+			if !s.validateGitHubPushTrigger(jenkins) {
 				valid = false
 			}
 		}
@@ -111,16 +111,16 @@ func (r *SeedJobs) ValidateSeedJobs(jenkins v1alpha2.Jenkins) (bool, error) {
 	return valid, nil
 }
 
-func (r *SeedJobs) validateSchedule(job v1alpha2.SeedJob, str string, key string) bool {
+func (s *SeedJobs) validateSchedule(job v1alpha2.SeedJob, str string, key string) bool {
 	_, err := cron.Parse(str)
 	if err != nil {
-		r.logger.V(log.VWarn).Info(fmt.Sprintf("`%s` schedule '%s' is invalid cron spec in `%s`", key, str, job.ID))
+		s.logger.V(log.VWarn).Info(fmt.Sprintf("`%s` schedule '%s' is invalid cron spec in `%s`", key, str, job.ID))
 		return false
 	}
 	return true
 }
 
-func (r *SeedJobs) validateGitHubPushTrigger(jenkins v1alpha2.Jenkins) bool {
+func (s *SeedJobs) validateGitHubPushTrigger(jenkins v1alpha2.Jenkins) bool {
 	exists := false
 	for _, plugin := range jenkins.Spec.Master.BasePlugins {
 		if plugin.Name == "github" {
@@ -136,17 +136,17 @@ func (r *SeedJobs) validateGitHubPushTrigger(jenkins v1alpha2.Jenkins) bool {
 	}
 
 	if !exists && !userExists {
-		r.logger.V(log.VWarn).Info("githubPushTrigger is set. This function requires `github` plugin installed in .Spec.Master.Plugins because seed jobs Push Trigger function needs it")
+		s.logger.V(log.VWarn).Info("githubPushTrigger is set. This function requires `github` plugin installed in .Spec.Master.Plugins because seed jobs Push Trigger function needs it")
 		return false
 	}
 	return true
 }
 
-func (r *SeedJobs) validateIfIDIsUnique(seedJobs []v1alpha2.SeedJob) bool {
+func (s *SeedJobs) validateIfIDIsUnique(seedJobs []v1alpha2.SeedJob) bool {
 	ids := map[string]bool{}
 	for _, seedJob := range seedJobs {
 		if _, found := ids[seedJob.ID]; found {
-			r.logger.V(log.VWarn).Info(fmt.Sprintf("'%s' seed job ID is not unique", seedJob.ID))
+			s.logger.V(log.VWarn).Info(fmt.Sprintf("'%s' seed job ID is not unique", seedJob.ID))
 			return false
 		}
 		ids[seedJob.ID] = true

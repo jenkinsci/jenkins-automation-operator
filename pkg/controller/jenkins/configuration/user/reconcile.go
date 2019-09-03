@@ -2,7 +2,6 @@ package user
 
 import (
 	"strings"
-	"time"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
@@ -11,10 +10,8 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/user/casc"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/user/seedjobs"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/groovy"
-	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/jobs"
 
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	k8s "sigs.k8s.io/controller-runtime/pkg/client"
@@ -82,20 +79,10 @@ func (r *ReconcileUserConfiguration) ensureSeedJobs() (reconcile.Result, error) 
 	seedJobs := seedjobs.New(r.jenkinsClient, r.k8sClient, r.logger)
 	done, err := seedJobs.EnsureSeedJobs(r.jenkins)
 	if err != nil {
-		// build failed and can be recovered - retry build and requeue reconciliation loop with timeout
-		if err == jobs.ErrorBuildFailed {
-			return reconcile.Result{Requeue: true, RequeueAfter: time.Second * 10}, nil
-		}
-		// build failed and cannot be recovered
-		if err == jobs.ErrorUnrecoverableBuildFailed {
-			return reconcile.Result{}, nil
-		}
-		// unexpected error - requeue reconciliation loop
-		return reconcile.Result{}, errors.WithStack(err)
+		return reconcile.Result{}, err
 	}
-	// build not finished yet - requeue reconciliation loop with timeout
 	if !done {
-		return reconcile.Result{Requeue: true, RequeueAfter: time.Second * 5}, nil
+		return reconcile.Result{Requeue: true}, nil
 	}
 	return reconcile.Result{}, nil
 }

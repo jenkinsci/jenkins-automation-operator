@@ -166,7 +166,7 @@ func (s *SeedJobs) EnsureSeedJobs(jenkins *v1alpha2.Jenkins) (done bool, err err
 		})
 
 		if err != nil && !apierrors.IsNotFound(err) {
-			return false, err
+			return false, stackerr.WithStack(err)
 		}
 	}
 
@@ -193,7 +193,7 @@ func (s *SeedJobs) EnsureSeedJobs(jenkins *v1alpha2.Jenkins) (done bool, err err
 
 // createJob is responsible for creating jenkins job which configures jenkins seed jobs and deploy keys
 func (s *SeedJobs) createJobs(jenkins *v1alpha2.Jenkins) (requeue bool, err error) {
-	groovyClient := groovy.New(s.jenkinsClient, s.k8sClient, s.logger, jenkins, "user-groovy", jenkins.Spec.GroovyScripts.Customization)
+	groovyClient := groovy.New(s.jenkinsClient, s.k8sClient, s.logger, jenkins, "seed-jobs", jenkins.Spec.GroovyScripts.Customization)
 	for _, seedJob := range jenkins.Spec.SeedJobs {
 		credentialValue, err := s.credentialValue(jenkins.Namespace, seedJob)
 		if err != nil {
@@ -209,7 +209,6 @@ func (s *SeedJobs) createJobs(jenkins *v1alpha2.Jenkins) (requeue bool, err erro
 		hash.Write([]byte(groovyScript))
 		hash.Write([]byte(credentialValue))
 		requeue, err := groovyClient.EnsureSingle(seedJob.ID, fmt.Sprintf("%s.groovy", seedJob.ID), base64.URLEncoding.EncodeToString(hash.Sum(nil)), groovyScript)
-
 		if err != nil {
 			return true, err
 		}
@@ -240,9 +239,8 @@ func (s *SeedJobs) ensureLabelsForSecrets(jenkins v1alpha2.Jenkins) error {
 
 			if !resources.VerifyIfLabelsAreSet(secret, requiredLabels) {
 				secret.ObjectMeta.Labels = requiredLabels
-				err = stackerr.WithStack(s.k8sClient.Update(context.TODO(), secret))
-				if err != nil {
-					return err
+				if err = s.k8sClient.Update(context.TODO(), secret); err != nil {
+					return stackerr.WithStack(err)
 				}
 			}
 		}
@@ -257,7 +255,7 @@ func (s *SeedJobs) credentialValue(namespace string, seedJob v1alpha2.SeedJob) (
 		namespaceName := types.NamespacedName{Namespace: namespace, Name: seedJob.CredentialID}
 		err := s.k8sClient.Get(context.TODO(), namespaceName, secret)
 		if err != nil {
-			return "", err
+			return "", stackerr.WithStack(err)
 		}
 
 		if seedJob.JenkinsCredentialType == v1alpha2.BasicSSHCredentialType {
@@ -321,10 +319,10 @@ func (s SeedJobs) createAgent(jenkinsClient jenkinsclient.Jenkins, k8sClient cli
 	if err != nil && err.Error() == "No node found" {
 		_, err = jenkinsClient.CreateNode(agentName, 1, "The jenkins-operator generated agent", "/home/jenkins", agentName)
 		if err != nil {
-			return err
+			return stackerr.WithStack(err)
 		}
 	} else if err != nil {
-		return err
+		return stackerr.WithStack(err)
 	}
 
 	secret, err := jenkinsClient.GetNodeSecret(agentName)
@@ -338,10 +336,10 @@ func (s SeedJobs) createAgent(jenkinsClient jenkinsclient.Jenkins, k8sClient cli
 	if apierrors.IsAlreadyExists(err) {
 		err := k8sClient.Update(context.TODO(), deployment)
 		if err != nil {
-			return err
+			return stackerr.WithStack(err)
 		}
 	} else if err != nil {
-		return err
+		return stackerr.WithStack(err)
 	}
 
 	return nil

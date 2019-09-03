@@ -145,9 +145,8 @@ func isNotFoundError(err error) bool {
 func (jenkins *jenkins) GetNodeSecret(name string) (string, error) {
 	var content string
 	_, err := jenkins.Requester.GetXML(fmt.Sprintf("/computer/%s/slave-agent.jnlp", name), &content, nil)
-
 	if err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
 
 	match := regex.FindStringSubmatch(content)
