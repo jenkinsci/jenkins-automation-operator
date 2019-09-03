@@ -64,15 +64,15 @@ make test
 Run e2e tests with minikube:
 
 ```bash
-make start-minikube
+make minikube-start
 eval $(minikube docker-env)
-make e2e
+make build e2e
 ```
 
 Run the specific e2e test:
 
 ```bash
-make e2e E2E_TEST_SELECTOR='^TestConfiguration$'
+make build e2e E2E_TEST_SELECTOR='^TestConfiguration$'
 ```
 
 ## Tips & Tricks
