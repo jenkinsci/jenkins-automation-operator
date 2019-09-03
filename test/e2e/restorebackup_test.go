@@ -3,12 +3,12 @@ package e2e
 import (
 	"context"
 	"testing"
+	"time"
 
+	"github.com/jenkinsci/kubernetes-operator/internal/try"
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
-	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
-
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,28 +25,41 @@ func TestBackupAndRestore(t *testing.T) {
 	// Deletes test namespace
 	defer ctx.Cleanup()
 
+	jobID := "e2e-jenkins-operator"
 	createPVC(t, namespace)
 	jenkins := createJenkinsWithBackupAndRestoreConfigured(t, "e2e", namespace)
 	waitForJenkinsUserConfigurationToComplete(t, jenkins)
+
+	jenkinsClient := verifyJenkinsAPIConnection(t, jenkins)
+	waitForJob(t, jenkinsClient, jobID)
+	job, err := jenkinsClient.GetJob(jobID)
+	require.NoError(t, err, job)
+	i, err := job.InvokeSimple(map[string]string{})
+	require.NoError(t, err, i)
+	time.Sleep(60 * time.Second) // wait for the build to complete
+
 	restartJenkinsMasterPod(t, jenkins)
 	waitForRecreateJenkinsMasterPod(t, jenkins)
 	waitForJenkinsUserConfigurationToComplete(t, jenkins)
-	jenkinsClient := verifyJenkinsAPIConnection(t, jenkins)
-	verifyJobBuildsAfterRestoreBackup(t, jenkinsClient)
+	jenkinsClient = verifyJenkinsAPIConnection(t, jenkins)
+	waitForJob(t, jenkinsClient, jobID)
+	verifyJobBuildsAfterRestoreBackup(t, jenkinsClient, jobID)
 }
 
-func verifyJobBuildsAfterRestoreBackup(t *testing.T, jenkins client.Jenkins) {
-	job, err := jenkins.GetJob(constants.UserConfigurationJobName)
+func waitForJob(t *testing.T, jenkinsClient client.Jenkins, jobID string) {
+	err := try.Until(func() (end bool, err error) {
+		_, err = jenkinsClient.GetJob(jobID)
+		return err == nil, err
+	}, time.Second*2, time.Minute*2)
+	require.NoErrorf(t, err, "Jenkins job '%s' not created by seed job", jobID)
+}
+
+func verifyJobBuildsAfterRestoreBackup(t *testing.T, jenkinsClient client.Jenkins, jobID string) {
+	job, err := jenkinsClient.GetJob(jobID)
 	require.NoError(t, err)
 	build, err := job.GetLastBuild()
 	require.NoError(t, err)
-	assert.Equal(t, int64(2), build.GetBuildNumber())
-
-	job, err = jenkins.GetJob(constants.UserConfigurationCASCJobName)
-	require.NoError(t, err)
-	build, err = job.GetLastBuild()
-	require.NoError(t, err)
-	assert.Equal(t, int64(2), build.GetBuildNumber())
+	assert.Equal(t, int64(1), build.GetBuildNumber())
 }
 
 func createPVC(t *testing.T, namespace string) {
@@ -134,6 +147,17 @@ func createJenkinsWithBackupAndRestoreConfigured(t *testing.T, name, namespace s
 							},
 						},
 					},
+				},
+			},
+			SeedJobs: []v1alpha2.SeedJob{
+				{
+					ID:                    "jenkins-operator",
+					CredentialID:          "jenkins-operator",
+					JenkinsCredentialType: v1alpha2.NoJenkinsCredentialCredentialType,
+					Targets:               "cicd/jobs/*.jenkins",
+					Description:           "Jenkins Operator repository",
+					RepositoryBranch:      "master",
+					RepositoryURL:         "https://github.com/jenkinsci/kubernetes-operator.git",
 				},
 			},
 		},

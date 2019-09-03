@@ -28,6 +28,7 @@ func TestJenkinsMasterPodRestart(t *testing.T) {
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
 }
 
+// FIXME java.lang.Exception: AuthorizationStrategy.Unsecured is not set
 func TestSafeRestart(t *testing.T) {
 	t.Parallel()
 	namespace, ctx := setupTest(t)

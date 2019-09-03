@@ -1,7 +1,7 @@
 #!/usr/bin/env groovy
 
 pipelineJob('e2e-jenkins-operator') {
-    displayName('Dummy job to e2e testing')
+    displayName('Dummy job for e2e testing')
 
     logRotator {
         numToKeep(10)
