@@ -124,6 +124,7 @@ func createJenkinsCR(t *testing.T, name, namespace string, seedJob *[]v1alpha2.S
 				Plugins: []v1alpha2.Plugin{
 					{Name: "audit-trail", Version: "2.4"},
 					{Name: "simple-theme-plugin", Version: "0.5.1"},
+					{Name: "github", Version: "1.29.4"},
 				},
 				NodeSelector: map[string]string{"kubernetes.io/hostname": "minikube"},
 			},

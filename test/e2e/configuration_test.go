@@ -40,6 +40,13 @@ func TestConfiguration(t *testing.T) {
 			Description:           "Jenkins Operator repository",
 			RepositoryBranch:      "master",
 			RepositoryURL:         "https://github.com/jenkinsci/kubernetes-operator.git",
+			PollSCM:               "1 1 1 1 1",
+			UnstableOnDeprecation: true,
+			BuildPeriodically:     "1 1 1 1 1",
+			FailOnMissingPlugin:   true,
+			IgnoreMissingFiles:    true,
+			//AdditionalClasspath: can fail with the seed job agent
+			GitHubPushTrigger: true,
 		},
 	}
 	groovyScripts := v1alpha2.GroovyScripts{

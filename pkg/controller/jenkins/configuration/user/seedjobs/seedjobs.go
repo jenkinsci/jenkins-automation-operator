@@ -40,7 +40,7 @@ const (
 	JenkinsCredentialTypeLabelName = "jenkins.io/credentials-type"
 
 	// AgentName is the name of seed job agent
-	AgentName = "jnlp"
+	AgentName = "seed-job-agent"
 
 	creatingGroovyScriptName = "seed-job-groovy-script.groovy"
 )
@@ -79,7 +79,7 @@ import static com.google.common.collect.Lists.newArrayList;
 
 Jenkins jenkins = Jenkins.instance
 
-def jobDslSeedName = "{{ .ID }} - {{ .SeedJobSuffix }}";
+def jobDslSeedName = "{{ .ID }}-{{ .SeedJobSuffix }}";
 def jobRef = jenkins.getItem(jobDslSeedName)
 
 def repoList = GitSCM.createRepoList("{{ .RepositoryURL }}", "{{ .CredentialID }}")
@@ -161,7 +161,7 @@ func (s *SeedJobs) EnsureSeedJobs(jenkins *v1alpha2.Jenkins) (done bool, err err
 		err := s.k8sClient.Delete(context.TODO(), &appsv1.Deployment{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: jenkins.Namespace,
-				Name:      AgentName,
+				Name:      agentDeploymentName(*jenkins, AgentName),
 			},
 		})
 
@@ -345,10 +345,14 @@ func (s SeedJobs) createAgent(jenkinsClient jenkinsclient.Jenkins, k8sClient cli
 	return nil
 }
 
-func agentDeployment(jenkinsManifest *v1alpha2.Jenkins, namespace string, agentName string, secret string) *apps.Deployment {
+func agentDeploymentName(jenkins v1alpha2.Jenkins, agentName string) string {
+	return fmt.Sprintf("%s-%s", agentName, jenkins.Name)
+}
+
+func agentDeployment(jenkins *v1alpha2.Jenkins, namespace string, agentName string, secret string) *apps.Deployment {
 	return &apps.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      agentName,
+			Name:      agentDeploymentName(*jenkins, agentName),
 			Namespace: namespace,
 		},
 		Spec: apps.DeploymentSpec{
@@ -362,9 +366,9 @@ func agentDeployment(jenkinsManifest *v1alpha2.Jenkins, namespace string, agentN
 								{
 									Name: "JENKINS_TUNNEL",
 									Value: fmt.Sprintf("%s.%s:%d",
-										resources.GetJenkinsSlavesServiceName(jenkinsManifest),
-										jenkinsManifest.ObjectMeta.Namespace,
-										jenkinsManifest.Spec.SlaveService.Port),
+										resources.GetJenkinsSlavesServiceName(jenkins),
+										jenkins.ObjectMeta.Namespace,
+										jenkins.Spec.SlaveService.Port),
 								},
 								{
 									Name:  "JENKINS_SECRET",
@@ -377,9 +381,9 @@ func agentDeployment(jenkinsManifest *v1alpha2.Jenkins, namespace string, agentN
 								{
 									Name: "JENKINS_URL",
 									Value: fmt.Sprintf("http://%s.%s:%d",
-										resources.GetJenkinsHTTPServiceName(jenkinsManifest),
-										jenkinsManifest.ObjectMeta.Namespace,
-										jenkinsManifest.Spec.Service.Port,
+										resources.GetJenkinsHTTPServiceName(jenkins),
+										jenkins.ObjectMeta.Namespace,
+										jenkins.Spec.Service.Port,
 									),
 								},
 								{

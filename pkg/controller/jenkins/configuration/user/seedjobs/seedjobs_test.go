@@ -79,20 +79,19 @@ func TestEnsureSeedJobs(t *testing.T) {
 		err = fakeClient.Create(ctx, jenkins)
 		assert.NoError(t, err)
 
-		agentName := "jnlp"
 		agentSecret := "test-secret"
 		testNode := &gojenkins.Node{
 			Raw: &gojenkins.NodeResponse{
-				DisplayName: agentName,
+				DisplayName: AgentName,
 			},
 		}
 
 		seedJobCreatingScript, err := seedJobCreatingGroovyScript(jenkins.Spec.SeedJobs[0])
 		assert.NoError(t, err)
 
-		jenkinsClient.EXPECT().GetNode(agentName).Return(nil, nil).AnyTimes()
-		jenkinsClient.EXPECT().CreateNode(agentName, 1, "The jenkins-operator generated agent", "/home/jenkins", agentName).Return(testNode, nil).AnyTimes()
-		jenkinsClient.EXPECT().GetNodeSecret(agentName).Return(agentSecret, nil).AnyTimes()
+		jenkinsClient.EXPECT().GetNode(AgentName).Return(nil, nil).AnyTimes()
+		jenkinsClient.EXPECT().CreateNode(AgentName, 1, "The jenkins-operator generated agent", "/home/jenkins", AgentName).Return(testNode, nil).AnyTimes()
+		jenkinsClient.EXPECT().GetNodeSecret(AgentName).Return(agentSecret, nil).AnyTimes()
 		jenkinsClient.EXPECT().ExecuteScript(seedJobCreatingScript).AnyTimes()
 
 		seedJobClient := New(jenkinsClient, fakeClient, logger)
@@ -104,7 +103,7 @@ func TestEnsureSeedJobs(t *testing.T) {
 		assert.NoError(t, err)
 
 		var agentDeployment appsv1.Deployment
-		err = fakeClient.Get(ctx, types.NamespacedName{Namespace: jenkins.Namespace, Name: agentName}, &agentDeployment)
+		err = fakeClient.Get(ctx, types.NamespacedName{Namespace: jenkins.Namespace, Name: agentDeploymentName(*jenkins, AgentName)}, &agentDeployment)
 		assert.NoError(t, err)
 	})
 
@@ -114,7 +113,6 @@ func TestEnsureSeedJobs(t *testing.T) {
 		ctx := context.TODO()
 		defer ctrl.Finish()
 
-		agentName := "test-agent"
 		agentSecret := "test-secret"
 		jenkins := jenkinsCustomResource()
 		jenkins.Spec.SeedJobs = []v1alpha2.SeedJob{}
@@ -124,15 +122,15 @@ func TestEnsureSeedJobs(t *testing.T) {
 		err := v1alpha2.SchemeBuilder.AddToScheme(scheme.Scheme)
 		assert.NoError(t, err)
 
-		jenkinsClient.EXPECT().GetNode(agentName).AnyTimes()
-		jenkinsClient.EXPECT().CreateNode(agentName, 1, "The jenkins-operator generated agent", "/home/jenkins", agentName).AnyTimes()
-		jenkinsClient.EXPECT().GetNodeSecret(agentName).Return(agentSecret, nil).AnyTimes()
+		jenkinsClient.EXPECT().GetNode(AgentName).AnyTimes()
+		jenkinsClient.EXPECT().CreateNode(AgentName, 1, "The jenkins-operator generated agent", "/home/jenkins", AgentName).AnyTimes()
+		jenkinsClient.EXPECT().GetNodeSecret(AgentName).Return(agentSecret, nil).AnyTimes()
 
 		seedJobsClient := New(jenkinsClient, fakeClient, nil)
 
 		err = fakeClient.Create(ctx, &appsv1.Deployment{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      agentName,
+				Name:      agentDeploymentName(*jenkins, AgentName),
 				Namespace: jenkins.Namespace,
 			},
 		})
@@ -145,9 +143,9 @@ func TestEnsureSeedJobs(t *testing.T) {
 		assert.NoError(t, err)
 
 		var deployment appsv1.Deployment
-		err = fakeClient.Get(ctx, types.NamespacedName{Name: agentName, Namespace: jenkins.Namespace}, &deployment)
+		err = fakeClient.Get(ctx, types.NamespacedName{Namespace: jenkins.Namespace, Name: agentDeploymentName(*jenkins, AgentName)}, &deployment)
 
-		assert.False(t, errors.IsNotFound(err), "Agent deployment hasn't been deleted")
+		assert.True(t, errors.IsNotFound(err), "Agent deployment hasn't been deleted")
 	})
 }
 
@@ -158,7 +156,6 @@ func TestCreateAgent(t *testing.T) {
 		ctx := context.TODO()
 		defer ctrl.Finish()
 
-		agentName := "test-agent"
 		agentSecret := "test-secret"
 		jenkins := jenkinsCustomResource()
 
@@ -167,22 +164,22 @@ func TestCreateAgent(t *testing.T) {
 		err := v1alpha2.SchemeBuilder.AddToScheme(scheme.Scheme)
 		assert.NoError(t, err)
 
-		jenkinsClient.EXPECT().GetNode(agentName).AnyTimes()
-		jenkinsClient.EXPECT().CreateNode(agentName, 1, "The jenkins-operator generated agent", "/home/jenkins", agentName).AnyTimes()
-		jenkinsClient.EXPECT().GetNodeSecret(agentName).Return(agentSecret, nil).AnyTimes()
+		jenkinsClient.EXPECT().GetNode(AgentName).AnyTimes()
+		jenkinsClient.EXPECT().CreateNode(AgentName, 1, "The jenkins-operator generated agent", "/home/jenkins", AgentName).AnyTimes()
+		jenkinsClient.EXPECT().GetNodeSecret(AgentName).Return(agentSecret, nil).AnyTimes()
 
 		seedJobsClient := New(jenkinsClient, fakeClient, nil)
 
 		err = fakeClient.Create(ctx, &appsv1.Deployment{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      agentName,
+				Name:      agentDeploymentName(*jenkins, AgentName),
 				Namespace: jenkins.Namespace,
 			},
 		})
 		assert.NoError(t, err)
 
 		// when
-		err = seedJobsClient.createAgent(jenkinsClient, fakeClient, jenkinsCustomResource(), jenkins.Namespace, agentName)
+		err = seedJobsClient.createAgent(jenkinsClient, fakeClient, jenkinsCustomResource(), jenkins.Namespace, AgentName)
 
 		// then
 		assert.NoError(t, err)
