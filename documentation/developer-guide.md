@@ -61,6 +61,8 @@ Run unit tests:
 make test
 ```
 
+### Running E2E tests on Linux
+
 Run e2e tests with minikube:
 
 ```bash
@@ -73,6 +75,30 @@ Run the specific e2e test:
 
 ```bash
 make build e2e E2E_TEST_SELECTOR='^TestConfiguration$'
+```
+
+### Running E2E tests on macOS
+
+At first, you need to start minikube:
+```bash
+$ make minikube-start
+$ eval $(minikube docker-env) 
+```
+
+Build Docker image inside provided Linux container by:
+```bash
+$ make indocker
+```
+
+Build **jenkins-operator** inside container using:
+
+```bash
+$ make build
+```
+
+Then exit the container and run:
+```
+make e2e
 ```
 
 ## Tips & Tricks
