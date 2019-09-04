@@ -61,6 +61,8 @@ Run unit tests:
 make test
 ```
 
+### Running E2E tests on Linux
+
 Run e2e tests with minikube:
 
 ```bash
