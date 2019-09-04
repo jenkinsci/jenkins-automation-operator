@@ -28,7 +28,6 @@ func TestJenkinsMasterPodRestart(t *testing.T) {
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
 }
 
-// FIXME java.lang.Exception: AuthorizationStrategy.Unsecured is not set
 func TestSafeRestart(t *testing.T) {
 	t.Parallel()
 	namespace, ctx := setupTest(t)
@@ -36,8 +35,17 @@ func TestSafeRestart(t *testing.T) {
 	defer ctx.Cleanup()
 
 	jenkinsCRName := "e2e"
-	configureAuthorizationToUnSecure(t, namespace)
-	jenkins := createJenkinsCR(t, jenkinsCRName, namespace, nil, v1alpha2.GroovyScripts{}, v1alpha2.ConfigurationAsCode{})
+	configureAuthorizationToUnSecure(t, namespace, userConfigurationConfigMapName)
+	groovyScriptsConfig := v1alpha2.GroovyScripts{
+		Customization: v1alpha2.Customization{
+			Configurations: []v1alpha2.ConfigMapRef{
+				{
+					Name: userConfigurationConfigMapName,
+				},
+			},
+		},
+	}
+	jenkins := createJenkinsCR(t, jenkinsCRName, namespace, nil, groovyScriptsConfig, v1alpha2.ConfigurationAsCode{})
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
 	waitForJenkinsUserConfigurationToComplete(t, jenkins)
 	jenkinsClient := verifyJenkinsAPIConnection(t, jenkins)
@@ -50,10 +58,10 @@ func TestSafeRestart(t *testing.T) {
 	checkIfAuthorizationStrategyUnsecuredIsSet(t, jenkinsClient)
 }
 
-func configureAuthorizationToUnSecure(t *testing.T, namespace string) {
+func configureAuthorizationToUnSecure(t *testing.T, namespace, configMapName string) {
 	limitRange := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      userConfigurationConfigMapName,
+			Name:      configMapName,
 			Namespace: namespace,
 		},
 		Data: map[string]string{
