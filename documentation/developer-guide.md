@@ -79,7 +79,13 @@ make build e2e E2E_TEST_SELECTOR='^TestConfiguration$'
 
 ### Running E2E tests on macOS
 
-At first you need to build Docker image inside provided Linux container by:
+At first, you need to start minikube:
+```bash
+$ make minikube-start
+$ eval $(minikube docker-env) 
+```
+
+Build Docker image inside provided Linux container by:
 ```bash
 $ make indocker
 ```
