@@ -134,7 +134,6 @@ def Jenkins jenkins = Jenkins.getInstance()
 
 def seedViewName = 'seed-jobs'
 def nonSeedViewName = 'non-seed-jobs'
-def jenkinsViewName = '` + constants.OperatorName + `'
 
 if (jenkins.getView(seedViewName) == null) {
     def seedView = new ListView(seedViewName)
@@ -146,12 +145,6 @@ if (jenkins.getView(nonSeedViewName) == null) {
     def nonSeedView = new ListView(nonSeedViewName)
     nonSeedView.setIncludeRegex('((?!seed)(?!jenkins).)*')
     jenkins.addView(nonSeedView)
-}
-
-if (jenkins.getView(jenkinsViewName) == null) {
-    def jenkinsView = new ListView(jenkinsViewName)
-    jenkinsView.setIncludeRegex('.*` + constants.OperatorName + `.*')
-    jenkins.addView(jenkinsView)
 }
 
 jenkins.save()
