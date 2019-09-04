@@ -1,0 +1,77 @@
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Jenkins Operator – How it works</title>
+    <link>/docs/how-it-works/</link>
+    <description>Recent Hugo news from gohugo.io</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <lastBuildDate>Mon, 05 Aug 2019 00:00:00 +0000</lastBuildDate>
+    <image>
+      <url>/img/hugo.png</url>
+      <title>GoHugo.io</title>
+      <link>/docs/how-it-works/</link>
+    </image>
+    
+	  <atom:link href="/docs/how-it-works/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+      
+        
+      
+    
+    
+    <item>
+      <title>Docs: Architecture and design</title>
+      <link>/docs/how-it-works/architecture-and-design/</link>
+      <pubDate>Mon, 05 Aug 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/how-it-works/architecture-and-design/</guid>
+      <description>
+        
+        
+        
+
+&lt;p&gt;The &lt;strong&gt;jenkins-operator&lt;/strong&gt; design incorporates the following concepts:
+- watches any changes of manifests and maintain the desired state according to deployed custom resource manifest
+- implements the main reconciliation loop which consists of two smaller reconciliation loops - base and user&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;/img/reconcile.png&#34; alt=&#34;reconcile&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Base&lt;/strong&gt; reconciliation loop takes care of reconciling base Jenkins configuration, which consists of:
+- Ensure Manifests - monitors any changes in manifests
+- Ensure Jenkins Pod - creates and verifies status of Jenkins master Pod
+- Ensure Jenkins Configuration - configures Jenkins instance including hardening, initial configuration for plugins, etc.
+- Ensure Jenkins API token - generates Jenkins API token and initialized Jenkins client&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;User&lt;/strong&gt; reconciliation loop takes care of reconciling user provided configuration, which consists of:
+- Ensure Restore Job - creates Restore job and ensures that restore has been successfully performed&lt;br /&gt;
+- Ensure Seed Jobs - creates Seed Jobs and ensures that all of them have been successfully executed
+- Ensure User Configuration - executed user provided configuration, like groovy scripts, configuration as code or plugins
+- Ensure Backup Job -  creates Backup job and ensures that backup has been successfully performed&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;/img/phases.png&#34; alt=&#34;reconcile&#34; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;operator-state&#34;&gt;Operator State&lt;/h2&gt;
+
+&lt;p&gt;Operator state is kept in custom resource status section, which is used for storing any configuration events or job statuses managed by the operator.
+It helps to maintain or recover desired state even after operator or Jenkins restarts.&lt;/p&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Docs: Jenkins Docker Images</title>
+      <link>/docs/how-it-works/jenkins-docker-images/</link>
+      <pubDate>Mon, 05 Aug 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/how-it-works/jenkins-docker-images/</guid>
+      <description>
+        
+        
+        &lt;p&gt;&lt;strong&gt;jenkins-operator&lt;/strong&gt; is fully compatible with &lt;strong&gt;jenkins:lts&lt;/strong&gt; docker image and does not introduce any hidden changes there.
+If needed, the docker image can easily be changed in custom resource manifest as long as it supports standard Jenkins file system structure.&lt;/p&gt;
+
+      </description>
+    </item>
+    
+  </channel>
+</rss>
