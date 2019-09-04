@@ -75,6 +75,24 @@ Run the specific e2e test:
 make build e2e E2E_TEST_SELECTOR='^TestConfiguration$'
 ```
 
+### Running E2E tests on macOS
+
+At first you need to build Docker image inside provided Linux container by:
+```bash
+$ make indocker
+```
+
+Build **jenkins-operator** inside container using:
+
+```bash
+$ make build
+```
+
+Then exit the container and run:
+```
+make e2e
+```
+
 ## Tips & Tricks
 
 ### Building docker image on minikube (for e2e tests)
