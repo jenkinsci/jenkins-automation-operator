@@ -1,6 +1,6 @@
 # Jenkins Operator
 
-[![Version](https://img.shields.io/badge/version-v0.1.1-brightgreen.svg)](https://github.com/jenkinsci/kubernetes-operator/releases/tag/v0.1.1)
+[![Version](https://img.shields.io/badge/version-v0.2.0-brightgreen.svg)](https://github.com/jenkinsci/kubernetes-operator/releases/tag/v0.2.0)
 [![Build Status](https://travis-ci.org/jenkinsci/kubernetes-operator.svg?branch=master)](https://travis-ci.org/jenkinsci/kubernetes-operator)
 [![Go Report Card](https://goreportcard.com/badge/github.com/jenkinsci/kubernetes-operator "Go Report Card")](https://goreportcard.com/report/github.com/jenkinsci/kubernetes-operator)
 [![Docker Pulls](https://img.shields.io/docker/pulls/virtuslab/jenkins-operator.svg)](https://hub.docker.com/r/virtuslab/jenkins-operator/tags)
@@ -52,8 +52,8 @@ Feel free to file [issues](https://github.com/jenkinsci/kubernetes-operator/issu
 This project was originally developed by [VirtusLab](https://virtuslab.com/) and the following [CONTRIBUTORS](https://github.com/jenkinsci/kubernetes-operator/graphs/contributors).
 
 [installation]:documentation/installation.md
-[getting_started]:documentation/v0.1.1/getting-started.md
+[getting_started]:documentation/v0.2.0/getting-started.md
 [how_it_works]:documentation/how-it-works.md
 [security]:documentation/security.md
 [developer_guide]:documentation/developer-guide.md
-[jenkins_scheme]:documentation/v0.1.1/jenkins-v1alpha2-scheme.md
+[jenkins_scheme]:documentation/v0.2.0/jenkins-v1alpha2-scheme.md
