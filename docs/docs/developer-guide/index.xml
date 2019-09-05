@@ -1,17 +1,17 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Jenkins Operator – Developer Guide</title>
-    <link>/docs/developer-guide/</link>
+    <link>/kubernetes-operator/docs/developer-guide/</link>
     <description>Recent Hugo news from gohugo.io</description>
     <generator>Hugo -- gohugo.io</generator>
     <lastBuildDate>Mon, 05 Aug 2019 00:00:00 +0000</lastBuildDate>
     <image>
-      <url>/img/hugo.png</url>
+      <url>/kubernetes-operator/img/hugo.png</url>
       <title>GoHugo.io</title>
-      <link>/docs/developer-guide/</link>
+      <link>/kubernetes-operator/docs/developer-guide/</link>
     </image>
     
-	  <atom:link href="/docs/developer-guide/index.xml" rel="self" type="application/rss+xml" />
+	  <atom:link href="/kubernetes-operator/docs/developer-guide/index.xml" rel="self" type="application/rss+xml" />
     
     
       
@@ -21,10 +21,10 @@
     
     <item>
       <title>Docs: Tools</title>
-      <link>/docs/developer-guide/tools/</link>
+      <link>/kubernetes-operator/docs/developer-guide/tools/</link>
       <pubDate>Mon, 05 Aug 2019 00:00:00 +0000</pubDate>
       
-      <guid>/docs/developer-guide/tools/</guid>
+      <guid>/kubernetes-operator/docs/developer-guide/tools/</guid>
       <description>
         
         

@@ -1,17 +1,17 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Jenkins Operator – New Releases</title>
-    <link>/blog/releases/</link>
+    <link>/kubernetes-operator/blog/releases/</link>
     <description>Recent Hugo news from gohugo.io</description>
     <generator>Hugo -- gohugo.io</generator>
     <lastBuildDate>Thu, 04 Jan 2018 00:00:00 +0000</lastBuildDate>
     <image>
-      <url>/img/hugo.png</url>
+      <url>/kubernetes-operator/img/hugo.png</url>
       <title>GoHugo.io</title>
-      <link>/blog/releases/</link>
+      <link>/kubernetes-operator/blog/releases/</link>
     </image>
     
-	  <atom:link href="/blog/releases/index.xml" rel="self" type="application/rss+xml" />
+	  <atom:link href="/kubernetes-operator/blog/releases/index.xml" rel="self" type="application/rss+xml" />
     
     
       
@@ -21,10 +21,10 @@
     
     <item>
       <title>Blog: Another Great Release</title>
-      <link>/blog/2018/01/04/another-great-release/</link>
+      <link>/kubernetes-operator/blog/2018/01/04/another-great-release/</link>
       <pubDate>Thu, 04 Jan 2018 00:00:00 +0000</pubDate>
       
-      <guid>/blog/2018/01/04/another-great-release/</guid>
+      <guid>/kubernetes-operator/blog/2018/01/04/another-great-release/</guid>
       <description>
         
         

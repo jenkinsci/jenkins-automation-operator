@@ -1,16 +1,16 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Jenkins Operator – Community</title>
-    <link>/community/</link>
+    <link>/kubernetes-operator/community/</link>
     <description>Recent Hugo news from gohugo.io</description>
     <generator>Hugo -- gohugo.io</generator>
     <image>
-      <url>/img/hugo.png</url>
+      <url>/kubernetes-operator/img/hugo.png</url>
       <title>GoHugo.io</title>
-      <link>/community/</link>
+      <link>/kubernetes-operator/community/</link>
     </image>
     
-	  <atom:link href="/community/index.xml" rel="self" type="application/rss+xml" />
+	  <atom:link href="/kubernetes-operator/community/index.xml" rel="self" type="application/rss+xml" />
     
     
       

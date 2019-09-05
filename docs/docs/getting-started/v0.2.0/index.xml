@@ -1,17 +1,17 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Jenkins Operator – v0.2.0</title>
-    <link>/docs/getting-started/v0.2.0/</link>
+    <link>/kubernetes-operator/docs/getting-started/v0.2.0/</link>
     <description>Recent Hugo news from gohugo.io</description>
     <generator>Hugo -- gohugo.io</generator>
     <lastBuildDate>Mon, 05 Aug 2019 00:00:00 +0000</lastBuildDate>
     <image>
-      <url>/img/hugo.png</url>
+      <url>/kubernetes-operator/img/hugo.png</url>
       <title>GoHugo.io</title>
-      <link>/docs/getting-started/v0.2.0/</link>
+      <link>/kubernetes-operator/docs/getting-started/v0.2.0/</link>
     </image>
     
-	  <atom:link href="/docs/getting-started/v0.2.0/index.xml" rel="self" type="application/rss+xml" />
+	  <atom:link href="/kubernetes-operator/docs/getting-started/v0.2.0/index.xml" rel="self" type="application/rss+xml" />
     
     
       
@@ -21,10 +21,10 @@
     
     <item>
       <title>Docs: Deploy Jenkins</title>
-      <link>/docs/getting-started/v0.2.0/deploy-jenkins/</link>
+      <link>/kubernetes-operator/docs/getting-started/v0.2.0/deploy-jenkins/</link>
       <pubDate>Mon, 05 Aug 2019 00:00:00 +0000</pubDate>
       
-      <guid>/docs/getting-started/v0.2.0/deploy-jenkins/</guid>
+      <guid>/kubernetes-operator/docs/getting-started/v0.2.0/deploy-jenkins/</guid>
       <description>
         
         
@@ -85,17 +85,17 @@ kubectl get secret jenkins-operator-credentials-&amp;lt;cr_name&amp;gt; -o &lt;s
 &lt;p&gt;Connect to Jenkins (actual Kubernetes cluster):&lt;/p&gt;
 &lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;kubectl port-forward jenkins-&amp;lt;cr_name&amp;gt; &lt;span style=&#34;color:#0000cf;font-weight:bold&#34;&gt;8080&lt;/span&gt;:8080&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 &lt;p&gt;Then open browser with address &lt;code&gt;http://localhost:8080&lt;/code&gt;.
-&lt;img src=&#34;/img/jenkins.png&#34; alt=&#34;jenkins&#34; /&gt;&lt;/p&gt;
+&lt;img src=&#34;/kubernetes-operator/img/jenkins.png&#34; alt=&#34;jenkins&#34; /&gt;&lt;/p&gt;
 
       </description>
     </item>
     
     <item>
       <title>Docs: Configuration</title>
-      <link>/docs/getting-started/v0.2.0/configuration/</link>
+      <link>/kubernetes-operator/docs/getting-started/v0.2.0/configuration/</link>
       <pubDate>Mon, 05 Aug 2019 00:00:00 +0000</pubDate>
       
-      <guid>/docs/getting-started/v0.2.0/configuration/</guid>
+      <guid>/kubernetes-operator/docs/getting-started/v0.2.0/configuration/</guid>
       <description>
         
         
@@ -214,11 +214,11 @@ spec:
 
 &lt;p&gt;You can verify if deploy keys were successfully configured in Jenkins &lt;strong&gt;Credentials&lt;/strong&gt; tab.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;/img/jenkins-credentials.png&#34; alt=&#34;jenkins&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;/kubernetes-operator/img/jenkins-credentials.png&#34; alt=&#34;jenkins&#34; /&gt;&lt;/p&gt;
 
 &lt;p&gt;You can verify if your pipelines were successfully configured in Jenkins Seed Job console output.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;/img/jenkins-seed.png&#34; alt=&#34;jenkins&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;/kubernetes-operator/img/jenkins-seed.png&#34; alt=&#34;jenkins&#34; /&gt;&lt;/p&gt;
 
 &lt;p&gt;If your GitHub repository is &lt;strong&gt;private&lt;/strong&gt; you have to configure SSH or username/password authentication.&lt;/p&gt;
 
@@ -382,10 +382,10 @@ stringData:
     
     <item>
       <title>Docs: Customization</title>
-      <link>/docs/getting-started/v0.2.0/customization/</link>
+      <link>/kubernetes-operator/docs/getting-started/v0.2.0/customization/</link>
       <pubDate>Mon, 05 Aug 2019 00:00:00 +0000</pubDate>
       
-      <guid>/docs/getting-started/v0.2.0/customization/</guid>
+      <guid>/kubernetes-operator/docs/getting-started/v0.2.0/customization/</guid>
       <description>
         
         
@@ -548,10 +548,10 @@ spec:
     
     <item>
       <title>Docs: AKS</title>
-      <link>/docs/getting-started/v0.2.0/aks/</link>
+      <link>/kubernetes-operator/docs/getting-started/v0.2.0/aks/</link>
       <pubDate>Mon, 05 Aug 2019 00:00:00 +0000</pubDate>
       
-      <guid>/docs/getting-started/v0.2.0/aks/</guid>
+      <guid>/kubernetes-operator/docs/getting-started/v0.2.0/aks/</guid>
       <description>
         
         
@@ -572,10 +572,10 @@ restart Jenkins pod over and over again.&lt;/p&gt;
     
     <item>
       <title>Docs: Configure backup and restore</title>
-      <link>/docs/getting-started/v0.2.0/configure-backup-and-restore/</link>
+      <link>/kubernetes-operator/docs/getting-started/v0.2.0/configure-backup-and-restore/</link>
       <pubDate>Mon, 05 Aug 2019 00:00:00 +0000</pubDate>
       
-      <guid>/docs/getting-started/v0.2.0/configure-backup-and-restore/</guid>
+      <guid>/kubernetes-operator/docs/getting-started/v0.2.0/configure-backup-and-restore/</guid>
       <description>
         
         
@@ -654,10 +654,10 @@ restart Jenkins pod over and over again.&lt;/p&gt;
     
     <item>
       <title>Docs: Migration from v0.1.1</title>
-      <link>/docs/getting-started/v0.2.0/migration/</link>
+      <link>/kubernetes-operator/docs/getting-started/v0.2.0/migration/</link>
       <pubDate>Mon, 05 Aug 2019 00:00:00 +0000</pubDate>
       
-      <guid>/docs/getting-started/v0.2.0/migration/</guid>
+      <guid>/kubernetes-operator/docs/getting-started/v0.2.0/migration/</guid>
       <description>
         
         
@@ -694,10 +694,10 @@ Now, when Jenkins configuration jobs are removed, you must use this command to s
     
     <item>
       <title>Docs: Diagnostics</title>
-      <link>/docs/getting-started/v0.2.0/diagnostics/</link>
+      <link>/kubernetes-operator/docs/getting-started/v0.2.0/diagnostics/</link>
       <pubDate>Mon, 05 Aug 2019 00:00:00 +0000</pubDate>
       
-      <guid>/docs/getting-started/v0.2.0/diagnostics/</guid>
+      <guid>/kubernetes-operator/docs/getting-started/v0.2.0/diagnostics/</guid>
       <description>
         
         
@@ -721,10 +721,10 @@ kubectl apply -f deploy/operator.yaml&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
     
     <item>
       <title>Docs: Scheme</title>
-      <link>/docs/getting-started/v0.2.0/scheme/</link>
+      <link>/kubernetes-operator/docs/getting-started/v0.2.0/scheme/</link>
       <pubDate>Mon, 05 Aug 2019 00:00:00 +0000</pubDate>
       
-      <guid>/docs/getting-started/v0.2.0/scheme/</guid>
+      <guid>/kubernetes-operator/docs/getting-started/v0.2.0/scheme/</guid>
       <description>
         
         
