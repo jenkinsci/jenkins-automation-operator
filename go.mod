@@ -77,3 +77,5 @@ replace (
 	git.apache.org/thrift.git => github.com/apache/thrift v0.12.0
 	github.com/golang/lint v0.0.0-20190409202823-959b441ac422 => golang.org/x/lint v0.0.0-20190409202823-959b441ac422
 )
+
+go 1.13

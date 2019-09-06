@@ -124,11 +124,11 @@ spec:
 
 You can verify if deploy keys were successfully configured in Jenkins **Credentials** tab.
 
-![jenkins](/img/jenkins-credentials.png)
+![jenkins](/kubernetes-operator/img/jenkins-credentials.png)
 
 You can verify if your pipelines were successfully configured in Jenkins Seed Job console output.
 
-![jenkins](/img/jenkins-seed.png)
+![jenkins](/kubernetes-operator/img/jenkins-seed.png)
 
 If your GitHub repository is **private** you have to configure SSH or username/password authentication.
 
