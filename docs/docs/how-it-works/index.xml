@@ -1,17 +1,17 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Jenkins Operator – How it works</title>
-    <link>/kubernetes-operator/docs/how-it-works/</link>
+    <link>https://jenkinsci.github.io/kubernetes-operator/docs/how-it-works/</link>
     <description>Recent Hugo news from gohugo.io</description>
     <generator>Hugo -- gohugo.io</generator>
     <lastBuildDate>Mon, 05 Aug 2019 00:00:00 +0000</lastBuildDate>
     <image>
-      <url>/kubernetes-operator/img/hugo.png</url>
+      <url>https://jenkinsci.github.io/kubernetes-operator/img/hugo.png</url>
       <title>GoHugo.io</title>
-      <link>/kubernetes-operator/docs/how-it-works/</link>
+      <link>https://jenkinsci.github.io/kubernetes-operator/docs/how-it-works/</link>
     </image>
     
-	  <atom:link href="/kubernetes-operator/docs/how-it-works/index.xml" rel="self" type="application/rss+xml" />
+	  <atom:link href="https://jenkinsci.github.io/kubernetes-operator/docs/how-it-works/index.xml" rel="self" type="application/rss+xml" />
     
     
       
@@ -21,10 +21,10 @@
     
     <item>
       <title>Docs: Architecture and design</title>
-      <link>/kubernetes-operator/docs/how-it-works/architecture-and-design/</link>
+      <link>https://jenkinsci.github.io/kubernetes-operator/docs/how-it-works/architecture-and-design/</link>
       <pubDate>Mon, 05 Aug 2019 00:00:00 +0000</pubDate>
       
-      <guid>/kubernetes-operator/docs/how-it-works/architecture-and-design/</guid>
+      <guid>https://jenkinsci.github.io/kubernetes-operator/docs/how-it-works/architecture-and-design/</guid>
       <description>
         
         
@@ -34,7 +34,7 @@
 - watches any changes of manifests and maintain the desired state according to deployed custom resource manifest
 - implements the main reconciliation loop which consists of two smaller reconciliation loops - base and user&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;/kubernetes-operator/img/reconcile.png&#34; alt=&#34;reconcile&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://jenkinsci.github.io/kubernetes-operator/kubernetes-operator/img/reconcile.png&#34; alt=&#34;reconcile&#34; /&gt;&lt;/p&gt;
 
 &lt;p&gt;&lt;strong&gt;Base&lt;/strong&gt; reconciliation loop takes care of reconciling base Jenkins configuration, which consists of:
 - Ensure Manifests - monitors any changes in manifests
@@ -48,7 +48,7 @@
 - Ensure User Configuration - executed user provided configuration, like groovy scripts, configuration as code or plugins
 - Ensure Backup Job -  creates Backup job and ensures that backup has been successfully performed&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;/kubernetes-operator/img/phases.png&#34; alt=&#34;reconcile&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://jenkinsci.github.io/kubernetes-operator/kubernetes-operator/img/phases.png&#34; alt=&#34;reconcile&#34; /&gt;&lt;/p&gt;
 
 &lt;h2 id=&#34;operator-state&#34;&gt;Operator State&lt;/h2&gt;
 
@@ -60,10 +60,10 @@ It helps to maintain or recover desired state even after operator or Jenkins res
     
     <item>
       <title>Docs: Jenkins Docker Images</title>
-      <link>/kubernetes-operator/docs/how-it-works/jenkins-docker-images/</link>
+      <link>https://jenkinsci.github.io/kubernetes-operator/docs/how-it-works/jenkins-docker-images/</link>
       <pubDate>Mon, 05 Aug 2019 00:00:00 +0000</pubDate>
       
-      <guid>/kubernetes-operator/docs/how-it-works/jenkins-docker-images/</guid>
+      <guid>https://jenkinsci.github.io/kubernetes-operator/docs/how-it-works/jenkins-docker-images/</guid>
       <description>
         
         

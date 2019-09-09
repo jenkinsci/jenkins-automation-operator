@@ -1,77 +1,23 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Jenkins Operator – Getting Started</title>
-    <link>/kubernetes-operator/docs/getting-started/</link>
+    <link>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/</link>
     <description>Recent Hugo news from gohugo.io</description>
     <generator>Hugo -- gohugo.io</generator>
     <lastBuildDate>Mon, 05 Aug 2019 00:00:00 +0000</lastBuildDate>
     <image>
-      <url>/kubernetes-operator/img/hugo.png</url>
+      <url>https://jenkinsci.github.io/kubernetes-operator/img/hugo.png</url>
       <title>GoHugo.io</title>
-      <link>/kubernetes-operator/docs/getting-started/</link>
+      <link>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/</link>
     </image>
     
-	  <atom:link href="/kubernetes-operator/docs/getting-started/index.xml" rel="self" type="application/rss+xml" />
+	  <atom:link href="https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/index.xml" rel="self" type="application/rss+xml" />
     
     
       
         
       
     
-    
-    <item>
-      <title>Docs: v0.1.1</title>
-      <link>/kubernetes-operator/docs/getting-started/v0.1.1/</link>
-      <pubDate>Mon, 05 Aug 2019 00:00:00 +0000</pubDate>
-      
-      <guid>/kubernetes-operator/docs/getting-started/v0.1.1/</guid>
-      <description>
-        
-        
-        
-
-
-
-&lt;div class=&#34;pageinfo pageinfo-primary&#34;&gt;
-&lt;p&gt;This document describes a getting started guide for &lt;strong&gt;jenkins-operator&lt;/strong&gt; &lt;code&gt;v0.1.1&lt;/code&gt; and an additional configuration.&lt;/p&gt;
-
-&lt;/div&gt;
-
-
-&lt;h2 id=&#34;first-steps&#34;&gt;First Steps&lt;/h2&gt;
-
-&lt;p&gt;Prepare your Kubernetes cluster and set up access.
-Once you have running Kubernetes cluster you can focus on installing &lt;strong&gt;jenkins-operator&lt;/strong&gt; according to the &lt;a href=&#34;/kubernetes-operator/docs/installation/&#34;&gt;Installation&lt;/a&gt; guide.&lt;/p&gt;
-
-      </description>
-    </item>
-    
-    <item>
-      <title>Docs: v0.2.0</title>
-      <link>/kubernetes-operator/docs/getting-started/v0.2.0/</link>
-      <pubDate>Mon, 05 Aug 2019 00:00:00 +0000</pubDate>
-      
-      <guid>/kubernetes-operator/docs/getting-started/v0.2.0/</guid>
-      <description>
-        
-        
-        
-
-
-
-&lt;div class=&#34;pageinfo pageinfo-primary&#34;&gt;
-&lt;p&gt;This document describes a getting started guide for &lt;strong&gt;jenkins-operator&lt;/strong&gt; &lt;code&gt;v0.2.0&lt;/code&gt; and an additional configuration.&lt;/p&gt;
-
-&lt;/div&gt;
-
-
-&lt;h2 id=&#34;first-steps&#34;&gt;First Steps&lt;/h2&gt;
-
-&lt;p&gt;Prepare your Kubernetes cluster and set up access.
-Once you have running Kubernetes cluster you can focus on installing &lt;strong&gt;jenkins-operator&lt;/strong&gt; according to the &lt;a href=&#34;/kubernetes-operator/docs/installation/&#34;&gt;Installation&lt;/a&gt; guide.&lt;/p&gt;
-
-      </description>
-    </item>
     
   </channel>
 </rss>
