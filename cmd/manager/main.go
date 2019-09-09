@@ -4,10 +4,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	kubemetrics "github.com/operator-framework/operator-sdk/pkg/kube-metrics"
-	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
-	"k8s.io/client-go/rest"
 	"os"
 	"runtime"
 
@@ -31,6 +27,10 @@ import (
 	"github.com/spf13/pflag"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+	kubemetrics "github.com/operator-framework/operator-sdk/pkg/kube-metrics"
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
@@ -124,7 +124,7 @@ func main() {
 	}
 
 	if err = serveCRMetrics(cfg); err != nil {
-		log.Log.Info("Could not generate and serve custom resource metrics", "error", err.Error())
+		log.Log.V(log.VWarn).Info("Could not generate and serve custom resource metrics", "error", err.Error())
 	}
 
 	// Add to the below struct any other metrics ports you want to expose.
@@ -135,7 +135,7 @@ func main() {
 	// Create Service object to expose the metrics port(s).
 	service, err := metrics.CreateMetricsService(ctx, cfg, servicePorts)
 	if err != nil {
-		log.Log.Info("Could not create metrics Service", "error", err.Error())
+		log.Log.V(log.VWarn).Info("Could not create metrics Service", "error", err.Error())
 	}
 
 	// CreateServiceMonitors will automatically create the prometheus-operator ServiceMonitor resources
@@ -143,11 +143,11 @@ func main() {
 	services := []*v1.Service{service}
 	_, err = metrics.CreateServiceMonitors(cfg, namespace, services)
 	if err != nil {
-		log.Log.Info("Could not create ServiceMonitor object", "error", err.Error())
+		log.Log.V(log.VWarn).Info("Could not create ServiceMonitor object", "error", err.Error())
 		// If this operator is deployed to a cluster without the prometheus-operator running, it will return
 		// ErrServiceMonitorNotPresent, which can be used to safely skip ServiceMonitor creation.
 		if err == metrics.ErrServiceMonitorNotPresent {
-			log.Log.Info("Install prometheus-operator in your cluster to create ServiceMonitor objects", "error", err.Error())
+			log.Log.V(log.VWarn).Info("Install prometheus-operator in your cluster to create ServiceMonitor objects", "error", err.Error())
 		}
 	}
 
@@ -176,11 +176,7 @@ func serveCRMetrics(cfg *rest.Config) error {
 	// To generate metrics in other namespaces, add the values below.
 	ns := []string{operatorNs}
 	// Generate and serve custom resource specific metrics.
-	err = kubemetrics.GenerateAndServeCRMetrics(cfg, ns, filteredGVK, metricsHost, operatorMetricsPort)
-	if err != nil {
-		return err
-	}
-	return nil
+	return kubemetrics.GenerateAndServeCRMetrics(cfg, ns, filteredGVK, metricsHost, operatorMetricsPort)
 }
 
 func fatal(err error, debug bool) {
