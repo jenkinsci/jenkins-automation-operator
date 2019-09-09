@@ -1,4 +1,4 @@
-baseURL = "/kubernetes-operator"
+baseURL = "https://jenkinsci.github.io/kubernetes-operator"
 title = "Jenkins Operator"
 
 enableRobotsTXT = true
