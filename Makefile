@@ -446,8 +446,8 @@ ifndef TRAVIS
 else
 	@echo "+ $@"
 	curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/$(MINIKUBE_KUBERNETES_VERSION)/bin/linux/amd64/kubectl && chmod +x kubectl && sudo mv kubectl /usr/local/bin/
-	curl -Lo minikube https://storage.googleapis.com/minikube/releases/$(MINIKUBE_VERSION)/minikube-linux-amd64 && chmod +x minikube && sudo mv minikube /usr/local/bin/
-	curl -Lo operator-sdk https://github.com/operator-framework/operator-sdk/releases/download/$(OPERATOR_SDK_VERSION)/operator-sdk-$(OPERATOR_SDK_VERSION)-x86_64-linux-gnu && chmod +x operator-sdk && sudo mv operator-sdk /usr/local/bin/
+	curl -Lo minikube https://storage.googleapis.com/minikube/releases/v$(MINIKUBE_VERSION)/minikube-linux-amd64 && chmod +x minikube && sudo mv minikube /usr/local/bin/
+	curl -Lo operator-sdk https://github.com/operator-framework/operator-sdk/releases/download/v$(OPERATOR_SDK_VERSION)/operator-sdk-v$(OPERATOR_SDK_VERSION)-x86_64-linux-gnu && chmod +x operator-sdk && sudo mv operator-sdk /usr/local/bin/
 	mkdir -p $(HOME)/.kube $(HOME)/.minikube
 	touch $(KUBECONFIG)
 	sudo minikube start --vm-driver=none --kubernetes-version=v1.12.9
