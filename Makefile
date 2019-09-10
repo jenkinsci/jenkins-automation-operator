@@ -134,7 +134,7 @@ HAS_GOLINT := $(shell which golint)
 lint: ## Verifies `golint` passes
 	@echo "+ $@"
 ifndef HAS_GOLINT
-	go get -u golang.org/x/lint
+	go get -u golang.org/x/lint/golint
 endif
 	@golint $(PACKAGES)
 
