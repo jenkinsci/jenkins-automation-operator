@@ -21,7 +21,8 @@ RUN apk update && \
             make \
             gcc \
             libc-dev \
-            git
+            git \
+            mercurial
 
 RUN curl -O https://storage.googleapis.com/golang/go$GO_VERSION.linux-amd64.tar.gz && tar -xvf go$GO_VERSION.linux-amd64.tar.gz
 
