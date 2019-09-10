@@ -21,7 +21,6 @@ matrix:
   - go: master
 
 before_install:
-- go get -u github.com/golang/lint/golint
 - make go-dependencies
 
 before_script:

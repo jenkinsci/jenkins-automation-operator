@@ -17,6 +17,7 @@ require (
 	github.com/stretchr/testify v1.3.0
 	go.uber.org/zap v1.9.1
 	golang.org/x/crypto v0.0.0-20190909091759-094676da4a83 // indirect
+	golang.org/x/lint v0.0.0-20190909230951-414d861bb4ac // indirect
 	golang.org/x/net v0.0.0-20190909003024-a7b16738d86b // indirect
 	golang.org/x/sys v0.0.0-20190910064555-bbd175535a8b // indirect
 	golang.org/x/text v0.3.2 // indirect
@@ -48,7 +49,4 @@ replace (
 	sigs.k8s.io/controller-tools => sigs.k8s.io/controller-tools v0.1.11-0.20190411181648-9d55346c2bde
 )
 
-replace (
-	git.apache.org/thrift.git => github.com/apache/thrift v0.12.0
-	github.com/golang/lint v0.0.0-20190409202823-959b441ac422 => golang.org/x/lint v0.0.0-20190409202823-959b441ac422
-)
+replace git.apache.org/thrift.git => github.com/apache/thrift v0.12.0
