@@ -7,7 +7,7 @@ description: >
   Jenkins Operator fundamentals
 ---
 
-The **jenkins-operator** design incorporates the following concepts:
+The **Jenkins Operator** design incorporates the following concepts:
 - watches any changes of manifests and maintain the desired state according to deployed custom resource manifest
 - implements the main reconciliation loop which consists of two smaller reconciliation loops - base and user 
 

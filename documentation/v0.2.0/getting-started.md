@@ -1,6 +1,6 @@
 # Getting Started
 
-This document describes a getting started guide for **jenkins-operator** and an additional configuration.
+This document describes a getting started guide for **Jenkins Operator** and an additional configuration.
 
 1. [First Steps](#first-steps)
 2. [Deploy Jenkins](#deploy-jenkins)
@@ -17,7 +17,7 @@ This document describes a getting started guide for **jenkins-operator** and an 
 ## First Steps
 
 Prepare your Kubernetes cluster and set up access.
-Once you have running Kubernetes cluster you can focus on installing **jenkins-operator** according to the [Installation](../installation.md) guide.
+Once you have running Kubernetes cluster you can focus on installing **Jenkins Operator** according to the [Installation](../installation.md) guide.
 
 ## Deploy Jenkins
 
@@ -215,7 +215,7 @@ spec:
     repositoryUrl: https://github.com/jenkinsci/kubernetes-operator.git
 ```
 
-**jenkins-operator** will automatically discover and configure all seed jobs.
+**Jenkins Operator** will automatically discover and configure all seed jobs.
 
 You can verify if deploy keys were successfully configured in Jenkins **Credentials** tab.
 
@@ -456,7 +456,7 @@ data:
 * *.groovy is Groovy script configuration
 * *.yaml is configuration as code
 
-If you want to correct your configuration you can edit it while **jenkins-operator** is running. 
+If you want to correct your configuration you can edit it while **Jenkins Operator** is running. 
 Jenkins will reconcile and apply new configuration.
 
 ### Using secrets inside Groovy script
@@ -547,7 +547,7 @@ spec:
      version: 0.5.1
 ```
 
-Then **jenkins-operator** will automatically install plugins after Jenkins master pod restart.
+Then **Jenkins Operator** will automatically install plugins after Jenkins master pod restart.
 
 ## Configure backup and restore
 
@@ -665,7 +665,7 @@ data:
   password: <base64-encoded-new-password>
 ```
 
-If needed **jenkins-operator** will restart Jenkins master pod and then you can login with the new user and password 
+If needed **Jenkins Operator** will restart Jenkins master pod and then you can login with the new user and password 
 credentials.
 
 ## Override default Jenkins container command
@@ -694,7 +694,7 @@ command:
 
 ## Debugging
 
-Turn on debug in **jenkins-operator** deployment:
+Turn on debug in **Jenkins Operator** deployment:
 
 ```bash
 sed -i 's|\(args:\).*|\1\ ["--debug"\]|' deploy/operator.yaml

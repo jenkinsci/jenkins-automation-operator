@@ -9,7 +9,7 @@ Visit [website](https://jenkinsci.github.io/kubernetes-operator/) for the full d
 
 ![logo](/assets/jenkins_gopher_wide.png)
 
-## What's Jenkins Operator?
+## What's the Jenkins Operator?
 
 Jenkins operator is a Kubernetes native operator which fully manages Jenkins on Kubernetes.
 It was built with immutability and declarative configuration as code in mind.
@@ -22,7 +22,7 @@ Out of the box it provides:
 
 ## Problem statement and goals
 
-The main reason why we decided to write the **jenkins-operator** is the fact that we faced a lot of problems with standard Jenkins deployment.
+The main reason why we decided to implement the **Jenkins Operator** is the fact that we faced a lot of problems with standard Jenkins deployment.
 We want to make Jenkins more robust, suitable for dynamic and multi-tenant environments. 
 
 Some of the problems we want to solve:

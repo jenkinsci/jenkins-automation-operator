@@ -13,7 +13,7 @@ Now seed jobs are not built by master executors, but by dedicated agent deployed
 ### Apply Jenkins configuration via Groovy scripts instead of Jenkins jobs
 We have removed hardcoded configuration by **Jenkins** jobs. 
 
-In `v0.1.1` **jenkins-operator** configuration was stored in `jenkins-operator-user-configuration-<cr_name>`
+In `v0.1.1` **Jenkins Operator** configuration was stored in `jenkins-operator-user-configuration-<cr_name>`
 If you want to use `v0.2.0` or newer you must simply write refer to old ConfigMap by modifying CR, for example:
 
 ```yaml

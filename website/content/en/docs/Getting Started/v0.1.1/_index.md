@@ -8,10 +8,10 @@ description: >
 ---
 
 {{% pageinfo %}}
-This document describes a getting started guide for **jenkins-operator** `v0.1.1` and an additional configuration.
+This document describes a getting started guide for **Jenkins Operator** `v0.1.1` and an additional configuration.
 {{% /pageinfo %}}
 
 ## First Steps
 
 Prepare your Kubernetes cluster and set up access.
-Once you have running Kubernetes cluster you can focus on installing **jenkins-operator** according to the [Installation](/docs/installation/) guide.
+Once you have running Kubernetes cluster you can focus on installing **Jenkins Operator** according to the [Installation](/docs/installation/) guide.

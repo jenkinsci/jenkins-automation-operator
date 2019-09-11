@@ -8,7 +8,7 @@ description: >
 ---
 
 
-Turn on debug in **jenkins-operator** deployment:
+Turn on debug in **Jenkins Operator** deployment:
 
 ```bash
 sed -i 's|\(args:\).*|\1\ ["--debug"\]|' deploy/operator.yaml

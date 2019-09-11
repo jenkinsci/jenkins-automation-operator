@@ -23,13 +23,13 @@ make go-dependencies
 
 ## Build and run with a minikube
 
-Build and run **jenkins-operator** locally:
+Build and run **Jenkins Operator** locally:
 
 ```bash
 make minikube-run EXTRA_ARGS='--minikube --local'
 ```
 
-Once minikube and **jenkins-operator** are up and running, apply Jenkins custom resource:
+Once minikube and **Jenkins Operator** are up and running, apply Jenkins custom resource:
 
 ```bash
 kubectl apply -f deploy/crds/jenkins_v1alpha2_jenkins_cr.yaml
@@ -45,7 +45,7 @@ You can also run the controller locally and make it listen to a remote Kubernete
 make run NAMESPACE=default KUBECTL_CONTEXT=remote-k8s EXTRA_ARGS='--kubeconfig ~/.kube/config'
 ```
 
-Once minikube and **jenkins-operator** are up and running, apply Jenkins custom resource:
+Once minikube and **Jenkins Operator** are up and running, apply Jenkins custom resource:
 
 ```bash
 kubectl --context remote-k8s --namespace default apply -f deploy/crds/jenkins_v1alpha2_jenkins_cr.yaml
@@ -90,7 +90,7 @@ Build Docker image inside provided Linux container by:
 $ make indocker
 ```
 
-Build **jenkins-operator** inside container using:
+Build **Jenkins Operator** inside container using:
 
 ```bash
 $ make build
