@@ -21,11 +21,19 @@ matrix:
 before_install:
 - make go-dependencies
 
-script:
-- make verify
-- make travis-prepare
-- make build e2e
+jobs:
+  include:
+    - stage: unit
+      name: "Unit Tests"
+      script:
+        - make verify
+    - stage: e2e
+      name: "End-to-End Tests"
+      script:
+        - make travis-prepare
+        - make build e2e
 
 cache:
   directories:
     - vendor
+    - /home/travis/.minikube/
