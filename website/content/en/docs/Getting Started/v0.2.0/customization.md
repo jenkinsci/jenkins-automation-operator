@@ -62,7 +62,7 @@ data:
 * *.groovy is Groovy script configuration
 * *.yaml is configuration as code
 
-If you want to correct your configuration you can edit it while **jenkins-operator** is running. 
+If you want to correct your configuration you can edit it while **Jenkins Operator** is running. 
 Jenkins will reconcile and apply new configuration.
 
 ### Using secrets inside Groovy script
@@ -153,7 +153,7 @@ spec:
      version: 0.5.1
 ```
 
-Under `spec.master.basePlugins` you can find plugins for valid **jenkins-operator** work:
+Under `spec.master.basePlugins` you can find plugins for valid **Jenkins Operator** work:
 
 ```yaml
 apiVersion: jenkins.io/v1alpha2
@@ -183,4 +183,4 @@ spec:
 
 You can change version of them.
 
-Then **jenkins-operator** will automatically install plugins after Jenkins master pod restart.
+Then **Jenkins Operator** will automatically install plugins after Jenkins master pod restart.

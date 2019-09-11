@@ -7,5 +7,5 @@ description: >
   Jenkins default image details
 ---
 
-**jenkins-operator** is fully compatible with **jenkins:lts** docker image and does not introduce any hidden changes there.
+**Jenkins Operator** is fully compatible with **jenkins:lts** docker image and does not introduce any hidden changes there.
 If needed, the docker image can easily be changed in custom resource manifest as long as it supports standard Jenkins file system structure.

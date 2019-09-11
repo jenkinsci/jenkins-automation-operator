@@ -118,7 +118,7 @@ spec:
     repositoryUrl: https://github.com/jenkinsci/kubernetes-operator.git
 ```
 
-**jenkins-operator** will automatically discover and configure all seed jobs.
+**Jenkins Operator** will automatically discover and configure all seed jobs.
 
 You can verify if deploy keys were successfully configured in Jenkins **Credentials** tab.
 
@@ -247,7 +247,7 @@ data:
   password: <base64-encoded-new-password>
 ```
 
-If needed **jenkins-operator** will restart Jenkins master pod and then you can login with the new user and password 
+If needed **Jenkins Operator** will restart Jenkins master pod and then you can login with the new user and password 
 credentials.
 
 ## Override default Jenkins container command

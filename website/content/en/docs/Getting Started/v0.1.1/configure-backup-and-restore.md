@@ -4,7 +4,7 @@ linkTitle: "Configure backup and restore"
 weight: 10
 date: 2019-08-05
 description: >
-  Prevent job history loss
+  Prevent loss of job history
 ---
 
 Backup and restore is done by container sidecar.

@@ -8,9 +8,9 @@ description: >
 ---
 
 Jenkins can be customized using groovy scripts or configuration as code plugin. All custom configuration is stored in
-the **jenkins-operator-user-configuration-<cr_name>** ConfigMap which is automatically created by **jenkins-operator**.
+the **jenkins-operator-user-configuration-<cr_name>** ConfigMap which is automatically created by **Jenkins Operator**.
 
-**jenkins-operator** creates **jenkins-operator-user-configuration-<cr_name>** secret where user can store sensitive 
+**Jenkins Operator** creates **jenkins-operator-user-configuration-<cr_name>** secret where user can store sensitive 
 information used for custom configuration. If you have entry in secret named `PASSWORD` then you can use it in 
 Configuration as Plugin as `adminAddress: "${PASSWORD}"`.
 
@@ -83,7 +83,7 @@ spec:
      version: 0.5.1
 ```
 
-Under `spec.master.basePlugins` you can find plugins for valid **jenkins-operator** work:
+Under `spec.master.basePlugins` you can find plugins for valid **Jenkins Operator** work:
 
 ```yaml
 apiVersion: jenkins.io/v1alpha2
@@ -113,4 +113,4 @@ spec:
 
 You can change version of them.
 
-Then **jenkins-operator** will automatically install plugins after Jenkins master pod restart.
+Then **Jenkins Operator** will automatically install plugins after Jenkins master pod restart.

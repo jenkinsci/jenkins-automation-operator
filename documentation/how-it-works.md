@@ -1,6 +1,6 @@
 # How it works
 
-This document describes a high level overview how **jenkins-operator** works. 
+This document describes a high level overview how **Jenkins Operator** works. 
 
 1. [Architecture and design](#architecture-and-design)
 2. [Operator State](#operator-state)
@@ -9,7 +9,7 @@ This document describes a high level overview how **jenkins-operator** works.
 
 ## Architecture and design
 
-The **jenkins-operator** design incorporates the following concepts:
+The **Jenkins Operator** design incorporates the following concepts:
 - watches any changes of manifests and maintain the desired state according to deployed custom resource manifest
 - implements the main reconciliation loop which consists of two smaller reconciliation loops - base and user 
 
@@ -48,5 +48,5 @@ Main assumptions are:
 
 ## Jenkins Docker Images
 
-**jenkins-operator** is fully compatible with **jenkins:lts** docker image and does not introduce any hidden changes there.
+**Jenkins Operator** is fully compatible with **jenkins:lts** docker image and does not introduce any hidden changes there.
 If needed, the docker image can easily be changed in custom resource manifest as long as it supports standard Jenkins file system structure.
