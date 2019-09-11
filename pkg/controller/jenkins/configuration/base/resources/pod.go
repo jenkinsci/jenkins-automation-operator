@@ -155,7 +155,7 @@ func getGroovyScriptsSecretVolumeName(jenkins *v1alpha2.Jenkins) string {
 }
 
 func getConfigurationAsCodeSecretVolumeName(jenkins *v1alpha2.Jenkins) string {
-	return "casc-" + jenkins.Spec.GroovyScripts.Secret.Name
+	return "casc-" + jenkins.Spec.ConfigurationAsCode.Secret.Name
 }
 
 // GetJenkinsMasterContainerBaseVolumeMounts returns Jenkins master pod volume mounts required by operator
