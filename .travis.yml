@@ -1,13 +1,17 @@
 language: go
-sudo: false
+sudo: required
 
 env:
   global:
     - GO111MODULE=on
+    - CHANGE_MINIKUBE_NONE_USER=true
+    - MINIKUBE_WANTUPDATENOTIFICATION=false
+    - MINIKUBE_WANTREPORTERRORPROMPT=false
+    - MINIKUBE_HOME=$HOME
+    - KUBECONFIG=$HOME/.kube/config
 
 go:
 - 1.12.x
-- master
 
 matrix:
   fast_finish: true
@@ -15,12 +19,21 @@ matrix:
   - go: master
 
 before_install:
-- go get -u github.com/golang/lint/golint
 - make go-dependencies
 
-script:
-- make verify
+jobs:
+  include:
+    - stage: unit
+      name: "Unit Tests"
+      script:
+        - make verify
+    - stage: e2e
+      name: "End-to-End Tests"
+      script:
+        - make travis-prepare
+        - make build e2e
 
 cache:
   directories:
     - vendor
+    - /home/travis/.minikube/
