@@ -1,9 +1,10 @@
 package resources
 
 import (
+	"testing"
+
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestGetJenkinsMasterPodBaseVolumes(t *testing.T) {
@@ -38,16 +39,7 @@ func TestGetJenkinsMasterPodBaseVolumes(t *testing.T) {
 			},
 		}
 
-		groovyExists := false
-		cascExists := false
-
-		for _, volume := range GetJenkinsMasterPodBaseVolumes(jenkins) {
-			if volume.Name == ("gs-" + jenkins.Spec.GroovyScripts.Secret.Name) {
-				groovyExists = true
-			} else if volume.Name == ("casc-" + jenkins.Spec.ConfigurationAsCode.Secret.Name) {
-				cascExists = true
-			}
-		}
+		groovyExists, cascExists := checkSecretVolumesPresence(jenkins)
 
 		assert.True(t, groovyExists)
 		assert.True(t, cascExists)
@@ -79,14 +71,10 @@ func TestGetJenkinsMasterPodBaseVolumes(t *testing.T) {
 			},
 		}
 
-		volumeExists := false
-		for _, volume := range GetJenkinsMasterPodBaseVolumes(jenkins) {
-			if volume.Name == ("casc-" + jenkins.Spec.ConfigurationAsCode.Secret.Name) {
-				volumeExists = true
-			}
-		}
+		groovyExists, cascExists := checkSecretVolumesPresence(jenkins)
 
-		assert.True(t, volumeExists)
+		assert.True(t, cascExists)
+		assert.False(t, groovyExists)
 	})
 	t.Run("casc without secret name", func(t *testing.T) {
 		jenkins := &v1alpha2.Jenkins{
@@ -115,14 +103,10 @@ func TestGetJenkinsMasterPodBaseVolumes(t *testing.T) {
 			},
 		}
 
-		volumeExists := false
-		for _, volume := range GetJenkinsMasterPodBaseVolumes(jenkins) {
-			if volume.Name == ("gs-" + jenkins.Spec.GroovyScripts.Secret.Name) {
-				volumeExists = true
-			}
-		}
+		groovyExists, cascExists := checkSecretVolumesPresence(jenkins)
 
-		assert.True(t, volumeExists)
+		assert.True(t, groovyExists)
+		assert.False(t, cascExists)
 	})
 	t.Run("casc and groovy script shared secret name", func(t *testing.T) {
 		jenkins := &v1alpha2.Jenkins{
