@@ -97,7 +97,7 @@ func TestConfiguration(t *testing.T) {
 	verifyJenkinsSeedJobs(t, client, []seedJobConfig{mySeedJob})
 }
 
-func TestPlugin(t *testing.T) {
+func TestPlugins(t *testing.T) {
 	t.Parallel()
 	namespace, ctx := setupTest(t)
 	// Deletes test namespace
@@ -127,6 +127,11 @@ func TestPlugin(t *testing.T) {
 	require.NoError(t, err, job)
 	i, err := job.InvokeSimple(map[string]string{})
 	require.NoError(t, err, i)
+
+	build, err := job.GetLastBuild()
+	require.NoError(t, err)
+	assert.Equal(t, int64(1), build.GetBuildNumber())
+	assert.True(t, build.IsGood())
 }
 
 func createUserConfigurationSecret(t *testing.T, namespace string, stringData map[string]string) {

@@ -11,7 +11,7 @@ podTemplate(label: label,
         ) {
     node(label) {
         container('alpine') {
-            echo "its working"
+            sh 'echo "Its working"'
         }
     }
 }
