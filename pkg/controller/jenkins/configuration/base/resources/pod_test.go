@@ -138,18 +138,21 @@ func TestGetJenkinsMasterPodBaseVolumes(t *testing.T) {
 			},
 		}
 
-		groovyExists := false
-		cascExists := false
-
-		for _, volume := range GetJenkinsMasterPodBaseVolumes(jenkins) {
-			if volume.Name == ("gs-" + jenkins.Spec.GroovyScripts.Secret.Name) {
-				groovyExists = true
-			} else if volume.Name == ("casc-" + jenkins.Spec.ConfigurationAsCode.Secret.Name) {
-				cascExists = true
-			}
-		}
+		groovyExists, cascExists := checkSecretVolumesPresence(jenkins)
 
 		assert.True(t, groovyExists)
 		assert.True(t, cascExists)
 	})
 }
+
+func checkSecretVolumesPresence(jenkins *v1alpha2.Jenkins) (groovyExists bool, cascExists bool) {
+	for _, volume := range GetJenkinsMasterPodBaseVolumes(jenkins) {
+		if volume.Name == ("gs-" + jenkins.Spec.GroovyScripts.Secret.Name) {
+			groovyExists = true
+		} else if volume.Name == ("casc-" + jenkins.Spec.ConfigurationAsCode.Secret.Name) {
+			cascExists = true
+		}
+	}
+	return groovyExists, cascExists
+}
+

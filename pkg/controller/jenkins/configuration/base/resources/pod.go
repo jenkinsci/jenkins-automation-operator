@@ -150,18 +150,6 @@ func GetJenkinsMasterPodBaseVolumes(jenkins *v1alpha2.Jenkins) []corev1.Volume {
 	return volumes
 }
 
-func checkSecretVolumesPresence(jenkins *v1alpha2.Jenkins) (groovyExists bool, cascExists bool) {
-	for _, volume := range GetJenkinsMasterPodBaseVolumes(jenkins) {
-		if volume.Name == ("gs-" + jenkins.Spec.GroovyScripts.Secret.Name) {
-			groovyExists = true
-		} else if volume.Name == ("casc-" + jenkins.Spec.ConfigurationAsCode.Secret.Name) {
-			cascExists = true
-		}
-	}
-
-	return groovyExists, cascExists
-}
-
 func getGroovyScriptsSecretVolumeName(jenkins *v1alpha2.Jenkins) string {
 	return "gs-" + jenkins.Spec.GroovyScripts.Secret.Name
 }
