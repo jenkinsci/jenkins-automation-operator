@@ -5,16 +5,17 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/groovy"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/plugins"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 
 	"github.com/bndr/gojenkins"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -94,6 +95,38 @@ func TestConfiguration(t *testing.T) {
 	waitForJenkinsUserConfigurationToComplete(t, jenkins)
 	verifyUserConfiguration(t, client, numberOfExecutors, systemMessage)
 	verifyJenkinsSeedJobs(t, client, []seedJobConfig{mySeedJob})
+}
+
+func TestPlugin(t *testing.T) {
+	t.Parallel()
+	namespace, ctx := setupTest(t)
+	// Deletes test namespace
+	defer ctx.Cleanup()
+
+	jobID := "k8s-e2e"
+
+	seedJobs := &[]v1alpha2.SeedJob{
+		{
+			ID:                    "jenkins-operator",
+			CredentialID:          "jenkins-operator",
+			JenkinsCredentialType: v1alpha2.NoJenkinsCredentialCredentialType,
+			Targets:               "cicd/jobs/k8s.jenkins",
+			Description:           "Jenkins Operator repository",
+			RepositoryBranch:      "master",
+			RepositoryURL:         "https://github.com/jenkinsci/kubernetes-operator.git",
+		},
+	}
+
+	jenkins := createJenkinsCR(t, "k8s-e2e", namespace, seedJobs, v1alpha2.GroovyScripts{}, v1alpha2.ConfigurationAsCode{})
+	waitForJenkinsUserConfigurationToComplete(t, jenkins)
+
+	jenkinsClient := verifyJenkinsAPIConnection(t, jenkins)
+	waitForJob(t, jenkinsClient, jobID)
+	job, err := jenkinsClient.GetJob(jobID)
+
+	require.NoError(t, err, job)
+	i, err := job.InvokeSimple(map[string]string{})
+	require.NoError(t, err, i)
 }
 
 func createUserConfigurationSecret(t *testing.T, namespace string, stringData map[string]string) {

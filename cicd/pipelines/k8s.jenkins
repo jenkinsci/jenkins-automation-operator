@@ -1,0 +1,17 @@
+#!/usr/bin/env groovy
+
+def label = "k8s-e2e"
+def home = "/home/jenkins"
+def workspace = "${home}/workspace/build-jenkins-operator"
+
+podTemplate(label: label,
+        containers: [
+                containerTemplate(name: 'alpine', image: 'alpine:3.10.2'),
+        ],
+        ) {
+    node(label) {
+        container('alpine') {
+            echo "its working"
+        }
+    }
+}
