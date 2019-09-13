@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base"
@@ -128,9 +129,12 @@ func TestPlugins(t *testing.T) {
 	i, err := job.InvokeSimple(map[string]string{})
 	require.NoError(t, err, i)
 
+	time.Sleep(time.Minute * 2)
+
+	job, err = jenkinsClient.GetJob(jobID)
+	require.NoError(t, err, job)
 	build, err := job.GetLastBuild()
 	require.NoError(t, err)
-	assert.Equal(t, int64(1), build.GetBuildNumber())
 	assert.True(t, build.IsGood())
 }
 

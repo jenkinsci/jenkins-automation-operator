@@ -1,17 +1,20 @@
 #!/usr/bin/env groovy
 
-def label = "k8s-e2e"
+def label = "k8sagent-e2e"
 def home = "/home/jenkins"
 def workspace = "${home}/workspace/build-jenkins-operator"
+def workdir = "${workspace}/src/github.com/jenkinsci/kubernetes-operator/"
 
 podTemplate(label: label,
         containers: [
-                containerTemplate(name: 'alpine', image: 'alpine:3.10.2'),
+                containerTemplate(name: 'alpine', image: 'alpine:3.10.2', ttyEnabled: true, command: 'cat'),
         ],
         ) {
     node(label) {
-        container('alpine') {
-            sh 'echo "Its working"'
+        stage('Run shell') {
+            container('alpine') {
+                sh 'echo "hello world"'
+            }
         }
     }
 }
