@@ -114,7 +114,7 @@ if (kubernetes == null) {
     add = true
 	kubernetes = new KubernetesCloud("kubernetes")
 }
-kubernetes.setServerUrl("https://kubernetes.default")
+kubernetes.setServerUrl("https://kubernetes.default.svc.cluster.local:443")
 kubernetes.setNamespace("%s")
 kubernetes.setJenkinsUrl("%s")
 kubernetes.setJenkinsTunnel("%s")
