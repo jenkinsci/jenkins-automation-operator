@@ -6,12 +6,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/groovy"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/plugins"
-	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 
 	"github.com/bndr/gojenkins"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
@@ -129,7 +129,7 @@ func TestPlugins(t *testing.T) {
 	i, err := job.InvokeSimple(map[string]string{})
 	require.NoError(t, err, i)
 
-	time.Sleep(time.Minute * 2)
+	waitForJobToFinish(t, job, 2 * time.Second, 2 * time.Minute)
 
 	job, err = jenkinsClient.GetJob(jobID)
 	require.NoError(t, err, job)

@@ -36,6 +36,7 @@ func TestBackupAndRestore(t *testing.T) {
 	require.NoError(t, err, job)
 	i, err := job.InvokeSimple(map[string]string{})
 	require.NoError(t, err, i)
+	// FIXME: waitForJobToFinish use
 	time.Sleep(60 * time.Second) // wait for the build to complete
 
 	restartJenkinsMasterPod(t, jenkins)
