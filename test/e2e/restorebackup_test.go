@@ -36,20 +36,8 @@ func TestBackupAndRestore(t *testing.T) {
 	require.NoError(t, err, job)
 	i, err := job.InvokeSimple(map[string]string{})
 	require.NoError(t, err, i)
-
-	time.Sleep(time.Second * 10)
-	err = try.Until(func() (end bool, err error) {
-		t.Log("Running job...")
-		running, _ := job.IsRunning()
-		queued, _ := job.IsQueued()
-
-		if !running && !queued {
-			return true, nil
-		}
-
-		return false, nil
-	}, time.Second*10, time.Minute*2)
-	require.NoError(t, err)
+	// FIXME: waitForJobToFinish use
+	time.Sleep(60 * time.Second) // wait for the build to complete
 
 	restartJenkinsMasterPod(t, jenkins)
 	waitForRecreateJenkinsMasterPod(t, jenkins)
