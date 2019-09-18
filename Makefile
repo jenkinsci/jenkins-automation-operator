@@ -454,3 +454,13 @@ else
 	sudo minikube start --vm-driver=none --kubernetes-version=$(MINIKUBE_KUBERNETES_VERSION)
 	sudo chown -R travis: /home/travis/.minikube/
 endif
+
+.PHONY: helm-package
+helm-package:
+	@echo "+ $@"
+	cd chart/ && helm package jenkins-operator
+
+.PHONY: helm-deploy
+helm-deploy: helm-package
+	@echo "+ $@"
+	helm repo index chart/ --url https://raw.githubusercontent.com/jenkinsci/kubernetes-operator/master/chart/jenkins-operator/
