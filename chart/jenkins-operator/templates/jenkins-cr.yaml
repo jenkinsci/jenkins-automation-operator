@@ -1,6 +1,8 @@
 apiVersion: {{ .Values.jenkins.apiVersion }}
 kind: Jenkins
 metadata:
-    name: {{ .Values.jenkins.name }}
-master:
-        {{- toYaml .Values.jenkins.master | nindent 4 }}
+  name: {{ .Values.jenkins.name }}
+  namespace: {{ .Values.jenkins.namespace  }}
+spec:
+  master:
+        {{- toYaml .Values.jenkins.spec.master | nindent 4 }}
