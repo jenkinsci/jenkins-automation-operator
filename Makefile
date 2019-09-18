@@ -458,9 +458,9 @@ endif
 .PHONY: helm-package
 helm-package:
 	@echo "+ $@"
-	cd chart/ && helm package jenkins-operator
-
+	cd chart && helm package jenkins-operator
 .PHONY: helm-deploy
 helm-deploy: helm-package
 	@echo "+ $@"
 	helm repo index chart/ --url https://raw.githubusercontent.com/jenkinsci/kubernetes-operator/master/chart/jenkins-operator/
+	cd chart/ && mv jenkins-operator-*.tgz jenkins-operator
