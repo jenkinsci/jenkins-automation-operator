@@ -16,7 +16,6 @@ fullnameOverride: ""
 jenkins:
     apiVersion: jenkins.io/v1alpha2
     name: example
-    namespace: default
     spec:
       master:
         containers:
