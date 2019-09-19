@@ -44,7 +44,7 @@ func TestValidatePlugins(t *testing.T) {
 	t.Run("invalid user plugin name", func(t *testing.T) {
 		var requiredBasePlugins []plugins.Plugin
 		var basePlugins []v1alpha2.Plugin
-		userPlugins := []v1alpha2.Plugin{{Name: "INVALID", Version: "0.0.1"}}
+		userPlugins := []v1alpha2.Plugin{{Name: "INVALID?", Version: "0.0.1"}}
 
 		got := baseReconcileLoop.validatePlugins(requiredBasePlugins, basePlugins, userPlugins)
 
@@ -70,7 +70,7 @@ func TestValidatePlugins(t *testing.T) {
 	})
 	t.Run("invalid base plugin name", func(t *testing.T) {
 		var requiredBasePlugins []plugins.Plugin
-		basePlugins := []v1alpha2.Plugin{{Name: "INVALID", Version: "0.0.1"}}
+		basePlugins := []v1alpha2.Plugin{{Name: "INVALID?", Version: "0.0.1"}}
 		var userPlugins []v1alpha2.Plugin
 
 		got := baseReconcileLoop.validatePlugins(requiredBasePlugins, basePlugins, userPlugins)

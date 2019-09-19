@@ -2,7 +2,6 @@ package e2e
 
 import (
 	goctx "context"
-	"github.com/bndr/gojenkins"
 	"net/http"
 	"testing"
 	"time"
@@ -12,6 +11,7 @@ import (
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 
+	"github.com/bndr/gojenkins"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"

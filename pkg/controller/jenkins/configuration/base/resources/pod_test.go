@@ -155,4 +155,3 @@ func checkSecretVolumesPresence(jenkins *v1alpha2.Jenkins) (groovyExists bool, c
 	}
 	return groovyExists, cascExists
 }
-
