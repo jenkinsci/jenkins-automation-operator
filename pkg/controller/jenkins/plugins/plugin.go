@@ -22,7 +22,7 @@ func (p Plugin) String() string {
 }
 
 var (
-	namePattern    = regexp.MustCompile(`^[0-9a-z-_]+$`)
+	namePattern    = regexp.MustCompile(`(?i)^[0-9a-z-_]+$`)
 	versionPattern = regexp.MustCompile(`^[0-9\\.]+$`)
 )
 
