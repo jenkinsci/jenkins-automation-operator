@@ -6,7 +6,7 @@ replicaCount: 1
 
 image:
   repository: virtuslab/jenkins-operator
-  tag: v0.2.0
+  tag: v0.2.2
   pullPolicy: IfNotPresent
 
 imagePullSecrets: []
