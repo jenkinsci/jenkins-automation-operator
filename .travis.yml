@@ -26,12 +26,12 @@ jobs:
     - stage: unit
       name: "Unit Tests"
       script:
-        - make verify
+        - travis_wait 15 make verify
     - stage: e2e
       name: "End-to-End Tests"
       script:
-        - make travis-prepare
-        - make build e2e
+        - travis_wait 10 make travis-prepare
+        - travis_wait 45 make build e2e
 
 cache:
   directories:
