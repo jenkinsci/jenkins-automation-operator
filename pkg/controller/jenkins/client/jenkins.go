@@ -94,6 +94,10 @@ func BuildJenkinsAPIUrl(namespace, serviceName string, portNumber int32, local, 
 		// First is for http, the second one is for Jenkins slaves communication
 		// see pkg/controller/jenkins/configuration/base/resources/service.go
 		url := lines[0]
+		if strings.HasPrefix(url, "* ") {
+			return url[2:], nil
+		}
+
 		return url, nil
 	}
 

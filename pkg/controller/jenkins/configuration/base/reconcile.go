@@ -788,7 +788,7 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsClient(meta metav1.Obje
 	if err != nil {
 		return nil, err
 	}
-	r.logger.V(log.VDebug).Info(fmt.Sprintf("Jenkins API URL %s", jenkinsURL))
+	r.logger.V(log.VDebug).Info(fmt.Sprintf("Jenkins API URL '%s'", jenkinsURL))
 
 	credentialsSecret := &corev1.Secret{}
 	err = r.k8sClient.Get(context.TODO(), types.NamespacedName{Name: resources.GetOperatorCredentialsSecretName(r.jenkins), Namespace: r.jenkins.ObjectMeta.Namespace}, credentialsSecret)
