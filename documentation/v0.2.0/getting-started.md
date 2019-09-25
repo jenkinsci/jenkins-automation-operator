@@ -144,7 +144,7 @@ pipelineJob('build-jenkins-operator') {
 }
 ```
 
-**cicd/jobs/build.jenkins** it's an actual Jenkins pipeline:
+**cicd/pipelines/build.jenkins** it's an actual Jenkins pipeline:
 
 ```
 #!/usr/bin/env groovy
