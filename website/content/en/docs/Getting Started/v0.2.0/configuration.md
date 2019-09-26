@@ -231,6 +231,22 @@ stringData:
   password: password_or_token
 ```
 
+## HTTP Proxy
+
+To use forwarding proxy with operator you need to put environment var to Jenkins CR, for e.g.:
+
+```yaml
+spec:
+  master:
+    containers:
+      - name: jenkins-master
+        env:
+          - name: CURL_OPTIONS
+            value: -L -x <proxy_url>
+```
+
+In `CURL_OPTIONS` var you can set additional arguments to curl command.
+
 ## Pulling Docker images from private repositories
 To pull Docker Image from private repository you can use `imagePullSecrets`.
 

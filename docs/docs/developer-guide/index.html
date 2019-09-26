@@ -458,9 +458,9 @@ git clone git@github.com:jenkinsci/kubernetes-operator.git
 make go-dependencies</code></pre></div>
 <h2 id="build-and-run-with-a-minikube">Build and run with a minikube</h2>
 
-<p>Build and run <strong>jenkins-operator</strong> locally:</p>
+<p>Build and run <strong>Jenkins Operator</strong> locally:</p>
 <div class="highlight"><pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">make minikube-run <span style="color:#000">EXTRA_ARGS</span><span style="color:#ce5c00;font-weight:bold">=</span><span style="color:#4e9a06">&#39;--minikube --local&#39;</span></code></pre></div>
-<p>Once minikube and <strong>jenkins-operator</strong> are up and running, apply Jenkins custom resource:</p>
+<p>Once minikube and <strong>Jenkins Operator</strong> are up and running, apply Jenkins custom resource:</p>
 <div class="highlight"><pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">kubectl apply -f deploy/crds/jenkins_v1alpha2_jenkins_cr.yaml
 kubectl get jenkins -o yaml
 kubectl get po</code></pre></div>
@@ -468,7 +468,7 @@ kubectl get po</code></pre></div>
 
 <p>You can also run the controller locally and make it listen to a remote Kubernetes server.</p>
 <div class="highlight"><pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">make run <span style="color:#000">NAMESPACE</span><span style="color:#ce5c00;font-weight:bold">=</span>default <span style="color:#000">KUBECTL_CONTEXT</span><span style="color:#ce5c00;font-weight:bold">=</span>remote-k8s <span style="color:#000">EXTRA_ARGS</span><span style="color:#ce5c00;font-weight:bold">=</span><span style="color:#4e9a06">&#39;--kubeconfig ~/.kube/config&#39;</span></code></pre></div>
-<p>Once minikube and <strong>jenkins-operator</strong> are up and running, apply Jenkins custom resource:</p>
+<p>Once minikube and <strong>Jenkins Operator</strong> are up and running, apply Jenkins custom resource:</p>
 <div class="highlight"><pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">kubectl --context remote-k8s --namespace default apply -f deploy/crds/jenkins_v1alpha2_jenkins_cr.yaml
 kubectl --context remote-k8s --namespace default get jenkins -o yaml
 kubectl --context remote-k8s --namespace default get po</code></pre></div>
@@ -491,7 +491,7 @@ make build e2e</code></pre></div>
 $ <span style="color:#204a87">eval</span> <span style="color:#204a87;font-weight:bold">$(</span>minikube docker-env<span style="color:#204a87;font-weight:bold">)</span> </code></pre></div>
 <p>Build Docker image inside provided Linux container by:</p>
 <div class="highlight"><pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ make indocker</code></pre></div>
-<p>Build <strong>jenkins-operator</strong> inside container using:</p>
+<p>Build <strong>Jenkins Operator</strong> inside container using:</p>
 <div class="highlight"><pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ make build</code></pre></div>
 <p>Then exit the container and run:</p>
 

@@ -30,7 +30,7 @@
         
         
 
-&lt;p&gt;The &lt;strong&gt;jenkins-operator&lt;/strong&gt; design incorporates the following concepts:
+&lt;p&gt;The &lt;strong&gt;Jenkins Operator&lt;/strong&gt; design incorporates the following concepts:
 - watches any changes of manifests and maintain the desired state according to deployed custom resource manifest
 - implements the main reconciliation loop which consists of two smaller reconciliation loops - base and user&lt;/p&gt;
 
@@ -67,7 +67,7 @@ It helps to maintain or recover desired state even after operator or Jenkins res
       <description>
         
         
-        &lt;p&gt;&lt;strong&gt;jenkins-operator&lt;/strong&gt; is fully compatible with &lt;strong&gt;jenkins:lts&lt;/strong&gt; docker image and does not introduce any hidden changes there.
+        &lt;p&gt;&lt;strong&gt;Jenkins Operator&lt;/strong&gt; is fully compatible with &lt;strong&gt;jenkins:lts&lt;/strong&gt; docker image and does not introduce any hidden changes there.
 If needed, the docker image can easily be changed in custom resource manifest as long as it supports standard Jenkins file system structure.&lt;/p&gt;
 
       </description>

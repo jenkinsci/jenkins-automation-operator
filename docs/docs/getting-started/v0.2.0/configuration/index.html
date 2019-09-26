@@ -35,7 +35,7 @@
 
 <meta itemprop="datePublished" content="2019-08-05T00:00:00&#43;00:00" />
 <meta itemprop="dateModified" content="2019-08-05T00:00:00&#43;00:00" />
-<meta itemprop="wordCount" content="672">
+<meta itemprop="wordCount" content="704">
 
 
 
@@ -567,7 +567,7 @@ spec:
     repositoryUrl: https://github.com/jenkinsci/kubernetes-operator.git
 </code></pre>
 
-<p><strong>jenkins-operator</strong> will automatically discover and configure all seed jobs.</p>
+<p><strong>Jenkins Operator</strong> will automatically discover and configure all seed jobs.</p>
 
 <p>You can verify if deploy keys were successfully configured in Jenkins <strong>Credentials</strong> tab.</p>
 
@@ -661,6 +661,18 @@ stringData:
   username: github_user_name
   password: password_or_token
 </code></pre>
+
+<h2 id="http-proxy">HTTP Proxy</h2>
+
+<p>To use forwarding proxy with operator you need to put environment var to Jenkins CR, for e.g.:</p>
+<div class="highlight"><pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml">spec<span style="color:#000;font-weight:bold">:</span><span style="color:#f8f8f8;text-decoration:underline">
+</span><span style="color:#f8f8f8;text-decoration:underline">  </span>master<span style="color:#000;font-weight:bold">:</span><span style="color:#f8f8f8;text-decoration:underline">
+</span><span style="color:#f8f8f8;text-decoration:underline">    </span>containers<span style="color:#000;font-weight:bold">:</span><span style="color:#f8f8f8;text-decoration:underline">
+</span><span style="color:#f8f8f8;text-decoration:underline">      </span>-<span style="color:#f8f8f8;text-decoration:underline"> </span>name<span style="color:#000;font-weight:bold">:</span><span style="color:#f8f8f8;text-decoration:underline"> </span>jenkins-master<span style="color:#f8f8f8;text-decoration:underline">
+</span><span style="color:#f8f8f8;text-decoration:underline">        </span>env<span style="color:#000;font-weight:bold">:</span><span style="color:#f8f8f8;text-decoration:underline">
+</span><span style="color:#f8f8f8;text-decoration:underline">          </span>-<span style="color:#f8f8f8;text-decoration:underline"> </span>name<span style="color:#000;font-weight:bold">:</span><span style="color:#f8f8f8;text-decoration:underline"> </span>CURL_OPTIONS<span style="color:#f8f8f8;text-decoration:underline">
+</span><span style="color:#f8f8f8;text-decoration:underline">            </span>value<span style="color:#000;font-weight:bold">:</span><span style="color:#f8f8f8;text-decoration:underline"> </span>-L<span style="color:#f8f8f8;text-decoration:underline"> </span>-x<span style="color:#f8f8f8;text-decoration:underline"> </span>&lt;proxy_url&gt;</code></pre></div>
+<p>In <code>CURL_OPTIONS</code> var you can set additional arguments to curl command.</p>
 
 <h2 id="pulling-docker-images-from-private-repositories">Pulling Docker images from private repositories</h2>
 

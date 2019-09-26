@@ -431,20 +431,20 @@
 	<div class="lead">Jenkins security and hardening out of the box</div>
 	
 
-<p>By default <strong>jenkins-operator</strong> performs an initial security hardening of Jenkins instance via groovy scripts to prevent any security gaps.</p>
+<p>By default <strong>Jenkins Operator</strong> performs an initial security hardening of Jenkins instance via groovy scripts to prevent any security gaps.</p>
 
 <h2 id="jenkins-access-control">Jenkins Access Control</h2>
 
-<p>Currently <strong>jenkins-operator</strong> generates a username and random password and stores them in a Kubernetes Secret.
+<p>Currently <strong>Jenkins Operator</strong> generates a username and random password and stores them in a Kubernetes Secret.
 However any other authorization mechanisms are possible and can be done via groovy scripts or configuration as code plugin.
 For more information take a look at <a href="v0.1.1/getting-started.md#jenkins-customisation" target="_blank">getting-started#jenkins-customization</a>.</p>
 
 <p>Any change to Security Realm or Authorization requires that user called <code>jenkins-operator</code> must have admin rights
-because <strong>jenkins-operator</strong> calls Jenkins API.</p>
+because <strong>Jenkins Operator</strong> calls Jenkins API.</p>
 
 <h2 id="jenkins-hardening">Jenkins Hardening</h2>
 
-<p>The list below describes all the default security setting configured by the <strong>jenkins-operator</strong>:
+<p>The list below describes all the default security setting configured by the <strong>Jenkins Operator</strong>:
 - basic settings - use <code>Mode.EXCLUSIVE</code> - Jobs must specify that they want to run on master node
 - enable CSRF - Cross Site Request Forgery Protection is enabled
 - disable usage stats - Jenkins usage stats submitting is disabled
@@ -457,7 +457,7 @@ because <strong>jenkins-operator</strong> calls Jenkins API.</p>
 
 <h2 id="jenkins-api">Jenkins API</h2>
 
-<p>The <strong>jenkins-operator</strong> generates and configures Basic Authentication token for Jenkins go client and stores it in a Kubernetes Secret.</p>
+<p>The <strong>Jenkins Operator</strong> generates and configures Basic Authentication token for Jenkins go client and stores it in a Kubernetes Secret.</p>
 
 <h2 id="kubernetes">Kubernetes</h2>
 
@@ -465,22 +465,22 @@ because <strong>jenkins-operator</strong> calls Jenkins API.</p>
 - <a href="../deploy/role.yaml">jenkins-operator role</a><br />
 - <a href="../pkg/controller/jenkins/configuration/base/resources/rbac.go">Jenkins Master role</a></p>
 
-<p>Since <strong>jenkins-operator</strong> must be able to grant permission for its&rsquo; deployed Jenkins masters to spawn pods (the <code>Jenkins Master role</code> above),
+<p>Since <strong>Jenkins Operator</strong> must be able to grant permission for its&rsquo; deployed Jenkins masters to spawn pods (the <code>Jenkins Master role</code> above),
 the operator itself requires permission to create RBAC resources (the <code>jenkins-operator role</code> above).
 Deployed this way, any subject which may create a Pod (including a Jenkins job) may
 assume the <code>jenkins-operator</code> role by using its&rsquo; ServiceAccount, create RBAC rules, and thus escape its granted permissions.
 Any namespace to which the <code>jenkins-operator</code> is deployed must be considered to implicitly grant all
 possible permissions to any subject which can create a Pod in that namespace.</p>
 
-<p>To mitigate this issue <strong>jenkins-operator</strong> should be deployed in one namespace and the Jenkins CR should be created in separate namespace.
+<p>To mitigate this issue <strong>Jenkins Operator</strong> should be deployed in one namespace and the Jenkins CR should be created in separate namespace.
 To achieve it change watch namespace in <a href="https://github.com/jenkinsci/kubernetes-operator/blob/master/deploy/operator.yaml#L25" target="_blank">https://github.com/jenkinsci/kubernetes-operator/blob/master/deploy/operator.yaml#L25</a></p>
 
 <h2 id="setup-jenkins-operator-and-jenkins-in-separated-namespaces">Setup Jenkins Operator and Jenkins in separated namespaces</h2>
 
-<p>You need to create two namespaces, for example we&rsquo;ll call them <strong>jenkins</strong> for Jenkins and <strong>jenkins-operator</strong> for Jenkins Operator.</p>
+<p>You need to create two namespaces, for example we&rsquo;ll call them <strong>jenkins</strong> for Jenkins and <strong>Jenkins Operator</strong> for Jenkins Operator.</p>
 <div class="highlight"><pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ kubectl create ns jenkins-operator
 $ kubectl create ns jenkins</code></pre></div>
-<p>Next, apply the RBAC manifests for <strong>jenkins-operator</strong> namespace</p>
+<p>Next, apply the RBAC manifests for <strong>Jenkins Operator</strong> namespace</p>
 <div class="highlight"><pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ kubectl -n jenkins-operator apply -f deploy/service_account.yaml
 $ kubectl -n jenkins-operator apply -f deploy/role_binding.yaml</code></pre></div>
 <p>Create file role_binding_jenkins.yaml in <code>deploy</code> folder:</p>
