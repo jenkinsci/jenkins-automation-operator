@@ -231,9 +231,9 @@ stringData:
   password: password_or_token
 ```
 
-## HTTP Proxy
+## HTTP Proxy for downloading plugins
 
-To use forwarding proxy with operator you need to put environment var to Jenkins CR, for e.g.:
+To use forwarding proxy with operator to downloading plugins you need to put environment var to Jenkins CR, for e.g.:
 
 ```yaml
 spec:
