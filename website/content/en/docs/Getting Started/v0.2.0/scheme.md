@@ -176,6 +176,34 @@ Restore
 More info: <a href="https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-backup-and-restore">https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-backup-and-restore</a></p>
 </td>
 </tr>
+<tr>
+<td>
+<code>groovyScripts</code></br>
+<em>
+<a href="#github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.GroovyScripts">
+GroovyScripts
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>GroovyScripts defines configuration of Jenkins customization via groovy scripts</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>configurationAsCode</code></br>
+<em>
+<a href="#github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.ConfigurationAsCode">
+ConfigurationAsCode
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>ConfigurationAsCode defines configuration of Jenkins customization via Configuration as Code Jenkins plugin</p>
+</td>
+</tr>
 </table>
 </td>
 </tr>
@@ -190,6 +218,69 @@ JenkinsStatus
 </td>
 <td>
 <p>Status defines the observed state of Jenkins</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.AppliedGroovyScript">AppliedGroovyScript
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.JenkinsStatus">JenkinsStatus</a>)
+</p>
+<p>
+<p>AppliedGroovyScript is the applied groovy script in Jenkins by the operator</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>configurationType</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>ConfigurationType is the name of the configuration type(base-groovy, user-groovy, user-casc)</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>source</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>Source is the name of source where is located groovy script</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>name</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>Name is the name of the groovy script</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>Hash</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>Hash is the hash of the groovy script and secrets which it uses</p>
 </td>
 </tr>
 </tbody>
@@ -260,14 +351,14 @@ bool
 </tr>
 </tbody>
 </table>
-<h3 id="github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Build">Build
+<h3 id="github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.ConfigMapRef">ConfigMapRef
 </h3>
 <p>
 (<em>Appears on:</em>
-<a href="#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.JenkinsStatus">JenkinsStatus</a>)
+<a href="#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.Customization">Customization</a>)
 </p>
 <p>
-<p>Build defines Jenkins Build status with corresponding metadata</p>
+<p>ConfigMapRef is reference to Kubernetes ConfigMap</p>
 </p>
 <table>
 <thead>
@@ -279,98 +370,47 @@ bool
 <tbody>
 <tr>
 <td>
-<code>jobName</code></br>
+<code>name</code></br>
 <em>
 string
 </em>
 </td>
 <td>
-<p>JobName is the Jenkins job name</p>
-</td>
-</tr>
-<tr>
-<td>
-<code>hash</code></br>
-<em>
-string
-</em>
-</td>
-<td>
-<p>Hash is the unique data identifier used in build</p>
-</td>
-</tr>
-<tr>
-<td>
-<code>number</code></br>
-<em>
-int64
-</em>
-</td>
-<td>
-<p>Number is the Jenkins build number</p>
-</td>
-</tr>
-<tr>
-<td>
-<code>status</code></br>
-<em>
-<a href="#github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.BuildStatus">
-BuildStatus
-</a>
-</em>
-</td>
-<td>
-<p>Status is the status of Jenkins build</p>
-</td>
-</tr>
-<tr>
-<td>
-<code>retries</code></br>
-<em>
-int
-</em>
-</td>
-<td>
-<p>Retires is the amount of Jenkins job build retries</p>
-</td>
-</tr>
-<tr>
-<td>
-<code>createTime</code></br>
-<em>
-<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.12/#time-v1-meta">
-Kubernetes meta/v1.Time
-</a>
-</em>
-</td>
-<td>
-<p>CreateTime is the time when the first build has been created</p>
-</td>
-</tr>
-<tr>
-<td>
-<code>lastUpdateTime</code></br>
-<em>
-<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.12/#time-v1-meta">
-Kubernetes meta/v1.Time
-</a>
-</em>
-</td>
-<td>
-<p>LastUpdateTime is the last update status time</p>
 </td>
 </tr>
 </tbody>
 </table>
-<h3 id="github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.BuildStatus">BuildStatus
-(<code>string</code> alias)</p></h3>
+<h3 id="github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.ConfigurationAsCode">ConfigurationAsCode
+</h3>
 <p>
 (<em>Appears on:</em>
-<a href="#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.Build">Build</a>)
+<a href="#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.JenkinsSpec">JenkinsSpec</a>)
 </p>
 <p>
-<p>BuildStatus defines type of Jenkins build job status</p>
+<p>ConfigurationAsCode defines configuration of Jenkins customization via Configuration as Code Jenkins plugin</p>
 </p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>Customization</code></br>
+<em>
+<a href="#github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Customization">
+Customization
+</a>
+</em>
+</td>
+<td>
+</td>
+</tr>
+</tbody>
+</table>
 <h3 id="github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Container">Container
 </h3>
 <p>
@@ -618,6 +658,81 @@ More info: <a href="https://kubernetes.io/docs/tasks/configure-pod-container/sec
 </tr>
 </tbody>
 </table>
+<h3 id="github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Customization">Customization
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.ConfigurationAsCode">ConfigurationAsCode</a>, 
+<a href="#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.GroovyScripts">GroovyScripts</a>)
+</p>
+<p>
+<p>Customization defines configuration of Jenkins customization</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>secret</code></br>
+<em>
+<a href="#github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.SecretRef">
+SecretRef
+</a>
+</em>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td>
+<code>configurations</code></br>
+<em>
+<a href="#github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.ConfigMapRef">
+[][]github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.ConfigMapRef
+</a>
+</em>
+</td>
+<td>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.GroovyScripts">GroovyScripts
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.JenkinsSpec">JenkinsSpec</a>)
+</p>
+<p>
+<p>GroovyScripts defines configuration of Jenkins customization via groovy scripts</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>Customization</code></br>
+<em>
+<a href="#github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Customization">
+Customization
+</a>
+</em>
+</td>
+<td>
+</td>
+</tr>
+</tbody>
+</table>
 <h3 id="github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Handler">Handler
 </h3>
 <p>
@@ -770,6 +885,23 @@ memory: 3Gi
 requests:
 cpu: &ldquo;1&rdquo;
 memory: 600Mi</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>imagePullSecrets</code></br>
+<em>
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.12/#localobjectreference-v1-core">
+[]Kubernetes core/v1.LocalObjectReference
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>ImagePullSecrets is an optional list of references to secrets in the same namespace to use for pulling any of the images used by this PodSpec.
+If specified, these secrets will be passed to individual puller implementations for them to use. For example,
+in the case of docker, only DockerConfig type secrets are honored.
+More info: <a href="https://kubernetes.io/docs/concepts/containers/images#specifying-imagepullsecrets-on-a-pod">https://kubernetes.io/docs/concepts/containers/images#specifying-imagepullsecrets-on-a-pod</a></p>
 </td>
 </tr>
 <tr>
@@ -943,6 +1075,34 @@ Restore
 More info: <a href="https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-backup-and-restore">https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-backup-and-restore</a></p>
 </td>
 </tr>
+<tr>
+<td>
+<code>groovyScripts</code></br>
+<em>
+<a href="#github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.GroovyScripts">
+GroovyScripts
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>GroovyScripts defines configuration of Jenkins customization via groovy scripts</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>configurationAsCode</code></br>
+<em>
+<a href="#github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.ConfigurationAsCode">
+ConfigurationAsCode
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>ConfigurationAsCode defines configuration of Jenkins customization via Configuration as Code Jenkins plugin</p>
+</td>
+</tr>
 </tbody>
 </table>
 <h3 id="github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.JenkinsStatus">JenkinsStatus
@@ -1018,20 +1178,6 @@ Kubernetes meta/v1.Time
 </tr>
 <tr>
 <td>
-<code>builds</code></br>
-<em>
-<a href="#github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Build">
-[][]github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Build
-</a>
-</em>
-</td>
-<td>
-<em>(Optional)</em>
-<p>Builds contains Jenkins builds statues</p>
-</td>
-</tr>
-<tr>
-<td>
 <code>restoredBackup</code></br>
 <em>
 uint64
@@ -1102,8 +1248,207 @@ string
 <p>CreatedSeedJobs contains list of seed job id already created in Jenkins</p>
 </td>
 </tr>
+<tr>
+<td>
+<code>appliedGroovyScripts</code></br>
+<em>
+<a href="#github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.AppliedGroovyScript">
+[][]github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.AppliedGroovyScript
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>AppliedGroovyScripts is a list with all applied groovy scripts in Jenkins by the operator</p>
+</td>
+</tr>
 </tbody>
 </table>
+<h3 id="github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Mailgun">Mailgun
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.Notification">Notification</a>)
+</p>
+<p>
+<p>Mailgun is handler for Mailgun email service notification channel</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>domain</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td>
+<code>apiKeySecretKeySelector</code></br>
+<em>
+<a href="#github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.SecretKeySelector">
+SecretKeySelector
+</a>
+</em>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td>
+<code>recipient</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td>
+<code>from</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.MicrosoftTeams">MicrosoftTeams
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.Notification">Notification</a>)
+</p>
+<p>
+<p>MicrosoftTeams is handler for Microsoft MicrosoftTeams notification channel</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>webHookURLSecretKeySelector</code></br>
+<em>
+<a href="#github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.SecretKeySelector">
+SecretKeySelector
+</a>
+</em>
+</td>
+<td>
+<p>The web hook URL to MicrosoftTeams App</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Notification">Notification
+</h3>
+<p>
+<p>Notification is a service configuration used to send notifications about Jenkins status</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>loggingLevel</code></br>
+<em>
+<a href="#github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.NotificationLogLevel">
+NotificationLogLevel
+</a>
+</em>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td>
+<code>verbose</code></br>
+<em>
+bool
+</em>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td>
+<code>name</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td>
+<code>slack</code></br>
+<em>
+<a href="#github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Slack">
+github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Slack
+</a>
+</em>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td>
+<code>teams</code></br>
+<em>
+<a href="#github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.MicrosoftTeams">
+github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.MicrosoftTeams
+</a>
+</em>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td>
+<code>mailgun</code></br>
+<em>
+<a href="#github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Mailgun">
+github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Mailgun
+</a>
+</em>
+</td>
+<td>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.NotificationLogLevel">NotificationLogLevel
+(<code>string</code> alias)</p></h3>
+<p>
+(<em>Appears on:</em>
+<a href="#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.Notification">Notification</a>)
+</p>
+<p>
+<p>NotificationLogLevel defines logging level of Notification</p>
+</p>
 <h3 id="github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Plugin">Plugin
 </h3>
 <p>
@@ -1196,6 +1541,80 @@ uint64
 <td>
 <em>(Optional)</em>
 <p>RecoveryOnce if want to restore specific backup set this field and then Jenkins will be restarted and desired backup will be restored</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.SecretKeySelector">SecretKeySelector
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.Mailgun">Mailgun</a>, 
+<a href="#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.MicrosoftTeams">MicrosoftTeams</a>, 
+<a href="#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.Slack">Slack</a>)
+</p>
+<p>
+<p>SecretKeySelector selects a key of a Secret.</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>secret</code></br>
+<em>
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.12/#localobjectreference-v1-core">
+Kubernetes core/v1.LocalObjectReference
+</a>
+</em>
+</td>
+<td>
+<p>The name of the secret in the pod&rsquo;s namespace to select from.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>key</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>The key of the secret to select from.  Must be a valid secret key.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.SecretRef">SecretRef
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.Customization">Customization</a>)
+</p>
+<p>
+<p>SecretRef is reference to Kubernetes secret</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>name</code></br>
+<em>
+string
+</em>
+</td>
+<td>
 </td>
 </tr>
 </tbody>
@@ -1297,6 +1716,90 @@ JenkinsCredentialType
 <td>
 <em>(Optional)</em>
 <p>JenkinsCredentialType is the <a href="https://jenkinsci.github.io/kubernetes-credentials-provider-plugin/">https://jenkinsci.github.io/kubernetes-credentials-provider-plugin/</a> credential type</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>githubPushTrigger</code></br>
+<em>
+bool
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>GitHubPushTrigger is used for GitHub web hooks</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>buildPeriodically</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>BuildPeriodically is setting for scheduled trigger</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>pollSCM</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>PollSCM is setting for polling changes in SCM</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>ignoreMissingFiles</code></br>
+<em>
+bool
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>IgnoreMissingFiles is setting for Job DSL API plugin to ignore files that miss</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>additionalClasspath</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>AdditionalClasspath is setting for Job DSL API plugin to set Additional Classpath</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>failOnMissingPlugin</code></br>
+<em>
+bool
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>FailOnMissingPlugin is setting for Job DSL API plugin that fails job if required plugin is missing</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>unstableOnDeprecation</code></br>
+<em>
+bool
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>UnstableOnDeprecation is setting for Job DSL API plugin that sets build status as unstable if build using deprecated features</p>
 </td>
 </tr>
 </tbody>
@@ -1437,8 +1940,40 @@ This field will be ignored if the cloud-provider does not support the feature.</
 </tr>
 </tbody>
 </table>
+<h3 id="github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Slack">Slack
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.Notification">Notification</a>)
+</p>
+<p>
+<p>Slack is handler for Slack notification channel</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>webHookURLSecretKeySelector</code></br>
+<em>
+<a href="#github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.SecretKeySelector">
+SecretKeySelector
+</a>
+</em>
+</td>
+<td>
+<p>The web hook URL to Slack App</p>
+</td>
+</tr>
+</tbody>
+</table>
 <hr/>
 <p><em>
 Generated with <code>gen-crd-api-reference-docs</code>
-on git commit <code>37e531a</code>.
+on git commit <code>f4c4235</code>.
 </em></p>

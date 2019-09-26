@@ -35,7 +35,7 @@
 
 <meta itemprop="datePublished" content="2019-08-05T00:00:00&#43;00:00" />
 <meta itemprop="dateModified" content="2019-08-05T00:00:00&#43;00:00" />
-<meta itemprop="wordCount" content="221">
+<meta itemprop="wordCount" content="225">
 
 
 
@@ -459,9 +459,9 @@
 	
 
 <p>Jenkins can be customized using groovy scripts or configuration as code plugin. All custom configuration is stored in
-the <strong>jenkins-operator-user-configuration-<cr_name></strong> ConfigMap which is automatically created by <strong>jenkins-operator</strong>.</p>
+the <strong>jenkins-operator-user-configuration-<cr_name></strong> ConfigMap which is automatically created by <strong>Jenkins Operator</strong>.</p>
 
-<p><strong>jenkins-operator</strong> creates <strong>jenkins-operator-user-configuration-<cr_name></strong> secret where user can store sensitive
+<p><strong>Jenkins Operator</strong> creates <strong>jenkins-operator-user-configuration-<cr_name></strong> secret where user can store sensitive
 information used for custom configuration. If you have entry in secret named <code>PASSWORD</code> then you can use it in
 Configuration as Plugin as <code>adminAddress: &quot;${PASSWORD}&quot;</code>.</p>
 
@@ -531,7 +531,7 @@ spec:
      version: 0.5.1
 </code></pre>
 
-<p>Under <code>spec.master.basePlugins</code> you can find plugins for valid <strong>jenkins-operator</strong> work:</p>
+<p>Under <code>spec.master.basePlugins</code> you can find plugins for valid <strong>Jenkins Operator</strong> work:</p>
 <div class="highlight"><pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml">apiVersion<span style="color:#000;font-weight:bold">:</span><span style="color:#f8f8f8;text-decoration:underline"> </span>jenkins.io/v1alpha2<span style="color:#f8f8f8;text-decoration:underline">
 </span><span style="color:#f8f8f8;text-decoration:underline"></span>kind<span style="color:#000;font-weight:bold">:</span><span style="color:#f8f8f8;text-decoration:underline"> </span>Jenkins<span style="color:#f8f8f8;text-decoration:underline">
 </span><span style="color:#f8f8f8;text-decoration:underline"></span>metadata<span style="color:#000;font-weight:bold">:</span><span style="color:#f8f8f8;text-decoration:underline">
@@ -557,7 +557,7 @@ spec:
 </span><span style="color:#f8f8f8;text-decoration:underline">      </span>version<span style="color:#000;font-weight:bold">:</span><span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#0000cf;font-weight:bold">0.12</span>.<span style="color:#0000cf;font-weight:bold">1</span></code></pre></div>
 <p>You can change version of them.</p>
 
-<p>Then <strong>jenkins-operator</strong> will automatically install plugins after Jenkins master pod restart.</p>
+<p>Then <strong>Jenkins Operator</strong> will automatically install plugins after Jenkins master pod restart.</p>
 
 	
 	
