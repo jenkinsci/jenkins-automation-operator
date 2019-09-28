@@ -1,5 +1,4 @@
 language: go
-sudo: required
 
 env:
   global:
@@ -11,15 +10,15 @@ env:
     - KUBECONFIG=$HOME/.kube/config
 
 go:
-- 1.12.x
+  - 1.13.x
 
 matrix:
   fast_finish: true
   allow_failures:
-  - go: master
+    - go: master
 
 before_install:
-- make go-dependencies
+  - make go-dependencies
 
 jobs:
   include:

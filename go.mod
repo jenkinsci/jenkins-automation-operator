@@ -1,5 +1,7 @@
 module github.com/jenkinsci/kubernetes-operator
 
+go 1.13
+
 require (
 	github.com/bndr/gojenkins v0.0.0-20181125150310-de43c03cf849
 	github.com/docker/distribution v2.7.1+incompatible
