@@ -91,7 +91,7 @@ func (s Slack) Send(event Event, config v1alpha2.Notification) error {
 		},
 	}
 
-	mainAttachment := sm.Attachments[0]
+	mainAttachment := &sm.Attachments[0]
 
 	mainAttachment.Title = notificationTitle(event)
 
