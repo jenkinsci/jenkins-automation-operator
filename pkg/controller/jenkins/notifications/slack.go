@@ -64,12 +64,11 @@ func (s Slack) Send(event Event, config v1alpha2.Notification) error {
 		return err
 	}
 
-	slackMessage, err := json.Marshal(SlackMessage{
+	sm := &SlackMessage{
 		Attachments: []SlackAttachment{
 			{
 				Fallback: "",
 				Color:    s.getStatusColor(event.LogLevel),
-				Text:     titleText,
 				Fields: []SlackField{
 					{
 						Title: messageFieldName,
@@ -82,16 +81,6 @@ func (s Slack) Send(event Event, config v1alpha2.Notification) error {
 						Short: true,
 					},
 					{
-						Title: configurationTypeFieldName,
-						Value: event.ConfigurationType,
-						Short: true,
-					},
-					{
-						Title: loggingLevelFieldName,
-						Value: string(event.LogLevel),
-						Short: true,
-					},
-					{
 						Title: namespaceFieldName,
 						Value: event.Jenkins.Namespace,
 						Short: true,
@@ -100,15 +89,33 @@ func (s Slack) Send(event Event, config v1alpha2.Notification) error {
 				Footer: footerContent,
 			},
 		},
-	})
+	}
+
+	mainAttachment := sm.Attachments[0]
+
+	mainAttachment.Title = notificationTitle(event)
+
+	if config.Verbose {
+		// TODO: or for title == message
+		mainAttachment.Fields[0].Value = event.MessageVerbose
+	}
+
+	if event.ConfigurationType != ConfigurationTypeUnknown {
+		mainAttachment.Fields = append(mainAttachment.Fields, SlackField{
+			Title: configurationTypeFieldName,
+			Value: event.ConfigurationType,
+			Short: true,
+		})
+	}
+
+	slackMessage, err := json.Marshal(sm)
+	if err != nil {
+		return err
+	}
 
 	secretValue := string(secret.Data[selector.Key])
 	if secretValue == "" {
 		return errors.Errorf("SecretValue %s is empty", selector.Name)
-	}
-
-	if err != nil {
-		return err
 	}
 
 	request, err := http.NewRequest("POST", secretValue, bytes.NewBuffer(slackMessage))

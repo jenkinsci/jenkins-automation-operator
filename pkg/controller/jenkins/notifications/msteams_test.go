@@ -42,7 +42,7 @@ func TestTeams_Send(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		assert.Equal(t, message.Title, titleText)
+		assert.Equal(t, message.Title, notificationTitle(event))
 		assert.Equal(t, message.ThemeColor, teams.getStatusColor(event.LogLevel))
 
 		mainSection := message.Sections[0]

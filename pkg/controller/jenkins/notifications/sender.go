@@ -1,19 +1,36 @@
 package notifications
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
+	"github.com/jenkinsci/kubernetes-operator/pkg/log"
+
+	"github.com/pkg/errors"
+	k8sclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
-	titleText                  = "Operator reconciled."
+	infoTitleText              = "Jenkins Operator reconciliation info"
+	warnTitleText              = "Jenkins Operator reconciliation warning"
 	messageFieldName           = "Message"
 	loggingLevelFieldName      = "Logging Level"
 	crNameFieldName            = "CR Name"
 	configurationTypeFieldName = "Configuration Type"
 	namespaceFieldName         = "Namespace"
 	footerContent              = "Powered by Jenkins Operator"
+)
+
+const (
+	// ConfigurationTypeBase is core configuration of Jenkins provided by the Operator
+	ConfigurationTypeBase = "base"
+
+	// ConfigurationTypeUser is user-defined configuration of Jenkins
+	ConfigurationTypeUser = "user"
+
+	// ConfigurationTypeUnknown is untraceable type of configuration
+	ConfigurationTypeUnknown = "unknown"
 )
 
 var (
@@ -42,7 +59,7 @@ type Event struct {
 	MessageVerbose    string
 }
 
-/*type service interface {
+type service interface {
 	Send(event Event, notificationConfig v1alpha2.Notification) error
 }
 
@@ -61,7 +78,7 @@ func Listen(events chan Event, k8sClient k8sclient.Client) {
 			} else if notificationConfig.Mailgun != nil {
 				svc = MailGun{k8sClient: k8sClient}
 			} else {
-				logger.V(log.VWarn).Info(fmt.Sprintf("Unexpected notification `%+v`", notificationConfig))
+				logger.V(log.VWarn).Info(fmt.Sprintf("Unknown notification service `%+v`", notificationConfig))
 				continue
 			}
 
@@ -85,6 +102,15 @@ func notify(svc service, event Event, manifest v1alpha2.Notification) error {
 	if event.LogLevel == v1alpha2.NotificationLogLevelInfo && manifest.LoggingLevel == v1alpha2.NotificationLogLevelWarning {
 		return nil
 	}
-
 	return svc.Send(event, manifest)
-}*/
+}
+
+func notificationTitle(event Event) string {
+	if event.LogLevel == v1alpha2.NotificationLogLevelInfo {
+		return infoTitleText
+	} else if event.LogLevel == v1alpha2.NotificationLogLevelWarning {
+		return warnTitleText
+	} else {
+		return "undefined"
+	}
+}

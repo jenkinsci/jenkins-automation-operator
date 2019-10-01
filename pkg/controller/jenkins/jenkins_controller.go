@@ -3,6 +3,7 @@ package jenkins
 import (
 	"context"
 	"fmt"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/notifications"
 	"reflect"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
@@ -52,20 +53,21 @@ var reconcileErrors = map[string]reconcileError{}
 
 // Add creates a new Jenkins Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
-func Add(mgr manager.Manager, local, minikube bool, events event.Recorder, clientSet kubernetes.Clientset, config rest.Config) error {
-	return add(mgr, newReconciler(mgr, local, minikube, events, clientSet, config))
+func Add(mgr manager.Manager, local, minikube bool, events event.Recorder, clientSet kubernetes.Clientset, config rest.Config, notificationEvents *chan notifications.Event) error {
+	return add(mgr, newReconciler(mgr, local, minikube, events, clientSet, config, notificationEvents))
 }
 
 // newReconciler returns a new reconcile.Reconciler
-func newReconciler(mgr manager.Manager, local, minikube bool, events event.Recorder, clientSet kubernetes.Clientset, config rest.Config) reconcile.Reconciler {
+func newReconciler(mgr manager.Manager, local, minikube bool, events event.Recorder, clientSet kubernetes.Clientset, config rest.Config, notificationEvents *chan notifications.Event) reconcile.Reconciler {
 	return &ReconcileJenkins{
-		client:    mgr.GetClient(),
-		scheme:    mgr.GetScheme(),
-		local:     local,
-		minikube:  minikube,
-		events:    events,
-		clientSet: clientSet,
-		config:    config,
+		client:             mgr.GetClient(),
+		scheme:             mgr.GetScheme(),
+		local:              local,
+		minikube:           minikube,
+		events:             events,
+		clientSet:          clientSet,
+		config:             config,
+		notificationEvents: notificationEvents,
 	}
 }
 
@@ -119,18 +121,33 @@ var _ reconcile.Reconciler = &ReconcileJenkins{}
 
 // ReconcileJenkins reconciles a Jenkins object
 type ReconcileJenkins struct {
-	client          client.Client
-	scheme          *runtime.Scheme
-	local, minikube bool
-	events          event.Recorder
-	clientSet       kubernetes.Clientset
-	config          rest.Config
+	client             client.Client
+	scheme             *runtime.Scheme
+	local, minikube    bool
+	events             event.Recorder
+	clientSet          kubernetes.Clientset
+	config             rest.Config
+	notificationEvents *chan notifications.Event
 }
 
 // Reconcile it's a main reconciliation loop which maintain desired state based on Jenkins.Spec
 func (r *ReconcileJenkins) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+	reconcileFailLimit := uint64(10)
 	logger := r.buildLogger(request.Name)
 	logger.V(log.VDebug).Info("Reconciling Jenkins")
+
+	jenkins := &v1alpha2.Jenkins{}
+	err := r.client.Get(context.TODO(), request.NamespacedName, jenkins)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			// Request object not found, could have been deleted after reconcile request.
+			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
+			// Return and don't requeue
+			return reconcile.Result{}, nil
+		}
+		// Error reading the object - requeue the request.
+		return reconcile.Result{}, errors.WithStack(err)
+	}
 
 	result, err := r.reconcile(request, logger)
 	if err != nil && apierrors.IsConflict(err) {
@@ -151,11 +168,19 @@ func (r *ReconcileJenkins) Reconcile(request reconcile.Request) (reconcile.Resul
 			}
 		}
 		reconcileErrors[request.Name] = lastErrors
-		if lastErrors.counter >= 15 {
+		if lastErrors.counter >= reconcileFailLimit {
 			if log.Debug {
-				logger.V(log.VWarn).Info(fmt.Sprintf("Reconcile loop failed ten times with the same error, giving up: %+v", err))
+				logger.V(log.VWarn).Info(fmt.Sprintf("Reconcile loop failed %d times with the same error, giving up: %+v", reconcileFailLimit, err))
 			} else {
-				logger.V(log.VWarn).Info(fmt.Sprintf("Reconcile loop failed ten times with the same error, giving up: %s", err))
+				logger.V(log.VWarn).Info(fmt.Sprintf("Reconcile loop failed %d times with the same error, giving up: %s", reconcileFailLimit, err))
+			}
+
+			*r.notificationEvents <- notifications.Event{
+				Jenkins:           *jenkins,
+				ConfigurationType: notifications.ConfigurationTypeUnknown,
+				LogLevel:          v1alpha2.NotificationLogLevelWarning,
+				Message:           fmt.Sprintf("Reconcile loop failed ten times with the same error, giving up: %s", err),
+				MessageVerbose:    fmt.Sprintf("Reconcile loop failed ten times with the same error, giving up: %+v", err),
 			}
 			return reconcile.Result{Requeue: false}, nil
 		}
@@ -203,8 +228,16 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request, logger logr.Logg
 		return reconcile.Result{}, err
 	}
 	if !valid {
+		message := "Validation of base configuration failed, please correct Jenkins CR"
+		*r.notificationEvents <- notifications.Event{
+			Jenkins:           *jenkins,
+			ConfigurationType: notifications.ConfigurationTypeBase,
+			LogLevel:          v1alpha2.NotificationLogLevelWarning,
+			Message:           message,
+			MessageVerbose:    message,
+		}
 		r.events.Emit(jenkins, event.TypeWarning, reasonCRValidationFailure, "Base CR validation failed")
-		logger.V(log.VWarn).Info("Validation of base configuration failed, please correct Jenkins CR")
+		logger.V(log.VWarn).Info(message)
 		return reconcile.Result{}, nil // don't requeue
 	}
 
@@ -226,8 +259,17 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request, logger logr.Logg
 		if err != nil {
 			return reconcile.Result{}, errors.WithStack(err)
 		}
-		logger.Info(fmt.Sprintf("Base configuration phase is complete, took %s",
-			jenkins.Status.BaseConfigurationCompletedTime.Sub(jenkins.Status.ProvisionStartTime.Time)))
+
+		message := fmt.Sprintf("Base configuration phase is complete, took %s",
+			jenkins.Status.BaseConfigurationCompletedTime.Sub(jenkins.Status.ProvisionStartTime.Time))
+		*r.notificationEvents <- notifications.Event{
+			Jenkins:           *jenkins,
+			ConfigurationType: notifications.ConfigurationTypeBase,
+			LogLevel:          v1alpha2.NotificationLogLevelInfo,
+			Message:           message,
+			MessageVerbose:    message,
+		}
+		logger.Info(message)
 		r.events.Emit(jenkins, event.TypeNormal, reasonBaseConfigurationSuccess, "Base configuration completed")
 	}
 	// Reconcile user configuration
@@ -238,7 +280,15 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request, logger logr.Logg
 		return reconcile.Result{}, err
 	}
 	if !valid {
-		logger.V(log.VWarn).Info("Validation of user configuration failed, please correct Jenkins CR")
+		message := fmt.Sprintf("Validation of user configuration failed, please correct Jenkins CR")
+		*r.notificationEvents <- notifications.Event{
+			Jenkins:           *jenkins,
+			ConfigurationType: notifications.ConfigurationTypeUser,
+			LogLevel:          v1alpha2.NotificationLogLevelWarning,
+			Message:           message,
+			MessageVerbose:    message,
+		}
+		logger.V(log.VWarn).Info(message)
 		r.events.Emit(jenkins, event.TypeWarning, reasonCRValidationFailure, "User CR validation failed")
 		return reconcile.Result{}, nil // don't requeue
 	}
@@ -258,8 +308,16 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request, logger logr.Logg
 		if err != nil {
 			return reconcile.Result{}, errors.WithStack(err)
 		}
-		logger.Info(fmt.Sprintf("User configuration phase is complete, took %s",
-			jenkins.Status.UserConfigurationCompletedTime.Sub(jenkins.Status.ProvisionStartTime.Time)))
+		message := fmt.Sprintf("User configuration phase is complete, took %s",
+			jenkins.Status.UserConfigurationCompletedTime.Sub(jenkins.Status.ProvisionStartTime.Time))
+		*r.notificationEvents <- notifications.Event{
+			Jenkins:           *jenkins,
+			ConfigurationType: notifications.ConfigurationTypeUser,
+			LogLevel:          v1alpha2.NotificationLogLevelInfo,
+			Message:           message,
+			MessageVerbose:    message,
+		}
+		logger.Info(message)
 		r.events.Emit(jenkins, event.TypeNormal, reasonUserConfigurationSuccess, "User configuration completed")
 	}
 

@@ -45,7 +45,7 @@ func TestSlack_Send(t *testing.T) {
 
 		mainAttachment := message.Attachments[0]
 
-		assert.Equal(t, mainAttachment.Text, titleText)
+		assert.Equal(t, mainAttachment.Title, notificationTitle(event))
 		for _, field := range mainAttachment.Fields {
 			switch field.Title {
 			case configurationTypeFieldName:

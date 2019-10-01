@@ -20,8 +20,8 @@ const content = `
 <html>
 <head></head>
 <body>
-		<h1 style="background-color: %s; color: white; padding: 3px 10px;">Jenkins Operator Reconciled</h1>
-		<h3>Failed to do something</h3>
+		<h1 style="background-color: %s; color: white; padding: 3px 10px;">%s</h1>
+		<h3>%s</h3>
 		<table>
 			<tr>
 				<td><b>CR name:</b></td>
@@ -30,10 +30,6 @@ const content = `
 			<tr>
 				<td><b>Configuration type:</b></td>
 				<td>%s</td>
-			</tr>
-			<tr>
-				<td><b>Status:</b></td>
-				<td><b style="color: %s;">%s</b></td>
 			</tr>
 		</table>
 		<h6 style="font-size: 11px; color: grey; margin-top: 15px;">Powered by Jenkins Operator <3</h6>
@@ -74,9 +70,17 @@ func (m MailGun) Send(event Event, config v1alpha2.Notification) error {
 
 	mg := mailgun.NewMailgun(config.Mailgun.Domain, secretValue)
 
-	htmlMessage := fmt.Sprintf(content, m.getStatusColor(event.LogLevel), event.Jenkins.Name, event.ConfigurationType, m.getStatusColor(event.LogLevel), string(event.LogLevel))
+	var statusMessage string
 
-	msg := mg.NewMessage(fmt.Sprintf("Jenkins Operator Notifier <%s>", config.Mailgun.From), "Jenkins Operator Status", "", config.Mailgun.Recipient)
+	if config.Verbose {
+		statusMessage = event.MessageVerbose
+	} else {
+		statusMessage = event.Message
+	}
+
+	htmlMessage := fmt.Sprintf(content, m.getStatusColor(event.LogLevel), statusMessage, event.Jenkins.Name, event.ConfigurationType, m.getStatusColor(event.LogLevel))
+
+	msg := mg.NewMessage(fmt.Sprintf("Jenkins Operator Notifier <%s>", config.Mailgun.From), notificationTitle(event), "", config.Mailgun.Recipient)
 	msg.SetHtml(htmlMessage)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
