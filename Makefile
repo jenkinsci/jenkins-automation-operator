@@ -200,10 +200,10 @@ PLATFORM  = $(shell echo $(UNAME_S) | tr A-Z a-z)
 staticcheck: ## Verifies `staticcheck` passes
 	@echo "+ $@"
 ifndef HAS_STATICCHECK
-	wget https://github.com/dominikh/go-tools/releases/download/2019.1.1/staticcheck_$(PLATFORM)_amd64
-	chmod +x staticcheck_$(PLATFORM)_amd64
+	wget -O staticcheck_$(PLATFORM)_amd64.tar.gz https://github.com/dominikh/go-tools/releases/download/2019.2.3/staticcheck_$(PLATFORM)_amd64.tar.gz
+	tar zxvf staticcheck_$(PLATFORM)_amd64.tar.gz
 	mkdir -p $(GOPATH)/bin
-	mv staticcheck_$(PLATFORM)_amd64 $(GOPATH)/bin/staticcheck
+	mv staticcheck/staticcheck $(GOPATH)/bin
 endif
 	@staticcheck $(PACKAGES)
 
