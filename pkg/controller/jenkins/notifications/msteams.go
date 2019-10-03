@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
@@ -26,6 +27,7 @@ type TeamsMessage struct {
 	ThemeColor StatusColor    `json:"themeColor"`
 	Title      string         `json:"title"`
 	Sections   []TeamsSection `json:"sections"`
+	Summary    string         `json:"summary"`
 }
 
 // TeamsSection is MS Teams message section
@@ -67,25 +69,16 @@ func (t Teams) Send(event Event, config v1alpha2.Notification) error {
 		return errors.Errorf("Microsoft Teams webhook URL is empty in secret '%s/%s[%s]", event.Jenkins.Namespace, selector.Name, selector.Key)
 	}
 
-	msg, err := json.Marshal(TeamsMessage{
+	tm := &TeamsMessage{
 		Type:       "MessageCard",
 		Context:    "https://schema.org/extensions",
 		ThemeColor: t.getStatusColor(event.LogLevel),
-		Title:      titleText,
 		Sections: []TeamsSection{
 			{
 				Facts: []TeamsFact{
 					{
 						Name:  crNameFieldName,
 						Value: event.Jenkins.Name,
-					},
-					{
-						Name:  configurationTypeFieldName,
-						Value: event.ConfigurationType,
-					},
-					{
-						Name:  loggingLevelFieldName,
-						Value: string(event.LogLevel),
 					},
 					{
 						Name:  namespaceFieldName,
@@ -95,7 +88,28 @@ func (t Teams) Send(event Event, config v1alpha2.Notification) error {
 				Text: event.Message,
 			},
 		},
-	})
+		Summary: event.Message,
+	}
+
+	tm.Title = notificationTitle(event)
+
+	if config.Verbose {
+		message := event.Message
+		for _, msg := range event.MessagesVerbose {
+			message = message + "\n\n - " + msg
+		}
+		tm.Sections[0].Text += message
+		tm.Summary = message
+	}
+
+	if event.Phase != PhaseUnknown {
+		tm.Sections[0].Facts = append(tm.Sections[0].Facts, TeamsFact{
+			Name:  phaseFieldName,
+			Value: string(event.Phase),
+		})
+	}
+
+	msg, err := json.Marshal(tm)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -110,6 +124,9 @@ func (t Teams) Send(event Event, config v1alpha2.Notification) error {
 		return errors.WithStack(err)
 	}
 
+	if resp.StatusCode != http.StatusOK {
+		return errors.New(fmt.Sprintf("Invalid response from server: %s", resp.Status))
+	}
 	defer func() { _ = resp.Body.Close() }()
 
 	return nil

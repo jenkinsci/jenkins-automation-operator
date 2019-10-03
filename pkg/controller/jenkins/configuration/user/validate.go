@@ -7,10 +7,10 @@ import (
 )
 
 // Validate validates Jenkins CR Spec section
-func (r *ReconcileUserConfiguration) Validate(jenkins *v1alpha2.Jenkins) (bool, error) {
+func (r *ReconcileUserConfiguration) Validate(jenkins *v1alpha2.Jenkins) ([]string, error) {
 	backupAndRestore := backuprestore.New(r.k8sClient, r.clientSet, r.logger, r.jenkins, r.config)
-	if ok := backupAndRestore.Validate(); !ok {
-		return false, nil
+	if msg := backupAndRestore.Validate(); msg != nil {
+		return msg, nil
 	}
 
 	seedJobs := seedjobs.New(r.jenkinsClient, r.k8sClient, r.logger)

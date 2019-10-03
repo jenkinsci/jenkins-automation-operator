@@ -18,7 +18,7 @@ func TestVerifyDependencies(t *testing.T) {
 			},
 		}
 		got := VerifyDependencies(basePlugins)
-		assert.Equal(t, true, got)
+		assert.Nil(t, got)
 	})
 	t.Run("happy, two root plugins with one depended plugin with the same version", func(t *testing.T) {
 		basePlugins := map[Plugin][]Plugin{
@@ -30,7 +30,7 @@ func TestVerifyDependencies(t *testing.T) {
 			},
 		}
 		got := VerifyDependencies(basePlugins)
-		assert.Equal(t, true, got)
+		assert.Nil(t, got)
 	})
 	t.Run("happy, two plugin names with names with underscores", func(t *testing.T) {
 		basePlugins := map[Plugin][]Plugin{
@@ -42,7 +42,7 @@ func TestVerifyDependencies(t *testing.T) {
 			},
 		}
 		got := VerifyDependencies(basePlugins)
-		assert.Equal(t, true, got)
+		assert.Nil(t, got)
 	})
 	t.Run("happy, two plugin names with uppercase names", func(t *testing.T) {
 		basePlugins := map[Plugin][]Plugin{
@@ -54,7 +54,7 @@ func TestVerifyDependencies(t *testing.T) {
 			},
 		}
 		got := VerifyDependencies(basePlugins)
-		assert.Equal(t, true, got)
+		assert.Nil(t, got)
 	})
 	t.Run("fail, two root plugins have different versions", func(t *testing.T) {
 		basePlugins := map[Plugin][]Plugin{
@@ -66,7 +66,7 @@ func TestVerifyDependencies(t *testing.T) {
 			},
 		}
 		got := VerifyDependencies(basePlugins)
-		assert.Equal(t, false, got)
+		assert.NotNil(t, got)
 	})
 	t.Run("happy, no version collision with two sperate plugins lists", func(t *testing.T) {
 		basePlugins := map[Plugin][]Plugin{
@@ -80,7 +80,7 @@ func TestVerifyDependencies(t *testing.T) {
 			},
 		}
 		got := VerifyDependencies(basePlugins, extraPlugins)
-		assert.Equal(t, true, got)
+		assert.Nil(t, got)
 	})
 	t.Run("fail, dependent plugins have different versions", func(t *testing.T) {
 		basePlugins := map[Plugin][]Plugin{
@@ -92,7 +92,7 @@ func TestVerifyDependencies(t *testing.T) {
 			},
 		}
 		got := VerifyDependencies(basePlugins)
-		assert.Equal(t, false, got)
+		assert.NotNil(t, got)
 	})
 	t.Run("fail, root and dependent plugins have different versions", func(t *testing.T) {
 		basePlugins := map[Plugin][]Plugin{
@@ -106,6 +106,6 @@ func TestVerifyDependencies(t *testing.T) {
 			},
 		}
 		got := VerifyDependencies(basePlugins, extraPlugins)
-		assert.Equal(t, false, got)
+		assert.NotNil(t, got)
 	})
 }

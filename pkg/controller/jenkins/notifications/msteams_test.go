@@ -27,10 +27,10 @@ func TestTeams_Send(t *testing.T) {
 				Namespace: testNamespace,
 			},
 		},
-		ConfigurationType: testConfigurationType,
-		Message:           testMessage,
-		MessageVerbose:    testMessageVerbose,
-		LogLevel:          testLoggingLevel,
+		Phase:           testPhase,
+		Message:         testMessage,
+		MessagesVerbose: testMessageVerbose,
+		LogLevel:        testLoggingLevel,
 	}
 	teams := Teams{k8sClient: fakeClient}
 
@@ -42,7 +42,7 @@ func TestTeams_Send(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		assert.Equal(t, message.Title, titleText)
+		assert.Equal(t, message.Title, notificationTitle(event))
 		assert.Equal(t, message.ThemeColor, teams.getStatusColor(event.LogLevel))
 
 		mainSection := message.Sections[0]
@@ -51,8 +51,8 @@ func TestTeams_Send(t *testing.T) {
 
 		for _, fact := range mainSection.Facts {
 			switch fact.Name {
-			case configurationTypeFieldName:
-				assert.Equal(t, fact.Value, event.ConfigurationType)
+			case phaseFieldName:
+				assert.Equal(t, fact.Value, string(event.Phase))
 			case crNameFieldName:
 				assert.Equal(t, fact.Value, event.Jenkins.Name)
 			case messageFieldName:

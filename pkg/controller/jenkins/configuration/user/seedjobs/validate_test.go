@@ -76,7 +76,7 @@ func TestValidateSeedJobs(t *testing.T) {
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
-		assert.Equal(t, true, result)
+		assert.Nil(t, result)
 	})
 	t.Run("Invalid without id", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
@@ -96,7 +96,8 @@ func TestValidateSeedJobs(t *testing.T) {
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
-		assert.Equal(t, false, result)
+
+		assert.Equal(t, result, []string{"seedJob `` id can't be empty"})
 	})
 	t.Run("Valid with private key and secret", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
@@ -129,7 +130,7 @@ func TestValidateSeedJobs(t *testing.T) {
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
-		assert.Equal(t, true, result)
+		assert.Nil(t, result)
 	})
 	t.Run("Invalid private key in secret", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
@@ -162,7 +163,8 @@ func TestValidateSeedJobs(t *testing.T) {
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
-		assert.Equal(t, false, result)
+
+		assert.Equal(t, result, []string{"seedJob `example` private key 'privateKey' invalid in secret 'deploy-keys': failed to decode PEM block"})
 	})
 	t.Run("Invalid with PrivateKey and empty Secret data", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
@@ -195,7 +197,8 @@ func TestValidateSeedJobs(t *testing.T) {
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
-		assert.Equal(t, false, result)
+
+		assert.Equal(t, result, []string{"seedJob `example` required data 'privateKey' not found in secret 'deploy-keys'", "seedJob `example` private key 'privateKey' invalid in secret 'deploy-keys': failed to decode PEM block"})
 	})
 	t.Run("Invalid with ssh RepositoryURL and empty PrivateKey", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
@@ -217,7 +220,8 @@ func TestValidateSeedJobs(t *testing.T) {
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
-		assert.Equal(t, false, result)
+
+		assert.Equal(t, result, []string([]string{"seedJob `example` required secret 'jenkins-operator-e2e' with Jenkins credential not found", "seedJob `example` required data 'username' not found in secret ''", "seedJob `example` required data 'username' is empty in secret ''", "seedJob `example` required data 'privateKey' not found in secret ''", "seedJob `example` required data 'privateKey' not found in secret ''", "seedJob `example` private key 'privateKey' invalid in secret '': failed to decode PEM block"}))
 	})
 	t.Run("Invalid without targets", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
@@ -237,7 +241,8 @@ func TestValidateSeedJobs(t *testing.T) {
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
-		assert.Equal(t, false, result)
+
+		assert.Equal(t, result, []string{"seedJob `example` targets can't be empty"})
 	})
 	t.Run("Invalid without repository URL", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
@@ -257,7 +262,8 @@ func TestValidateSeedJobs(t *testing.T) {
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
-		assert.Equal(t, false, result)
+
+		assert.Equal(t, result, []string{"seedJob `example` repository URL branch can't be empty"})
 	})
 	t.Run("Invalid without repository branch", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
@@ -277,7 +283,8 @@ func TestValidateSeedJobs(t *testing.T) {
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
-		assert.Equal(t, false, result)
+
+		assert.Equal(t, result, []string{"seedJob `example` repository branch can't be empty"})
 	})
 	t.Run("Valid with username and password", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
@@ -310,7 +317,7 @@ func TestValidateSeedJobs(t *testing.T) {
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
-		assert.Equal(t, true, result)
+		assert.Nil(t, result)
 	})
 	t.Run("Invalid with empty username", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
@@ -343,7 +350,8 @@ func TestValidateSeedJobs(t *testing.T) {
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
-		assert.Equal(t, false, result)
+
+		assert.Equal(t, result, []string{"seedJob `example` required data 'username' is empty in secret 'deploy-keys'"})
 	})
 	t.Run("Invalid with empty password", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
@@ -376,7 +384,8 @@ func TestValidateSeedJobs(t *testing.T) {
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
-		assert.Equal(t, false, result)
+
+		assert.Equal(t, result, []string{"seedJob `example` required data 'password' is empty in secret 'deploy-keys'"})
 	})
 	t.Run("Invalid without username", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
@@ -408,7 +417,8 @@ func TestValidateSeedJobs(t *testing.T) {
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
-		assert.Equal(t, false, result)
+
+		assert.Equal(t, result, []string{"seedJob `example` required data 'username' not found in secret 'deploy-keys'", "seedJob `example` required data 'username' is empty in secret 'deploy-keys'"})
 	})
 	t.Run("Invalid without password", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
@@ -440,7 +450,8 @@ func TestValidateSeedJobs(t *testing.T) {
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
-		assert.Equal(t, false, result)
+
+		assert.Equal(t, result, []string{"seedJob `example` required data 'password' not found in secret 'deploy-keys'", "seedJob `example` required data 'password' is empty in secret 'deploy-keys'"})
 	})
 	t.Run("Invalid with wrong cron spec", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
@@ -463,7 +474,8 @@ func TestValidateSeedJobs(t *testing.T) {
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
-		assert.False(t, result)
+
+		assert.Equal(t, result, []string{"seedJob `example` `buildPeriodically` schedule 'invalid-cron-spec' is invalid cron spec in `example`"})
 	})
 	t.Run("Valid with good cron spec", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
@@ -487,7 +499,7 @@ func TestValidateSeedJobs(t *testing.T) {
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
-		assert.True(t, result)
+		assert.Nil(t, result)
 	})
 	t.Run("Invalid with set githubPushTrigger and not installed github plugin", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
@@ -510,7 +522,8 @@ func TestValidateSeedJobs(t *testing.T) {
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
-		assert.False(t, result)
+
+		assert.Equal(t, result, []string{"seedJob `example` githubPushTrigger is set. This function requires `github` plugin installed in .Spec.Master.Plugins because seed jobs Push Trigger function needs it"})
 	})
 	t.Run("Invalid with set githubPushTrigger and not installed github plugin", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
@@ -538,7 +551,7 @@ func TestValidateSeedJobs(t *testing.T) {
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
-		assert.True(t, result)
+		assert.Nil(t, result)
 	})
 }
 
@@ -549,7 +562,7 @@ func TestValidateIfIDIsUnique(t *testing.T) {
 		}
 		ctrl := New(nil, nil, logf.ZapLogger(false))
 		got := ctrl.validateIfIDIsUnique(seedJobs)
-		assert.Equal(t, true, got)
+		assert.Nil(t, got)
 	})
 	t.Run("duplicated ids", func(t *testing.T) {
 		seedJobs := []v1alpha2.SeedJob{
@@ -557,6 +570,7 @@ func TestValidateIfIDIsUnique(t *testing.T) {
 		}
 		ctrl := New(nil, nil, logf.ZapLogger(false))
 		got := ctrl.validateIfIDIsUnique(seedJobs)
-		assert.Equal(t, false, got)
+
+		assert.Equal(t, got, []string{"'first' seed job ID is not unique"})
 	})
 }

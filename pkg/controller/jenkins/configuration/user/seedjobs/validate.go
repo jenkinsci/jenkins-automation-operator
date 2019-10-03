@@ -8,9 +8,6 @@ import (
 	"strings"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
-	"github.com/jenkinsci/kubernetes-operator/pkg/log"
-
-	"github.com/go-logr/logr"
 	stackerr "github.com/pkg/errors"
 	"github.com/robfig/cron"
 	"k8s.io/api/core/v1"
@@ -19,51 +16,42 @@ import (
 )
 
 // ValidateSeedJobs verify seed jobs configuration
-func (s *SeedJobs) ValidateSeedJobs(jenkins v1alpha2.Jenkins) (bool, error) {
-	valid := true
+func (s *SeedJobs) ValidateSeedJobs(jenkins v1alpha2.Jenkins) ([]string, error) {
+	var messages []string
 
-	if !s.validateIfIDIsUnique(jenkins.Spec.SeedJobs) {
-		valid = false
+	if msg := s.validateIfIDIsUnique(jenkins.Spec.SeedJobs); len(msg) > 0 {
+		messages = append(messages, msg...)
 	}
 
 	for _, seedJob := range jenkins.Spec.SeedJobs {
-		logger := s.logger.WithValues("seedJob", seedJob.ID).V(log.VWarn)
-
 		if len(seedJob.ID) == 0 {
-			logger.Info("id can't be empty")
-			valid = false
+			messages = append(messages, fmt.Sprintf("seedJob `%s` id can't be empty", seedJob.ID))
 		}
 
 		if len(seedJob.RepositoryBranch) == 0 {
-			logger.Info("repository branch can't be empty")
-			valid = false
+			messages = append(messages, fmt.Sprintf("seedJob `%s` repository branch can't be empty", seedJob.ID))
 		}
 
 		if len(seedJob.RepositoryURL) == 0 {
-			logger.Info("repository URL branch can't be empty")
-			valid = false
+			messages = append(messages, fmt.Sprintf("seedJob `%s` repository URL branch can't be empty", seedJob.ID))
 		}
 
 		if len(seedJob.Targets) == 0 {
-			logger.Info("targets can't be empty")
-			valid = false
+			messages = append(messages, fmt.Sprintf("seedJob `%s` targets can't be empty", seedJob.ID))
 		}
 
 		if _, ok := v1alpha2.AllowedJenkinsCredentialMap[string(seedJob.JenkinsCredentialType)]; !ok {
-			logger.Info("unknown credential type")
-			return false, nil
+			messages = append(messages, fmt.Sprintf("seedJob `%s` unknown credential type", seedJob.ID))
 		}
 
 		if (seedJob.JenkinsCredentialType == v1alpha2.BasicSSHCredentialType ||
 			seedJob.JenkinsCredentialType == v1alpha2.UsernamePasswordCredentialType) && len(seedJob.CredentialID) == 0 {
-			logger.Info("credential ID can't be empty")
-			valid = false
+			messages = append(messages, fmt.Sprintf("seedJob `%s` credential ID can't be empty", seedJob.ID))
 		}
 
 		// validate repository url match private key
 		if strings.Contains(seedJob.RepositoryURL, "git@") && seedJob.JenkinsCredentialType == v1alpha2.NoJenkinsCredentialCredentialType {
-			logger.Info("Jenkins credential must be set while using ssh repository url")
-			valid = false
+			messages = append(messages, fmt.Sprintf("seedJob `%s` Jenkins credential must be set while using ssh repository url", seedJob.ID))
 		}
 
 		if seedJob.JenkinsCredentialType == v1alpha2.BasicSSHCredentialType || seedJob.JenkinsCredentialType == v1alpha2.UsernamePasswordCredentialType {
@@ -71,56 +59,66 @@ func (s *SeedJobs) ValidateSeedJobs(jenkins v1alpha2.Jenkins) (bool, error) {
 			namespaceName := types.NamespacedName{Namespace: jenkins.Namespace, Name: seedJob.CredentialID}
 			err := s.k8sClient.Get(context.TODO(), namespaceName, secret)
 			if err != nil && apierrors.IsNotFound(err) {
-				logger.Info(fmt.Sprintf("required secret '%s' with Jenkins credential not found", seedJob.CredentialID))
-				return false, nil
+				messages = append(messages, fmt.Sprintf("seedJob `%s` required secret '%s' with Jenkins credential not found", seedJob.ID, seedJob.CredentialID))
 			} else if err != nil {
-				return false, stackerr.WithStack(err)
+				return nil, stackerr.WithStack(err)
 			}
 
 			if seedJob.JenkinsCredentialType == v1alpha2.BasicSSHCredentialType {
-				if ok := validateBasicSSHSecret(logger, *secret); !ok {
-					valid = false
+				if msg := validateBasicSSHSecret(*secret); len(msg) > 0 {
+					for _, m := range msg {
+						messages = append(messages, fmt.Sprintf("seedJob `%s` %s", seedJob.ID, m))
+					}
 				}
 			}
 			if seedJob.JenkinsCredentialType == v1alpha2.UsernamePasswordCredentialType {
-				if ok := validateUsernamePasswordSecret(logger, *secret); !ok {
-					valid = false
+				if msg := validateUsernamePasswordSecret(*secret); len(msg) > 0 {
+					for _, m := range msg {
+						messages = append(messages, fmt.Sprintf("seedJob `%s` %s", seedJob.ID, m))
+					}
 				}
 			}
 		}
 
 		if len(seedJob.BuildPeriodically) > 0 {
-			if !s.validateSchedule(seedJob, seedJob.BuildPeriodically, "buildPeriodically") {
-				valid = false
+			if msg := s.validateSchedule(seedJob, seedJob.BuildPeriodically, "buildPeriodically"); len(msg) > 0 {
+				for _, m := range msg {
+					messages = append(messages, fmt.Sprintf("seedJob `%s` %s", seedJob.ID, m))
+				}
 			}
 		}
 
 		if len(seedJob.PollSCM) > 0 {
-			if !s.validateSchedule(seedJob, seedJob.PollSCM, "pollSCM") {
-				valid = false
+			if msg := s.validateSchedule(seedJob, seedJob.PollSCM, "pollSCM"); len(msg) > 0 {
+				for _, m := range msg {
+					messages = append(messages, fmt.Sprintf("seedJob `%s` %s", seedJob.ID, m))
+				}
 			}
 		}
 
 		if seedJob.GitHubPushTrigger {
-			if !s.validateGitHubPushTrigger(jenkins) {
-				valid = false
+			if msg := s.validateGitHubPushTrigger(jenkins); len(msg) > 0 {
+				for _, m := range msg {
+					messages = append(messages, fmt.Sprintf("seedJob `%s` %s", seedJob.ID, m))
+				}
 			}
 		}
 	}
 
-	return valid, nil
+	return messages, nil
 }
 
-func (s *SeedJobs) validateSchedule(job v1alpha2.SeedJob, str string, key string) bool {
+func (s *SeedJobs) validateSchedule(job v1alpha2.SeedJob, str string, key string) []string {
+	var messages []string
 	_, err := cron.Parse(str)
 	if err != nil {
-		s.logger.V(log.VWarn).Info(fmt.Sprintf("`%s` schedule '%s' is invalid cron spec in `%s`", key, str, job.ID))
-		return false
+		messages = append(messages, fmt.Sprintf("`%s` schedule '%s' is invalid cron spec in `%s`", key, str, job.ID))
 	}
-	return true
+	return messages
 }
 
-func (s *SeedJobs) validateGitHubPushTrigger(jenkins v1alpha2.Jenkins) bool {
+func (s *SeedJobs) validateGitHubPushTrigger(jenkins v1alpha2.Jenkins) []string {
+	var messages []string
 	exists := false
 	for _, plugin := range jenkins.Spec.Master.BasePlugins {
 		if plugin.Name == "github" {
@@ -136,75 +134,65 @@ func (s *SeedJobs) validateGitHubPushTrigger(jenkins v1alpha2.Jenkins) bool {
 	}
 
 	if !exists && !userExists {
-		s.logger.V(log.VWarn).Info("githubPushTrigger is set. This function requires `github` plugin installed in .Spec.Master.Plugins because seed jobs Push Trigger function needs it")
-		return false
+		messages = append(messages, "githubPushTrigger is set. This function requires `github` plugin installed in .Spec.Master.Plugins because seed jobs Push Trigger function needs it")
 	}
-	return true
+	return messages
 }
 
-func (s *SeedJobs) validateIfIDIsUnique(seedJobs []v1alpha2.SeedJob) bool {
+func (s *SeedJobs) validateIfIDIsUnique(seedJobs []v1alpha2.SeedJob) []string {
+	var messages []string
 	ids := map[string]bool{}
 	for _, seedJob := range seedJobs {
 		if _, found := ids[seedJob.ID]; found {
-			s.logger.V(log.VWarn).Info(fmt.Sprintf("'%s' seed job ID is not unique", seedJob.ID))
-			return false
+			messages = append(messages, fmt.Sprintf("'%s' seed job ID is not unique", seedJob.ID))
 		}
 		ids[seedJob.ID] = true
 	}
-	return true
+	return messages
 }
 
-func validateBasicSSHSecret(logger logr.InfoLogger, secret v1.Secret) bool {
-	valid := true
+func validateBasicSSHSecret(secret v1.Secret) []string {
+	var messages []string
 	username, exists := secret.Data[UsernameSecretKey]
 	if !exists {
-		logger.Info(fmt.Sprintf("required data '%s' not found in secret '%s'", UsernameSecretKey, secret.ObjectMeta.Name))
-		valid = false
+		messages = append(messages, fmt.Sprintf("required data '%s' not found in secret '%s'", UsernameSecretKey, secret.ObjectMeta.Name))
 	}
 	if len(username) == 0 {
-		logger.Info(fmt.Sprintf("required data '%s' is empty in secret '%s'", UsernameSecretKey, secret.ObjectMeta.Name))
-		valid = false
+		messages = append(messages, fmt.Sprintf("required data '%s' is empty in secret '%s'", UsernameSecretKey, secret.ObjectMeta.Name))
 	}
 
 	privateKey, exists := secret.Data[PrivateKeySecretKey]
 	if !exists {
-		logger.Info(fmt.Sprintf("required data '%s' not found in secret '%s'", PrivateKeySecretKey, secret.ObjectMeta.Name))
-		valid = false
+		messages = append(messages, fmt.Sprintf("required data '%s' not found in secret '%s'", PrivateKeySecretKey, secret.ObjectMeta.Name))
 	}
 	if len(string(privateKey)) == 0 {
-		logger.Info(fmt.Sprintf("required data '%s' not found in secret '%s'", PrivateKeySecretKey, secret.ObjectMeta.Name))
-		return false
+		messages = append(messages, fmt.Sprintf("required data '%s' not found in secret '%s'", PrivateKeySecretKey, secret.ObjectMeta.Name))
 	}
 	if err := validatePrivateKey(string(privateKey)); err != nil {
-		logger.Info(fmt.Sprintf("private key '%s' invalid in secret '%s': %s", PrivateKeySecretKey, secret.ObjectMeta.Name, err))
-		valid = false
+		messages = append(messages, fmt.Sprintf("private key '%s' invalid in secret '%s': %s", PrivateKeySecretKey, secret.ObjectMeta.Name, err))
 	}
 
-	return valid
+	return messages
 }
 
-func validateUsernamePasswordSecret(logger logr.InfoLogger, secret v1.Secret) bool {
-	valid := true
+func validateUsernamePasswordSecret(secret v1.Secret) []string {
+	var messages []string
 	username, exists := secret.Data[UsernameSecretKey]
 	if !exists {
-		logger.Info(fmt.Sprintf("required data '%s' not found in secret '%s'", UsernameSecretKey, secret.ObjectMeta.Name))
-		valid = false
+		messages = append(messages, fmt.Sprintf("required data '%s' not found in secret '%s'", UsernameSecretKey, secret.ObjectMeta.Name))
 	}
 	if len(username) == 0 {
-		logger.Info(fmt.Sprintf("required data '%s' is empty in secret '%s'", UsernameSecretKey, secret.ObjectMeta.Name))
-		valid = false
+		messages = append(messages, fmt.Sprintf("required data '%s' is empty in secret '%s'", UsernameSecretKey, secret.ObjectMeta.Name))
 	}
 	password, exists := secret.Data[PasswordSecretKey]
 	if !exists {
-		logger.Info(fmt.Sprintf("required data '%s' not found in secret '%s'", PasswordSecretKey, secret.ObjectMeta.Name))
-		valid = false
+		messages = append(messages, fmt.Sprintf("required data '%s' not found in secret '%s'", PasswordSecretKey, secret.ObjectMeta.Name))
 	}
 	if len(password) == 0 {
-		logger.Info(fmt.Sprintf("required data '%s' is empty in secret '%s'", PasswordSecretKey, secret.ObjectMeta.Name))
-		valid = false
+		messages = append(messages, fmt.Sprintf("required data '%s' is empty in secret '%s'", PasswordSecretKey, secret.ObjectMeta.Name))
 	}
 
-	return valid
+	return messages
 }
 
 func validatePrivateKey(privateKey string) error {
