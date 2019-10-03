@@ -104,10 +104,10 @@ func (s Slack) Send(event Event, config v1alpha2.Notification) error {
 		mainAttachment.Fields[0].Value = message
 	}
 
-	if event.ConfigurationType != ConfigurationTypeUnknown {
+	if event.Phase != PhaseUnknown {
 		mainAttachment.Fields = append(mainAttachment.Fields, SlackField{
-			Title: configurationTypeFieldName,
-			Value: string(event.ConfigurationType),
+			Title: phaseFieldName,
+			Value: string(event.Phase),
 			Short: true,
 		})
 	}

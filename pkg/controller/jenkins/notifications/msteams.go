@@ -102,10 +102,10 @@ func (t Teams) Send(event Event, config v1alpha2.Notification) error {
 		tm.Summary = message
 	}
 
-	if event.ConfigurationType != ConfigurationTypeUnknown {
+	if event.Phase != PhaseUnknown {
 		tm.Sections[0].Facts = append(tm.Sections[0].Facts, TeamsFact{
-			Name:  configurationTypeFieldName,
-			Value: string(event.ConfigurationType),
+			Name:  phaseFieldName,
+			Value: string(event.Phase),
 		})
 	}
 

@@ -2,50 +2,50 @@ package notifications
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/event"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
-	"net/http"
-
 	"github.com/pkg/errors"
 	k8sclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
-	infoTitleText              = "Jenkins Operator reconciliation info"
-	warnTitleText              = "Jenkins Operator reconciliation warning"
-	messageFieldName           = "Message"
-	loggingLevelFieldName      = "Logging Level"
-	crNameFieldName            = "CR Name"
-	configurationTypeFieldName = "Phase"
-	namespaceFieldName         = "Namespace"
-	footerContent              = "Powered by Jenkins Operator"
+	infoTitleText         = "Jenkins Operator reconciliation info"
+	warnTitleText         = "Jenkins Operator reconciliation warning"
+	messageFieldName      = "Message"
+	loggingLevelFieldName = "Logging Level"
+	crNameFieldName       = "CR Name"
+	phaseFieldName        = "Phase"
+	namespaceFieldName    = "Namespace"
+	footerContent         = "Powered by Jenkins Operator"
 )
 
 const (
-	// ConfigurationTypeBase is core configuration of Jenkins provided by the Operator
-	ConfigurationTypeBase ConfigurationType = "base"
+	// PhaseBase is core configuration of Jenkins provided by the Operator
+	PhaseBase Phase = "base"
 
-	// ConfigurationTypeUser is user-defined configuration of Jenkins
-	ConfigurationTypeUser ConfigurationType = "user"
+	// PhaseUser is user-defined configuration of Jenkins
+	PhaseUser Phase = "user"
 
-	// ConfigurationTypeUnknown is untraceable type of configuration
-	ConfigurationTypeUnknown ConfigurationType = "unknown"
+	// PhaseUnknown is untraceable type of configuration
+	PhaseUnknown Phase = "unknown"
 )
 
 var (
-	testConfigurationType = ConfigurationTypeUser
-	testCrName            = "test-cr"
-	testNamespace         = "default"
-	testMessage           = "test-message"
-	testMessageVerbose    = []string{"detail-test-message"}
-	testLoggingLevel      = v1alpha2.NotificationLogLevelWarning
+	testPhase          = PhaseUser
+	testCrName         = "test-cr"
+	testNamespace      = "default"
+	testMessage        = "test-message"
+	testMessageVerbose = []string{"detail-test-message"}
+	testLoggingLevel   = v1alpha2.NotificationLogLevelWarning
 
 	client = http.Client{}
 )
 
-// ConfigurationType defines the type of configuration
-type ConfigurationType string
+// Phase defines the type of configuration
+type Phase string
 
 // StatusColor is useful for better UX
 type StatusColor string
@@ -55,11 +55,11 @@ type LoggingLevel string
 
 // Event contains event details which will be sent as a notification
 type Event struct {
-	Jenkins           v1alpha2.Jenkins
-	ConfigurationType ConfigurationType
-	LogLevel          v1alpha2.NotificationLogLevel
-	Message           string
-	MessagesVerbose   []string
+	Jenkins         v1alpha2.Jenkins
+	Phase           Phase
+	LogLevel        v1alpha2.NotificationLogLevel
+	Message         string
+	MessagesVerbose []string
 }
 
 type service interface {

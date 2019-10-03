@@ -6,13 +6,11 @@ import (
 	"regexp"
 	"strings"
 
+	docker "github.com/docker/distribution/reference"
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/plugins"
-	"github.com/jenkinsci/kubernetes-operator/pkg/log"
-
-	docker "github.com/docker/distribution/reference"
 	stackerr "github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -27,38 +25,38 @@ var (
 func (r *ReconcileJenkinsBaseConfiguration) Validate(jenkins *v1alpha2.Jenkins) ([]string, error) {
 	var messages []string
 
-	if msg := r.validateReservedVolumes(); msg != nil {
+	if msg := r.validateReservedVolumes(); len(msg) > 0 {
 		messages = append(messages, msg...)
 	}
 
 	if msg, err := r.validateVolumes(); err != nil {
 		return nil, err
-	} else if msg != nil {
+	} else if len(msg) > 0 {
 		messages = append(messages, msg...)
 	}
 
 	for _, container := range jenkins.Spec.Master.Containers {
-		if msg := r.validateContainer(container); msg != nil {
+		if msg := r.validateContainer(container); len(msg) > 0 {
 			messages = append(messages, msg...)
 		}
 	}
 
-	if msg := r.validatePlugins(plugins.BasePlugins(), jenkins.Spec.Master.BasePlugins, jenkins.Spec.Master.Plugins); msg != nil {
+	if msg := r.validatePlugins(plugins.BasePlugins(), jenkins.Spec.Master.BasePlugins, jenkins.Spec.Master.Plugins); len(msg) > 0 {
 		messages = append(messages, msg...)
 	}
 
-	if msg := r.validateJenkinsMasterPodEnvs(); msg != nil {
+	if msg := r.validateJenkinsMasterPodEnvs(); len(msg) > 0 {
 		messages = append(messages, msg...)
 	}
 
 	if msg, err := r.validateCustomization(r.jenkins.Spec.GroovyScripts.Customization, "spec.groovyScripts"); err != nil {
 		return nil, err
-	} else if msg != nil {
+	} else if len(msg) > 0 {
 		messages = append(messages, msg...)
 	}
 	if msg, err := r.validateCustomization(r.jenkins.Spec.ConfigurationAsCode.Customization, "spec.configurationAsCode"); err != nil {
 		return nil, err
-	} else if msg != nil {
+	} else if len(msg) > 0 {
 		messages = append(messages, msg...)
 	}
 
@@ -72,7 +70,7 @@ func (r *ReconcileJenkinsBaseConfiguration) validateImagePullSecrets() ([]string
 		if err != nil {
 			return nil, err
 		}
-		if msg != nil {
+		if len(msg) > 0 {
 			messages = append(messages, msg...)
 		}
 	}
@@ -112,19 +110,19 @@ func (r *ReconcileJenkinsBaseConfiguration) validateVolumes() ([]string, error) 
 		case volume.ConfigMap != nil:
 			if msg, err := r.validateConfigMapVolume(volume); err != nil {
 				return nil, err
-			} else if msg != nil {
+			} else if len(msg) > 0 {
 				messages = append(messages, msg...)
 			}
 		case volume.Secret != nil:
 			if msg, err := r.validateSecretVolume(volume); err != nil {
 				return nil, err
-			} else if msg != nil {
+			} else if len(msg) > 0 {
 				messages = append(messages, msg...)
 			}
 		case volume.PersistentVolumeClaim != nil:
 			if msg, err := r.validatePersistentVolumeClaim(volume); err != nil {
 				return nil, err
-			} else if msg != nil {
+			} else if len(msg) > 0 {
 				messages = append(messages, msg...)
 			}
 		default: //TODO add support for rest of volumes
@@ -211,7 +209,7 @@ func (r *ReconcileJenkinsBaseConfiguration) validateContainer(container v1alpha2
 		messages = append(messages, "Image pull policy not set")
 	}
 
-	if msg := r.validateContainerVolumeMounts(container); msg != nil {
+	if msg := r.validateContainerVolumeMounts(container); len(msg) > 0 {
 		messages = append(messages, msg...)
 	}
 
@@ -307,19 +305,19 @@ func (r *ReconcileJenkinsBaseConfiguration) validatePlugins(requiredBasePlugins 
 		}
 	}
 
-	if !plugins.VerifyDependencies(allPlugins) {
-		messages = append(messages, "Invalid dependencies")
+	if msg := plugins.VerifyDependencies(allPlugins); len(msg) > 0 {
+		messages = append(messages, msg...)
 	}
 
-	if !r.verifyBasePlugins(requiredBasePlugins, basePlugins) {
-		messages = append(messages, "Failed to verify base plugins")
+	if msg := r.verifyBasePlugins(requiredBasePlugins, basePlugins); len(msg) > 0 {
+		messages = append(messages, msg...)
 	}
 
 	return messages
 }
 
-func (r *ReconcileJenkinsBaseConfiguration) verifyBasePlugins(requiredBasePlugins []plugins.Plugin, basePlugins []v1alpha2.Plugin) bool {
-	valid := true
+func (r *ReconcileJenkinsBaseConfiguration) verifyBasePlugins(requiredBasePlugins []plugins.Plugin, basePlugins []v1alpha2.Plugin) []string {
+	var messages []string
 
 	for _, requiredBasePlugin := range requiredBasePlugins {
 		found := false
@@ -330,12 +328,11 @@ func (r *ReconcileJenkinsBaseConfiguration) verifyBasePlugins(requiredBasePlugin
 			}
 		}
 		if !found {
-			valid = false
-			r.logger.V(log.VWarn).Info(fmt.Sprintf("Missing plugin '%s' in spec.master.basePlugins", requiredBasePlugin.Name))
+			messages = append(messages, fmt.Sprintf("Missing plugin '%s' in spec.master.basePlugins", requiredBasePlugin.Name))
 		}
 	}
 
-	return valid
+	return messages
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) validateCustomization(customization v1alpha2.Customization, name string) ([]string, error) {

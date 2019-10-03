@@ -27,10 +27,10 @@ func TestSlack_Send(t *testing.T) {
 				Namespace: testNamespace,
 			},
 		},
-		ConfigurationType: testConfigurationType,
-		Message:           testMessage,
-		MessagesVerbose:   testMessageVerbose,
-		LogLevel:          testLoggingLevel,
+		Phase:           testPhase,
+		Message:         testMessage,
+		MessagesVerbose: testMessageVerbose,
+		LogLevel:        testLoggingLevel,
 	}
 	slack := Slack{k8sClient: fakeClient}
 
@@ -48,8 +48,8 @@ func TestSlack_Send(t *testing.T) {
 		assert.Equal(t, mainAttachment.Title, notificationTitle(event))
 		for _, field := range mainAttachment.Fields {
 			switch field.Title {
-			case configurationTypeFieldName:
-				assert.Equal(t, field.Value, string(event.ConfigurationType))
+			case phaseFieldName:
+				assert.Equal(t, field.Value, string(event.Phase))
 			case crNameFieldName:
 				assert.Equal(t, field.Value, event.Jenkins.Name)
 			case messageFieldName:

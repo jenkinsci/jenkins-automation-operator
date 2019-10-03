@@ -8,9 +8,6 @@ import (
 	"strings"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
-	"github.com/jenkinsci/kubernetes-operator/pkg/log"
-
-	"github.com/go-logr/logr"
 	stackerr "github.com/pkg/errors"
 	"github.com/robfig/cron"
 	"k8s.io/api/core/v1"
@@ -22,41 +19,39 @@ import (
 func (s *SeedJobs) ValidateSeedJobs(jenkins v1alpha2.Jenkins) ([]string, error) {
 	var messages []string
 
-	if msg := s.validateIfIDIsUnique(jenkins.Spec.SeedJobs); msg != nil {
+	if msg := s.validateIfIDIsUnique(jenkins.Spec.SeedJobs); len(msg) > 0 {
 		messages = append(messages, msg...)
 	}
 
 	for _, seedJob := range jenkins.Spec.SeedJobs {
-		logger := s.logger.WithValues("seedJob", seedJob.ID).V(log.VWarn)
-
 		if len(seedJob.ID) == 0 {
-			messages = append(messages, "id can't be empty")
+			messages = append(messages, fmt.Sprintf("seedJob `%s` id can't be empty", seedJob.ID))
 		}
 
 		if len(seedJob.RepositoryBranch) == 0 {
-			messages = append(messages, "repository branch can't be empty")
+			messages = append(messages, fmt.Sprintf("seedJob `%s` repository branch can't be empty", seedJob.ID))
 		}
 
 		if len(seedJob.RepositoryURL) == 0 {
-			messages = append(messages, "repository URL branch can't be empty")
+			messages = append(messages, fmt.Sprintf("seedJob `%s` repository URL branch can't be empty", seedJob.ID))
 		}
 
 		if len(seedJob.Targets) == 0 {
-			messages = append(messages, "targets can't be empty")
+			messages = append(messages, fmt.Sprintf("seedJob `%s` targets can't be empty", seedJob.ID))
 		}
 
 		if _, ok := v1alpha2.AllowedJenkinsCredentialMap[string(seedJob.JenkinsCredentialType)]; !ok {
-			messages = append(messages, "unknown credential type")
+			messages = append(messages, fmt.Sprintf("seedJob `%s` unknown credential type", seedJob.ID))
 		}
 
 		if (seedJob.JenkinsCredentialType == v1alpha2.BasicSSHCredentialType ||
 			seedJob.JenkinsCredentialType == v1alpha2.UsernamePasswordCredentialType) && len(seedJob.CredentialID) == 0 {
-			messages = append(messages, "credential ID can't be empty")
+			messages = append(messages, fmt.Sprintf("seedJob `%s` credential ID can't be empty", seedJob.ID))
 		}
 
 		// validate repository url match private key
 		if strings.Contains(seedJob.RepositoryURL, "git@") && seedJob.JenkinsCredentialType == v1alpha2.NoJenkinsCredentialCredentialType {
-			messages = append(messages, "Jenkins credential must be set while using ssh repository url")
+			messages = append(messages, fmt.Sprintf("seedJob `%s` Jenkins credential must be set while using ssh repository url", seedJob.ID))
 		}
 
 		if seedJob.JenkinsCredentialType == v1alpha2.BasicSSHCredentialType || seedJob.JenkinsCredentialType == v1alpha2.UsernamePasswordCredentialType {
@@ -64,38 +59,48 @@ func (s *SeedJobs) ValidateSeedJobs(jenkins v1alpha2.Jenkins) ([]string, error) 
 			namespaceName := types.NamespacedName{Namespace: jenkins.Namespace, Name: seedJob.CredentialID}
 			err := s.k8sClient.Get(context.TODO(), namespaceName, secret)
 			if err != nil && apierrors.IsNotFound(err) {
-				messages = append(messages, fmt.Sprintf("required secret '%s' with Jenkins credential not found", seedJob.CredentialID))
+				messages = append(messages, fmt.Sprintf("seedJob `%s` required secret '%s' with Jenkins credential not found", seedJob.ID, seedJob.CredentialID))
 			} else if err != nil {
 				return nil, stackerr.WithStack(err)
 			}
 
 			if seedJob.JenkinsCredentialType == v1alpha2.BasicSSHCredentialType {
-				if msg := validateBasicSSHSecret(logger, *secret); msg != nil {
-					messages = append(messages, msg...)
+				if msg := validateBasicSSHSecret(*secret); len(msg) > 0 {
+					for _, m := range msg {
+						messages = append(messages, fmt.Sprintf("seedJob `%s` %s", seedJob.ID, m))
+					}
 				}
 			}
 			if seedJob.JenkinsCredentialType == v1alpha2.UsernamePasswordCredentialType {
-				if msg := validateUsernamePasswordSecret(logger, *secret); msg != nil {
-					messages = append(messages, msg...)
+				if msg := validateUsernamePasswordSecret(*secret); len(msg) > 0 {
+					for _, m := range msg {
+						messages = append(messages, fmt.Sprintf("seedJob `%s` %s", seedJob.ID, m))
+					}
 				}
 			}
 		}
 
 		if len(seedJob.BuildPeriodically) > 0 {
-			if msg := s.validateSchedule(seedJob, seedJob.BuildPeriodically, "buildPeriodically"); msg != nil {
-				messages = append(messages, msg...)
+			if msg := s.validateSchedule(seedJob, seedJob.BuildPeriodically, "buildPeriodically"); len(msg) > 0 {
+				for _, m := range msg {
+					messages = append(messages, fmt.Sprintf("seedJob `%s` %s", seedJob.ID, m))
+				}
 			}
 		}
 
 		if len(seedJob.PollSCM) > 0 {
-			if msg := s.validateSchedule(seedJob, seedJob.PollSCM, "pollSCM"); msg != nil {
-				messages = append(messages, msg...)
+			if msg := s.validateSchedule(seedJob, seedJob.PollSCM, "pollSCM"); len(msg) > 0 {
+				for _, m := range msg {
+					messages = append(messages, fmt.Sprintf("seedJob `%s` %s", seedJob.ID, m))
+				}
 			}
 		}
 
 		if seedJob.GitHubPushTrigger {
-			if msg := s.validateGitHubPushTrigger(jenkins); msg != nil {
-				messages = append(messages, msg...)
+			if msg := s.validateGitHubPushTrigger(jenkins); len(msg) > 0 {
+				for _, m := range msg {
+					messages = append(messages, fmt.Sprintf("seedJob `%s` %s", seedJob.ID, m))
+				}
 			}
 		}
 	}
@@ -146,7 +151,7 @@ func (s *SeedJobs) validateIfIDIsUnique(seedJobs []v1alpha2.SeedJob) []string {
 	return messages
 }
 
-func validateBasicSSHSecret(logger logr.InfoLogger, secret v1.Secret) []string {
+func validateBasicSSHSecret(secret v1.Secret) []string {
 	var messages []string
 	username, exists := secret.Data[UsernameSecretKey]
 	if !exists {
@@ -170,7 +175,7 @@ func validateBasicSSHSecret(logger logr.InfoLogger, secret v1.Secret) []string {
 	return messages
 }
 
-func validateUsernamePasswordSecret(logger logr.InfoLogger, secret v1.Secret) []string {
+func validateUsernamePasswordSecret(secret v1.Secret) []string {
 	var messages []string
 	username, exists := secret.Data[UsernameSecretKey]
 	if !exists {

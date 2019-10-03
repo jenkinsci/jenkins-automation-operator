@@ -28,7 +28,7 @@ const content = `
 				<td>%s</td>
 			</tr>
 			<tr>
-				<td><b>Configuration type:</b></td>
+				<td><b>Phase:</b></td>
 				<td>%s</td>
 			</tr>
 		</table>
@@ -83,7 +83,7 @@ func (m MailGun) Send(event Event, config v1alpha2.Notification) error {
 		statusMessage = event.Message
 	}
 
-	htmlMessage := fmt.Sprintf(content, m.getStatusColor(event.LogLevel), notificationTitle(event), statusMessage, event.Jenkins.Name, event.ConfigurationType)
+	htmlMessage := fmt.Sprintf(content, m.getStatusColor(event.LogLevel), notificationTitle(event), statusMessage, event.Jenkins.Name, event.Phase)
 
 	msg := mg.NewMessage(fmt.Sprintf("Jenkins Operator Notifier <%s>", config.Mailgun.From), notificationTitle(event), "", config.Mailgun.Recipient)
 	msg.SetHtml(htmlMessage)
