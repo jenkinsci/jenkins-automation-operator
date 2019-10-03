@@ -29,7 +29,7 @@ func TestTeams_Send(t *testing.T) {
 		},
 		ConfigurationType: testConfigurationType,
 		Message:           testMessage,
-		MessageVerbose:    testMessageVerbose,
+		MessagesVerbose:   testMessageVerbose,
 		LogLevel:          testLoggingLevel,
 	}
 	teams := Teams{k8sClient: fakeClient}
@@ -52,7 +52,7 @@ func TestTeams_Send(t *testing.T) {
 		for _, fact := range mainSection.Facts {
 			switch fact.Name {
 			case configurationTypeFieldName:
-				assert.Equal(t, fact.Value, event.ConfigurationType)
+				assert.Equal(t, fact.Value, string(event.ConfigurationType))
 			case crNameFieldName:
 				assert.Equal(t, fact.Value, event.Jenkins.Name)
 			case messageFieldName:

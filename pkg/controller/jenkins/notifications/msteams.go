@@ -94,14 +94,18 @@ func (t Teams) Send(event Event, config v1alpha2.Notification) error {
 	tm.Title = notificationTitle(event)
 
 	if config.Verbose {
-		tm.Sections[0].Text = event.MessageVerbose
-		tm.Summary = event.MessageVerbose
+		message := event.Message
+		for _, msg := range event.MessagesVerbose {
+			message = message + "\n\n - " + msg
+		}
+		tm.Sections[0].Text += message
+		tm.Summary = message
 	}
 
 	if event.ConfigurationType != ConfigurationTypeUnknown {
 		tm.Sections[0].Facts = append(tm.Sections[0].Facts, TeamsFact{
 			Name:  configurationTypeFieldName,
-			Value: event.ConfigurationType,
+			Value: string(event.ConfigurationType),
 		})
 	}
 

@@ -73,12 +73,17 @@ func (m MailGun) Send(event Event, config v1alpha2.Notification) error {
 	var statusMessage string
 
 	if config.Verbose {
-		statusMessage = event.MessageVerbose
+		message := event.Message + "<ul>"
+		for _, msg := range event.MessagesVerbose {
+			message = message + "<li>" + msg + "</li>"
+		}
+		message = message + "</ul>"
+		statusMessage = message
 	} else {
 		statusMessage = event.Message
 	}
 
-	htmlMessage := fmt.Sprintf(content, m.getStatusColor(event.LogLevel), statusMessage, event.Jenkins.Name, event.ConfigurationType, m.getStatusColor(event.LogLevel))
+	htmlMessage := fmt.Sprintf(content, m.getStatusColor(event.LogLevel), notificationTitle(event), statusMessage, event.Jenkins.Name, event.ConfigurationType)
 
 	msg := mg.NewMessage(fmt.Sprintf("Jenkins Operator Notifier <%s>", config.Mailgun.From), notificationTitle(event), "", config.Mailgun.Recipient)
 	msg.SetHtml(htmlMessage)

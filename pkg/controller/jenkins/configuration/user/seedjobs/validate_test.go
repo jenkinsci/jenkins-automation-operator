@@ -76,7 +76,7 @@ func TestValidateSeedJobs(t *testing.T) {
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
-		assert.Equal(t, true, result)
+		assert.Nil(t, result)
 	})
 	t.Run("Invalid without id", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
@@ -96,7 +96,7 @@ func TestValidateSeedJobs(t *testing.T) {
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
-		assert.Equal(t, false, result)
+		assert.NotNil(t, result)
 	})
 	t.Run("Valid with private key and secret", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
@@ -129,7 +129,7 @@ func TestValidateSeedJobs(t *testing.T) {
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
-		assert.Equal(t, true, result)
+		assert.Nil(t, result)
 	})
 	t.Run("Invalid private key in secret", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
@@ -162,7 +162,7 @@ func TestValidateSeedJobs(t *testing.T) {
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
-		assert.Equal(t, false, result)
+		assert.NotNil(t, result)
 	})
 	t.Run("Invalid with PrivateKey and empty Secret data", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
@@ -195,7 +195,7 @@ func TestValidateSeedJobs(t *testing.T) {
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
-		assert.Equal(t, false, result)
+		assert.NotNil(t, result)
 	})
 	t.Run("Invalid with ssh RepositoryURL and empty PrivateKey", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
@@ -217,7 +217,7 @@ func TestValidateSeedJobs(t *testing.T) {
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
-		assert.Equal(t, false, result)
+		assert.NotNil(t, result)
 	})
 	t.Run("Invalid without targets", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
@@ -237,7 +237,7 @@ func TestValidateSeedJobs(t *testing.T) {
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
-		assert.Equal(t, false, result)
+		assert.NotNil(t, result)
 	})
 	t.Run("Invalid without repository URL", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
@@ -257,7 +257,7 @@ func TestValidateSeedJobs(t *testing.T) {
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
-		assert.Equal(t, false, result)
+		assert.NotNil(t, result)
 	})
 	t.Run("Invalid without repository branch", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
@@ -277,7 +277,7 @@ func TestValidateSeedJobs(t *testing.T) {
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
-		assert.Equal(t, false, result)
+		assert.NotNil(t, result)
 	})
 	t.Run("Valid with username and password", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
@@ -310,7 +310,7 @@ func TestValidateSeedJobs(t *testing.T) {
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
-		assert.Equal(t, true, result)
+		assert.Nil(t, result)
 	})
 	t.Run("Invalid with empty username", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
@@ -343,7 +343,7 @@ func TestValidateSeedJobs(t *testing.T) {
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
-		assert.Equal(t, false, result)
+		assert.NotNil(t, result)
 	})
 	t.Run("Invalid with empty password", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
@@ -376,7 +376,7 @@ func TestValidateSeedJobs(t *testing.T) {
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
-		assert.Equal(t, false, result)
+		assert.NotNil(t, result)
 	})
 	t.Run("Invalid without username", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
@@ -408,7 +408,7 @@ func TestValidateSeedJobs(t *testing.T) {
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
-		assert.Equal(t, false, result)
+		assert.NotNil(t, result)
 	})
 	t.Run("Invalid without password", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
@@ -440,7 +440,7 @@ func TestValidateSeedJobs(t *testing.T) {
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
-		assert.Equal(t, false, result)
+		assert.NotNil(t, result)
 	})
 	t.Run("Invalid with wrong cron spec", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
@@ -463,7 +463,7 @@ func TestValidateSeedJobs(t *testing.T) {
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
-		assert.False(t, result)
+		assert.NotNil(t, result)
 	})
 	t.Run("Valid with good cron spec", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
@@ -487,7 +487,7 @@ func TestValidateSeedJobs(t *testing.T) {
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
-		assert.True(t, result)
+		assert.Nil(t, result)
 	})
 	t.Run("Invalid with set githubPushTrigger and not installed github plugin", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
@@ -510,7 +510,7 @@ func TestValidateSeedJobs(t *testing.T) {
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
-		assert.False(t, result)
+		assert.NotNil(t, result)
 	})
 	t.Run("Invalid with set githubPushTrigger and not installed github plugin", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
@@ -538,7 +538,7 @@ func TestValidateSeedJobs(t *testing.T) {
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
-		assert.True(t, result)
+		assert.Nil(t, result)
 	})
 }
 
@@ -549,7 +549,7 @@ func TestValidateIfIDIsUnique(t *testing.T) {
 		}
 		ctrl := New(nil, nil, logf.ZapLogger(false))
 		got := ctrl.validateIfIDIsUnique(seedJobs)
-		assert.Equal(t, true, got)
+		assert.Nil(t, got)
 	})
 	t.Run("duplicated ids", func(t *testing.T) {
 		seedJobs := []v1alpha2.SeedJob{
@@ -557,6 +557,6 @@ func TestValidateIfIDIsUnique(t *testing.T) {
 		}
 		ctrl := New(nil, nil, logf.ZapLogger(false))
 		got := ctrl.validateIfIDIsUnique(seedJobs)
-		assert.Equal(t, false, got)
+		assert.NotNil(t, got)
 	})
 }

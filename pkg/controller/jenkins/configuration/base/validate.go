@@ -24,213 +24,207 @@ var (
 )
 
 // Validate validates Jenkins CR Spec.master section
-func (r *ReconcileJenkinsBaseConfiguration) Validate(jenkins *v1alpha2.Jenkins) (bool, error) {
-	if !r.validateReservedVolumes() {
-		return false, nil
+func (r *ReconcileJenkinsBaseConfiguration) Validate(jenkins *v1alpha2.Jenkins) ([]string, error) {
+	var messages []string
+
+	if msg := r.validateReservedVolumes(); msg != nil {
+		messages = append(messages, msg...)
 	}
-	if valid, err := r.validateVolumes(); err != nil {
-		return false, err
-	} else if !valid {
-		return false, nil
+
+	if msg, err := r.validateVolumes(); err != nil {
+		return nil, err
+	} else if msg != nil {
+		messages = append(messages, msg...)
 	}
 
 	for _, container := range jenkins.Spec.Master.Containers {
-		if !r.validateContainer(container) {
-			return false, nil
+		if msg := r.validateContainer(container); msg != nil {
+			messages = append(messages, msg...)
 		}
 	}
 
-	if !r.validatePlugins(plugins.BasePlugins(), jenkins.Spec.Master.BasePlugins, jenkins.Spec.Master.Plugins) {
-		return false, nil
+	if msg := r.validatePlugins(plugins.BasePlugins(), jenkins.Spec.Master.BasePlugins, jenkins.Spec.Master.Plugins); msg != nil {
+		messages = append(messages, msg...)
 	}
 
-	if !r.validateJenkinsMasterPodEnvs() {
-		return false, nil
+	if msg := r.validateJenkinsMasterPodEnvs(); msg != nil {
+		messages = append(messages, msg...)
 	}
 
-	if valid, err := r.validateCustomization(r.jenkins.Spec.GroovyScripts.Customization, "spec.groovyScripts"); err != nil {
-		return false, err
-	} else if !valid {
-		return false, nil
+	if msg, err := r.validateCustomization(r.jenkins.Spec.GroovyScripts.Customization, "spec.groovyScripts"); err != nil {
+		return nil, err
+	} else if msg != nil {
+		messages = append(messages, msg...)
 	}
-	if valid, err := r.validateCustomization(r.jenkins.Spec.ConfigurationAsCode.Customization, "spec.configurationAsCode"); err != nil {
-		return false, err
-	} else if !valid {
-		return false, nil
+	if msg, err := r.validateCustomization(r.jenkins.Spec.ConfigurationAsCode.Customization, "spec.configurationAsCode"); err != nil {
+		return nil, err
+	} else if msg != nil {
+		messages = append(messages, msg...)
 	}
 
-	return true, nil
+	return messages, nil
 }
 
-func (r *ReconcileJenkinsBaseConfiguration) validateImagePullSecrets() (bool, error) {
+func (r *ReconcileJenkinsBaseConfiguration) validateImagePullSecrets() ([]string, error) {
+	var messages []string
 	for _, sr := range r.jenkins.Spec.Master.ImagePullSecrets {
-		valid, err := r.validateImagePullSecret(sr.Name)
+		msg, err := r.validateImagePullSecret(sr.Name)
 		if err != nil {
-			return false, err
+			return nil, err
 		}
-		if !valid {
-			return false, nil
+		if msg != nil {
+			messages = append(messages, msg...)
 		}
 	}
-	return true, nil
+	return messages, nil
 }
 
-func (r *ReconcileJenkinsBaseConfiguration) validateImagePullSecret(secretName string) (bool, error) {
+func (r *ReconcileJenkinsBaseConfiguration) validateImagePullSecret(secretName string) ([]string, error) {
+	var messages []string
 	secret := &corev1.Secret{}
 	err := r.k8sClient.Get(context.TODO(), types.NamespacedName{Name: secretName, Namespace: r.jenkins.ObjectMeta.Namespace}, secret)
 	if err != nil && apierrors.IsNotFound(err) {
-		r.logger.V(log.VWarn).Info(fmt.Sprintf("Secret %s not found defined in spec.master.imagePullSecrets", secretName))
-		return false, nil
+		messages = append(messages, fmt.Sprintf("Secret %s not found defined in spec.master.imagePullSecrets", secretName))
 	} else if err != nil && !apierrors.IsNotFound(err) {
-		return false, stackerr.WithStack(err)
+		return nil, stackerr.WithStack(err)
 	}
 
 	if secret.Data["docker-server"] == nil {
-		r.logger.V(log.VWarn).Info(fmt.Sprintf("Secret '%s' defined in spec.master.imagePullSecrets doesn't have 'docker-server' key.", secretName))
-		return false, nil
+		messages = append(messages, fmt.Sprintf("Secret '%s' defined in spec.master.imagePullSecrets doesn't have 'docker-server' key.", secretName))
 	}
 	if secret.Data["docker-username"] == nil {
-		r.logger.V(log.VWarn).Info(fmt.Sprintf("Secret '%s' defined in spec.master.imagePullSecrets doesn't have 'docker-username' key.", secretName))
-		return false, nil
+		messages = append(messages, fmt.Sprintf("Secret '%s' defined in spec.master.imagePullSecrets doesn't have 'docker-username' key.", secretName))
 	}
 	if secret.Data["docker-password"] == nil {
-		r.logger.V(log.VWarn).Info(fmt.Sprintf("Secret '%s' defined in spec.master.imagePullSecrets doesn't have 'docker-password' key.", secretName))
-		return false, nil
+		messages = append(messages, fmt.Sprintf("Secret '%s' defined in spec.master.imagePullSecrets doesn't have 'docker-password' key.", secretName))
 	}
 	if secret.Data["docker-email"] == nil {
-		r.logger.V(log.VWarn).Info(fmt.Sprintf("Secret '%s' defined in spec.master.imagePullSecrets doesn't have 'docker-email' key.", secretName))
-		return false, nil
+		messages = append(messages, fmt.Sprintf("Secret '%s' defined in spec.master.imagePullSecrets doesn't have 'docker-email' key.", secretName))
 	}
 
-	return true, nil
+	return messages, nil
 }
 
-func (r *ReconcileJenkinsBaseConfiguration) validateVolumes() (bool, error) {
-	valid := true
+func (r *ReconcileJenkinsBaseConfiguration) validateVolumes() ([]string, error) {
+	var messages []string
 	for _, volume := range r.jenkins.Spec.Master.Volumes {
 		switch {
 		case volume.ConfigMap != nil:
-			if ok, err := r.validateConfigMapVolume(volume); err != nil {
-				return false, err
-			} else if !ok {
-				valid = false
+			if msg, err := r.validateConfigMapVolume(volume); err != nil {
+				return nil, err
+			} else if msg != nil {
+				messages = append(messages, msg...)
 			}
 		case volume.Secret != nil:
-			if ok, err := r.validateSecretVolume(volume); err != nil {
-				return false, err
-			} else if !ok {
-				valid = false
+			if msg, err := r.validateSecretVolume(volume); err != nil {
+				return nil, err
+			} else if msg != nil {
+				messages = append(messages, msg...)
 			}
 		case volume.PersistentVolumeClaim != nil:
-			if ok, err := r.validatePersistentVolumeClaim(volume); err != nil {
-				return false, err
-			} else if !ok {
-				valid = false
+			if msg, err := r.validatePersistentVolumeClaim(volume); err != nil {
+				return nil, err
+			} else if msg != nil {
+				messages = append(messages, msg...)
 			}
 		default: //TODO add support for rest of volumes
-			valid = false
-			r.logger.V(log.VWarn).Info(fmt.Sprintf("Unsupported volume '%v'", volume))
+			messages = append(messages, fmt.Sprintf("Unsupported volume '%v'", volume))
 		}
 	}
 
-	return valid, nil
+	return messages, nil
 }
 
-func (r *ReconcileJenkinsBaseConfiguration) validatePersistentVolumeClaim(volume corev1.Volume) (bool, error) {
+func (r *ReconcileJenkinsBaseConfiguration) validatePersistentVolumeClaim(volume corev1.Volume) ([]string, error) {
+	var messages []string
+
 	pvc := &corev1.PersistentVolumeClaim{}
 	err := r.k8sClient.Get(context.TODO(), types.NamespacedName{Name: volume.PersistentVolumeClaim.ClaimName, Namespace: r.jenkins.ObjectMeta.Namespace}, pvc)
 	if err != nil && apierrors.IsNotFound(err) {
-		r.logger.V(log.VWarn).Info(fmt.Sprintf("PersistentVolumeClaim '%s' not found for volume '%v'", volume.PersistentVolumeClaim.ClaimName, volume))
-		return false, nil
+		messages = append(messages, fmt.Sprintf("PersistentVolumeClaim '%s' not found for volume '%v'", volume.PersistentVolumeClaim.ClaimName, volume))
 	} else if err != nil && !apierrors.IsNotFound(err) {
-		return false, stackerr.WithStack(err)
+		return nil, stackerr.WithStack(err)
 	}
 
-	return true, nil
+	return messages, nil
 }
 
-func (r *ReconcileJenkinsBaseConfiguration) validateConfigMapVolume(volume corev1.Volume) (bool, error) {
+func (r *ReconcileJenkinsBaseConfiguration) validateConfigMapVolume(volume corev1.Volume) ([]string, error) {
+	var messages []string
 	if volume.ConfigMap.Optional != nil && *volume.ConfigMap.Optional {
-		return true, nil
+		return nil, nil
 	}
 
 	configMap := &corev1.ConfigMap{}
 	err := r.k8sClient.Get(context.TODO(), types.NamespacedName{Name: volume.ConfigMap.Name, Namespace: r.jenkins.ObjectMeta.Namespace}, configMap)
 	if err != nil && apierrors.IsNotFound(err) {
-		r.logger.V(log.VWarn).Info(fmt.Sprintf("ConfigMap '%s' not found for volume '%v'", volume.ConfigMap.Name, volume))
-		return false, nil
+		messages = append(messages, fmt.Sprintf("ConfigMap '%s' not found for volume '%v'", volume.ConfigMap.Name, volume))
 	} else if err != nil && !apierrors.IsNotFound(err) {
-		return false, stackerr.WithStack(err)
+		return nil, stackerr.WithStack(err)
 	}
 
-	return true, nil
+	return messages, nil
 }
 
-func (r *ReconcileJenkinsBaseConfiguration) validateSecretVolume(volume corev1.Volume) (bool, error) {
+func (r *ReconcileJenkinsBaseConfiguration) validateSecretVolume(volume corev1.Volume) ([]string, error) {
+	var messages []string
 	if volume.Secret.Optional != nil && *volume.Secret.Optional {
-		return true, nil
+		return nil, nil
 	}
 
 	secret := &corev1.Secret{}
 	err := r.k8sClient.Get(context.TODO(), types.NamespacedName{Name: volume.Secret.SecretName, Namespace: r.jenkins.ObjectMeta.Namespace}, secret)
 	if err != nil && apierrors.IsNotFound(err) {
-		r.logger.V(log.VWarn).Info(fmt.Sprintf("Secret '%s' not found for volume '%v'", volume.Secret.SecretName, volume))
-		return false, nil
+		messages = append(messages, fmt.Sprintf("Secret '%s' not found for volume '%v'", volume.Secret.SecretName, volume))
 	} else if err != nil && !apierrors.IsNotFound(err) {
-		return false, stackerr.WithStack(err)
+		return nil, stackerr.WithStack(err)
 	}
 
-	return true, nil
+	return messages, nil
 }
 
-func (r *ReconcileJenkinsBaseConfiguration) validateReservedVolumes() bool {
-	valid := true
+func (r *ReconcileJenkinsBaseConfiguration) validateReservedVolumes() []string {
+	var messages []string
 
 	for _, baseVolume := range resources.GetJenkinsMasterPodBaseVolumes(r.jenkins) {
 		for _, volume := range r.jenkins.Spec.Master.Volumes {
 			if baseVolume.Name == volume.Name {
-				r.logger.V(log.VWarn).Info(fmt.Sprintf("Jenkins Master pod volume '%s' is reserved please choose different one", volume.Name))
-				valid = false
+				messages = append(messages, fmt.Sprintf("Jenkins Master pod volume '%s' is reserved please choose different one", volume.Name))
 			}
 		}
 	}
 
-	return valid
+	return messages
 }
 
-func (r *ReconcileJenkinsBaseConfiguration) validateContainer(container v1alpha2.Container) bool {
-	logger := r.logger.WithValues("container", container.Name)
+func (r *ReconcileJenkinsBaseConfiguration) validateContainer(container v1alpha2.Container) []string {
+	var messages []string
 	if container.Image == "" {
-		logger.V(log.VWarn).Info("Image not set")
-		return false
+		messages = append(messages, "Image not set")
 	}
 
 	if !dockerImageRegexp.MatchString(container.Image) && !docker.ReferenceRegexp.MatchString(container.Image) {
-		logger.V(log.VWarn).Info("Invalid image")
-		return false
+		messages = append(messages, "Invalid image")
 	}
 
 	if container.ImagePullPolicy == "" {
-		logger.V(log.VWarn).Info("Image pull policy not set")
-		return false
+		messages = append(messages, "Image pull policy not set")
 	}
 
-	if !r.validateContainerVolumeMounts(container) {
-		return false
+	if msg := r.validateContainerVolumeMounts(container); msg != nil {
+		messages = append(messages, msg...)
 	}
 
-	return true
+	return messages
 }
 
-func (r *ReconcileJenkinsBaseConfiguration) validateContainerVolumeMounts(container v1alpha2.Container) bool {
-	logger := r.logger.WithValues("container", container.Name)
+func (r *ReconcileJenkinsBaseConfiguration) validateContainerVolumeMounts(container v1alpha2.Container) []string {
+	var messages []string
 	allVolumes := append(resources.GetJenkinsMasterPodBaseVolumes(r.jenkins), r.jenkins.Spec.Master.Volumes...)
-	valid := true
 
 	for _, volumeMount := range container.VolumeMounts {
 		if len(volumeMount.MountPath) == 0 {
-			logger.V(log.VWarn).Info(fmt.Sprintf("mountPath not set for '%s' volume mount in container '%s'", volumeMount.Name, container.Name))
-			valid = false
+			messages = append(messages, fmt.Sprintf("mountPath not set for '%s' volume mount in container '%s'", volumeMount.Name, container.Name))
 		}
 
 		foundVolume := false
@@ -241,15 +235,15 @@ func (r *ReconcileJenkinsBaseConfiguration) validateContainerVolumeMounts(contai
 		}
 
 		if !foundVolume {
-			logger.V(log.VWarn).Info(fmt.Sprintf("Not found volume for '%s' volume mount in container '%s'", volumeMount.Name, container.Name))
-			valid = false
+			messages = append(messages, fmt.Sprintf("Not found volume for '%s' volume mount in container '%s'", volumeMount.Name, container.Name))
 		}
 	}
 
-	return valid
+	return messages
 }
 
-func (r *ReconcileJenkinsBaseConfiguration) validateJenkinsMasterPodEnvs() bool {
+func (r *ReconcileJenkinsBaseConfiguration) validateJenkinsMasterPodEnvs() []string {
+	var messages []string
 	baseEnvs := resources.GetJenkinsMasterContainerBaseEnvs(r.jenkins)
 	baseEnvNames := map[string]string{}
 	for _, env := range baseEnvs {
@@ -257,14 +251,12 @@ func (r *ReconcileJenkinsBaseConfiguration) validateJenkinsMasterPodEnvs() bool 
 	}
 
 	javaOpts := corev1.EnvVar{}
-	valid := true
 	for _, userEnv := range r.jenkins.Spec.Master.Containers[0].Env {
 		if userEnv.Name == constants.JavaOpsVariableName {
 			javaOpts = userEnv
 		}
 		if _, overriding := baseEnvNames[userEnv.Name]; overriding {
-			r.logger.V(log.VWarn).Info(fmt.Sprintf("Jenkins Master container env '%s' cannot be overridden", userEnv.Name))
-			valid = false
+			messages = append(messages, fmt.Sprintf("Jenkins Master container env '%s' cannot be overridden", userEnv.Name))
 		}
 	}
 
@@ -282,23 +274,21 @@ func (r *ReconcileJenkinsBaseConfiguration) validateJenkinsMasterPodEnvs() bool 
 	}
 	for requiredFlag, set := range requiredFlags {
 		if !set {
-			valid = false
-			r.logger.V(log.VWarn).Info(fmt.Sprintf("Jenkins Master container env '%s' doesn't have required flag '%s'", constants.JavaOpsVariableName, requiredFlag))
+			messages = append(messages, fmt.Sprintf("Jenkins Master container env '%s' doesn't have required flag '%s'", constants.JavaOpsVariableName, requiredFlag))
 		}
 	}
 
-	return valid
+	return messages
 }
 
-func (r *ReconcileJenkinsBaseConfiguration) validatePlugins(requiredBasePlugins []plugins.Plugin, basePlugins, userPlugins []v1alpha2.Plugin) bool {
-	valid := true
+func (r *ReconcileJenkinsBaseConfiguration) validatePlugins(requiredBasePlugins []plugins.Plugin, basePlugins, userPlugins []v1alpha2.Plugin) []string {
+	var messages []string
 	allPlugins := map[plugins.Plugin][]plugins.Plugin{}
 
 	for _, jenkinsPlugin := range basePlugins {
 		plugin, err := plugins.NewPlugin(jenkinsPlugin.Name, jenkinsPlugin.Version)
 		if err != nil {
-			r.logger.V(log.VWarn).Info(err.Error())
-			valid = false
+			messages = append(messages, err.Error())
 		}
 
 		if plugin != nil {
@@ -309,8 +299,7 @@ func (r *ReconcileJenkinsBaseConfiguration) validatePlugins(requiredBasePlugins 
 	for _, jenkinsPlugin := range userPlugins {
 		plugin, err := plugins.NewPlugin(jenkinsPlugin.Name, jenkinsPlugin.Version)
 		if err != nil {
-			r.logger.V(log.VWarn).Info(err.Error())
-			valid = false
+			messages = append(messages, err.Error())
 		}
 
 		if plugin != nil {
@@ -319,14 +308,14 @@ func (r *ReconcileJenkinsBaseConfiguration) validatePlugins(requiredBasePlugins 
 	}
 
 	if !plugins.VerifyDependencies(allPlugins) {
-		valid = false
+		messages = append(messages, "Invalid dependencies")
 	}
 
 	if !r.verifyBasePlugins(requiredBasePlugins, basePlugins) {
-		valid = false
+		messages = append(messages, "Failed to verify base plugins")
 	}
 
-	return valid
+	return messages
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) verifyBasePlugins(requiredBasePlugins []plugins.Plugin, basePlugins []v1alpha2.Plugin) bool {
@@ -349,44 +338,39 @@ func (r *ReconcileJenkinsBaseConfiguration) verifyBasePlugins(requiredBasePlugin
 	return valid
 }
 
-func (r *ReconcileJenkinsBaseConfiguration) validateCustomization(customization v1alpha2.Customization, name string) (bool, error) {
-	valid := true
+func (r *ReconcileJenkinsBaseConfiguration) validateCustomization(customization v1alpha2.Customization, name string) ([]string, error) {
+	var messages []string
 	if len(customization.Secret.Name) == 0 && len(customization.Configurations) == 0 {
-		return true, nil
+		return nil, nil
 	}
 	if len(customization.Secret.Name) > 0 && len(customization.Configurations) == 0 {
-		valid = false
-		r.logger.V(log.VWarn).Info(fmt.Sprintf("%s.secret.name is set but %s.configurations is empty", name, name))
+		messages = append(messages, fmt.Sprintf("%s.secret.name is set but %s.configurations is empty", name, name))
 	}
 
 	if len(customization.Secret.Name) > 0 {
 		secret := &corev1.Secret{}
 		err := r.k8sClient.Get(context.TODO(), types.NamespacedName{Name: customization.Secret.Name, Namespace: r.jenkins.ObjectMeta.Namespace}, secret)
 		if err != nil && apierrors.IsNotFound(err) {
-			valid = false
-			r.logger.V(log.VWarn).Info(fmt.Sprintf("Secret '%s' configured in %s.secret.name not found", customization.Secret.Name, name))
+			messages = append(messages, fmt.Sprintf("Secret '%s' configured in %s.secret.name not found", customization.Secret.Name, name))
 		} else if err != nil && !apierrors.IsNotFound(err) {
-			return false, stackerr.WithStack(err)
+			return nil, stackerr.WithStack(err)
 		}
 	}
 
 	for index, configMapRef := range customization.Configurations {
 		if len(configMapRef.Name) == 0 {
-			r.logger.V(log.VWarn).Info(fmt.Sprintf("%s.configurations[%d] name is empty", name, index))
-			valid = false
+			messages = append(messages, fmt.Sprintf("%s.configurations[%d] name is empty", name, index))
 			continue
 		}
 
 		configMap := &corev1.ConfigMap{}
 		err := r.k8sClient.Get(context.TODO(), types.NamespacedName{Name: configMapRef.Name, Namespace: r.jenkins.ObjectMeta.Namespace}, configMap)
 		if err != nil && apierrors.IsNotFound(err) {
-			valid = false
-			r.logger.V(log.VWarn).Info(fmt.Sprintf("ConfigMap '%s' configured in %s.configurations[%d] not found", configMapRef.Name, name, index))
-			return false, nil
+			messages = append(messages, fmt.Sprintf("ConfigMap '%s' configured in %s.configurations[%d] not found", configMapRef.Name, name, index))
 		} else if err != nil && !apierrors.IsNotFound(err) {
-			return false, stackerr.WithStack(err)
+			return nil, stackerr.WithStack(err)
 		}
 	}
 
-	return valid, nil
+	return messages, nil
 }

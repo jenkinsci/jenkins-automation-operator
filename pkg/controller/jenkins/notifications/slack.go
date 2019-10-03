@@ -97,13 +97,17 @@ func (s Slack) Send(event Event, config v1alpha2.Notification) error {
 
 	if config.Verbose {
 		// TODO: or for title == message
-		mainAttachment.Fields[0].Value = event.MessageVerbose
+		message := event.Message
+		for _, msg := range event.MessagesVerbose {
+			message = message + "\n - " + msg
+		}
+		mainAttachment.Fields[0].Value = message
 	}
 
 	if event.ConfigurationType != ConfigurationTypeUnknown {
 		mainAttachment.Fields = append(mainAttachment.Fields, SlackField{
 			Title: configurationTypeFieldName,
-			Value: event.ConfigurationType,
+			Value: string(event.ConfigurationType),
 			Short: true,
 		})
 	}
@@ -115,7 +119,7 @@ func (s Slack) Send(event Event, config v1alpha2.Notification) error {
 
 	secretValue := string(secret.Data[selector.Key])
 	if secretValue == "" {
-		return errors.Errorf("SecretValue %s is empty", selector.Name)
+		return errors.Errorf("Secret with given name `%s` and selector name `%s` is empty", secret.Name, selector.Name)
 	}
 
 	request, err := http.NewRequest("POST", secretValue, bytes.NewBuffer(slackMessage))

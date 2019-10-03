@@ -2,10 +2,10 @@ package notifications
 
 import (
 	"fmt"
-	"net/http"
-
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
+	"github.com/jenkinsci/kubernetes-operator/pkg/event"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
+	"net/http"
 
 	"github.com/pkg/errors"
 	k8sclient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -17,32 +17,35 @@ const (
 	messageFieldName           = "Message"
 	loggingLevelFieldName      = "Logging Level"
 	crNameFieldName            = "CR Name"
-	configurationTypeFieldName = "Configuration Type"
+	configurationTypeFieldName = "Phase"
 	namespaceFieldName         = "Namespace"
 	footerContent              = "Powered by Jenkins Operator"
 )
 
 const (
 	// ConfigurationTypeBase is core configuration of Jenkins provided by the Operator
-	ConfigurationTypeBase = "base"
+	ConfigurationTypeBase ConfigurationType = "base"
 
 	// ConfigurationTypeUser is user-defined configuration of Jenkins
-	ConfigurationTypeUser = "user"
+	ConfigurationTypeUser ConfigurationType = "user"
 
 	// ConfigurationTypeUnknown is untraceable type of configuration
-	ConfigurationTypeUnknown = "unknown"
+	ConfigurationTypeUnknown ConfigurationType = "unknown"
 )
 
 var (
-	testConfigurationType = "test-configuration"
+	testConfigurationType = ConfigurationTypeUser
 	testCrName            = "test-cr"
 	testNamespace         = "default"
 	testMessage           = "test-message"
-	testMessageVerbose    = "detail-test-message"
+	testMessageVerbose    = []string{"detail-test-message"}
 	testLoggingLevel      = v1alpha2.NotificationLogLevelWarning
 
 	client = http.Client{}
 )
+
+// ConfigurationType defines the type of configuration
+type ConfigurationType string
 
 // StatusColor is useful for better UX
 type StatusColor string
@@ -53,10 +56,10 @@ type LoggingLevel string
 // Event contains event details which will be sent as a notification
 type Event struct {
 	Jenkins           v1alpha2.Jenkins
-	ConfigurationType string
+	ConfigurationType ConfigurationType
 	LogLevel          v1alpha2.NotificationLogLevel
 	Message           string
-	MessageVerbose    string
+	MessagesVerbose   []string
 }
 
 type service interface {
@@ -64,7 +67,7 @@ type service interface {
 }
 
 // Listen listens for incoming events and send it as notifications
-func Listen(events chan Event, k8sClient k8sclient.Client) {
+func Listen(events chan Event, k8sEvent event.Recorder, k8sClient k8sclient.Client) {
 	for event := range events {
 		logger := log.Log.WithValues("cr", event.Jenkins.Name)
 		for _, notificationConfig := range event.Jenkins.Spec.Notifications {
@@ -94,7 +97,18 @@ func Listen(events chan Event, k8sClient k8sclient.Client) {
 				}
 			}(notificationConfig)
 		}
+		k8sEvent.Emit(&event.Jenkins, logLevelEventType(event.LogLevel), "NotificationSent", event.Message)
+	}
+}
 
+func logLevelEventType(level v1alpha2.NotificationLogLevel) event.Type {
+	switch level {
+	case v1alpha2.NotificationLogLevelWarning:
+		return event.TypeWarning
+	case v1alpha2.NotificationLogLevelInfo:
+		return event.TypeNormal
+	default:
+		return event.TypeNormal
 	}
 }
 
@@ -111,6 +125,6 @@ func notificationTitle(event Event) string {
 	} else if event.LogLevel == v1alpha2.NotificationLogLevelWarning {
 		return warnTitleText
 	} else {
-		return "undefined"
+		return ""
 	}
 }

@@ -120,10 +120,10 @@ func main() {
 	}
 
 	c := make(chan notifications.Event)
-	go notifications.Listen(c, mgr.GetClient())
+	go notifications.Listen(c, events, mgr.GetClient())
 
 	// setup Jenkins controller
-	if err := jenkins.Add(mgr, *local, *minikube, events, *clientSet, *cfg, &c); err != nil {
+	if err := jenkins.Add(mgr, *local, *minikube, *clientSet, *cfg, &c); err != nil {
 		fatal(errors.Wrap(err, "failed to setup controllers"), *debug)
 	}
 

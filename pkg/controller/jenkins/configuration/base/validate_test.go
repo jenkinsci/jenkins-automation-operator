@@ -30,7 +30,7 @@ func TestValidatePlugins(t *testing.T) {
 
 		got := baseReconcileLoop.validatePlugins(requiredBasePlugins, basePlugins, userPlugins)
 
-		assert.True(t, got)
+		assert.Nil(t, got)
 	})
 	t.Run("valid user plugin", func(t *testing.T) {
 		var requiredBasePlugins []plugins.Plugin
@@ -39,7 +39,7 @@ func TestValidatePlugins(t *testing.T) {
 
 		got := baseReconcileLoop.validatePlugins(requiredBasePlugins, basePlugins, userPlugins)
 
-		assert.True(t, got)
+		assert.Nil(t, got)
 	})
 	t.Run("invalid user plugin name", func(t *testing.T) {
 		var requiredBasePlugins []plugins.Plugin
@@ -48,7 +48,7 @@ func TestValidatePlugins(t *testing.T) {
 
 		got := baseReconcileLoop.validatePlugins(requiredBasePlugins, basePlugins, userPlugins)
 
-		assert.False(t, got)
+		assert.NotNil(t, got)
 	})
 	t.Run("invalid user plugin version", func(t *testing.T) {
 		var requiredBasePlugins []plugins.Plugin
@@ -57,7 +57,7 @@ func TestValidatePlugins(t *testing.T) {
 
 		got := baseReconcileLoop.validatePlugins(requiredBasePlugins, basePlugins, userPlugins)
 
-		assert.False(t, got)
+		assert.NotNil(t, got)
 	})
 	t.Run("valid base plugin", func(t *testing.T) {
 		var requiredBasePlugins []plugins.Plugin
@@ -66,7 +66,7 @@ func TestValidatePlugins(t *testing.T) {
 
 		got := baseReconcileLoop.validatePlugins(requiredBasePlugins, basePlugins, userPlugins)
 
-		assert.True(t, got)
+		assert.Nil(t, got)
 	})
 	t.Run("invalid base plugin name", func(t *testing.T) {
 		var requiredBasePlugins []plugins.Plugin
@@ -75,7 +75,7 @@ func TestValidatePlugins(t *testing.T) {
 
 		got := baseReconcileLoop.validatePlugins(requiredBasePlugins, basePlugins, userPlugins)
 
-		assert.False(t, got)
+		assert.NotNil(t, got)
 	})
 	t.Run("invalid base plugin version", func(t *testing.T) {
 		var requiredBasePlugins []plugins.Plugin
@@ -84,7 +84,7 @@ func TestValidatePlugins(t *testing.T) {
 
 		got := baseReconcileLoop.validatePlugins(requiredBasePlugins, basePlugins, userPlugins)
 
-		assert.False(t, got)
+		assert.NotNil(t, got)
 	})
 	t.Run("valid user and base plugin version", func(t *testing.T) {
 		var requiredBasePlugins []plugins.Plugin
@@ -93,7 +93,7 @@ func TestValidatePlugins(t *testing.T) {
 
 		got := baseReconcileLoop.validatePlugins(requiredBasePlugins, basePlugins, userPlugins)
 
-		assert.True(t, got)
+		assert.Nil(t, got)
 	})
 	t.Run("invalid user and base plugin version", func(t *testing.T) {
 		var requiredBasePlugins []plugins.Plugin
@@ -102,7 +102,7 @@ func TestValidatePlugins(t *testing.T) {
 
 		got := baseReconcileLoop.validatePlugins(requiredBasePlugins, basePlugins, userPlugins)
 
-		assert.False(t, got)
+		assert.NotNil(t, got)
 	})
 	t.Run("required base plugin set with the same version", func(t *testing.T) {
 		requiredBasePlugins := []plugins.Plugin{{Name: "simple-plugin", Version: "0.0.1"}}
@@ -111,7 +111,7 @@ func TestValidatePlugins(t *testing.T) {
 
 		got := baseReconcileLoop.validatePlugins(requiredBasePlugins, basePlugins, userPlugins)
 
-		assert.True(t, got)
+		assert.Nil(t, got)
 	})
 	t.Run("required base plugin set with different version", func(t *testing.T) {
 		requiredBasePlugins := []plugins.Plugin{{Name: "simple-plugin", Version: "0.0.1"}}
@@ -120,16 +120,16 @@ func TestValidatePlugins(t *testing.T) {
 
 		got := baseReconcileLoop.validatePlugins(requiredBasePlugins, basePlugins, userPlugins)
 
-		assert.True(t, got)
+		assert.Nil(t, got)
 	})
-	t.Run("missign required base plugin", func(t *testing.T) {
+	t.Run("missing required base plugin", func(t *testing.T) {
 		requiredBasePlugins := []plugins.Plugin{{Name: "simple-plugin", Version: "0.0.1"}}
 		var basePlugins []v1alpha2.Plugin
 		var userPlugins []v1alpha2.Plugin
 
 		got := baseReconcileLoop.validatePlugins(requiredBasePlugins, basePlugins, userPlugins)
 
-		assert.False(t, got)
+		assert.NotNil(t, got)
 	})
 }
 
@@ -165,7 +165,7 @@ func TestReconcileJenkinsBaseConfiguration_validateImagePullSecrets(t *testing.T
 			&jenkins, false, false, nil, nil)
 
 		got, err := baseReconcileLoop.validateImagePullSecrets()
-		assert.Equal(t, got, true)
+		assert.Nil(t, got)
 		assert.NoError(t, err)
 	})
 
@@ -186,7 +186,7 @@ func TestReconcileJenkinsBaseConfiguration_validateImagePullSecrets(t *testing.T
 			&jenkins, false, false, nil, nil)
 
 		got, _ := baseReconcileLoop.validateImagePullSecrets()
-		assert.Equal(t, got, false)
+		assert.NotNil(t, got)
 	})
 
 	t.Run("no docker email", func(t *testing.T) {
@@ -219,7 +219,7 @@ func TestReconcileJenkinsBaseConfiguration_validateImagePullSecrets(t *testing.T
 			&jenkins, false, false, nil, nil)
 
 		got, _ := baseReconcileLoop.validateImagePullSecrets()
-		assert.Equal(t, got, false)
+		assert.NotNil(t, got)
 	})
 
 	t.Run("no docker password", func(t *testing.T) {
@@ -252,7 +252,7 @@ func TestReconcileJenkinsBaseConfiguration_validateImagePullSecrets(t *testing.T
 			&jenkins, false, false, nil, nil)
 
 		got, _ := baseReconcileLoop.validateImagePullSecrets()
-		assert.Equal(t, got, false)
+		assert.NotNil(t, got)
 	})
 
 	t.Run("no docker username", func(t *testing.T) {
@@ -285,7 +285,7 @@ func TestReconcileJenkinsBaseConfiguration_validateImagePullSecrets(t *testing.T
 			&jenkins, false, false, nil, nil)
 
 		got, _ := baseReconcileLoop.validateImagePullSecrets()
-		assert.Equal(t, got, false)
+		assert.NotNil(t, got)
 	})
 
 	t.Run("no docker server", func(t *testing.T) {
@@ -318,7 +318,7 @@ func TestReconcileJenkinsBaseConfiguration_validateImagePullSecrets(t *testing.T
 			&jenkins, false, false, nil, nil)
 
 		got, _ := baseReconcileLoop.validateImagePullSecrets()
-		assert.Equal(t, got, false)
+		assert.NotNil(t, got)
 	})
 }
 
@@ -348,7 +348,7 @@ func TestValidateJenkinsMasterPodEnvs(t *testing.T) {
 		baseReconcileLoop := New(nil, nil, logf.ZapLogger(false),
 			&jenkins, false, false, nil, nil)
 		got := baseReconcileLoop.validateJenkinsMasterPodEnvs()
-		assert.Equal(t, true, got)
+		assert.Nil(t, got)
 	})
 	t.Run("override JENKINS_HOME env", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
@@ -374,7 +374,7 @@ func TestValidateJenkinsMasterPodEnvs(t *testing.T) {
 		baseReconcileLoop := New(nil, nil, logf.ZapLogger(false),
 			&jenkins, false, false, nil, nil)
 		got := baseReconcileLoop.validateJenkinsMasterPodEnvs()
-		assert.Equal(t, false, got)
+		assert.NotNil(t, got)
 	})
 	t.Run("missing -Djava.awt.headless=true in JAVA_OPTS env", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
@@ -396,7 +396,7 @@ func TestValidateJenkinsMasterPodEnvs(t *testing.T) {
 		baseReconcileLoop := New(nil, nil, logf.ZapLogger(false),
 			&jenkins, false, false, nil, nil)
 		got := baseReconcileLoop.validateJenkinsMasterPodEnvs()
-		assert.Equal(t, false, got)
+		assert.NotNil(t, got)
 	})
 	t.Run("missing -Djenkins.install.runSetupWizard=false in JAVA_OPTS env", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
@@ -418,7 +418,7 @@ func TestValidateJenkinsMasterPodEnvs(t *testing.T) {
 		baseReconcileLoop := New(nil, nil, logf.ZapLogger(false),
 			&jenkins, false, false, nil, nil)
 		got := baseReconcileLoop.validateJenkinsMasterPodEnvs()
-		assert.Equal(t, false, got)
+		assert.NotNil(t, got)
 	})
 }
 
@@ -438,7 +438,7 @@ func TestValidateReservedVolumes(t *testing.T) {
 		baseReconcileLoop := New(nil, nil, logf.ZapLogger(false),
 			&jenkins, false, false, nil, nil)
 		got := baseReconcileLoop.validateReservedVolumes()
-		assert.Equal(t, true, got)
+		assert.Nil(t, got)
 	})
 	t.Run("used reserved name", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
@@ -455,7 +455,7 @@ func TestValidateReservedVolumes(t *testing.T) {
 		baseReconcileLoop := New(nil, nil, logf.ZapLogger(false),
 			&jenkins, false, false, nil, nil)
 		got := baseReconcileLoop.validateReservedVolumes()
-		assert.Equal(t, false, got)
+		assert.NotNil(t, got)
 	})
 }
 
@@ -469,7 +469,7 @@ func TestValidateContainerVolumeMounts(t *testing.T) {
 		baseReconcileLoop := New(nil, nil, logf.ZapLogger(false),
 			&jenkins, false, false, nil, nil)
 		got := baseReconcileLoop.validateContainerVolumeMounts(v1alpha2.Container{})
-		assert.Equal(t, true, got)
+		assert.Nil(t, got)
 	})
 	t.Run("one extra volume", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
@@ -496,7 +496,7 @@ func TestValidateContainerVolumeMounts(t *testing.T) {
 		baseReconcileLoop := New(nil, nil, logf.ZapLogger(false),
 			&jenkins, false, false, nil, nil)
 		got := baseReconcileLoop.validateContainerVolumeMounts(jenkins.Spec.Master.Containers[0])
-		assert.Equal(t, true, got)
+		assert.Nil(t, got)
 	})
 	t.Run("empty mountPath", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
@@ -523,7 +523,7 @@ func TestValidateContainerVolumeMounts(t *testing.T) {
 		baseReconcileLoop := New(nil, nil, logf.ZapLogger(false),
 			&jenkins, false, false, nil, nil)
 		got := baseReconcileLoop.validateContainerVolumeMounts(jenkins.Spec.Master.Containers[0])
-		assert.Equal(t, false, got)
+		assert.NotNil(t, got)
 	})
 	t.Run("missing volume", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
@@ -545,7 +545,7 @@ func TestValidateContainerVolumeMounts(t *testing.T) {
 		baseReconcileLoop := New(nil, nil, logf.ZapLogger(false),
 			&jenkins, false, false, nil, nil)
 		got := baseReconcileLoop.validateContainerVolumeMounts(jenkins.Spec.Master.Containers[0])
-		assert.Equal(t, false, got)
+		assert.NotNil(t, got)
 	})
 }
 
@@ -568,7 +568,7 @@ func TestValidateConfigMapVolume(t *testing.T) {
 		got, err := baseReconcileLoop.validateConfigMapVolume(volume)
 
 		assert.NoError(t, err)
-		assert.True(t, got)
+		assert.Nil(t, got)
 	})
 	t.Run("happy, required", func(t *testing.T) {
 		optional := false
@@ -594,7 +594,7 @@ func TestValidateConfigMapVolume(t *testing.T) {
 		got, err := baseReconcileLoop.validateConfigMapVolume(volume)
 
 		assert.NoError(t, err)
-		assert.True(t, got)
+		assert.Nil(t, got)
 	})
 	t.Run("missing configmap", func(t *testing.T) {
 		optional := false
@@ -618,7 +618,7 @@ func TestValidateConfigMapVolume(t *testing.T) {
 		got, err := baseReconcileLoop.validateConfigMapVolume(volume)
 
 		assert.NoError(t, err)
-		assert.False(t, got)
+		assert.NotNil(t, got)
 	})
 }
 
@@ -641,7 +641,7 @@ func TestValidateSecretVolume(t *testing.T) {
 		got, err := baseReconcileLoop.validateSecretVolume(volume)
 
 		assert.NoError(t, err)
-		assert.True(t, got)
+		assert.Nil(t, got)
 	})
 	t.Run("happy, required", func(t *testing.T) {
 		optional := false
@@ -665,7 +665,7 @@ func TestValidateSecretVolume(t *testing.T) {
 		got, err := baseReconcileLoop.validateSecretVolume(volume)
 
 		assert.NoError(t, err)
-		assert.True(t, got)
+		assert.Nil(t, got)
 	})
 	t.Run("missing secret", func(t *testing.T) {
 		optional := false
@@ -687,7 +687,7 @@ func TestValidateSecretVolume(t *testing.T) {
 		got, err := baseReconcileLoop.validateSecretVolume(volume)
 
 		assert.NoError(t, err)
-		assert.False(t, got)
+		assert.NotNil(t, got)
 	})
 }
 
@@ -709,7 +709,7 @@ func TestValidateCustomization(t *testing.T) {
 		got, err := baseReconcileLoop.validateCustomization(customization, "spec.groovyScripts")
 
 		assert.NoError(t, err)
-		assert.True(t, got)
+		assert.Nil(t, got)
 	})
 	t.Run("secret set but configurations is empty", func(t *testing.T) {
 		customization := v1alpha2.Customization{
@@ -731,7 +731,7 @@ func TestValidateCustomization(t *testing.T) {
 		got, err := baseReconcileLoop.validateCustomization(customization, "spec.groovyScripts")
 
 		assert.NoError(t, err)
-		assert.False(t, got)
+		assert.NotNil(t, got)
 	})
 	t.Run("secret and configmap exists", func(t *testing.T) {
 		customization := v1alpha2.Customization{
@@ -761,7 +761,7 @@ func TestValidateCustomization(t *testing.T) {
 		got, err := baseReconcileLoop.validateCustomization(customization, "spec.groovyScripts")
 
 		assert.NoError(t, err)
-		assert.True(t, got)
+		assert.Nil(t, got)
 	})
 	t.Run("secret not exists and configmap exists", func(t *testing.T) {
 		configMapName := "configmap-name"
@@ -784,7 +784,7 @@ func TestValidateCustomization(t *testing.T) {
 		got, err := baseReconcileLoop.validateCustomization(customization, "spec.groovyScripts")
 
 		assert.NoError(t, err)
-		assert.False(t, got)
+		assert.NotNil(t, got)
 	})
 	t.Run("secret exists and configmap not exists", func(t *testing.T) {
 		customization := v1alpha2.Customization{
@@ -806,6 +806,6 @@ func TestValidateCustomization(t *testing.T) {
 		got, err := baseReconcileLoop.validateCustomization(customization, "spec.groovyScripts")
 
 		assert.NoError(t, err)
-		assert.False(t, got)
+		assert.NotNil(t, got)
 	})
 }
