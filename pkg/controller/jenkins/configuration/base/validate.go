@@ -37,7 +37,9 @@ func (r *ReconcileJenkinsBaseConfiguration) Validate(jenkins *v1alpha2.Jenkins) 
 
 	for _, container := range jenkins.Spec.Master.Containers {
 		if msg := r.validateContainer(container); len(msg) > 0 {
-			messages = append(messages, msg...)
+			for _, m := range msg {
+				messages = append(messages, fmt.Sprintf("Container `%s` - %s", container.Name, m))
+			}
 		}
 	}
 

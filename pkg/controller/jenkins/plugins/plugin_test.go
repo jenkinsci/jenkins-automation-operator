@@ -66,7 +66,8 @@ func TestVerifyDependencies(t *testing.T) {
 			},
 		}
 		got := VerifyDependencies(basePlugins)
-		assert.NotNil(t, got)
+		assert.Contains(t, got, "Plugin 'first-root-plugin:1.0.0' requires version '1.0.0' but plugin 'first-root-plugin:2.0.0' requires '2.0.0' for plugin 'first-root-plugin'")
+		assert.Contains(t, got, "Plugin 'first-root-plugin:2.0.0' requires version '2.0.0' but plugin 'first-root-plugin:1.0.0' requires '1.0.0' for plugin 'first-root-plugin'")
 	})
 	t.Run("happy, no version collision with two sperate plugins lists", func(t *testing.T) {
 		basePlugins := map[Plugin][]Plugin{
@@ -92,7 +93,10 @@ func TestVerifyDependencies(t *testing.T) {
 			},
 		}
 		got := VerifyDependencies(basePlugins)
-		assert.NotNil(t, got)
+		assert.Contains(t, got, "Plugin 'first-root-plugin:1.0.0' requires version '1.0.0' but plugin 'first-root-plugin:2.0.0' requires '2.0.0' for plugin 'first-root-plugin'")
+		assert.Contains(t, got, "Plugin 'first-root-plugin:2.0.0' requires version '2.0.0' but plugin 'first-root-plugin:1.0.0' requires '1.0.0' for plugin 'first-root-plugin'")
+		assert.Contains(t, got, "Plugin 'first-root-plugin:1.0.0' requires version '0.0.1' but plugin 'first-root-plugin:2.0.0' requires '0.0.2' for plugin 'first-plugin'")
+		assert.Contains(t, got, "Plugin 'first-root-plugin:2.0.0' requires version '0.0.2' but plugin 'first-root-plugin:1.0.0' requires '0.0.1' for plugin 'first-plugin'")
 	})
 	t.Run("fail, root and dependent plugins have different versions", func(t *testing.T) {
 		basePlugins := map[Plugin][]Plugin{
@@ -106,6 +110,9 @@ func TestVerifyDependencies(t *testing.T) {
 			},
 		}
 		got := VerifyDependencies(basePlugins, extraPlugins)
-		assert.NotNil(t, got)
+		assert.Contains(t, got, "Plugin 'first-root-plugin:1.0.0' requires version '1.0.0' but plugin 'first-root-plugin:2.0.0' requires '2.0.0' for plugin 'first-root-plugin'")
+		assert.Contains(t, got, "Plugin 'first-root-plugin:2.0.0' requires version '2.0.0' but plugin 'first-root-plugin:1.0.0' requires '1.0.0' for plugin 'first-root-plugin'")
+		assert.Contains(t, got, "Plugin 'first-root-plugin:1.0.0' requires version '0.0.1' but plugin 'first-root-plugin:2.0.0' requires '0.0.2' for plugin 'first-plugin'")
+		assert.Contains(t, got, "Plugin 'first-root-plugin:2.0.0' requires version '0.0.2' but plugin 'first-root-plugin:1.0.0' requires '0.0.1' for plugin 'first-plugin'")
 	})
 }
