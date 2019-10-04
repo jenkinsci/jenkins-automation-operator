@@ -102,7 +102,8 @@ func TestValidatePlugins(t *testing.T) {
 
 		got := baseReconcileLoop.validatePlugins(requiredBasePlugins, basePlugins, userPlugins)
 
-		assert.NotNil(t, got)
+		assert.Contains(t, got, "Plugin 'simple-plugin:0.0.1' requires version '0.0.1' but plugin 'simple-plugin:0.0.2' requires '0.0.2' for plugin 'simple-plugin'")
+		assert.Contains(t, got, "Plugin 'simple-plugin:0.0.2' requires version '0.0.2' but plugin 'simple-plugin:0.0.1' requires '0.0.1' for plugin 'simple-plugin'")
 	})
 	t.Run("required base plugin set with the same version", func(t *testing.T) {
 		requiredBasePlugins := []plugins.Plugin{{Name: "simple-plugin", Version: "0.0.1"}}
@@ -532,7 +533,7 @@ func TestValidateContainerVolumeMounts(t *testing.T) {
 		baseReconcileLoop := New(nil, nil, logf.ZapLogger(false),
 			&jenkins, false, false, nil, nil)
 		got := baseReconcileLoop.validateContainerVolumeMounts(jenkins.Spec.Master.Containers[0])
-		assert.NotNil(t, got)
+		assert.Equal(t, got, []string{"mountPath not set for 'example' volume mount in container ''"})
 	})
 	t.Run("missing volume", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{

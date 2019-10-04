@@ -221,7 +221,7 @@ func TestValidateSeedJobs(t *testing.T) {
 
 		assert.NoError(t, err)
 
-		assert.Equal(t, result, []string([]string{"seedJob `example` required secret 'jenkins-operator-e2e' with Jenkins credential not found", "seedJob `example` required data 'username' not found in secret ''", "seedJob `example` required data 'username' is empty in secret ''", "seedJob `example` required data 'privateKey' not found in secret ''", "seedJob `example` required data 'privateKey' not found in secret ''", "seedJob `example` private key 'privateKey' invalid in secret '': failed to decode PEM block"}))
+		assert.Equal(t, result, []string{"seedJob `example` required secret 'jenkins-operator-e2e' with Jenkins credential not found", "seedJob `example` required data 'username' not found in secret ''", "seedJob `example` required data 'username' is empty in secret ''", "seedJob `example` required data 'privateKey' not found in secret ''", "seedJob `example` required data 'privateKey' not found in secret ''", "seedJob `example` private key 'privateKey' invalid in secret '': failed to decode PEM block"})
 	})
 	t.Run("Invalid without targets", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
