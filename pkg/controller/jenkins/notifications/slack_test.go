@@ -52,14 +52,14 @@ func TestSlack_Send(t *testing.T) {
 				assert.Equal(t, field.Value, string(event.Phase))
 			case crNameFieldName:
 				assert.Equal(t, field.Value, event.Jenkins.Name)
-			case messageFieldName:
+			case "":
 				assert.Equal(t, field.Value, event.Message)
 			case loggingLevelFieldName:
 				assert.Equal(t, field.Value, string(event.LogLevel))
 			case namespaceFieldName:
 				assert.Equal(t, field.Value, event.Jenkins.Namespace)
 			default:
-				t.Fail()
+				t.Errorf("Unexpected field %+v", field)
 			}
 		}
 

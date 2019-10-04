@@ -14,6 +14,7 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/backuprestore"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/groovy"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/notifications"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/plugins"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
 	"github.com/jenkinsci/kubernetes-operator/version"
@@ -39,27 +40,30 @@ const (
 
 // ReconcileJenkinsBaseConfiguration defines values required for Jenkins base configuration
 type ReconcileJenkinsBaseConfiguration struct {
-	k8sClient       client.Client
-	scheme          *runtime.Scheme
-	logger          logr.Logger
-	jenkins         *v1alpha2.Jenkins
-	local, minikube bool
-	clientSet       *kubernetes.Clientset
-	config          *rest.Config
+	k8sClient          client.Client
+	scheme             *runtime.Scheme
+	logger             logr.Logger
+	jenkins            *v1alpha2.Jenkins
+	local, minikube    bool
+	clientSet          *kubernetes.Clientset
+	config             *rest.Config
+	notificationEvents *chan notifications.Event
 }
 
 // New create structure which takes care of base configuration
 func New(client client.Client, scheme *runtime.Scheme, logger logr.Logger,
-	jenkins *v1alpha2.Jenkins, local, minikube bool, clientSet *kubernetes.Clientset, config *rest.Config) *ReconcileJenkinsBaseConfiguration {
+	jenkins *v1alpha2.Jenkins, local, minikube bool, clientSet *kubernetes.Clientset, config *rest.Config,
+	notificationEvents *chan notifications.Event) *ReconcileJenkinsBaseConfiguration {
 	return &ReconcileJenkinsBaseConfiguration{
-		k8sClient: client,
-		scheme:    scheme,
-		logger:    logger,
-		jenkins:   jenkins,
-		local:     local,
-		minikube:  minikube,
-		clientSet: clientSet,
-		config:    config,
+		k8sClient:          client,
+		scheme:             scheme,
+		logger:             logger,
+		jenkins:            jenkins,
+		local:              local,
+		minikube:           minikube,
+		clientSet:          clientSet,
+		config:             config,
+		notificationEvents: notificationEvents,
 	}
 }
 
@@ -434,6 +438,12 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsMasterPod(meta metav1.O
 			r.logger.Info(fmt.Sprintf("spec.master.containers[%s].command has been overridden make sure the command looks like: '%v', otherwise the operator won't configure default user and install plugins",
 				resources.JenkinsMasterContainerName, []string{"bash", "-c", fmt.Sprintf("%s/%s && <custom-command-here> && /sbin/tini -s -- /usr/local/bin/jenkins.sh",
 					resources.JenkinsScriptsVolumePath, resources.InitScriptName)}))
+		}
+		*r.notificationEvents <- notifications.Event{
+			Jenkins:  *r.jenkins,
+			Phase:    notifications.PhaseBase,
+			LogLevel: v1alpha2.NotificationLogLevelInfo,
+			Message:  "Creating a new Jenkins Master Pod",
 		}
 		r.logger.Info(fmt.Sprintf("Creating a new Jenkins Master Pod %s/%s", jenkinsMasterPod.Namespace, jenkinsMasterPod.Name))
 		err = r.createResource(jenkinsMasterPod)

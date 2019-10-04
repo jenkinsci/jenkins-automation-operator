@@ -49,7 +49,11 @@ func (g *Groovy) EnsureSingle(source, name, hash, groovyScript string) (requeue 
 
 	logs, err := g.jenkinsClient.ExecuteScript(groovyScript)
 	if err != nil {
-		if _, ok := err.(*jenkinsclient.GroovyScriptExecutionFailed); ok {
+		if groovyErr, ok := err.(*jenkinsclient.GroovyScriptExecutionFailed); ok {
+			groovyErr.ConfigurationType = g.configurationType
+			groovyErr.Name = name
+			groovyErr.Source = source
+			groovyErr.Logs = logs
 			g.logger.V(log.VWarn).Info(fmt.Sprintf("%s Source '%s' Name '%s' groovy script execution failed, logs :\n%s", g.configurationType, source, name, logs))
 		}
 		return true, err

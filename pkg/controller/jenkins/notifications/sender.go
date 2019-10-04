@@ -7,6 +7,7 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/event"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
+
 	"github.com/pkg/errors"
 	k8sclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -68,9 +69,9 @@ type service interface {
 
 // Listen listens for incoming events and send it as notifications
 func Listen(events chan Event, k8sEvent event.Recorder, k8sClient k8sclient.Client) {
-	for event := range events {
-		logger := log.Log.WithValues("cr", event.Jenkins.Name)
-		for _, notificationConfig := range event.Jenkins.Spec.Notifications {
+	for evt := range events {
+		logger := log.Log.WithValues("cr", evt.Jenkins.Name)
+		for _, notificationConfig := range evt.Jenkins.Spec.Notifications {
 			var err error
 			var svc service
 
@@ -86,18 +87,18 @@ func Listen(events chan Event, k8sEvent event.Recorder, k8sClient k8sclient.Clie
 			}
 
 			go func(notificationConfig v1alpha2.Notification) {
-				err = notify(svc, event, notificationConfig)
+				err = notify(svc, evt, notificationConfig)
 
 				if err != nil {
 					if log.Debug {
-						logger.Error(nil, fmt.Sprintf("%+v", errors.WithMessage(err, "failed to send notification")))
+						logger.Error(nil, fmt.Sprintf("%+v", errors.WithMessage(err, fmt.Sprintf("failed to send notification '%s'", notificationConfig.Name))))
 					} else {
-						logger.Error(nil, fmt.Sprintf("%s", errors.WithMessage(err, "failed to send notification")))
+						logger.Error(nil, fmt.Sprintf("%s", errors.WithMessage(err, fmt.Sprintf("failed to send notification '%s'", notificationConfig.Name))))
 					}
 				}
 			}(notificationConfig)
 		}
-		k8sEvent.Emit(&event.Jenkins, logLevelEventType(event.LogLevel), "NotificationSent", event.Message)
+		k8sEvent.Emit(&evt.Jenkins, logLevelEventType(evt.LogLevel), "NotificationSent", evt.Message)
 	}
 }
 

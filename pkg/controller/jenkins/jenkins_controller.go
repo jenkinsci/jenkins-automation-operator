@@ -3,7 +3,6 @@ package jenkins
 import (
 	"context"
 	"fmt"
-
 	"reflect"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
@@ -169,7 +168,14 @@ func (r *ReconcileJenkins) Reconcile(request reconcile.Request) (reconcile.Resul
 			}
 		}
 
-		if _, ok := err.(*jenkinsclient.GroovyScriptExecutionFailed); ok {
+		if groovyErr, ok := err.(*jenkinsclient.GroovyScriptExecutionFailed); ok {
+			*r.notificationEvents <- notifications.Event{
+				Jenkins:         *jenkins,
+				Phase:           notifications.PhaseBase,
+				LogLevel:        v1alpha2.NotificationLogLevelWarning,
+				Message:         fmt.Sprintf("%s Source '%s' Name '%s' groovy script execution failed, logs:", groovyErr.ConfigurationType, groovyErr.Source, groovyErr.Name),
+				MessagesVerbose: []string{groovyErr.Logs},
+			}
 			return reconcile.Result{Requeue: false}, nil
 		}
 		return reconcile.Result{Requeue: true}, nil
@@ -193,14 +199,14 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request, logger logr.Logg
 	}
 	err = r.setDefaults(jenkins, logger)
 	if err != nil {
-		return reconcile.Result{}, nil, err
+		return reconcile.Result{}, jenkins, err
 	}
 	// Reconcile base configuration
-	baseConfiguration := base.New(r.client, r.scheme, logger, jenkins, r.local, r.minikube, &r.clientSet, &r.config)
+	baseConfiguration := base.New(r.client, r.scheme, logger, jenkins, r.local, r.minikube, &r.clientSet, &r.config, r.notificationEvents)
 
 	messages, err := baseConfiguration.Validate(jenkins)
 	if err != nil {
-		return reconcile.Result{}, nil, err
+		return reconcile.Result{}, jenkins, err
 	}
 	if len(messages) > 0 {
 		message := "Validation of base configuration failed, please correct Jenkins CR."
@@ -215,18 +221,18 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request, logger logr.Logg
 		for _, msg := range messages {
 			logger.V(log.VWarn).Info(msg)
 		}
-		return reconcile.Result{}, nil, nil // don't requeue
+		return reconcile.Result{}, jenkins, nil // don't requeue
 	}
 
 	result, jenkinsClient, err := baseConfiguration.Reconcile()
 	if err != nil {
-		return reconcile.Result{}, nil, err
+		return reconcile.Result{}, jenkins, err
 	}
 	if result.Requeue {
-		return result, nil, nil
+		return result, jenkins, nil
 	}
 	if jenkinsClient == nil {
-		return reconcile.Result{Requeue: false}, nil, nil
+		return reconcile.Result{Requeue: false}, jenkins, nil
 	}
 
 	if jenkins.Status.BaseConfigurationCompletedTime == nil {
@@ -234,7 +240,7 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request, logger logr.Logg
 		jenkins.Status.BaseConfigurationCompletedTime = &now
 		err = r.client.Update(context.TODO(), jenkins)
 		if err != nil {
-			return reconcile.Result{}, nil, errors.WithStack(err)
+			return reconcile.Result{}, jenkins, errors.WithStack(err)
 		}
 
 		message := fmt.Sprintf("Base configuration phase is complete, took %s",
@@ -253,7 +259,7 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request, logger logr.Logg
 
 	messages, err = userConfiguration.Validate(jenkins)
 	if err != nil {
-		return reconcile.Result{}, nil, err
+		return reconcile.Result{}, jenkins, err
 	}
 	if len(messages) > 0 {
 		message := fmt.Sprintf("Validation of user configuration failed, please correct Jenkins CR")
@@ -269,15 +275,15 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request, logger logr.Logg
 		for _, msg := range messages {
 			logger.V(log.VWarn).Info(msg)
 		}
-		return reconcile.Result{}, nil, nil // don't requeue
+		return reconcile.Result{}, jenkins, nil // don't requeue
 	}
 
 	result, err = userConfiguration.Reconcile()
 	if err != nil {
-		return reconcile.Result{}, nil, err
+		return reconcile.Result{}, jenkins, err
 	}
 	if result.Requeue {
-		return result, nil, nil
+		return result, jenkins, nil
 	}
 
 	if jenkins.Status.UserConfigurationCompletedTime == nil {
@@ -285,7 +291,7 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request, logger logr.Logg
 		jenkins.Status.UserConfigurationCompletedTime = &now
 		err = r.client.Update(context.TODO(), jenkins)
 		if err != nil {
-			return reconcile.Result{}, nil, errors.WithStack(err)
+			return reconcile.Result{}, jenkins, errors.WithStack(err)
 		}
 		message := fmt.Sprintf("User configuration phase is complete, took %s",
 			jenkins.Status.UserConfigurationCompletedTime.Sub(jenkins.Status.ProvisionStartTime.Time))

@@ -71,18 +71,18 @@ func (s Slack) Send(event Event, config v1alpha2.Notification) error {
 				Color:    s.getStatusColor(event.LogLevel),
 				Fields: []SlackField{
 					{
-						Title: messageFieldName,
+						Title: "",
 						Value: event.Message,
 						Short: false,
 					},
 					{
-						Title: crNameFieldName,
-						Value: event.Jenkins.Name,
+						Title: namespaceFieldName,
+						Value: event.Jenkins.Namespace,
 						Short: true,
 					},
 					{
-						Title: namespaceFieldName,
-						Value: event.Jenkins.Namespace,
+						Title: crNameFieldName,
+						Value: event.Jenkins.Name,
 						Short: true,
 					},
 				},
@@ -119,7 +119,7 @@ func (s Slack) Send(event Event, config v1alpha2.Notification) error {
 
 	secretValue := string(secret.Data[selector.Key])
 	if secretValue == "" {
-		return errors.Errorf("Secret with given name `%s` and selector name `%s` is empty", secret.Name, selector.Name)
+		return errors.Errorf("Slack WebHook URL is empty in secret '%s/%s[%s]", event.Jenkins.Namespace, selector.Name, selector.Key)
 	}
 
 	request, err := http.NewRequest("POST", secretValue, bytes.NewBuffer(slackMessage))

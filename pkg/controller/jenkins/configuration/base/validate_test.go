@@ -22,7 +22,7 @@ import (
 func TestValidatePlugins(t *testing.T) {
 	log.SetupLogger(true)
 	baseReconcileLoop := New(nil, nil, log.Log,
-		nil, false, false, nil, nil)
+		nil, false, false, nil, nil, nil)
 	t.Run("empty", func(t *testing.T) {
 		var requiredBasePlugins []plugins.Plugin
 		var basePlugins []v1alpha2.Plugin
@@ -163,7 +163,7 @@ func TestReconcileJenkinsBaseConfiguration_validateImagePullSecrets(t *testing.T
 		assert.NoError(t, err)
 
 		baseReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false),
-			&jenkins, false, false, nil, nil)
+			&jenkins, false, false, nil, nil, nil)
 
 		got, err := baseReconcileLoop.validateImagePullSecrets()
 		assert.Nil(t, got)
@@ -184,7 +184,7 @@ func TestReconcileJenkinsBaseConfiguration_validateImagePullSecrets(t *testing.T
 		fakeClient := fake.NewFakeClient()
 
 		baseReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false),
-			&jenkins, false, false, nil, nil)
+			&jenkins, false, false, nil, nil, nil)
 
 		got, _ := baseReconcileLoop.validateImagePullSecrets()
 
@@ -218,7 +218,7 @@ func TestReconcileJenkinsBaseConfiguration_validateImagePullSecrets(t *testing.T
 		assert.NoError(t, err)
 
 		baseReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false),
-			&jenkins, false, false, nil, nil)
+			&jenkins, false, false, nil, nil, nil)
 
 		got, _ := baseReconcileLoop.validateImagePullSecrets()
 
@@ -252,7 +252,7 @@ func TestReconcileJenkinsBaseConfiguration_validateImagePullSecrets(t *testing.T
 		assert.NoError(t, err)
 
 		baseReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false),
-			&jenkins, false, false, nil, nil)
+			&jenkins, false, false, nil, nil, nil)
 
 		got, _ := baseReconcileLoop.validateImagePullSecrets()
 
@@ -286,7 +286,7 @@ func TestReconcileJenkinsBaseConfiguration_validateImagePullSecrets(t *testing.T
 		assert.NoError(t, err)
 
 		baseReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false),
-			&jenkins, false, false, nil, nil)
+			&jenkins, false, false, nil, nil, nil)
 
 		got, _ := baseReconcileLoop.validateImagePullSecrets()
 
@@ -320,7 +320,7 @@ func TestReconcileJenkinsBaseConfiguration_validateImagePullSecrets(t *testing.T
 		assert.NoError(t, err)
 
 		baseReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false),
-			&jenkins, false, false, nil, nil)
+			&jenkins, false, false, nil, nil, nil)
 
 		got, _ := baseReconcileLoop.validateImagePullSecrets()
 
@@ -352,7 +352,7 @@ func TestValidateJenkinsMasterPodEnvs(t *testing.T) {
 			},
 		}
 		baseReconcileLoop := New(nil, nil, logf.ZapLogger(false),
-			&jenkins, false, false, nil, nil)
+			&jenkins, false, false, nil, nil, nil)
 		got := baseReconcileLoop.validateJenkinsMasterPodEnvs()
 		assert.Nil(t, got)
 	})
@@ -378,7 +378,7 @@ func TestValidateJenkinsMasterPodEnvs(t *testing.T) {
 			},
 		}
 		baseReconcileLoop := New(nil, nil, logf.ZapLogger(false),
-			&jenkins, false, false, nil, nil)
+			&jenkins, false, false, nil, nil, nil)
 		got := baseReconcileLoop.validateJenkinsMasterPodEnvs()
 
 		assert.Equal(t, got, []string{"Jenkins Master container env 'JENKINS_HOME' cannot be overridden"})
@@ -401,7 +401,7 @@ func TestValidateJenkinsMasterPodEnvs(t *testing.T) {
 			},
 		}
 		baseReconcileLoop := New(nil, nil, logf.ZapLogger(false),
-			&jenkins, false, false, nil, nil)
+			&jenkins, false, false, nil, nil, nil)
 		got := baseReconcileLoop.validateJenkinsMasterPodEnvs()
 
 		assert.Equal(t, got, []string{"Jenkins Master container env 'JAVA_OPTS' doesn't have required flag '-Djava.awt.headless=true'"})
@@ -424,7 +424,7 @@ func TestValidateJenkinsMasterPodEnvs(t *testing.T) {
 			},
 		}
 		baseReconcileLoop := New(nil, nil, logf.ZapLogger(false),
-			&jenkins, false, false, nil, nil)
+			&jenkins, false, false, nil, nil, nil)
 		got := baseReconcileLoop.validateJenkinsMasterPodEnvs()
 
 		assert.Equal(t, got, []string{"Jenkins Master container env 'JAVA_OPTS' doesn't have required flag '-Djenkins.install.runSetupWizard=false'"})
@@ -445,7 +445,7 @@ func TestValidateReservedVolumes(t *testing.T) {
 			},
 		}
 		baseReconcileLoop := New(nil, nil, logf.ZapLogger(false),
-			&jenkins, false, false, nil, nil)
+			&jenkins, false, false, nil, nil, nil)
 		got := baseReconcileLoop.validateReservedVolumes()
 		assert.Nil(t, got)
 	})
@@ -462,7 +462,7 @@ func TestValidateReservedVolumes(t *testing.T) {
 			},
 		}
 		baseReconcileLoop := New(nil, nil, logf.ZapLogger(false),
-			&jenkins, false, false, nil, nil)
+			&jenkins, false, false, nil, nil, nil)
 		got := baseReconcileLoop.validateReservedVolumes()
 
 		assert.Equal(t, got, []string{"Jenkins Master pod volume 'jenkins-home' is reserved please choose different one"})
@@ -477,7 +477,7 @@ func TestValidateContainerVolumeMounts(t *testing.T) {
 			},
 		}
 		baseReconcileLoop := New(nil, nil, logf.ZapLogger(false),
-			&jenkins, false, false, nil, nil)
+			&jenkins, false, false, nil, nil, nil)
 		got := baseReconcileLoop.validateContainerVolumeMounts(v1alpha2.Container{})
 		assert.Nil(t, got)
 	})
@@ -504,7 +504,7 @@ func TestValidateContainerVolumeMounts(t *testing.T) {
 			},
 		}
 		baseReconcileLoop := New(nil, nil, logf.ZapLogger(false),
-			&jenkins, false, false, nil, nil)
+			&jenkins, false, false, nil, nil, nil)
 		got := baseReconcileLoop.validateContainerVolumeMounts(jenkins.Spec.Master.Containers[0])
 		assert.Nil(t, got)
 	})
@@ -531,7 +531,7 @@ func TestValidateContainerVolumeMounts(t *testing.T) {
 			},
 		}
 		baseReconcileLoop := New(nil, nil, logf.ZapLogger(false),
-			&jenkins, false, false, nil, nil)
+			&jenkins, false, false, nil, nil, nil)
 		got := baseReconcileLoop.validateContainerVolumeMounts(jenkins.Spec.Master.Containers[0])
 		assert.Equal(t, got, []string{"mountPath not set for 'example' volume mount in container ''"})
 	})
@@ -553,7 +553,7 @@ func TestValidateContainerVolumeMounts(t *testing.T) {
 			},
 		}
 		baseReconcileLoop := New(nil, nil, logf.ZapLogger(false),
-			&jenkins, false, false, nil, nil)
+			&jenkins, false, false, nil, nil, nil)
 		got := baseReconcileLoop.validateContainerVolumeMounts(jenkins.Spec.Master.Containers[0])
 
 		assert.Equal(t, got, []string{"Not found volume for 'missing-volume' volume mount in container ''"})
@@ -574,7 +574,7 @@ func TestValidateConfigMapVolume(t *testing.T) {
 		}
 		fakeClient := fake.NewFakeClient()
 		baseReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false),
-			nil, false, false, nil, nil)
+			nil, false, false, nil, nil, nil)
 
 		got, err := baseReconcileLoop.validateConfigMapVolume(volume)
 
@@ -600,7 +600,7 @@ func TestValidateConfigMapVolume(t *testing.T) {
 		err := fakeClient.Create(context.TODO(), &configMap)
 		assert.NoError(t, err)
 		baseReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false),
-			jenkins, false, false, nil, nil)
+			jenkins, false, false, nil, nil, nil)
 
 		got, err := baseReconcileLoop.validateConfigMapVolume(volume)
 
@@ -624,7 +624,7 @@ func TestValidateConfigMapVolume(t *testing.T) {
 		}
 		fakeClient := fake.NewFakeClient()
 		baseReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false),
-			jenkins, false, false, nil, nil)
+			jenkins, false, false, nil, nil, nil)
 
 		got, err := baseReconcileLoop.validateConfigMapVolume(volume)
 
@@ -648,7 +648,7 @@ func TestValidateSecretVolume(t *testing.T) {
 		}
 		fakeClient := fake.NewFakeClient()
 		baseReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false),
-			nil, false, false, nil, nil)
+			nil, false, false, nil, nil, nil)
 
 		got, err := baseReconcileLoop.validateSecretVolume(volume)
 
@@ -672,7 +672,7 @@ func TestValidateSecretVolume(t *testing.T) {
 		err := fakeClient.Create(context.TODO(), &secret)
 		assert.NoError(t, err)
 		baseReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false),
-			jenkins, false, false, nil, nil)
+			jenkins, false, false, nil, nil, nil)
 
 		got, err := baseReconcileLoop.validateSecretVolume(volume)
 
@@ -694,7 +694,7 @@ func TestValidateSecretVolume(t *testing.T) {
 		}
 		fakeClient := fake.NewFakeClient()
 		baseReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false),
-			jenkins, false, false, nil, nil)
+			jenkins, false, false, nil, nil, nil)
 
 		got, err := baseReconcileLoop.validateSecretVolume(volume)
 
@@ -717,7 +717,7 @@ func TestValidateCustomization(t *testing.T) {
 		customization := v1alpha2.Customization{}
 		fakeClient := fake.NewFakeClient()
 		baseReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false),
-			jenkins, false, false, nil, nil)
+			jenkins, false, false, nil, nil, nil)
 
 		got, err := baseReconcileLoop.validateCustomization(customization, "spec.groovyScripts")
 
@@ -737,7 +737,7 @@ func TestValidateCustomization(t *testing.T) {
 		}
 		fakeClient := fake.NewFakeClient()
 		baseReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false),
-			jenkins, false, false, nil, nil)
+			jenkins, false, false, nil, nil, nil)
 		err := fakeClient.Create(context.TODO(), secret)
 		require.NoError(t, err)
 
@@ -766,7 +766,7 @@ func TestValidateCustomization(t *testing.T) {
 		}
 		fakeClient := fake.NewFakeClient()
 		baseReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false),
-			jenkins, false, false, nil, nil)
+			jenkins, false, false, nil, nil, nil)
 		err := fakeClient.Create(context.TODO(), secret)
 		require.NoError(t, err)
 		err = fakeClient.Create(context.TODO(), configMap)
@@ -791,7 +791,7 @@ func TestValidateCustomization(t *testing.T) {
 		}
 		fakeClient := fake.NewFakeClient()
 		baseReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false),
-			jenkins, false, false, nil, nil)
+			jenkins, false, false, nil, nil, nil)
 		err := fakeClient.Create(context.TODO(), configMap)
 		require.NoError(t, err)
 
@@ -814,7 +814,7 @@ func TestValidateCustomization(t *testing.T) {
 		}
 		fakeClient := fake.NewFakeClient()
 		baseReconcileLoop := New(fakeClient, nil, logf.ZapLogger(false),
-			jenkins, false, false, nil, nil)
+			jenkins, false, false, nil, nil, nil)
 		err := fakeClient.Create(context.TODO(), secret)
 		require.NoError(t, err)
 

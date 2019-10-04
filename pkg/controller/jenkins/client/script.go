@@ -11,7 +11,12 @@ import (
 )
 
 // GroovyScriptExecutionFailed is custom error type which indicates passed groovy script is invalid
-type GroovyScriptExecutionFailed struct{}
+type GroovyScriptExecutionFailed struct {
+	ConfigurationType string
+	Source            string
+	Name              string
+	Logs              string
+}
 
 func (e GroovyScriptExecutionFailed) Error() string {
 	return "script execution failed"

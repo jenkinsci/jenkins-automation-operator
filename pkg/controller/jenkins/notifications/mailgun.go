@@ -65,7 +65,7 @@ func (m MailGun) Send(event Event, config v1alpha2.Notification) error {
 
 	secretValue := string(secret.Data[selector.Key])
 	if secretValue == "" {
-		return errors.Errorf("Mailgun API is empty in secret '%s/%s[%s]", event.Jenkins.Namespace, selector.Name, selector.Key)
+		return errors.Errorf("Mailgun API secret is empty in secret '%s/%s[%s]", event.Jenkins.Namespace, selector.Name, selector.Key)
 	}
 
 	mg := mailgun.NewMailgun(config.Mailgun.Domain, secretValue)

@@ -66,7 +66,7 @@ func (t Teams) Send(event Event, config v1alpha2.Notification) error {
 
 	secretValue := string(secret.Data[selector.Key])
 	if secretValue == "" {
-		return errors.Errorf("Microsoft Teams webhook URL is empty in secret '%s/%s[%s]", event.Jenkins.Namespace, selector.Name, selector.Key)
+		return errors.Errorf("Microsoft Teams WebHook URL is empty in secret '%s/%s[%s]", event.Jenkins.Namespace, selector.Name, selector.Key)
 	}
 
 	tm := &TeamsMessage{
