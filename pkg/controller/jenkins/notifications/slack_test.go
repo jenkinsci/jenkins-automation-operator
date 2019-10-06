@@ -63,7 +63,7 @@ func TestSlack_Send(t *testing.T) {
 			}
 		}
 
-		assert.Equal(t, mainAttachment.Footer, footerContent)
+		assert.Equal(t, mainAttachment.Footer, "")
 		assert.Equal(t, mainAttachment.Color, slack.getStatusColor(event.LogLevel))
 	}))
 

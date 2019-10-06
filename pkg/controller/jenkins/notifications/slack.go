@@ -86,7 +86,6 @@ func (s Slack) Send(event Event, config v1alpha2.Notification) error {
 						Short: true,
 					},
 				},
-				Footer: footerContent,
 			},
 		},
 	}
