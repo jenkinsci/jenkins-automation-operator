@@ -115,6 +115,6 @@ func TestVerifyDependencies(t *testing.T) {
 			},
 		}
 		got := VerifyDependencies(basePlugins)
-		assert.Equal(t, true, got)
+		assert.Nil(got)
 	})
 }
