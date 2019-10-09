@@ -115,4 +115,13 @@ func TestVerifyDependencies(t *testing.T) {
 		assert.Contains(t, got, "Plugin 'first-root-plugin:1.0.0' requires version '0.0.1' but plugin 'first-root-plugin:2.0.0' requires '0.0.2' for plugin 'first-plugin'")
 		assert.Contains(t, got, "Plugin 'first-root-plugin:2.0.0' requires version '0.0.2' but plugin 'first-root-plugin:1.0.0' requires '0.0.1' for plugin 'first-plugin'")
 	})
+	t.Run("happy with dash in version", func(t *testing.T) {
+		basePlugins := map[Plugin][]Plugin{
+			Must(New("first-root-plugin:1.0.0-1")): {
+				Must(New("first-plugin:0.0.1-1")),
+			},
+		}
+		got := VerifyDependencies(basePlugins)
+		assert.Nil(got)
+	})
 }
