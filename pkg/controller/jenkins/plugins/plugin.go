@@ -5,8 +5,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/jenkinsci/kubernetes-operator/pkg/log"
-
 	"github.com/pkg/errors"
 )
 
@@ -77,10 +75,10 @@ func Must(plugin *Plugin, err error) Plugin {
 }
 
 // VerifyDependencies checks if all plugins have compatible versions
-func VerifyDependencies(values ...map[Plugin][]Plugin) bool {
+func VerifyDependencies(values ...map[Plugin][]Plugin) []string {
+	var messages []string
 	// key - plugin name, value array of versions
 	allPlugins := make(map[string][]Plugin)
-	valid := true
 
 	for _, value := range values {
 		for rootPlugin, plugins := range value {
@@ -105,18 +103,17 @@ func VerifyDependencies(values ...map[Plugin][]Plugin) bool {
 		for _, firstVersion := range versions {
 			for _, secondVersion := range versions {
 				if firstVersion.Version != secondVersion.Version {
-					log.Log.V(log.VWarn).Info(fmt.Sprintf("Plugin '%s' requires version '%s' but plugin '%s' requires '%s' for plugin '%s'",
+					messages = append(messages, fmt.Sprintf("Plugin '%s' requires version '%s' but plugin '%s' requires '%s' for plugin '%s'",
 						firstVersion.rootPluginNameAndVersion,
 						firstVersion.Version,
 						secondVersion.rootPluginNameAndVersion,
 						secondVersion.Version,
 						pluginName,
 					))
-					valid = false
 				}
 			}
 		}
 	}
 
-	return valid
+	return messages
 }

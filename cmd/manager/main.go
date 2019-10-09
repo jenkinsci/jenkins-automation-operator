@@ -13,6 +13,7 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/notifications"
 	"github.com/jenkinsci/kubernetes-operator/pkg/event"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
 	"github.com/jenkinsci/kubernetes-operator/version"
@@ -118,8 +119,11 @@ func main() {
 		fatal(errors.Wrap(err, "failed to create Kubernetes client set"), *debug)
 	}
 
+	c := make(chan notifications.Event)
+	go notifications.Listen(c, events, mgr.GetClient())
+
 	// setup Jenkins controller
-	if err := jenkins.Add(mgr, *local, *minikube, events, *clientSet, *cfg); err != nil {
+	if err := jenkins.Add(mgr, *local, *minikube, *clientSet, *cfg, &c); err != nil {
 		fatal(errors.Wrap(err, "failed to setup controllers"), *debug)
 	}
 

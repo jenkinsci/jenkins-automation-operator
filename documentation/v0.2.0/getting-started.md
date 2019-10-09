@@ -144,7 +144,7 @@ pipelineJob('build-jenkins-operator') {
 }
 ```
 
-**cicd/jobs/build.jenkins** it's an actual Jenkins pipeline:
+**cicd/pipelines/build.jenkins** it's an actual Jenkins pipeline:
 
 ```
 #!/usr/bin/env groovy
@@ -563,7 +563,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: <pvc_name>
-  namespace: <namesapce>
+  namespace: <namespace>
 spec:
   accessModes:
   - ReadWriteOnce
@@ -574,7 +574,7 @@ spec:
 
 Run command:
 ```bash
-$ kubectl -n <namesapce> create -f pvc.yaml
+$ kubectl -n <namespace> create -f pvc.yaml
 ```
 
 #### Configure Jenkins CR

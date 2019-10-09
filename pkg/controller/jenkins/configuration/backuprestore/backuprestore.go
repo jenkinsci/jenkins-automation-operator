@@ -46,8 +46,8 @@ func New(k8sClient k8s.Client, clientSet kubernetes.Clientset,
 }
 
 // Validate validates backup and restore configuration
-func (bar *BackupAndRestore) Validate() bool {
-	valid := true
+func (bar *BackupAndRestore) Validate() []string {
+	var messages []string
 	allContainers := map[string]v1alpha2.Container{}
 	for _, container := range bar.jenkins.Spec.Master.Containers {
 		allContainers[container.Name] = container
@@ -57,12 +57,10 @@ func (bar *BackupAndRestore) Validate() bool {
 	if len(restore.ContainerName) > 0 {
 		_, found := allContainers[restore.ContainerName]
 		if !found {
-			valid = false
-			bar.logger.V(log.VWarn).Info(fmt.Sprintf("restore container '%s' not found in CR spec.master.containers", restore.ContainerName))
+			messages = append(messages, fmt.Sprintf("restore container '%s' not found in CR spec.master.containers", restore.ContainerName))
 		}
 		if restore.Action.Exec == nil {
-			valid = false
-			bar.logger.V(log.VWarn).Info(fmt.Sprintf("spec.restore.action.exec is not configured"))
+			messages = append(messages, fmt.Sprintf("spec.restore.action.exec is not configured"))
 		}
 	}
 
@@ -70,29 +68,24 @@ func (bar *BackupAndRestore) Validate() bool {
 	if len(backup.ContainerName) > 0 {
 		_, found := allContainers[backup.ContainerName]
 		if !found {
-			valid = false
-			bar.logger.V(log.VWarn).Info(fmt.Sprintf("backup container '%s' not found in CR spec.master.containers", backup.ContainerName))
+			messages = append(messages, fmt.Sprintf("backup container '%s' not found in CR spec.master.containers", backup.ContainerName))
 		}
 		if backup.Action.Exec == nil {
-			valid = false
-			bar.logger.V(log.VWarn).Info(fmt.Sprintf("spec.backup.action.exec is not configured"))
+			messages = append(messages, fmt.Sprintf("spec.backup.action.exec is not configured"))
 		}
 		if backup.Interval == 0 {
-			valid = false
-			bar.logger.V(log.VWarn).Info(fmt.Sprintf("spec.backup.interval is not configured"))
+			messages = append(messages, fmt.Sprintf("spec.backup.interval is not configured"))
 		}
 	}
 
 	if len(restore.ContainerName) > 0 && len(backup.ContainerName) == 0 {
-		valid = false
-		bar.logger.V(log.VWarn).Info("spec.backup.containerName is not configured")
+		messages = append(messages, "spec.backup.containerName is not configured")
 	}
 	if len(backup.ContainerName) > 0 && len(restore.ContainerName) == 0 {
-		valid = false
-		bar.logger.V(log.VWarn).Info("spec.restore.containerName is not configured")
+		messages = append(messages, "spec.restore.containerName is not configured")
 	}
 
-	return valid
+	return messages
 }
 
 // Restore performs Jenkins restore backup operation

@@ -27,10 +27,10 @@ func TestSlack_Send(t *testing.T) {
 				Namespace: testNamespace,
 			},
 		},
-		ConfigurationType: testConfigurationType,
-		Message:           testMessage,
-		MessageVerbose:    testMessageVerbose,
-		LogLevel:          testLoggingLevel,
+		Phase:           testPhase,
+		Message:         testMessage,
+		MessagesVerbose: testMessageVerbose,
+		LogLevel:        testLoggingLevel,
 	}
 	slack := Slack{k8sClient: fakeClient}
 
@@ -45,25 +45,25 @@ func TestSlack_Send(t *testing.T) {
 
 		mainAttachment := message.Attachments[0]
 
-		assert.Equal(t, mainAttachment.Text, titleText)
+		assert.Equal(t, mainAttachment.Title, notificationTitle(event))
 		for _, field := range mainAttachment.Fields {
 			switch field.Title {
-			case configurationTypeFieldName:
-				assert.Equal(t, field.Value, event.ConfigurationType)
+			case phaseFieldName:
+				assert.Equal(t, field.Value, string(event.Phase))
 			case crNameFieldName:
 				assert.Equal(t, field.Value, event.Jenkins.Name)
-			case messageFieldName:
+			case "":
 				assert.Equal(t, field.Value, event.Message)
 			case loggingLevelFieldName:
 				assert.Equal(t, field.Value, string(event.LogLevel))
 			case namespaceFieldName:
 				assert.Equal(t, field.Value, event.Jenkins.Namespace)
 			default:
-				t.Fail()
+				t.Errorf("Unexpected field %+v", field)
 			}
 		}
 
-		assert.Equal(t, mainAttachment.Footer, footerContent)
+		assert.Equal(t, mainAttachment.Footer, "")
 		assert.Equal(t, mainAttachment.Color, slack.getStatusColor(event.LogLevel))
 	}))
 
