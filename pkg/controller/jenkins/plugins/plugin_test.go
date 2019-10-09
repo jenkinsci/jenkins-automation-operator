@@ -108,4 +108,13 @@ func TestVerifyDependencies(t *testing.T) {
 		got := VerifyDependencies(basePlugins, extraPlugins)
 		assert.Equal(t, false, got)
 	})
+	t.Run("happy with dash in version", func(t *testing.T) {
+		basePlugins := map[Plugin][]Plugin{
+			Must(New("first-root-plugin:1.0.0-1")): {
+				Must(New("first-plugin:0.0.1-1")),
+			},
+		}
+		got := VerifyDependencies(basePlugins)
+		assert.Equal(t, true, got)
+	})
 }
