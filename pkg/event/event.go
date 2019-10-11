@@ -23,7 +23,7 @@ const (
 // Type is the type of event
 type Type string
 
-// Reason is the type of reason message, used in evant
+// Reason is the type of reason message, used in event
 type Reason string
 
 // Recorder is the interface used to emit events
