@@ -7,11 +7,11 @@ description: >
   How to customize Jenkins
 ---
 
-Jenkins can be customized using groovy scripts or [configuration as code plugin](https://github.com/jenkinsci/configuration-as-code-plugin). 
-By using [ConfigMap](https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/) you can create own **Jenkins** customized configuration.
-Then you must reference the *ConfigMap* in **Jenkins** pod customization file in `spec.groovyScripts` or `spec.configurationAsCode`
+Jenkins can be customized using groovy scripts or the [configuration as code plugin](https://github.com/jenkinsci/configuration-as-code-plugin). 
+By using a [ConfigMap](https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/) you can create your own **Jenkins** customized configuration.
+Then you must reference the *ConfigMap* in the **Jenkins** pod customization file in `spec.groovyScripts` or `spec.configurationAsCode`
 
-For example create *ConfigMap* with name `jenkins-operator-user-configuration`. Then, modify the **Jenkins** manifest to look like this:
+For example create a *ConfigMap* with name `jenkins-operator-user-configuration`. Then, modify the **Jenkins** manifest to look like this:
 
 ```yaml
 apiVersion: jenkins.io/v1alpha2
@@ -27,7 +27,7 @@ spec:
     - name: jenkins-operator-user-configuration
 ```
 
-Here is example of `jenkins-operator-user-configuration`:
+Here is an example of `jenkins-operator-user-configuration`:
 ```yaml
 apiVersion: v1
 kind: ConfigMap
@@ -62,15 +62,15 @@ data:
 * *.groovy is Groovy script configuration
 * *.yaml is configuration as code
 
-If you want to correct your configuration you can edit it while **Jenkins Operator** is running. 
-Jenkins will reconcile and apply new configuration.
+If you want to correct your configuration you can edit it while the **Jenkins Operator** is running. 
+Jenkins will reconcile and apply the new configuration.
 
-### Using secrets inside Groovy script
+### Using secrets from a Groovy script
 
-If you configured `spec.groovyScripts.secret.name`, then this secret is available to use inside map Groovy scripts.
+If you configured `spec.groovyScripts.secret.name`, then this secret is available to use from map Groovy scripts.
 The secrets are loaded to `secrets` map.
 
-Create a [secret](https://kubernetes.io/docs/concepts/configuration/secret/) with for eg. `jenkins-conf-secrets` name.
+Create a [secret](https://kubernetes.io/docs/concepts/configuration/secret/) with for example the name `jenkins-conf-secrets`.
 
 ```yaml
 kind: Secret
@@ -122,7 +122,7 @@ data:
     jenkins.save()
 ```
 
-Or by applying configuration as code:
+Or by applying this configuration as code:
 ```yaml
 apiVersion: v1
 kind: ConfigMap
@@ -135,7 +135,7 @@ data:
 ```
 
 
-After this, you should see the `Hello world` system message at **Jenkins** homepage.
+After this, you should see the `Hello world` system message from the **Jenkins** homepage.
 
 ## Install Plugins
 
@@ -153,7 +153,7 @@ spec:
      version: 0.5.1
 ```
 
-Under `spec.master.basePlugins` you can find plugins for valid **Jenkins Operator** work:
+Under `spec.master.basePlugins` you can find plugins for a valid **Jenkins Operator**:
 
 ```yaml
 apiVersion: jenkins.io/v1alpha2
@@ -181,6 +181,6 @@ spec:
       version: 0.12.1
 ```
 
-You can change version of them.
+You can change their versions.
 
-Then **Jenkins Operator** will automatically install plugins after Jenkins master pod restart.
+Then the **Jenkins Operator** will automatically install plugins after the Jenkins master pod restarts.
