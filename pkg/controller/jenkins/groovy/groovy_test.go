@@ -388,7 +388,7 @@ func TestGroovy_Ensure(t *testing.T) {
 			},
 			Data: map[string]string{
 				groovyScriptName: groovyScript,
-				"to-ommit":       "to-ommit",
+				"to-omit":        "to-omit",
 			},
 		}
 		err := v1alpha2.SchemeBuilder.AddToScheme(scheme.Scheme)

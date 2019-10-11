@@ -509,11 +509,11 @@ func setDefaultsForContainer(jenkins *v1alpha2.Jenkins, containerIndex int, logg
 
 func isResourceRequirementsNotSet(requirements corev1.ResourceRequirements) bool {
 	_, requestCPUSet := requirements.Requests[corev1.ResourceCPU]
-	_, requestMemporySet := requirements.Requests[corev1.ResourceMemory]
+	_, requestMemorySet := requirements.Requests[corev1.ResourceMemory]
 	_, limitCPUSet := requirements.Limits[corev1.ResourceCPU]
 	_, limitMemorySet := requirements.Limits[corev1.ResourceMemory]
 
-	return !limitCPUSet || !limitMemorySet || !requestCPUSet || !requestMemporySet
+	return !limitCPUSet || !limitMemorySet || !requestCPUSet || !requestMemorySet
 }
 
 func basePlugins() (result []v1alpha2.Plugin) {
