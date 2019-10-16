@@ -7,10 +7,10 @@ description: >
   How to migrate to new CRD manifest
 ---
 
-Please not that **CRD manifests are global**, not namespaced, so every jenkins operator running on the cluster
+Please note that **CRD manifests are global**, not namespaced, so every **Jenkins operator** running on the cluster
 will be impacted by the new CRD manifest. Multiple operator instances with different versions *should* continue to work.
 
-## Stop jenkins-operator pod
+## Stop the jenkins-operator pod
 
 Run command:
 ```bash
@@ -18,13 +18,13 @@ $ kubectl -n <namespace> scale deployment.apps/jenkins-operator --replicas=0
 deployment.apps/jenkins-operator scaled
 ```
 
-Desired state:
+Verify the desired state, by running this command:
 ```bash
 $ kubectl -n <namespace> get po
 No resources found.
 ```
 
-## Stop Jenkins master pod
+## Stop the Jenkins master pod
 
 Run command:
 ```bash
@@ -35,7 +35,7 @@ $ kubectl -n <namespace> get delete po jenkins-operator-<cr_name>
 pod "jenkins-operator-<cr_name>" deleted
 ```
 
-Desired state:
+Verify the desired state, by running this command:
 ```bash
 $ kubectl -n <namespace> get po
 No resources found.
@@ -91,7 +91,7 @@ spec:
       ...
 ```
 
-See also the examples bellow for more details. For even more details please look at the source code.
+See also the examples below for more details. For even more details please look at the source code.
 Code that defines the data structures can be found [here](v0.1.1/jenkins-v1alpha2-scheme.md)
 
 ### Examples
@@ -305,21 +305,21 @@ spec:
       version: 2.24
 ```
 
-## Update CRD to new version
+## Update CRD to a new version
 
-New version of the Custom Resource definition for the operator needs to be applied:
+A new version of the Custom Resource Definition for the operator needs to be applied:
 -[Jenkins CRD v1alpha2](https://github.com/jenkinsci/kubernetes-operator/blob/master/deploy/crds/jenkins_v1alpha2_jenkins_crd.yaml)
 
-To use default CRD file:
+To use the default CRD file:
 ```
 kubectl -n <namespace> apply -f https://github.com/jenkinsci/kubernetes-operator/blob/master/deploy/crds/jenkins_v1alpha2_jenkins_crd.yaml
 ```
 
-## Update RBAC to new version
+## Update RBAC to a new version
 
-New operator version requires updated RBAC permissions:
+A new operator version requires updated RBAC permissions:
 
-To use default Role file:
+To use the default Role file:
 ```
 $ kubectl -n <namespace> apply -f https://raw.githubusercontent.com/jenkinsci/kubernetes-operator/master/deploy/role.yaml
 ```
