@@ -111,4 +111,4 @@ spec:
 
 You can change their versions.
 
-Then the **Jenkins Operator** will automatically install those plugins after the Jenkins master pod restart.
+The **Jenkins Operator** will then automatically install those plugins after the Jenkins master pod restart.
