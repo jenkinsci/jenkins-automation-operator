@@ -9,8 +9,8 @@ description: >
 
 ## Deploy Jenkins
 
-Once jenkins-operator is up and running let's deploy actual Jenkins instance.
-Create manifest ie. **jenkins_instance.yaml** with following data and save it on drive.
+Once the **Jenkins Operator** is up and running let's deploy an actual Jenkins instance.
+Create a manifest ie. **jenkins_instance.yaml** with following data and save it on drive.
 
 ```bash
 apiVersion: jenkins.io/v1alpha2
