@@ -104,9 +104,7 @@ spec:
     - name: job-dsl
       version: "1.76"
     - name: configuration-as-code
-      version: "1.29"
-    - name: configuration-as-code-support
-      version: "1.19"
+      version: "1.31"
     - name: kubernetes-credentials-provider
       version: 0.12.1
 ```
