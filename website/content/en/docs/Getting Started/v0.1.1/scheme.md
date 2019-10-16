@@ -19,7 +19,7 @@ This document contains API scheme for `jenkins-operator` manifest
 </ul>
 <h2 id="jenkins.io">jenkins.io</h2>
 <p>
-<p>Package v1alpha2 contains API Schema definitions for the jenkins.io v1alpha2 API group</p>
+<p>Package v1alpha2 contains the API Schema definitions for the jenkins.io v1alpha2 API group</p>
 </p>
 Resource Types:
 <ul><li>
@@ -108,7 +108,7 @@ Every single change here requires a pod restart.</p>
 </td>
 <td>
 <em>(Optional)</em>
-<p>SeedJobs defines list of Jenkins Seed Job configurations
+<p>SeedJobs defines a list of Jenkins Seed Job configurations
 More info: <a href="https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-seed-jobs-and-pipelines">https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-seed-jobs-and-pipelines</a></p>
 </td>
 </tr>
@@ -123,7 +123,7 @@ Service
 </td>
 <td>
 <em>(Optional)</em>
-<p>Service is Kubernetes service of Jenkins master HTTP pod
+<p>Service is the Kubernetes service of the Jenkins master HTTP pod
 Defaults to :
 port: 8080
 type: ClusterIP</p>
@@ -140,7 +140,7 @@ Service
 </td>
 <td>
 <em>(Optional)</em>
-<p>Service is Kubernetes service of Jenkins slave pods
+<p>Service is the Kubernetes service of the Jenkins slave pods
 Defaults to :
 port: 50000
 type: ClusterIP</p>
@@ -157,7 +157,7 @@ Backup
 </td>
 <td>
 <em>(Optional)</em>
-<p>Backup defines configuration of Jenkins backup
+<p>Backup defines the configuration of a Jenkins backup
 More info: <a href="https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-backup-and-restore">https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-backup-and-restore</a></p>
 </td>
 </tr>
@@ -172,7 +172,7 @@ Restore
 </td>
 <td>
 <em>(Optional)</em>
-<p>Backup defines configuration of Jenkins backup restore
+<p>Backup defines the configuration of a Jenkins backup restore
 More info: <a href="https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-backup-and-restore">https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-backup-and-restore</a></p>
 </td>
 </tr>
@@ -201,7 +201,7 @@ JenkinsStatus
 <a href="#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.JenkinsSpec">JenkinsSpec</a>)
 </p>
 <p>
-<p>Backup defines configuration of Jenkins backup</p>
+<p>Backup defines the configuration of Jenkins backup</p>
 </p>
 <table>
 <thead>
@@ -232,7 +232,7 @@ Handler
 </em>
 </td>
 <td>
-<p>Action defines action which performs backup in backup container sidecar</p>
+<p>Action defines the action which performs the backup in the backup container sidecar</p>
 </td>
 </tr>
 <tr>
@@ -243,7 +243,7 @@ uint64
 </em>
 </td>
 <td>
-<p>Interval tells how often make backup in seconds
+<p>Interval tells you how often the backup is made in seconds
 Defaults to 30.</p>
 </td>
 </tr>
@@ -255,7 +255,7 @@ bool
 </em>
 </td>
 <td>
-<p>MakeBackupBeforePodDeletion tells operator to make backup before Jenkins master pod deletion</p>
+<p>MakeBackupBeforePodDeletion tells the operator to make a backup before Jenkins master pod deletion</p>
 </td>
 </tr>
 </tbody>
@@ -267,7 +267,7 @@ bool
 <a href="#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.JenkinsStatus">JenkinsStatus</a>)
 </p>
 <p>
-<p>Build defines Jenkins Build status with corresponding metadata</p>
+<p>Build defines the Jenkins Build status with corresponding metadata</p>
 </p>
 <table>
 <thead>
@@ -320,7 +320,7 @@ BuildStatus
 </em>
 </td>
 <td>
-<p>Status is the status of Jenkins build</p>
+<p>Status is the status of a Jenkins build</p>
 </td>
 </tr>
 <tr>
@@ -331,7 +331,7 @@ int
 </em>
 </td>
 <td>
-<p>Retires is the amount of Jenkins job build retries</p>
+<p>Retires is the amount of times a Jenkins job build retries</p>
 </td>
 </tr>
 <tr>
@@ -369,7 +369,7 @@ Kubernetes meta/v1.Time
 <a href="#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.Build">Build</a>)
 </p>
 <p>
-<p>BuildStatus defines type of Jenkins build job status</p>
+<p>BuildStatus defines the type of Jenkins build job status</p>
 </p>
 <h3 id="github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Container">Container
 </h3>
@@ -378,7 +378,7 @@ Kubernetes meta/v1.Time
 <a href="#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.JenkinsMaster">JenkinsMaster</a>)
 </p>
 <p>
-<p>Container defines Kubernetes container attributes</p>
+<p>Container defines the Kubernetes container attributes</p>
 </p>
 <table>
 <thead>
@@ -568,7 +568,7 @@ Kubernetes core/v1.Probe
 <td>
 <em>(Optional)</em>
 <p>Periodic probe of container liveness.
-Container will be restarted if the probe fails.</p>
+The container will be restarted if the probe fails.</p>
 </td>
 </tr>
 <tr>
@@ -583,7 +583,7 @@ Kubernetes core/v1.Probe
 <td>
 <em>(Optional)</em>
 <p>Periodic probe of container service readiness.
-Container will be removed from service endpoints if the probe fails.</p>
+The container will be removed from service endpoints if the probe fails.</p>
 </td>
 </tr>
 <tr>
@@ -658,7 +658,7 @@ Kubernetes core/v1.ExecAction
 <a href="#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.SeedJob">SeedJob</a>)
 </p>
 <p>
-<p>JenkinsCredentialType defines type of Jenkins credential used to seed job mechanism</p>
+<p>JenkinsCredentialType defines type of Jenkins credential used in the seed job mechanism</p>
 </p>
 <h3 id="github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.JenkinsMaster">JenkinsMaster
 </h3>
@@ -860,7 +860,7 @@ JenkinsMaster
 </em>
 </td>
 <td>
-<p>Master represents Jenkins master pod properties and Jenkins plugins.
+<p>Master represents the Jenkins master pod properties and Jenkins plugins.
 Every single change here requires a pod restart.</p>
 </td>
 </tr>
@@ -890,7 +890,7 @@ Service
 </td>
 <td>
 <em>(Optional)</em>
-<p>Service is Kubernetes service of Jenkins master HTTP pod
+<p>Service is the Kubernetes service of the Jenkins master HTTP pod
 Defaults to :
 port: 8080
 type: ClusterIP</p>
@@ -907,7 +907,7 @@ Service
 </td>
 <td>
 <em>(Optional)</em>
-<p>Service is Kubernetes service of Jenkins slave pods
+<p>Service is the Kubernetes service of the Jenkins slave pods
 Defaults to :
 port: 50000
 type: ClusterIP</p>
@@ -924,7 +924,7 @@ Backup
 </td>
 <td>
 <em>(Optional)</em>
-<p>Backup defines configuration of Jenkins backup
+<p>Backup defines the configuration of the Jenkins backup
 More info: <a href="https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-backup-and-restore">https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-backup-and-restore</a></p>
 </td>
 </tr>
@@ -939,7 +939,7 @@ Restore
 </td>
 <td>
 <em>(Optional)</em>
-<p>Backup defines configuration of Jenkins backup restore
+<p>Backup defines the configuration of the Jenkins backup restore
 More info: <a href="https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-backup-and-restore">https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-backup-and-restore</a></p>
 </td>
 </tr>
@@ -985,7 +985,7 @@ Kubernetes meta/v1.Time
 </td>
 <td>
 <em>(Optional)</em>
-<p>ProvisionStartTime is a time when Jenkins master pod has been created</p>
+<p>ProvisionStartTime is a time when the Jenkins master pod has been created</p>
 </td>
 </tr>
 <tr>
@@ -1027,7 +1027,7 @@ Kubernetes meta/v1.Time
 </td>
 <td>
 <em>(Optional)</em>
-<p>Builds contains Jenkins builds statues</p>
+<p>Builds contains the Jenkins builds statues</p>
 </td>
 </tr>
 <tr>
@@ -1039,7 +1039,7 @@ uint64
 </td>
 <td>
 <em>(Optional)</em>
-<p>RestoredBackup is the restored backup number after Jenkins master pod restart</p>
+<p>RestoredBackup is the restored backup number after the Jenkins master pod restart</p>
 </td>
 </tr>
 <tr>
@@ -1075,7 +1075,7 @@ bool
 </td>
 <td>
 <em>(Optional)</em>
-<p>BackupDoneBeforePodDeletion tells if backup before pod deletion has been made</p>
+<p>BackupDoneBeforePodDeletion tells if a backup before pod deletion has been made</p>
 </td>
 </tr>
 <tr>
@@ -1087,7 +1087,7 @@ string
 </td>
 <td>
 <em>(Optional)</em>
-<p>UserAndPasswordHash is a SHA256 hash made from user and password</p>
+<p>UserAndPasswordHash is a SHA256 hash made from  the username and password</p>
 </td>
 </tr>
 <tr>
@@ -1099,7 +1099,7 @@ string
 </td>
 <td>
 <em>(Optional)</em>
-<p>CreatedSeedJobs contains list of seed job id already created in Jenkins</p>
+<p>CreatedSeedJobs contains list of seed job ids already created in Jenkins</p>
 </td>
 </tr>
 </tbody>
@@ -1129,7 +1129,7 @@ string
 </em>
 </td>
 <td>
-<p>Name is the name of Jenkins plugin</p>
+<p>Name is the name of the Jenkins plugin</p>
 </td>
 </tr>
 <tr>
@@ -1140,7 +1140,7 @@ string
 </em>
 </td>
 <td>
-<p>Version is the version of Jenkins plugin</p>
+<p>Version is the version of the Jenkins plugin</p>
 </td>
 </tr>
 </tbody>
@@ -1152,7 +1152,7 @@ string
 <a href="#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.JenkinsSpec">JenkinsSpec</a>)
 </p>
 <p>
-<p>Restore defines configuration of Jenkins backup restore operation</p>
+<p>Restore defines the configuration of a Jenkins backup restore operation</p>
 </p>
 <table>
 <thead>
@@ -1170,7 +1170,7 @@ string
 </em>
 </td>
 <td>
-<p>ContainerName is the container name responsible for restore backup operation</p>
+<p>ContainerName is the container name responsible for the restore backup operation</p>
 </td>
 </tr>
 <tr>
@@ -1183,7 +1183,7 @@ Handler
 </em>
 </td>
 <td>
-<p>Action defines action which performs restore backup in restore container sidecar</p>
+<p>Action defines action which performs the restore backup in a restore container sidecar</p>
 </td>
 </tr>
 <tr>
@@ -1195,7 +1195,7 @@ uint64
 </td>
 <td>
 <em>(Optional)</em>
-<p>RecoveryOnce if want to restore specific backup set this field and then Jenkins will be restarted and desired backup will be restored</p>
+<p>RecoveryOnce if you want to restore a specific backup, set this field, and then Jenkins will be restarted and the desired backup will be restored</p>
 </td>
 </tr>
 </tbody>
@@ -1260,7 +1260,7 @@ string
 </em>
 </td>
 <td>
-<p>Targets is the repository path where are seed job definitions</p>
+<p>Targets is the repository path where the seed job definitions are</p>
 </td>
 </tr>
 <tr>
@@ -1271,7 +1271,7 @@ string
 </em>
 </td>
 <td>
-<p>RepositoryBranch is the repository branch where are seed job definitions</p>
+<p>RepositoryBranch is the repository branch where the seed job definitions are</p>
 </td>
 </tr>
 <tr>
@@ -1308,7 +1308,7 @@ JenkinsCredentialType
 <a href="#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.JenkinsSpec">JenkinsSpec</a>)
 </p>
 <p>
-<p>Service defines Kubernetes service attributes</p>
+<p>Service defines the Kubernetes service attributes</p>
 </p>
 <table>
 <thead>
@@ -1384,7 +1384,7 @@ int32
 </em>
 </td>
 <td>
-<p>The port that are exposed by this service.
+<p>The port that is exposed by this service.
 More info: <a href="https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies">https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies</a></p>
 </td>
 </tr>
@@ -1398,8 +1398,8 @@ int32
 <td>
 <em>(Optional)</em>
 <p>The port on each node on which this service is exposed when type=NodePort or LoadBalancer.
-Usually assigned by the system. If specified, it will be allocated to the service
-if unused or else creation of the service will fail.
+Usually assigned by the system. If specified, it will be allocated to the service,
+if unused, or else creation of the service will fail.
 Default is to auto-allocate a port if the ServiceType of this Service requires one.
 More info: <a href="https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport">https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport</a></p>
 </td>
@@ -1413,8 +1413,8 @@ More info: <a href="https://kubernetes.io/docs/concepts/services-networking/serv
 </td>
 <td>
 <em>(Optional)</em>
-<p>If specified and supported by the platform, this will restrict traffic through the cloud-provider
-load-balancer will be restricted to the specified client IPs. This field will be ignored if the
+<p>If specified and supported by the platform, this will restrict traffic through the cloud-provider.
+The load-balancer will be restricted to the specified client IPs. This field will be ignored if the
 cloud-provider does not support the feature.&rdquo;
 More info: <a href="https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/">https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/</a></p>
 </td>

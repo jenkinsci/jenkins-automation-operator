@@ -94,12 +94,12 @@ $ make minikube-start
 $ eval $(minikube docker-env) 
 ```
 
-Build Docker image inside provided Linux container by:
+Build a Docker image inside the provided Linux container by:
 ```bash
 $ make indocker
 ```
 
-Build **Jenkins Operator** inside container using:
+Build **Jenkins Operator** inside a container using:
 
 
 ```bash
@@ -129,7 +129,7 @@ Run:
 make deepcopy-gen
 ```
 
-### Getting Jenkins URL and basic credentials
+### Getting the Jenkins URL and basic credentials
 
 ```bash
 minikube service jenkins-operator-http-<cr_name> --url

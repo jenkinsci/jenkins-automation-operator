@@ -9,8 +9,8 @@ description: >
 
 ## Deploy Jenkins
 
-Once jenkins-operator is up and running let's deploy actual Jenkins instance.
-Create manifest ie. **jenkins_instance.yaml** with following data and save it on drive.
+Once the **Jenkins Operator** is up and running let's deploy an actual Jenkins instance.
+Create a manifest ie. **jenkins_instance.yaml** with following data and save it on drive.
 
 ```bash
 apiVersion: jenkins.io/v1alpha2
@@ -58,31 +58,31 @@ spec:
     repositoryUrl: https://github.com/jenkinsci/kubernetes-operator.git
 ```
 
-Deploy Jenkins to K8s:
+Deploy a Jenkins to K8s:
 
 ```bash
 kubectl create -f jenkins_instance.yaml
 ```
-Watch Jenkins instance being created:
+Watch the Jenkins instance being created:
 
 ```bash
 kubectl get pods -w
 ```
 
-Get Jenkins credentials:
+Get the Jenkins credentials:
 
 ```bash
 kubectl get secret jenkins-operator-credentials-<cr_name> -o 'jsonpath={.data.user}' | base64 -d
 kubectl get secret jenkins-operator-credentials-<cr_name> -o 'jsonpath={.data.password}' | base64 -d
 ```
 
-Connect to Jenkins (minikube):
+Connect to the Jenkins Operator (minikube):
 
 ```bash
 minikube service jenkins-operator-http-<cr_name> --url
 ```
 
-Connect to Jenkins (actual Kubernetes cluster):
+Connect to the Jenkins intance (actual Kubernetes cluster):
 
 ```bash
 kubectl port-forward jenkins-<cr_name> 8080:8080

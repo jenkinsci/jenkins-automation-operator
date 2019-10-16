@@ -7,12 +7,12 @@ description: >
   How to customize Jenkins
 ---
 
-Jenkins can be customized using groovy scripts or the configuration as code plugin. All custom configuration is stored in
-the **jenkins-operator-user-configuration-<cr_name>** ConfigMap which is automatically created by the **Jenkins Operator**.
+Jenkins can be customized using by groovy scripts or the Jenkins Configuration as Code Plugin. All custom configuration is stored in
+the **jenkins-operator-user-configuration-<cr_name>** ConfigMap, which is automatically created by the **Jenkins Operator**.
 
 The **Jenkins Operator** creates a **jenkins-operator-user-configuration-<cr_name>** secret where the user can store sensitive 
 information used for custom configuration. If you have an entry in the secret named `PASSWORD` then you can use it in the 
-Configuration as Plugin as `adminAddress: "${PASSWORD}"`.
+Jenkins Configuration as Code Plugin as `adminAddress: "${PASSWORD}"`.
 
 ```
 kubectl get secret jenkins-operator-user-configuration-<cr_name> -o yaml
@@ -63,8 +63,8 @@ metadata:
   namespace: default
 ``` 
 
-When the **jenkins-operator-user-configuration-<cr_name>** ConfigMap is updated Jenkins automatically 
-runs the **jenkins-operator-user-configuration** Jenkins Job which executes all scripts then
+When the **jenkins-operator-user-configuration-<cr_name>** ConfigMap is updated, Jenkins automatically 
+runs the **jenkins-operator-user-configuration** Jenkins Job which executes all scripts, and  then
 runs the **jenkins-operator-user-configuration-casc** Jenkins Job which applies the Configuration as Code configuration.
 
 ## Install Plugins
@@ -104,13 +104,11 @@ spec:
     - name: job-dsl
       version: "1.76"
     - name: configuration-as-code
-      version: "1.29"
-    - name: configuration-as-code-support
-      version: "1.19"
+      version: "1.31"
     - name: kubernetes-credentials-provider
       version: 0.12.1
 ```
 
 You can change their versions.
 
-Then the **Jenkins Operator** will automatically install those plugins after the Jenkins master pod restart.
+The **Jenkins Operator** will then automatically install those plugins after the Jenkins master pod restart.
