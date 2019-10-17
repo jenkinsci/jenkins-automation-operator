@@ -452,17 +452,21 @@ spec:
       env:
       - name: BACKUP_DIR
         value: /backup
+      - name: BACKUP_TMP_DIR
+        value: /tmp
       - name: JENKINS_HOME
         value: /jenkins-home
       - name: BACKUP_COUNT
         value: "3" # keep only the 2 most recent backups
-      image: virtuslab/jenkins-operator-backup-pvc:v0.0.6 # look at backup/pvc directory
+      image: virtuslab/jenkins-operator-backup-pvc:v0.0.7 # look at backup/pvc directory
       imagePullPolicy: IfNotPresent
       volumeMounts:
       - mountPath: /jenkins-home # Jenkins home volume
         name: jenkins-home
       - mountPath: /backup # backup volume
         name: backup
+      - mountPath: /tmp # backup tmp volume
+        name: tmp
     volumes:
     - name: backup # PVC volume where backups will be stored
       persistentVolumeClaim:
