@@ -83,7 +83,7 @@ func TestValidatePlugins(t *testing.T) {
 		var userPlugins []v1alpha2.Plugin
 
 		got := baseReconcileLoop.validatePlugins(requiredBasePlugins, basePlugins, userPlugins)
-    
+
 		assert.Equal(t, got, []string{"invalid plugin version 'simple-plugin:invalid', must follow pattern '^[0-9\\\\.-]+$'"})
 	})
 	t.Run("valid user and base plugin version", func(t *testing.T) {
