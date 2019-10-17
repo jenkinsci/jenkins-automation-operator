@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"log"
 	"mime/quotedprintable"
+	"net"
 	"regexp"
 	"testing"
 	"time"
@@ -77,6 +78,8 @@ func (s *testSession) Data(r io.Reader) error {
 		return err
 	}
 
+	fmt.Println(string(b))
+
 	res := re.FindAllStringSubmatch(string(b), -1)
 
 	if smtpEvent.Jenkins.Name == res[0][1] {
@@ -132,13 +135,13 @@ func TestSMTP_Send(t *testing.T) {
 	err := fakeClient.Create(context.TODO(), secret)
 	assert.NoError(t, err)
 
-	go func() {
-		if err := s.ListenAndServe(); err != nil {
-			log.Fatal(err)
-		}
-	}()
+	l, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", testSMTPPort))
+	assert.NoError(t, err)
 
-	time.Sleep(time.Second * 5)
+	go func() {
+		err := s.Serve(l)
+		assert.NoError(t, err)
+	}()
 
 	err = smtpClient.Send(smtpEvent, v1alpha2.Notification{
 		SMTP: &v1alpha2.SMTP{
