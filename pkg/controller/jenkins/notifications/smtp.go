@@ -18,10 +18,12 @@ const (
 	mailSubject = "Jenkins Operator Notification"
 )
 
+// SMTP is Simple Mail Transport Protocol used for sending emails
 type SMTP struct {
 	k8sClient k8sclient.Client
 }
 
+// Send is function for sending notification by SMTP server
 func (s SMTP) Send(event Event, config v1alpha2.Notification) error {
 	usernameSecret := &corev1.Secret{}
 	passwordSecret := &corev1.Secret{}

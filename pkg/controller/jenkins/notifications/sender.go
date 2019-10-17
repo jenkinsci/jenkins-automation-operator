@@ -20,7 +20,6 @@ const (
 	crNameFieldName       = "CR Name"
 	phaseFieldName        = "Phase"
 	namespaceFieldName    = "Namespace"
-	footerContent         = "Powered by Jenkins Operator"
 )
 
 const (

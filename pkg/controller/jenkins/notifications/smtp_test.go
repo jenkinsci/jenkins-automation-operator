@@ -72,17 +72,19 @@ func (s *testSession) Rcpt(to string) error {
 func (s *testSession) Data(r io.Reader) error {
 	re := regexp.MustCompile(`\t+<tr>\n\t+<td><b>(.*):</b></td>\n\t+<td>(.*)</td>\n\t+</tr>`)
 
-	if b, err := ioutil.ReadAll(quotedprintable.NewReader(r)); err != nil {
+	b, err := ioutil.ReadAll(quotedprintable.NewReader(r))
+	if err != nil {
 		return err
-	} else {
-		res := re.FindAllStringSubmatch(string(b), -1)
-
-		if smtpEvent.Jenkins.Name == res[0][1] {
-			return errors.New(fmt.Sprintf("jenkins CR not identical: %s, expected: %s", res[0][1], smtpEvent.Jenkins.Name))
-		} else if string(smtpEvent.Phase) == res[1][1] {
-			return errors.New(fmt.Sprintf("phase not identical: %s, expected: %s", res[1][1], smtpEvent.Phase))
-		}
 	}
+
+	res := re.FindAllStringSubmatch(string(b), -1)
+
+	if smtpEvent.Jenkins.Name == res[0][1] {
+		return fmt.Errorf("jenkins CR not identical: %s, expected: %s", res[0][1], smtpEvent.Jenkins.Name)
+	} else if string(smtpEvent.Phase) == res[1][1] {
+		return fmt.Errorf("phase not identical: %s, expected: %s", res[1][1], smtpEvent.Phase)
+	}
+
 	return nil
 }
 
@@ -91,7 +93,6 @@ func (s *testSession) Reset() {}
 func (s *testSession) Logout() error {
 	return nil
 }
-
 
 func TestSMTP_Send(t *testing.T) {
 	fakeClient := fake.NewFakeClient()
@@ -139,11 +140,11 @@ func TestSMTP_Send(t *testing.T) {
 
 	err = smtpClient.Send(smtpEvent, v1alpha2.Notification{
 		SMTP: &v1alpha2.SMTP{
-			Server: "localhost",
-			From: "test@localhost",
-			To: "test@localhost",
+			Server:                "localhost",
+			From:                  "test@localhost",
+			To:                    "test@localhost",
 			TLSInsecureSkipVerify: true,
-			Port: testSMTPPort,
+			Port:                  testSMTPPort,
 			UsernameSecretKeySelector: v1alpha2.SecretKeySelector{
 				LocalObjectReference: corev1.LocalObjectReference{
 					Name: testSecretName,
