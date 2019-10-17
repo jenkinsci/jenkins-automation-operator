@@ -5,17 +5,20 @@ import (
 	"errors"
 	"fmt"
 	"github.com/emersion/go-smtp"
-	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
-	"github.com/stretchr/testify/assert"
 	"io"
 	"io/ioutil"
 	"log"
-	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"mime/quotedprintable"
+	"regexp"
 	"testing"
 	"time"
 
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
+
+	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 const (
@@ -24,6 +27,19 @@ const (
 
 	testSMTPPort = 1025
 )
+
+var smtpEvent = Event{
+	Jenkins: v1alpha2.Jenkins{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      testCrName,
+			Namespace: testNamespace,
+		},
+	},
+	Phase:           testPhase,
+	Message:         testMessage,
+	MessagesVerbose: testMessageVerbose,
+	LogLevel:        testLoggingLevel,
+}
 
 type testServer struct{}
 
@@ -54,10 +70,18 @@ func (s *testSession) Rcpt(to string) error {
 }
 
 func (s *testSession) Data(r io.Reader) error {
-	if b, err := ioutil.ReadAll(r); err != nil {
+	re := regexp.MustCompile(`\t+<tr>\n\t+<td><b>(.*):</b></td>\n\t+<td>(.*)</td>\n\t+</tr>`)
+
+	if b, err := ioutil.ReadAll(quotedprintable.NewReader(r)); err != nil {
 		return err
 	} else {
-		log.Println("Data:", string(b))
+		res := re.FindAllStringSubmatch(string(b), -1)
+
+		if smtpEvent.Jenkins.Name == res[0][1] {
+			return errors.New(fmt.Sprintf("jenkins CR not identical: %s, expected: %s", res[0][1], smtpEvent.Jenkins.Name))
+		} else if string(smtpEvent.Phase) == res[1][1] {
+			return errors.New(fmt.Sprintf("phase not identical: %s, expected: %s", res[1][1], smtpEvent.Phase))
+		}
 	}
 	return nil
 }
@@ -74,19 +98,6 @@ func TestSMTP_Send(t *testing.T) {
 	testUsernameSelectorKeyName := "test-username-selector"
 	testPasswordSelectorKeyName := "test-password-selector"
 	testSecretName := "test-secret"
-
-	event := Event{
-		Jenkins: v1alpha2.Jenkins{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      testCrName,
-				Namespace: testNamespace,
-			},
-		},
-		Phase:           testPhase,
-		Message:         testMessage,
-		MessagesVerbose: testMessageVerbose,
-		LogLevel:        testLoggingLevel,
-	}
 
 	smtpClient := SMTP{k8sClient: fakeClient}
 
@@ -126,7 +137,7 @@ func TestSMTP_Send(t *testing.T) {
 		}
 	}()
 
-	err = smtpClient.Send(event, v1alpha2.Notification{
+	err = smtpClient.Send(smtpEvent, v1alpha2.Notification{
 		SMTP: &v1alpha2.SMTP{
 			Server: "localhost",
 			From: "test@localhost",

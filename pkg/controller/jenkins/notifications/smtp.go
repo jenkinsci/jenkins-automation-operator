@@ -74,7 +74,6 @@ func (s SMTP) Send(event Event, config v1alpha2.Notification) error {
 	message.SetBody("text/html", htmlMessage)
 
 	if err := mailer.DialAndSend(message); err != nil {
-		fmt.Print(err)
 		return err
 	}
 
