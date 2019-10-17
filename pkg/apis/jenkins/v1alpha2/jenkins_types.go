@@ -73,12 +73,23 @@ type Notification struct {
 	Slack        *Slack               `json:"slack,omitempty"`
 	Teams        *MicrosoftTeams      `json:"teams,omitempty"`
 	Mailgun      *Mailgun             `json:"mailgun,omitempty"`
+	SMTP 		 *SMTP 				  `json:"smtp,omitempty"`
 }
 
 // Slack is handler for Slack notification channel
 type Slack struct {
 	// The web hook URL to Slack App
 	WebHookURLSecretKeySelector SecretKeySelector `json:"webHookURLSecretKeySelector"`
+}
+
+type SMTP struct {
+	UsernameSecretKeySelector SecretKeySelector `json:"usernameSecretKeySelector"`
+	PasswordSecretKeySelector SecretKeySelector `json:"passwordSecretKeySelector"`
+	Port int `json:"port"`
+	Server string `json:"server"`
+	TLSInsecureSkipVerify bool `json:"tlsInsecureSkipVerify,omitempty"`
+	From string `json:"from"`
+	To string `json:"to"`
 }
 
 // MicrosoftTeams is handler for Microsoft MicrosoftTeams notification channel

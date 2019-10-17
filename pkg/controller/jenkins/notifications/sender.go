@@ -81,6 +81,8 @@ func Listen(events chan Event, k8sEvent event.Recorder, k8sClient k8sclient.Clie
 				svc = Teams{k8sClient: k8sClient}
 			} else if notificationConfig.Mailgun != nil {
 				svc = MailGun{k8sClient: k8sClient}
+			} else if notificationConfig.SMTP != nil {
+				svc = SMTP{k8sClient: k8sClient}
 			} else {
 				logger.V(log.VWarn).Info(fmt.Sprintf("Unknown notification service `%+v`", notificationConfig))
 				continue
