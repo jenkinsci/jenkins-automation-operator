@@ -15,12 +15,13 @@ fi
 
 JENKINS_HOME="$(pwd)/jenkins_home"
 BACKUP_DIR="$(pwd)/backup"
+BACKUP_TMP_DIR="$(pwd)/tmp"
 RESTORE_FOLDER="$(pwd)/restore"
 mkdir -p ${BACKUP_DIR}
 mkdir -p ${RESTORE_FOLDER}
 
 # Create an instance of the container under testing
-cid="$(docker run -e JENKINS_HOME=${JENKINS_HOME} -v ${JENKINS_HOME}:${JENKINS_HOME}:ro -e BACKUP_DIR=${BACKUP_DIR} -v ${BACKUP_DIR}:${BACKUP_DIR}:rw -e RESTORE_FOLDER=${RESTORE_FOLDER} -v ${RESTORE_FOLDER}:${RESTORE_FOLDER}:rw -d ${docker_image})"
+cid="$(docker run -e JENKINS_HOME=${JENKINS_HOME} -v ${JENKINS_HOME}:${JENKINS_HOME}:ro -e BACKUP_DIR=${BACKUP_DIR} -v ${BACKUP_DIR}:${BACKUP_DIR}:rw -e BACKUP_TMP_DIR=${BACKUP_TMP_DIR} -v ${BACKUP_TMP_DIR}:${BACKUP_TMP_DIR}:rw -e RESTORE_FOLDER=${RESTORE_FOLDER} -v ${RESTORE_FOLDER}:${RESTORE_FOLDER}:rw -d ${docker_image})"
 echo "Docker container ID '${cid}'"
 
 # Remove test directory and container afterwards
