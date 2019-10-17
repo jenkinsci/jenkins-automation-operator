@@ -4,10 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/emersion/go-smtp"
 	"io"
 	"io/ioutil"
-	"log"
 	"mime/quotedprintable"
 	"net"
 	"regexp"
@@ -16,6 +14,7 @@ import (
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 
+	"github.com/emersion/go-smtp"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -27,29 +26,27 @@ const (
 	testSMTPPassword = "password"
 
 	testSMTPPort = 1025
+
+	testFrom    = "test@localhost"
+	testTo      = "test.to@localhost"
+	testSubject = "Jenkins Operator Notification"
+
+	// Headers titles
+	fromHeader    = "From"
+	toHeader      = "To"
+	subjectHeader = "Subject"
 )
 
-var smtpEvent = Event{
-	Jenkins: v1alpha2.Jenkins{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      testCrName,
-			Namespace: testNamespace,
-		},
-	},
-	Phase:           testPhase,
-	Message:         testMessage,
-	MessagesVerbose: testMessageVerbose,
-	LogLevel:        testLoggingLevel,
+type testServer struct {
+	event Event
 }
-
-type testServer struct{}
 
 // Login handles a login command with username and password.
 func (bkd *testServer) Login(state *smtp.ConnectionState, username, password string) (smtp.Session, error) {
 	if username != testSMTPUsername || password != testSMTPPassword {
 		return nil, errors.New("invalid username or password")
 	}
-	return &testSession{}, nil
+	return &testSession{event: bkd.event}, nil
 }
 
 // AnonymousLogin requires clients to authenticate using SMTP AUTH before sending emails
@@ -58,34 +55,50 @@ func (bkd *testServer) AnonymousLogin(state *smtp.ConnectionState) (smtp.Session
 }
 
 // A Session is returned after successful login.
-type testSession struct{}
+type testSession struct {
+	event Event
+}
 
 func (s *testSession) Mail(from string) error {
-	log.Println("Mail from:", from)
+	if from != testFrom {
+		return fmt.Errorf("`From` header is not equal: '%s', expected '%s'", from, testFrom)
+	}
 	return nil
 }
 
 func (s *testSession) Rcpt(to string) error {
-	log.Println("Rcpt to:", to)
+	if to != testTo {
+		return fmt.Errorf("`To` header is not equal: '%s', expected '%s'", to, testTo)
+	}
 	return nil
 }
 
 func (s *testSession) Data(r io.Reader) error {
-	re := regexp.MustCompile(`\t+<tr>\n\t+<td><b>(.*):</b></td>\n\t+<td>(.*)</td>\n\t+</tr>`)
+	contentRegex := regexp.MustCompile(`\t+<tr>\n\t+<td><b>(.*):</b></td>\n\t+<td>(.*)</td>\n\t+</tr>`)
+	headersRegex := regexp.MustCompile(`(.*):\s(.*)`)
 
 	b, err := ioutil.ReadAll(quotedprintable.NewReader(r))
 	if err != nil {
 		return err
 	}
 
-	fmt.Println(string(b))
+	content := contentRegex.FindAllStringSubmatch(string(b), -1)
+	headers := headersRegex.FindAllStringSubmatch(string(b), -1)
 
-	res := re.FindAllStringSubmatch(string(b), -1)
+	if s.event.Jenkins.Name == content[0][1] {
+		return fmt.Errorf("jenkins CR not identical: %s, expected: %s", content[0][1], s.event.Jenkins.Name)
+	} else if string(s.event.Phase) == content[1][1] {
+		return fmt.Errorf("phase not identical: %s, expected: %s", content[1][1], s.event.Phase)
+	}
 
-	if smtpEvent.Jenkins.Name == res[0][1] {
-		return fmt.Errorf("jenkins CR not identical: %s, expected: %s", res[0][1], smtpEvent.Jenkins.Name)
-	} else if string(smtpEvent.Phase) == res[1][1] {
-		return fmt.Errorf("phase not identical: %s, expected: %s", res[1][1], smtpEvent.Phase)
+	for i := range headers {
+		if headers[i][1] == fromHeader && headers[i][2] != testFrom {
+			return fmt.Errorf("`From` header is not equal: '%s', expected '%s'", headers[i][2], testFrom)
+		} else if headers[i][1] == toHeader && headers[i][2] != testTo {
+			return fmt.Errorf("`To` header is not equal: '%s', expected '%s'", headers[i][2], testTo)
+		} else if headers[i][1] == subjectHeader && headers[i][2] != testSubject {
+			return fmt.Errorf("`Subject` header is not equal: '%s', expected '%s'", headers[i][2], testSubject)
+		}
 	}
 
 	return nil
@@ -98,6 +111,19 @@ func (s *testSession) Logout() error {
 }
 
 func TestSMTP_Send(t *testing.T) {
+	event := Event{
+		Jenkins: v1alpha2.Jenkins{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      testCrName,
+				Namespace: testNamespace,
+			},
+		},
+		Phase:           testPhase,
+		Message:         testMessage,
+		MessagesVerbose: testMessageVerbose,
+		LogLevel:        testLoggingLevel,
+	}
+
 	fakeClient := fake.NewFakeClient()
 	testUsernameSelectorKeyName := "test-username-selector"
 	testPasswordSelectorKeyName := "test-password-selector"
@@ -105,7 +131,7 @@ func TestSMTP_Send(t *testing.T) {
 
 	smtpClient := SMTP{k8sClient: fakeClient}
 
-	ts := &testServer{}
+	ts := &testServer{event: event}
 
 	// Create fake SMTP server
 
@@ -143,11 +169,11 @@ func TestSMTP_Send(t *testing.T) {
 		assert.NoError(t, err)
 	}()
 
-	err = smtpClient.Send(smtpEvent, v1alpha2.Notification{
+	err = smtpClient.Send(event, v1alpha2.Notification{
 		SMTP: &v1alpha2.SMTP{
 			Server:                "localhost",
-			From:                  "test@localhost",
-			To:                    "test@localhost",
+			From:                  testFrom,
+			To:                    testTo,
 			TLSInsecureSkipVerify: true,
 			Port:                  testSMTPPort,
 			UsernameSecretKeySelector: v1alpha2.SecretKeySelector{
