@@ -138,6 +138,8 @@ func TestSMTP_Send(t *testing.T) {
 		}
 	}()
 
+	time.Sleep(time.Second * 5)
+
 	err = smtpClient.Send(smtpEvent, v1alpha2.Notification{
 		SMTP: &v1alpha2.SMTP{
 			Server:                "localhost",
