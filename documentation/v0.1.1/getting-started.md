@@ -452,8 +452,6 @@ spec:
       env:
       - name: BACKUP_DIR
         value: /backup
-      - name: BACKUP_TMP_DIR
-        value: /tmp
       - name: JENKINS_HOME
         value: /jenkins-home
       - name: BACKUP_COUNT
@@ -465,8 +463,6 @@ spec:
         name: jenkins-home
       - mountPath: /backup # backup volume
         name: backup
-      - mountPath: /tmp # backup tmp volume
-        name: tmp
     volumes:
     - name: backup # PVC volume where backups will be stored
       persistentVolumeClaim:
