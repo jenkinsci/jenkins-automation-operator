@@ -26,6 +26,7 @@ make go-dependencies
 Build and run **Jenkins Operator** locally:
 
 ```bash
+make jenkins-operator
 make minikube-run EXTRA_ARGS='--minikube --local'
 ```
 
