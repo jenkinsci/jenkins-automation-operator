@@ -3,7 +3,6 @@ apiVersion: {{ .Values.jenkins.apiVersion }}
 kind: Jenkins
 metadata:
   name: {{ .Values.jenkins.name }}
-  namespace: {{ .Release.Namespace }}
 spec:
   {{- toYaml .Values.jenkins.spec | nindent 4 }}
 {{- end }}
