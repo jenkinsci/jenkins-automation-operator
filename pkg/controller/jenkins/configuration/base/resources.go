@@ -17,11 +17,11 @@ func (r *ReconcileJenkinsBaseConfiguration) createResource(obj metav1.Object) er
 	}
 
 	// Set Jenkins instance as the owner and controller
-	if err := controllerutil.SetControllerReference(r.jenkins, obj, r.scheme); err != nil {
+	if err := controllerutil.SetControllerReference(r.Configuration.Jenkins, obj, r.scheme); err != nil {
 		return stackerr.WithStack(err)
 	}
 
-	return r.k8sClient.Create(context.TODO(), runtimeObj) // don't wrap error
+	return r.Client.Create(context.TODO(), runtimeObj) // don't wrap error
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) updateResource(obj metav1.Object) error {
@@ -31,9 +31,9 @@ func (r *ReconcileJenkinsBaseConfiguration) updateResource(obj metav1.Object) er
 	}
 
 	// set Jenkins instance as the owner and controller, don't check error(can be already set)
-	_ = controllerutil.SetControllerReference(r.jenkins, obj, r.scheme)
+	_ = controllerutil.SetControllerReference(r.Configuration.Jenkins, obj, r.scheme)
 
-	return r.k8sClient.Update(context.TODO(), runtimeObj) // don't wrap error
+	return r.Client.Update(context.TODO(), runtimeObj) // don't wrap error
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) createOrUpdateResource(obj metav1.Object) error {
@@ -43,9 +43,9 @@ func (r *ReconcileJenkinsBaseConfiguration) createOrUpdateResource(obj metav1.Ob
 	}
 
 	// set Jenkins instance as the owner and controller, don't check error(can be already set)
-	_ = controllerutil.SetControllerReference(r.jenkins, obj, r.scheme)
+	_ = controllerutil.SetControllerReference(r.Configuration.Jenkins, obj, r.scheme)
 
-	err := r.k8sClient.Create(context.TODO(), runtimeObj)
+	err := r.Client.Create(context.TODO(), runtimeObj)
 	if err != nil && errors.IsAlreadyExists(err) {
 		return r.updateResource(obj)
 	} else if err != nil && !errors.IsAlreadyExists(err) {

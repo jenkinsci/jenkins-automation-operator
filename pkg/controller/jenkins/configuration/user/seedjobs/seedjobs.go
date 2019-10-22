@@ -11,6 +11,7 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/internal/render"
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/groovy"
@@ -24,7 +25,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	k8s "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -131,16 +131,16 @@ jenkins.getQueue().schedule(jobRef)
 
 // SeedJobs defines API for configuring and ensuring Jenkins Seed Jobs and Deploy Keys
 type SeedJobs struct {
+	configuration.Configuration
 	jenkinsClient jenkinsclient.Jenkins
-	k8sClient     k8s.Client
 	logger        logr.Logger
 }
 
 // New creates SeedJobs object
-func New(jenkinsClient jenkinsclient.Jenkins, k8sClient k8s.Client, logger logr.Logger) *SeedJobs {
+func New(jenkinsClient jenkinsclient.Jenkins, config configuration.Configuration, logger logr.Logger) *SeedJobs {
 	return &SeedJobs{
+		Configuration: config,
 		jenkinsClient: jenkinsClient,
-		k8sClient:     k8sClient,
 		logger:        logger,
 	}
 }
@@ -149,16 +149,16 @@ func New(jenkinsClient jenkinsclient.Jenkins, k8sClient k8s.Client, logger logr.
 func (s *SeedJobs) EnsureSeedJobs(jenkins *v1alpha2.Jenkins) (done bool, err error) {
 	if s.isRecreatePodNeeded(*jenkins) {
 		s.logger.Info("Some seed job has been deleted, recreating pod")
-		return false, s.restartJenkinsMasterPod(*jenkins)
+		return false, s.RestartJenkinsMasterPod()
 	}
 
 	if len(jenkins.Spec.SeedJobs) > 0 {
-		err := s.createAgent(s.jenkinsClient, s.k8sClient, jenkins, jenkins.Namespace, AgentName)
+		err := s.createAgent(s.jenkinsClient, s.Client, jenkins, jenkins.Namespace, AgentName)
 		if err != nil {
 			return false, err
 		}
 	} else if len(jenkins.Spec.SeedJobs) == 0 {
-		err := s.k8sClient.Delete(context.TODO(), &appsv1.Deployment{
+		err := s.Client.Delete(context.TODO(), &appsv1.Deployment{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: jenkins.Namespace,
 				Name:      agentDeploymentName(*jenkins, AgentName),
@@ -185,7 +185,7 @@ func (s *SeedJobs) EnsureSeedJobs(jenkins *v1alpha2.Jenkins) (done bool, err err
 	seedJobIDs := s.getAllSeedJobIDs(*jenkins)
 	if done && !reflect.DeepEqual(seedJobIDs, jenkins.Status.CreatedSeedJobs) {
 		jenkins.Status.CreatedSeedJobs = seedJobIDs
-		return false, stackerr.WithStack(s.k8sClient.Update(context.TODO(), jenkins))
+		return false, stackerr.WithStack(s.Client.Update(context.TODO(), jenkins))
 	}
 
 	return true, nil
@@ -193,7 +193,7 @@ func (s *SeedJobs) EnsureSeedJobs(jenkins *v1alpha2.Jenkins) (done bool, err err
 
 // createJob is responsible for creating jenkins job which configures jenkins seed jobs and deploy keys
 func (s *SeedJobs) createJobs(jenkins *v1alpha2.Jenkins) (requeue bool, err error) {
-	groovyClient := groovy.New(s.jenkinsClient, s.k8sClient, s.logger, jenkins, "seed-jobs", jenkins.Spec.GroovyScripts.Customization)
+	groovyClient := groovy.New(s.jenkinsClient, s.Client, s.logger, jenkins, "seed-jobs", jenkins.Spec.GroovyScripts.Customization)
 	for _, seedJob := range jenkins.Spec.SeedJobs {
 		credentialValue, err := s.credentialValue(jenkins.Namespace, seedJob)
 		if err != nil {
@@ -232,14 +232,14 @@ func (s *SeedJobs) ensureLabelsForSecrets(jenkins v1alpha2.Jenkins) error {
 
 			secret := &corev1.Secret{}
 			namespaceName := types.NamespacedName{Namespace: jenkins.ObjectMeta.Namespace, Name: seedJob.CredentialID}
-			err := s.k8sClient.Get(context.TODO(), namespaceName, secret)
+			err := s.Client.Get(context.TODO(), namespaceName, secret)
 			if err != nil {
 				return stackerr.WithStack(err)
 			}
 
 			if !resources.VerifyIfLabelsAreSet(secret, requiredLabels) {
 				secret.ObjectMeta.Labels = requiredLabels
-				if err = s.k8sClient.Update(context.TODO(), secret); err != nil {
+				if err = s.Client.Update(context.TODO(), secret); err != nil {
 					return stackerr.WithStack(err)
 				}
 			}
@@ -253,7 +253,7 @@ func (s *SeedJobs) credentialValue(namespace string, seedJob v1alpha2.SeedJob) (
 	if seedJob.JenkinsCredentialType == v1alpha2.BasicSSHCredentialType || seedJob.JenkinsCredentialType == v1alpha2.UsernamePasswordCredentialType {
 		secret := &corev1.Secret{}
 		namespaceName := types.NamespacedName{Namespace: namespace, Name: seedJob.CredentialID}
-		err := s.k8sClient.Get(context.TODO(), namespaceName, secret)
+		err := s.Client.Get(context.TODO(), namespaceName, secret)
 		if err != nil {
 			return "", stackerr.WithStack(err)
 		}
@@ -272,27 +272,6 @@ func (s *SeedJobs) getAllSeedJobIDs(jenkins v1alpha2.Jenkins) []string {
 		ids = append(ids, seedJob.ID)
 	}
 	return ids
-}
-
-//TODO move to k8sClient
-func (s *SeedJobs) getJenkinsMasterPod(jenkins v1alpha2.Jenkins) (*corev1.Pod, error) {
-	jenkinsMasterPodName := resources.GetJenkinsMasterPodName(jenkins)
-	currentJenkinsMasterPod := &corev1.Pod{}
-	err := s.k8sClient.Get(context.TODO(), types.NamespacedName{Name: jenkinsMasterPodName, Namespace: jenkins.Namespace}, currentJenkinsMasterPod)
-	if err != nil {
-		return nil, err // don't wrap error
-	}
-	return currentJenkinsMasterPod, nil
-}
-
-//TODO move to k8sClient
-func (s *SeedJobs) restartJenkinsMasterPod(jenkins v1alpha2.Jenkins) error {
-	currentJenkinsMasterPod, err := s.getJenkinsMasterPod(jenkins)
-	if err != nil {
-		return err
-	}
-	s.logger.Info(fmt.Sprintf("Terminating Jenkins Master Pod %s/%s", currentJenkinsMasterPod.Namespace, currentJenkinsMasterPod.Name))
-	return stackerr.WithStack(s.k8sClient.Delete(context.TODO(), currentJenkinsMasterPod))
 }
 
 func (s *SeedJobs) isRecreatePodNeeded(jenkins v1alpha2.Jenkins) bool {

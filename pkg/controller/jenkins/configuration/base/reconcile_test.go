@@ -5,6 +5,7 @@ import (
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/client-go/kubernetes"
 )
 
 func TestGetJenkinsOpts(t *testing.T) {
@@ -233,7 +235,7 @@ func TestCompareVolumes(t *testing.T) {
 				Volumes:            resources.GetJenkinsMasterPodBaseVolumes(jenkins),
 			},
 		}
-		reconciler := New(nil, nil, nil, jenkins, false, false, nil, nil, nil)
+		reconciler := New(nil, nil, nil, jenkins, false, false, kubernetes.Clientset{}, nil, nil)
 
 		got := reconciler.compareVolumes(pod)
 
@@ -257,7 +259,7 @@ func TestCompareVolumes(t *testing.T) {
 				Volumes:            resources.GetJenkinsMasterPodBaseVolumes(jenkins),
 			},
 		}
-		reconciler := New(nil, nil, nil, jenkins, false, false, nil, nil, nil)
+		reconciler := New(nil, nil, nil, jenkins, false, false, kubernetes.Clientset{}, nil, nil)
 
 		got := reconciler.compareVolumes(pod)
 
@@ -281,7 +283,7 @@ func TestCompareVolumes(t *testing.T) {
 				Volumes:            append(resources.GetJenkinsMasterPodBaseVolumes(jenkins), corev1.Volume{Name: "added"}),
 			},
 		}
-		reconciler := New(nil, nil, nil, jenkins, false, false, nil, nil, nil)
+		reconciler := New(nil, nil, nil, jenkins, false, false, kubernetes.Clientset{}, nil, nil)
 
 		got := reconciler.compareVolumes(pod)
 
@@ -295,8 +297,10 @@ func TestReconcileJenkinsBaseConfiguration_verifyPlugins(t *testing.T) {
 	t.Run("happy, empty base and user plugins", func(t *testing.T) {
 		jenkins := &v1alpha2.Jenkins{}
 		r := ReconcileJenkinsBaseConfiguration{
-			logger:  log.Log,
-			jenkins: jenkins,
+			logger: log.Log,
+			Configuration: configuration.Configuration{
+				Jenkins: jenkins,
+			},
 		}
 		pluginsInJenkins := &gojenkins.Plugins{
 			Raw: &gojenkins.PluginResponse{},
@@ -321,8 +325,10 @@ func TestReconcileJenkinsBaseConfiguration_verifyPlugins(t *testing.T) {
 			},
 		}
 		r := ReconcileJenkinsBaseConfiguration{
-			logger:  log.Log,
-			jenkins: jenkins,
+			logger: log.Log,
+			Configuration: configuration.Configuration{
+				Jenkins: jenkins,
+			},
 		}
 		pluginsInJenkins := &gojenkins.Plugins{
 			Raw: &gojenkins.PluginResponse{
@@ -363,8 +369,10 @@ func TestReconcileJenkinsBaseConfiguration_verifyPlugins(t *testing.T) {
 			},
 		}
 		r := ReconcileJenkinsBaseConfiguration{
-			logger:  log.Log,
-			jenkins: jenkins,
+			logger: log.Log,
+			Configuration: configuration.Configuration{
+				Jenkins: jenkins,
+			},
 		}
 		pluginsInJenkins := &gojenkins.Plugins{
 			Raw: &gojenkins.PluginResponse{
@@ -398,8 +406,10 @@ func TestReconcileJenkinsBaseConfiguration_verifyPlugins(t *testing.T) {
 			},
 		}
 		r := ReconcileJenkinsBaseConfiguration{
-			logger:  log.Log,
-			jenkins: jenkins,
+			logger: log.Log,
+			Configuration: configuration.Configuration{
+				Jenkins: jenkins,
+			},
 		}
 		pluginsInJenkins := &gojenkins.Plugins{
 			Raw: &gojenkins.PluginResponse{
@@ -433,8 +443,10 @@ func TestReconcileJenkinsBaseConfiguration_verifyPlugins(t *testing.T) {
 			},
 		}
 		r := ReconcileJenkinsBaseConfiguration{
-			logger:  log.Log,
-			jenkins: jenkins,
+			logger: log.Log,
+			Configuration: configuration.Configuration{
+				Jenkins: jenkins,
+			},
 		}
 		pluginsInJenkins := &gojenkins.Plugins{
 			Raw: &gojenkins.PluginResponse{
@@ -468,8 +480,10 @@ func TestReconcileJenkinsBaseConfiguration_verifyPlugins(t *testing.T) {
 			},
 		}
 		r := ReconcileJenkinsBaseConfiguration{
-			logger:  log.Log,
-			jenkins: jenkins,
+			logger: log.Log,
+			Configuration: configuration.Configuration{
+				Jenkins: jenkins,
+			},
 		}
 		pluginsInJenkins := &gojenkins.Plugins{
 			Raw: &gojenkins.PluginResponse{
@@ -503,8 +517,10 @@ func TestReconcileJenkinsBaseConfiguration_verifyPlugins(t *testing.T) {
 			},
 		}
 		r := ReconcileJenkinsBaseConfiguration{
-			logger:  log.Log,
-			jenkins: jenkins,
+			logger: log.Log,
+			Configuration: configuration.Configuration{
+				Jenkins: jenkins,
+			},
 		}
 		pluginsInJenkins := &gojenkins.Plugins{
 			Raw: &gojenkins.PluginResponse{
@@ -530,8 +546,10 @@ func TestReconcileJenkinsBaseConfiguration_verifyPlugins(t *testing.T) {
 			},
 		}
 		r := ReconcileJenkinsBaseConfiguration{
-			logger:  log.Log,
-			jenkins: jenkins,
+			logger: log.Log,
+			Configuration: configuration.Configuration{
+				Jenkins: jenkins,
+			},
 		}
 		pluginsInJenkins := &gojenkins.Plugins{
 			Raw: &gojenkins.PluginResponse{
