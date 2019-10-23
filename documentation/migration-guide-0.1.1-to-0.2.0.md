@@ -18,9 +18,13 @@ spec:
   configurationAsCode:
     configurations: 
     - name: jenkins-operator-user-configuration-<cr_name>
+    secret:
+      name: jenkins-operator-user-configuration-<cr_name>
   groovyScripts:
     configurations:
     - name: jenkins-operator-user-configuration-<cr_name>
+    secret:
+      name: jenkins-operator-user-configuration-<cr_name>
 ```
 
 Jenkins configuration jobs (Configure Seed Jobs, jenkins-operator-base-configuration, jenkins-operator-user-configuration) have been removed from Jenkins.
