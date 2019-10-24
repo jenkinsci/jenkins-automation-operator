@@ -27,14 +27,14 @@ We want to make Jenkins more robust, suitable for dynamic and multi-tenant envir
 
 Some of the problems we want to solve:
 - volumes handling (AWS EBS volume attach/detach issue when using PVC)
-- installing plugins with incompatible versions or security vulnerabilities
-- better configuration as code
+- [installing plugins with incompatible versions or security vulnerabilities](https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/customization/#install-plugins)
+- [better configuration as code](https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/customization/)
 - lack of end to end tests
 - handle graceful shutdown properly
-- security and hardening out of the box
+- [security and hardening out of the box](https://jenkinsci.github.io/kubernetes-operator/docs/security/)
 - orphaned jobs with no jnlp connection
-- make errors more visible for end users
-- backup and restore for jobs history
+- [make errors more visible for end users](https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/diagnostics/)
+- [backup and restore for jobs history](https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/configure-backup-and-restore/)
 
 ## Documentation
 
