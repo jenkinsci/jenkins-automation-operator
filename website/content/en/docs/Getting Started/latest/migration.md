@@ -1,10 +1,10 @@
 ---
-title: "Migration from v0.1.1"
-linkTitle: "Migration from v0.1.1"
+title: "Migration from v0.1.x"
+linkTitle: "Migration from v0.1.x"
 weight: 10
 date: 2019-08-05
 description: >
-    How to migrate from v0.1.1 to v0.2.0
+    How to migrate from v0.1.x to v0.2.x
 ---
 
 ### Added seed job agent
@@ -25,9 +25,13 @@ spec:
   configurationAsCode:
     configurations: 
     - name: jenkins-operator-user-configuration-<cr_name>
+    secret:
+      name: jenkins-operator-user-configuration-<cr_name>
   groovyScripts:
     configurations:
     - name: jenkins-operator-user-configuration-<cr_name>
+    secret:
+      name: jenkins-operator-user-configuration-<cr_name>
 ```
 
 **Jenkins** configuration jobs (*Configure Seed Jobs*, *jenkins-operator-base-configuration*, *jenkins-operator-user-configuration*) have been removed from **Jenkins**.

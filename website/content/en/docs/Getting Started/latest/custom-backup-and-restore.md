@@ -1,4 +1,11 @@
-# Custom Backup and Restore Providers
+---
+title: "Custom Backup and Restore Providers"
+linkTitle: "Custom Backup and Restore Providers"
+weight: 10
+date: 2019-08-05
+description: >
+  Custom backup and restore provider
+---
 
 With enough effort one can create a custom backup and restore provider 
 for the Jenkins Operator.

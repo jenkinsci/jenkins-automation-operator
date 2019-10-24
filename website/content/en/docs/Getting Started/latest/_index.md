@@ -1,14 +1,14 @@
 ---
-title: "v0.1.1"
-linkTitle: "v0.1.1"
+title: "Latest (v0.2.x)"
+linkTitle: "Latest (v0.2.x)"
 weight: 10
 date: 2019-08-05
 description: >
-  How to work with jenkins-operator legacy version. We recommend migration to v0.2.0 version
+  How to work with jenkins-operator latest version
 ---
 
 {{% pageinfo %}}
-This document describes a getting started guide for **Jenkins Operator** `v0.1.1` and an additional configuration.
+This document describes a getting started guide for **Jenkins Operator** `v0.2.x` and an additional configuration.
 {{% /pageinfo %}}
 
 ## First Steps

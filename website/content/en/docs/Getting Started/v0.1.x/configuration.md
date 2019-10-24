@@ -7,8 +7,6 @@ description: >
   How to configure Jenkins with Operator
 ---
 
-## Configure Seed Jobs and Pipelines
-
 Jenkins operator uses [job-dsl][job-dsl] and [kubernetes-credentials-provider][kubernetes-credentials-provider] plugins for configuring jobs
 and deploy keys.
 
@@ -24,7 +22,7 @@ cicd/
     └── build.jenkins
 ```
 
-**cicd/jobs/build.jenkins** is a job definition:
+**cicd/jobs/build.jenkins** it's a job definition:
 
 ```
 #!/usr/bin/env groovy
@@ -49,7 +47,7 @@ pipelineJob('build-jenkins-operator') {
 }
 ```
 
-**cicd/jobs/build.jenkins** is an actual Jenkins pipeline:
+**cicd/pipelines/build.jenkins** is an actual Jenkins pipeline:
 
 ```
 #!/usr/bin/env groovy
@@ -201,7 +199,7 @@ stringData:
 
 ### Username & password authentication
 
-Configure the seed job like:
+Configure a seed job like this:
 
 ```
 apiVersion: jenkins.io/v1alpha2
@@ -247,77 +245,49 @@ spec:
 
 In `CURL_OPTIONS` var you can set additional arguments to curl command.
 
-## Pulling Docker images from private repositories
-To pull a Docker Image from private repository you can use `imagePullSecrets`.
+## Jenkins login credentials
 
-Please follow the instructions on [creating a secret with a docker config](https://kubernetes.io/docs/concepts/containers/images/?origin_team=T42NTAGHM#creating-a-secret-with-a-docker-config).
+The operator automatically generates a Jenkins username and password and stores it in Kubernetes secret named 
+`jenkins-operator-credentials-<cr_name>` in the namespace where Jenkins CR has been deployed.
 
-### Docker Hub Configuration
-To use Docker Hub additional steps are required.
+If you want change it you can override the secret:
 
-Edit the previously created secret:
-```bash
-kubectl -n <namespace> edit secret <name>
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: jenkins-operator-credentials-<cr-name>
+  namespace: <namespace>
+data:
+  user: <base64-encoded-new-username>
+  password: <base64-encoded-new-password>
 ```
 
-The `.dockerconfigjson` key's value needs to be replaced with a modified version.
+If needed **Jenkins Operator** will restart the Jenkins master pod and then you can login with the new username and password 
+credentials.
 
-After modifications, it needs to be encoded as a Base64 value before setting the `.dockerconfigjson` key:q.
+## Override default Jenkins container command
 
-Example config file to modify and use:
+The default command for the Jenkins master container `jenkins/jenkins:lts` looks like:
+
+```yaml
+command:
+- bash
+- -c
+- /var/jenkins/scripts/init.sh && /sbin/tini -s -- /usr/local/bin/jenkins.sh
 ```
-{
-    "auths":{
-        "https://index.docker.io/v1/":{
-            "username":"user",
-            "password":"password",
-            "email":"yourdockeremail@gmail.com",
-            "auth":"base64 of string user:password"
-        },
-        "auth.docker.io":{
-            "username":"user",
-            "password":"password",
-            "email":"yourdockeremail@gmail.com",
-            "auth":"base64 of string user:password"
-        },
-        "registry.docker.io":{
-            "username":"user",
-            "password":"password",
-            "email":"yourdockeremail@gmail.com",
-            "auth":"base64 of string user:password"
-        },
-        "docker.io":{
-            "username":"user",
-            "password":"password",
-            "email":"yourdockeremail@gmail.com",
-            "auth":"base64 of string user:password"
-        },
-        "https://registry-1.docker.io/v2/": {
-            "username":"user",
-            "password":"password",
-            "email":"yourdockeremail@gmail.com",
-            "auth":"base64 of string user:password"
-        },
-        "registry-1.docker.io/v2/": {
-            "username":"user",
-            "password":"password",
-            "email":"yourdockeremail@gmail.com",
-            "auth":"base64 of string user:password"
-        },
-        "registry-1.docker.io": {
-            "username":"user",
-            "password":"password",
-            "email":"yourdockeremail@gmail.com",
-            "auth":"base64 of string user:password"
-        },
-        "https://registry-1.docker.io": {
-            "username":"user",
-            "password":"password",
-            "email":"yourdockeremail@gmail.com",
-            "auth":"base64 of string user:password"
-        }
-    }
-}
+
+The script`/var/jenkins/scripts/init.sh` is provided by the operator and configures init.groovy.d (creates the Jenkins user) 
+and installs plugins.
+The `/sbin/tini -s -- /usr/local/bin/jenkins.sh` command runs the Jenkins master main process.
+
+You can overwrite it in the following pattern:
+
+```yaml
+command:
+- bash
+- -c
+- /var/jenkins/scripts/init.sh && <custom-code-here> && /sbin/tini -s -- /usr/local/bin/jenkins.sh
 ```
 
 [job-dsl]:https://github.com/jenkinsci/job-dsl-plugin
