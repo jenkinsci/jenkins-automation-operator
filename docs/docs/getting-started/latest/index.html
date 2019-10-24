@@ -7,6 +7,7 @@
 
 <META NAME="ROBOTS" CONTENT="NOINDEX, NOFOLLOW">
 
+<link rel="alternate" type="application/rss&#43;xml" href="https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/index.xml">
 
 
 <link rel="shortcut icon" href="/favicons/favicon.ico" >
@@ -20,29 +21,21 @@
 <link rel="icon" type="image/png" href="/kubernetes-operator/favicons/android-144x144.png" sizes="144x144">
 <link rel="icon" type="image/png" href="/kubernetes-operator/favicons/android-192x192.png"sizes="192x192">
 
-<title>Architecture and design | Jenkins Operator</title><meta property="og:title" content="Architecture and design" />
-<meta property="og:description" content="Jenkins Operator fundamentals
+<title>Latest (v0.2.x) | Jenkins Operator</title><meta property="og:title" content="Latest (v0.2.x)" />
+<meta property="og:description" content="How to work with jenkins-operator latest version
 " />
-<meta property="og:type" content="article" />
-<meta property="og:url" content="https://jenkinsci.github.io/kubernetes-operator/docs/how-it-works/architecture-and-design/" />
-<meta property="article:published_time" content="2019-08-05T00:00:00&#43;00:00"/>
-<meta property="article:modified_time" content="2019-08-05T00:00:00&#43;00:00"/><meta property="og:site_name" content="Jenkins Operator" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/" />
 
-<meta itemprop="name" content="Architecture and design">
-<meta itemprop="description" content="Jenkins Operator fundamentals
+<meta property="og:updated_time" content="2019-08-05T00:00:00&#43;00:00"/><meta property="og:site_name" content="Jenkins Operator" />
+
+<meta itemprop="name" content="Latest (v0.2.x)">
+<meta itemprop="description" content="How to work with jenkins-operator latest version
 ">
 
-
-<meta itemprop="datePublished" content="2019-08-05T00:00:00&#43;00:00" />
-<meta itemprop="dateModified" content="2019-08-05T00:00:00&#43;00:00" />
-<meta itemprop="wordCount" content="226">
-
-
-
-<meta itemprop="keywords" content="" />
 <meta name="twitter:card" content="summary"/>
-<meta name="twitter:title" content="Architecture and design"/>
-<meta name="twitter:description" content="Jenkins Operator fundamentals
+<meta name="twitter:title" content="Latest (v0.2.x)"/>
+<meta name="twitter:description" content="How to work with jenkins-operator latest version
 "/>
 
 
@@ -58,9 +51,9 @@
   crossorigin="anonymous"></script>
 
 
-    <title>Architecture and design | Jenkins Operator</title>
+    <title>Latest (v0.2.x) | Jenkins Operator</title>
   </head>
-  <body class="td-page">
+  <body class="td-section">
     <header>
       
 <nav class="js-navbar-scroll navbar navbar-expand navbar-dark flex-column flex-md-row td-navbar">
@@ -154,17 +147,17 @@
 
 <ul class="td-sidebar-nav__section pr-md-3">
   <li class="td-sidebar-nav__section-title">
-    <a  href="/kubernetes-operator/docs/how-it-works/" class="align-left pl-0 pr-2 active td-sidebar-link td-sidebar-link__section">How it works</a>
+    <a  href="/kubernetes-operator/docs/how-it-works/" class="align-left pl-0 pr-2 collapsed td-sidebar-link td-sidebar-link__section">How it works</a>
   </li>
   <ul>
-    <li class="collapse show" id="kubernetes-operator-docs-how-it-works">
+    <li class="collapse " id="kubernetes-operator-docs-how-it-works">
       
       
       
       
       
       
-      <a class="td-sidebar-link td-sidebar-link__page  active" id="m-kubernetes-operator-docs-how-it-works-architecture-and-design" href="/kubernetes-operator/docs/how-it-works/architecture-and-design/">Architecture and design</a>
+      <a class="td-sidebar-link td-sidebar-link__page " id="m-kubernetes-operator-docs-how-it-works-architecture-and-design" href="/kubernetes-operator/docs/how-it-works/architecture-and-design/">Architecture and design</a>
       
       
       
@@ -189,10 +182,10 @@
 
 <ul class="td-sidebar-nav__section pr-md-3">
   <li class="td-sidebar-nav__section-title">
-    <a  href="/kubernetes-operator/docs/getting-started/" class="align-left pl-0 pr-2 collapsed td-sidebar-link td-sidebar-link__section">Getting Started</a>
+    <a  href="/kubernetes-operator/docs/getting-started/" class="align-left pl-0 pr-2 td-sidebar-link td-sidebar-link__section">Getting Started</a>
   </li>
   <ul>
-    <li class="collapse " id="kubernetes-operator-docs-getting-started">
+    <li class="collapse show" id="kubernetes-operator-docs-getting-started">
       
       
       
@@ -206,10 +199,10 @@
 
 <ul class="td-sidebar-nav__section pr-md-3">
   <li class="td-sidebar-nav__section-title">
-    <a  href="/kubernetes-operator/docs/getting-started/latest/" class="align-left pl-0 pr-2 collapsed td-sidebar-link td-sidebar-link__section">Latest (v0.2.x)</a>
+    <a  href="/kubernetes-operator/docs/getting-started/latest/" class="align-left pl-0 pr-2 active td-sidebar-link td-sidebar-link__section">Latest (v0.2.x)</a>
   </li>
   <ul>
-    <li class="collapse " id="kubernetes-operator-docs-getting-started-latest">
+    <li class="collapse show" id="kubernetes-operator-docs-getting-started-latest">
       
       
       
@@ -422,8 +415,8 @@
 
 
 
-<a href="https://github.com/jenkinsci/kubernetes-operator/edit/master/content/docs/How%20it%20works/architecture-and-design.md" target="_blank"><i class="fa fa-edit fa-fw"></i> Edit this page</a>
-<a href="https://github.com/jenkinsci/kubernetes-operator/issues/new?title=Architecture%20and%20design" target="_blank"><i class="fab fa-github fa-fw"></i> Create documentation issue</a>
+<a href="https://github.com/jenkinsci/kubernetes-operator/edit/master/content/docs/Getting%20Started/latest/_index.md" target="_blank"><i class="fa fa-edit fa-fw"></i> Edit this page</a>
+<a href="https://github.com/jenkinsci/kubernetes-operator/issues/new?title=Latest%20%28v0.2.x%29" target="_blank"><i class="fab fa-github fa-fw"></i> Create documentation issue</a>
 
 
 <a href="https://github.com/jenkinsci/kubernetes-operator/issues/new" target="_blank"><i class="fas fa-tasks fa-fw"></i> Create project issue</a>
@@ -460,14 +453,14 @@
 
 
 <li class="breadcrumb-item" >
-	<a href="https://jenkinsci.github.io/kubernetes-operator/docs/how-it-works/">How it works</a>
+	<a href="https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/">Getting Started</a>
 </li>
 
 
 
 
 <li class="breadcrumb-item active" aria-current="page">
-	<a href="https://jenkinsci.github.io/kubernetes-operator/docs/how-it-works/architecture-and-design/">Architecture and design</a>
+	<a href="https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/">Latest (v0.2.x)</a>
 </li>
 
 	</ol>
@@ -475,41 +468,166 @@
 
             
 <div class="td-content">
-	<h1>Architecture and design</h1>
-	<div class="lead">Jenkins Operator fundamentals</div>
+	<h1>Latest (v0.2.x)</h1>
+	<div class="lead">How to work with jenkins-operator latest version</div>
 	
 
-<p>The <strong>Jenkins Operator</strong> design incorporates the following concepts:
-- watches any changes of manifests and maintain the desired state according to deployed custom resource manifest
-- implements the main reconciliation loop which consists of two smaller reconciliation loops - base and user</p>
 
-<p><img src="/kubernetes-operator/img/reconcile.png" alt="reconcile" /></p>
 
-<p><strong>Base</strong> reconciliation loop takes care of reconciling base Jenkins configuration, which consists of:
-- Ensure Manifests - monitors any changes in manifests
-- Ensure Jenkins Pod - creates and verifies status of Jenkins master Pod
-- Ensure Jenkins Configuration - configures Jenkins instance including hardening, initial configuration for plugins, etc.
-- Ensure Jenkins API token - generates Jenkins API token and initialized Jenkins client</p>
+<div class="pageinfo pageinfo-primary">
+<p>This document describes a getting started guide for <strong>Jenkins Operator</strong> <code>v0.2.x</code> and an additional configuration.</p>
 
-<p><strong>User</strong> reconciliation loop takes care of reconciling user provided configuration, which consists of:
-- Ensure Restore Job - creates Restore job and ensures that restore has been successfully performed<br />
-- Ensure Seed Jobs - creates Seed Jobs and ensures that all of them have been successfully executed
-- Ensure User Configuration - executed user provided configuration, like groovy scripts, configuration as code or plugins
-- Ensure Backup Job -  creates Backup job and ensures that backup has been successfully performed</p>
+</div>
 
-<p><img src="/kubernetes-operator/img/phases.png" alt="reconcile" /></p>
 
-<h2 id="operator-state">Operator State</h2>
+<h2 id="first-steps">First Steps</h2>
 
-<p>Operator state is kept in custom resource status section, which is used for storing any configuration events or job statuses managed by the operator.
-It helps to maintain or recover desired state even after operator or Jenkins restarts.</p>
+<p>Prepare your Kubernetes cluster and set up access.
+Once you have running Kubernetes cluster you can focus on installing <strong>Jenkins Operator</strong> according to the <a href="/docs/installation/">Installation</a> guide.</p>
+
+        <div class="section-index">
+    
+    
+    
+    
+    <hr class="panel-line">
+        
+            
+        
+            
+                <div class="entry">
+                    <h5>
+                        <a href="https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/deploy-jenkins/">Deploy Jenkins</a>
+                    </h5>
+                    <p>Deploy production ready Jenkins Operator manifest
+</p>
+                </div>
+            
+        
+            
+        
+            
+        
+            
+                <div class="entry">
+                    <h5>
+                        <a href="https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/configuration/">Configuration</a>
+                    </h5>
+                    <p>How to configure Jenkins with Operator
+</p>
+                </div>
+            
+        
+            
+        
+            
+                <div class="entry">
+                    <h5>
+                        <a href="https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/customization/">Customization</a>
+                    </h5>
+                    <p>How to customize Jenkins
+</p>
+                </div>
+            
+        
+            
+        
+            
+        
+            
+                <div class="entry">
+                    <h5>
+                        <a href="https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/aks/">AKS</a>
+                    </h5>
+                    <p>Additional configuration for Azure Kubernetes Service
+</p>
+                </div>
+            
+        
+            
+        
+            
+                <div class="entry">
+                    <h5>
+                        <a href="https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/configure-backup-and-restore/">Configure backup and restore</a>
+                    </h5>
+                    <p>Prevent loss of job history
+</p>
+                </div>
+            
+        
+            
+        
+            
+                <div class="entry">
+                    <h5>
+                        <a href="https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/custom-backup-and-restore/">Custom Backup and Restore Providers</a>
+                    </h5>
+                    <p>Custom backup and restore provider
+</p>
+                </div>
+            
+        
+            
+        
+            
+        
+            
+        
+            
+                <div class="entry">
+                    <h5>
+                        <a href="https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/migration/">Migration from v0.1.x</a>
+                    </h5>
+                    <p>How to migrate from v0.1.x to v0.2.x
+</p>
+                </div>
+            
+        
+            
+        
+            
+        
+            
+        
+            
+                <div class="entry">
+                    <h5>
+                        <a href="https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/diagnostics/">Diagnostics</a>
+                    </h5>
+                    <p>How to deal with jenkins-operator problems
+</p>
+                </div>
+            
+        
+            
+        
+            
+                <div class="entry">
+                    <h5>
+                        <a href="https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/scheme/">Scheme</a>
+                    </h5>
+                    <p>API Schema definitions for Jenkins CR
+</p>
+                </div>
+            
+        
+            
+        
+            
+        
+            
+        
+            
+        
+    
+</div>
 
 	
 	
 	<div class="text-muted mt-5 pt-3 border-top">Last modified August 5, 2019
 </div>
 </div>
-
 
           </main>
         </div>
