@@ -35,7 +35,7 @@
 
 <meta itemprop="datePublished" content="2019-08-05T00:00:00&#43;00:00" />
 <meta itemprop="dateModified" content="2019-08-05T00:00:00&#43;00:00" />
-<meta itemprop="wordCount" content="163">
+<meta itemprop="wordCount" content="170">
 
 
 
@@ -530,16 +530,16 @@ spec:
     description: <span style="color:#4e9a06">&#34;Jenkins Operator repository&#34;</span>
     repositoryBranch: master
     repositoryUrl: https://github.com/jenkinsci/kubernetes-operator.git</code></pre></div>
-<p>Deploy Jenkins to K8s:</p>
+<p>Deploy a Jenkins to K8s:</p>
 <div class="highlight"><pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">kubectl create -f jenkins_instance.yaml</code></pre></div>
-<p>Watch Jenkins instance being created:</p>
+<p>Watch the Jenkins instance being created:</p>
 <div class="highlight"><pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">kubectl get pods -w</code></pre></div>
-<p>Get Jenkins credentials:</p>
+<p>Get the Jenkins credentials:</p>
 <div class="highlight"><pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">kubectl get secret jenkins-operator-credentials-&lt;cr_name&gt; -o <span style="color:#4e9a06">&#39;jsonpath={.data.user}&#39;</span> <span style="color:#000;font-weight:bold">|</span> base64 -d
 kubectl get secret jenkins-operator-credentials-&lt;cr_name&gt; -o <span style="color:#4e9a06">&#39;jsonpath={.data.password}&#39;</span> <span style="color:#000;font-weight:bold">|</span> base64 -d</code></pre></div>
-<p>Connect to Jenkins (minikube):</p>
+<p>Connect to the Jenkins instance (minikube):</p>
 <div class="highlight"><pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">minikube service jenkins-operator-http-&lt;cr_name&gt; --url</code></pre></div>
-<p>Connect to Jenkins (actual Kubernetes cluster):</p>
+<p>Connect to the Jenkins instance (actual Kubernetes cluster):</p>
 <div class="highlight"><pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">kubectl port-forward jenkins-&lt;cr_name&gt; <span style="color:#0000cf;font-weight:bold">8080</span>:8080</code></pre></div>
 <p>Then open browser with address <code>http://localhost:8080</code>.
 <img src="/img/jenkins.png" alt="jenkins" /></p>
