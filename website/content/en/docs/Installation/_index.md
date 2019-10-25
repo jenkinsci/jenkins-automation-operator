@@ -8,7 +8,8 @@ description: >
 ---
 
 {{% pageinfo %}}
-This document describes installation procedure for jenkins-operator. All container images can be found at virtuslab/jenkins-operator
+This document describes installation procedure for **Jenkins Operator**.
+All container images can be found at [virtuslab/jenkins-operator](https://hub.docker.com/r/virtuslab/jenkins-operator)
 {{% /pageinfo %}}
 
 ## Requirements

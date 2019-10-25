@@ -1,6 +1,6 @@
 ---
-title: "Scheme"
-linkTitle: "Scheme"
+title: "Schema"
+linkTitle: "Schema"
 weight: 40
 date: 2019-08-05
 description: >
