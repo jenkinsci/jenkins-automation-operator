@@ -13,6 +13,7 @@ for the Jenkins Operator.
 ## Requirements
 
 Two commands (e.g. scripts) are required:
+
 - a backup command, e.g. `backup.sh` that takes one argument, a **backup number**
 - a restore command, e.g. `backup.sh` that takes one argument, a **backup number**
 
@@ -33,6 +34,7 @@ Name of the backup and restore containers can be set as necessary using
 In most cases it will be the same container, but we allow for less common use cases.
 
 The operator will call a backup or restore commands inside a sidecar container when necessary:
+
 - backup command (defined in `spec.backup.action.exec.command`) 
   will be called every `N` seconds configurable in: `spec.backup.interval`
   and on pod shutdown (if enabled in `spec.backup.makeBackupBeforePodDeletion`)
@@ -49,6 +51,7 @@ using: `aws-cli`, `bash` and `kube2iam`.
 
 In addition to your normal `Jenkins` `CustomResource` some additional settings 
 for backup and restore are required, e.g.:
+
 ```yaml
 kind: Jenkins
 apiVersion: jenkins.io/v1alpha1
