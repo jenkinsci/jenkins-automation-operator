@@ -38,12 +38,15 @@ Some of the problems we want to solve:
 
 ## Documentation
 
-1. [Installation][installation]
-2. [Getting Started][getting_started]
-3. [How it works][how_it_works]
-4. [Security][security]
-5. [Developer Guide][developer_guide]
-5. [Jenkins scheme][jenkins_scheme]
+Go to [**our documentation website**](https://jenkinsci.github.io/kubernetes-operator/) for more informaiton.
+
+Selected content:
+1. [Installation](https://jenkinsci.github.io/kubernetes-operator/docs/installation/)
+2. [Getting Started](https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/)
+3. [How it works](https://jenkinsci.github.io/kubernetes-operator/docs/how-it-works/)
+4. [Security](https://jenkinsci.github.io/kubernetes-operator/docs/security/)
+5. [Developer Guide](https://jenkinsci.github.io/kubernetes-operator/docs/developer-guide/)
+5. [Jenkins Custom Resource Definition scheme](https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/scheme/)
 
 ## Contribution
 
@@ -52,10 +55,3 @@ Feel free to file [issues](https://github.com/jenkinsci/kubernetes-operator/issu
 ## About the authors
 
 This project was originally developed by [VirtusLab](https://virtuslab.com/) and the following [CONTRIBUTORS](https://github.com/jenkinsci/kubernetes-operator/graphs/contributors).
-
-[installation]:documentation/installation.md
-[getting_started]:documentation/v0.2.0/getting-started.md
-[how_it_works]:documentation/how-it-works.md
-[security]:documentation/security.md
-[developer_guide]:documentation/developer-guide.md
-[jenkins_scheme]:documentation/v0.2.0/jenkins-v1alpha2-scheme.md
