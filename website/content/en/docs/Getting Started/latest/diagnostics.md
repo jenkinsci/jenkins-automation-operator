@@ -4,7 +4,7 @@ linkTitle: "Diagnostics"
 weight: 40
 date: 2019-08-05
 description: >
-  How to deal with jenkins-operator problems
+  How to deal with Jenkins Operator problems
 ---
 
 
@@ -27,7 +27,7 @@ Verify Jenkins master logs:
 kubectl logs -f jenkins-<cr_name>
 ```
 
-Verify jenkins-operator logs:
+Verify the `jenkins-operator` logs:
 
 ```bash
 kubectl logs deployment/jenkins-operator
