@@ -9,9 +9,9 @@ description: >
 
 Jenkins can be customized using groovy scripts or the [configuration as code plugin](https://github.com/jenkinsci/configuration-as-code-plugin). 
 By using a [ConfigMap](https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/) you can create your own **Jenkins** customized configuration.
-Then you must reference the *ConfigMap* in the **Jenkins** pod customization file in `spec.groovyScripts` or `spec.configurationAsCode`
+Then you must reference the **`ConfigMap`** in the **Jenkins** pod customization file in `spec.groovyScripts` or `spec.configurationAsCode`
 
-For example create a *ConfigMap* with name `jenkins-operator-user-configuration`. Then, modify the **Jenkins** manifest to look like this:
+For example create a **`ConfigMap`** with name `jenkins-operator-user-configuration`. Then, modify the **Jenkins** manifest to look like this:
 
 ```yaml
 apiVersion: jenkins.io/v1alpha2
@@ -59,8 +59,8 @@ data:
       systemMessage: "Configuration as Code integration works!!!"
 ```
 
-* *.groovy is Groovy script configuration
-* *.yaml is configuration as code
+* `*.groovy` is Groovy script configuration
+* `*.yaml is` configuration as code
 
 If you want to correct your configuration you can edit it while the **Jenkins Operator** is running. 
 Jenkins will reconcile and apply the new configuration.
@@ -103,7 +103,7 @@ spec:
       name: jenkins-conf-secrets
 ```
 
-Now you can test that the secret is mounted by applying this ConfigMap for Groovy script:
+Now you can test that the secret is mounted by applying this `ConfigMap` for Groovy script:
 
 ```yaml
 apiVersion: v1
@@ -139,7 +139,7 @@ After this, you should see the `Hello world` system message from the **Jenkins**
 
 ## Install Plugins
 
-Edit CR under `spec.master.plugins`:
+Edit Custom Resource under `spec.master.plugins`:
 
 ```
 apiVersion: jenkins.io/v1alpha2
