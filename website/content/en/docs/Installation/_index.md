@@ -16,9 +16,9 @@ All container images can be found at [virtuslab/jenkins-operator](https://hub.do
  
 To run **Jenkins Operator**, you will need:
 
-- running Kubernetes cluster version 1.11+
+- access to a Kubernetes cluster version `1.11+`
 
-- kubectl version 1.11+
+- `kubectl` version `1.11+`
 
 ## Configure Custom Resource Definition 
 
@@ -42,4 +42,4 @@ Watch **Jenkins Operator** instance being created:
 kubectl get pods -w
 ```
 
-Now **Jenkins Operator** should be up and running in `default` namespace.
+Now **Jenkins Operator** should be up and running in the `default` namespace.
