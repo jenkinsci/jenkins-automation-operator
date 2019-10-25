@@ -24,7 +24,7 @@ cicd/
     └── build.jenkins
 ```
 
-**cicd/jobs/build.jenkins** is a job definition:
+**`cicd/jobs/build.jenkins`** is a job definition:
 
 ```
 #!/usr/bin/env groovy
@@ -49,7 +49,7 @@ pipelineJob('build-jenkins-operator') {
 }
 ```
 
-**cicd/pipelines/build.jenkins** is an actual Jenkins pipeline:
+**`cicd/pipelines/build.jenkins`** is an actual Jenkins pipeline:
 
 ```
 #!/usr/bin/env groovy
@@ -233,7 +233,7 @@ stringData:
 
 ## HTTP Proxy for downloading plugins
 
-To use forwarding proxy with an operator to download plugins you need to add the following environment variable to Jenkins CR, for e.g.:
+To use forwarding proxy with an operator to download plugins you need to add the following environment variable to Jenkins Custom Resource (CR), e.g.:
 
 ```yaml
 spec:
@@ -245,9 +245,10 @@ spec:
             value: -L -x <proxy_url>
 ```
 
-In `CURL_OPTIONS` var you can set additional arguments to curl command.
+In `CURL_OPTIONS` var you can set additional arguments to `curl` command.
 
 ## Pulling Docker images from private repositories
+
 To pull a Docker Image from private repository you can use `imagePullSecrets`.
 
 Please follow the instructions on [creating a secret with a docker config](https://kubernetes.io/docs/concepts/containers/images/?origin_team=T42NTAGHM#creating-a-secret-with-a-docker-config).
@@ -262,7 +263,7 @@ kubectl -n <namespace> edit secret <name>
 
 The `.dockerconfigjson` key's value needs to be replaced with a modified version.
 
-After modifications, it needs to be encoded as a Base64 value before setting the `.dockerconfigjson` key:q.
+After modifications, it needs to be encoded as a Base64 value before setting the `.dockerconfigjson` key.
 
 Example config file to modify and use:
 ```
