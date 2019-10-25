@@ -7,8 +7,8 @@ description: >
   Deploy production ready Jenkins Operator manifest
 ---
 
-Once jenkins-operator is up and running let's deploy actual Jenkins instance.
-Create manifest ie. **jenkins_instance.yaml** with following data and save it on drive.
+Once Jenkins Operator is up and running let's deploy actual Jenkins instance.
+Create manifest e.g. **jenkins_instance.yaml** with following data and save it on drive.
 
 ```bash
 apiVersion: jenkins.io/v1alpha2
