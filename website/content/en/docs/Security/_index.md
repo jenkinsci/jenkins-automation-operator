@@ -7,7 +7,8 @@ description: >
   Jenkins security and hardening out of the box
 ---
 
-By default **Jenkins Operator** performs an initial security hardening of Jenkins instance via groovy scripts to prevent any security gaps.
+By default **Jenkins Operator** performs an initial security hardening of Jenkins instance 
+via groovy scripts to prevent any security gaps.
 
 ## Jenkins Access Control
 
@@ -21,6 +22,7 @@ because **Jenkins Operator** calls Jenkins API.
 ## Jenkins Hardening
 
 The list below describes all the default security setting configured by the **Jenkins Operator**:
+
 - basic settings - use `Mode.EXCLUSIVE` - Jobs must specify that they want to run on master node
 - enable CSRF - Cross Site Request Forgery Protection is enabled
 - disable usage stats - Jenkins usage stats submitting is disabled
@@ -33,7 +35,8 @@ If you would like to dig a little bit into the code, take a look [here](../pkg/c
 
 ## Jenkins API
 
-The **Jenkins Operator** generates and configures Basic Authentication token for Jenkins go client and stores it in a Kubernetes Secret.
+The **Jenkins Operator** generates and configures Basic Authentication token for Jenkins Go client 
+and stores it in a Kubernetes Secret.
 
 ## Kubernetes
 
@@ -41,8 +44,10 @@ Kubernetes API permissions are limited by the following roles:
 - [jenkins-operator role](../deploy/role.yaml)  
 - [Jenkins Master role](../pkg/controller/jenkins/configuration/base/resources/rbac.go)
 
-Since **Jenkins Operator** must be able to grant permission for its' deployed Jenkins masters to spawn pods (the `Jenkins Master role` above), 
+Since **Jenkins Operator** must be able to grant permission for its' deployed Jenkins masters 
+to spawn pods (the `Jenkins Master role` above), 
 the operator itself requires permission to create RBAC resources (the `jenkins-operator role` above). 
+
 Deployed this way, any subject which may create a Pod (including a Jenkins job) may 
 assume the `jenkins-operator` role by using its' ServiceAccount, create RBAC rules, and thus escape its granted permissions. 
 Any namespace to which the `jenkins-operator` is deployed must be considered to implicitly grant all 
@@ -65,7 +70,7 @@ $ kubectl -n jenkins-operator apply -f deploy/service_account.yaml
 $ kubectl -n jenkins-operator apply -f deploy/role_binding.yaml
 ```
 
-Create file role_binding_jenkins.yaml in `deploy` folder:
+Create file `role_binding_jenkins.yaml` in `deploy` folder:
 ```yaml
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
