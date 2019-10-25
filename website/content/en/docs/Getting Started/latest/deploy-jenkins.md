@@ -8,7 +8,7 @@ description: >
 ---
 
 Once Jenkins Operator is up and running let's deploy actual Jenkins instance.
-Create manifest e.g. **jenkins_instance.yaml** with following data and save it on drive.
+Create manifest e.g. **`jenkins_instance.yaml`** with following data and save it on drive.
 
 ```bash
 apiVersion: jenkins.io/v1alpha2
@@ -56,7 +56,7 @@ spec:
     repositoryUrl: https://github.com/jenkinsci/kubernetes-operator.git
 ```
 
-Deploy a Jenkins to K8s:
+Deploy a Jenkins to Kubernetes:
 
 ```bash
 kubectl create -f jenkins_instance.yaml
