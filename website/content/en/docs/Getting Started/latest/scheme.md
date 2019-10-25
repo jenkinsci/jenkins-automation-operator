@@ -4,11 +4,11 @@ linkTitle: "Scheme"
 weight: 40
 date: 2019-08-05
 description: >
-  API Schema definitions for Jenkins CR
+  API Schema definitions for Jenkins CRD
 ---
 
 {{% pageinfo %}}
-This document contains API scheme for `jenkins-operator` manifest
+This document contains API scheme for `jenkins-operator` Custom Resource Definition manifest
 {{% /pageinfo %}}
 
 <p>Packages:</p>
