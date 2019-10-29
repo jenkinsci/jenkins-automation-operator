@@ -29,7 +29,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -49,21 +48,14 @@ type ReconcileJenkinsBaseConfiguration struct {
 }
 
 // New create structure which takes care of base configuration
-func New(client client.Client, scheme *runtime.Scheme, logger logr.Logger,
-	jenkins *v1alpha2.Jenkins, local, minikube bool, clientSet kubernetes.Clientset, config *rest.Config,
-	notificationEvents *chan notifications.Event) *ReconcileJenkinsBaseConfiguration {
+func New(config configuration.Configuration, scheme *runtime.Scheme, logger logr.Logger, local, minikube bool, restConfig *rest.Config) *ReconcileJenkinsBaseConfiguration {
 	return &ReconcileJenkinsBaseConfiguration{
-		Configuration: configuration.Configuration{
-			Client:        client,
-			ClientSet:     clientSet,
-			Notifications: notificationEvents,
-			Jenkins:       jenkins,
-		},
-		scheme:   scheme,
-		logger:   logger,
-		local:    local,
-		minikube: minikube,
-		config:   config,
+		Configuration: config,
+		scheme:        scheme,
+		logger:        logger,
+		local:         local,
+		minikube:      minikube,
+		config:        restConfig,
 	}
 }
 
@@ -462,6 +454,9 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsMasterPod(meta metav1.O
 
 	messages := r.isRecreatePodNeeded(*currentJenkinsMasterPod, userAndPasswordHash)
 	if hasMessages := len(messages) > 0; hasMessages {
+		for _, msg := range messages {
+			r.logger.Info(msg)
+		}
 		return reconcile.Result{Requeue: true}, r.Configuration.RestartJenkinsMasterPod()
 	}
 

@@ -3,6 +3,7 @@ package jenkins
 import (
 	"context"
 	"fmt"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration"
 	"reflect"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
@@ -202,7 +203,12 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request, logger logr.Logg
 		return reconcile.Result{}, jenkins, err
 	}
 	// Reconcile base configuration
-	baseConfiguration := base.New(r.client, r.scheme, logger, jenkins, r.local, r.minikube, r.clientSet, &r.config, r.notificationEvents)
+	baseConfiguration := base.New(configuration.Configuration{
+		Client:        r.client,
+		ClientSet:     r.clientSet,
+		Notifications: r.notificationEvents,
+		Jenkins:       jenkins,
+	}, r.scheme, logger, r.local, r.minikube, &r.config)
 
 	messages, err := baseConfiguration.Validate(jenkins)
 	if err != nil {
@@ -255,7 +261,12 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request, logger logr.Logg
 		logger.Info(message)
 	}
 	// Reconcile user configuration
-	userConfiguration := user.New(r.client, jenkinsClient, logger, jenkins, r.clientSet, r.config, r.notificationEvents)
+	userConfiguration := user.New(configuration.Configuration{
+		Client:        r.client,
+		ClientSet:     r.clientSet,
+		Notifications: r.notificationEvents,
+		Jenkins:       jenkins,
+	}, jenkinsClient, logger, r.config)
 
 	messages, err = userConfiguration.Validate(jenkins)
 	if err != nil {

@@ -13,7 +13,6 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/client-go/kubernetes"
 )
 
 func TestGetJenkinsOpts(t *testing.T) {
@@ -235,7 +234,7 @@ func TestCompareVolumes(t *testing.T) {
 				Volumes:            resources.GetJenkinsMasterPodBaseVolumes(jenkins),
 			},
 		}
-		reconciler := New(nil, nil, nil, jenkins, false, false, kubernetes.Clientset{}, nil, nil)
+		reconciler := New(configuration.Configuration{Jenkins: jenkins}, nil, nil, false, false, nil)
 
 		got := reconciler.compareVolumes(pod)
 
@@ -259,7 +258,7 @@ func TestCompareVolumes(t *testing.T) {
 				Volumes:            resources.GetJenkinsMasterPodBaseVolumes(jenkins),
 			},
 		}
-		reconciler := New(nil, nil, nil, jenkins, false, false, kubernetes.Clientset{}, nil, nil)
+		reconciler := New(configuration.Configuration{Jenkins: jenkins}, nil, nil, false, false, nil)
 
 		got := reconciler.compareVolumes(pod)
 
@@ -283,7 +282,7 @@ func TestCompareVolumes(t *testing.T) {
 				Volumes:            append(resources.GetJenkinsMasterPodBaseVolumes(jenkins), corev1.Volume{Name: "added"}),
 			},
 		}
-		reconciler := New(nil, nil, nil, jenkins, false, false, kubernetes.Clientset{}, nil, nil)
+		reconciler := New(configuration.Configuration{Jenkins: jenkins}, nil, nil, false, false, nil)
 
 		got := reconciler.compareVolumes(pod)
 

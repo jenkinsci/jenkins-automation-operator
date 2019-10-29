@@ -3,7 +3,7 @@ package user
 import (
 	"strings"
 
-	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
+
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/backuprestore"
@@ -11,12 +11,9 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/user/casc"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/user/seedjobs"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/groovy"
-	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/notifications"
 
 	"github.com/go-logr/logr"
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -29,15 +26,9 @@ type ReconcileUserConfiguration struct {
 }
 
 // New create structure which takes care of user configuration
-func New(client client.Client, jenkinsClient jenkinsclient.Jenkins, logger logr.Logger,
-	jenkins *v1alpha2.Jenkins, clientSet kubernetes.Clientset, config rest.Config, notificationEvents *chan notifications.Event) *ReconcileUserConfiguration {
+func New(configuration configuration.Configuration, jenkinsClient jenkinsclient.Jenkins, logger logr.Logger, config rest.Config) *ReconcileUserConfiguration {
 	return &ReconcileUserConfiguration{
-		Configuration: configuration.Configuration{
-			Client:        client,
-			ClientSet:     clientSet,
-			Notifications: notificationEvents,
-			Jenkins:       jenkins,
-		},
+		Configuration: configuration,
 		jenkinsClient: jenkinsClient,
 		logger:        logger,
 		config:        config,
