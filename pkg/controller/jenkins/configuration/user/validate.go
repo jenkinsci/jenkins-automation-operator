@@ -8,11 +8,11 @@ import (
 
 // Validate validates Jenkins CR Spec section
 func (r *ReconcileUserConfiguration) Validate(jenkins *v1alpha2.Jenkins) ([]string, error) {
-	backupAndRestore := backuprestore.New(r.k8sClient, r.clientSet, r.logger, r.jenkins, r.config)
+	backupAndRestore := backuprestore.New(r.Client, r.ClientSet, r.logger, r.Configuration.Jenkins, r.config)
 	if msg := backupAndRestore.Validate(); msg != nil {
 		return msg, nil
 	}
 
-	seedJobs := seedjobs.New(r.jenkinsClient, r.k8sClient, r.logger)
+	seedJobs := seedjobs.New(r.jenkinsClient, r.Configuration, r.logger)
 	return seedJobs.ValidateSeedJobs(*jenkins)
 }

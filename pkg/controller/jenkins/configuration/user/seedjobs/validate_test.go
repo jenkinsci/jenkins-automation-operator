@@ -5,10 +5,12 @@ import (
 	"testing"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration"
 
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
@@ -72,7 +74,15 @@ func TestValidateSeedJobs(t *testing.T) {
 			},
 		}
 
-		seedJobs := New(nil, fake.NewFakeClient(), logf.ZapLogger(false))
+		fakeClient := fake.NewFakeClient()
+
+		config := configuration.Configuration{
+			Client:        fakeClient,
+			ClientSet:     kubernetes.Clientset{},
+			Notifications: nil,
+		}
+
+		seedJobs := New(nil, config, logf.ZapLogger(false))
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
@@ -92,7 +102,15 @@ func TestValidateSeedJobs(t *testing.T) {
 			},
 		}
 
-		seedJobs := New(nil, fake.NewFakeClient(), logf.ZapLogger(false))
+		fakeClient := fake.NewFakeClient()
+
+		config := configuration.Configuration{
+			Client:        fakeClient,
+			ClientSet:     kubernetes.Clientset{},
+			Notifications: nil,
+		}
+
+		seedJobs := New(nil, config, logf.ZapLogger(false))
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
@@ -126,7 +144,13 @@ func TestValidateSeedJobs(t *testing.T) {
 		err := fakeClient.Create(context.TODO(), secret)
 		assert.NoError(t, err)
 
-		seedJobs := New(nil, fakeClient, logf.ZapLogger(false))
+		config := configuration.Configuration{
+			Client:        fakeClient,
+			ClientSet:     kubernetes.Clientset{},
+			Notifications: nil,
+		}
+
+		seedJobs := New(nil, config, logf.ZapLogger(false))
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
@@ -159,7 +183,13 @@ func TestValidateSeedJobs(t *testing.T) {
 		err := fakeClient.Create(context.TODO(), secret)
 		assert.NoError(t, err)
 
-		seedJobs := New(nil, fakeClient, logf.ZapLogger(false))
+		config := configuration.Configuration{
+			Client:        fakeClient,
+			ClientSet:     kubernetes.Clientset{},
+			Notifications: nil,
+		}
+
+		seedJobs := New(nil, config, logf.ZapLogger(false))
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
@@ -193,7 +223,13 @@ func TestValidateSeedJobs(t *testing.T) {
 		err := fakeClient.Create(context.TODO(), secret)
 		assert.NoError(t, err)
 
-		seedJobs := New(nil, fakeClient, logf.ZapLogger(false))
+		config := configuration.Configuration{
+			Client:        fakeClient,
+			ClientSet:     kubernetes.Clientset{},
+			Notifications: nil,
+		}
+
+		seedJobs := New(nil, config, logf.ZapLogger(false))
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
@@ -216,7 +252,15 @@ func TestValidateSeedJobs(t *testing.T) {
 			},
 		}
 
-		seedJobs := New(nil, fake.NewFakeClient(), logf.ZapLogger(false))
+		fakeClient := fake.NewFakeClient()
+
+		config := configuration.Configuration{
+			Client:        fakeClient,
+			ClientSet:     kubernetes.Clientset{},
+			Notifications: nil,
+		}
+
+		seedJobs := New(nil, config, logf.ZapLogger(false))
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
@@ -237,7 +281,15 @@ func TestValidateSeedJobs(t *testing.T) {
 			},
 		}
 
-		seedJobs := New(nil, fake.NewFakeClient(), logf.ZapLogger(false))
+		fakeClient := fake.NewFakeClient()
+
+		config := configuration.Configuration{
+			Client:        fakeClient,
+			ClientSet:     kubernetes.Clientset{},
+			Notifications: nil,
+		}
+
+		seedJobs := New(nil, config, logf.ZapLogger(false))
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
@@ -258,7 +310,15 @@ func TestValidateSeedJobs(t *testing.T) {
 			},
 		}
 
-		seedJobs := New(nil, fake.NewFakeClient(), logf.ZapLogger(false))
+		fakeClient := fake.NewFakeClient()
+
+		config := configuration.Configuration{
+			Client:        fakeClient,
+			ClientSet:     kubernetes.Clientset{},
+			Notifications: nil,
+		}
+
+		seedJobs := New(nil, config, logf.ZapLogger(false))
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
@@ -279,7 +339,15 @@ func TestValidateSeedJobs(t *testing.T) {
 			},
 		}
 
-		seedJobs := New(nil, fake.NewFakeClient(), logf.ZapLogger(false))
+		fakeClient := fake.NewFakeClient()
+
+		config := configuration.Configuration{
+			Client:        fakeClient,
+			ClientSet:     kubernetes.Clientset{},
+			Notifications: nil,
+		}
+
+		seedJobs := New(nil, config, logf.ZapLogger(false))
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
@@ -313,7 +381,13 @@ func TestValidateSeedJobs(t *testing.T) {
 		err := fakeClient.Create(context.TODO(), secret)
 		assert.NoError(t, err)
 
-		seedJobs := New(nil, fakeClient, logf.ZapLogger(false))
+		config := configuration.Configuration{
+			Client:        fakeClient,
+			ClientSet:     kubernetes.Clientset{},
+			Notifications: nil,
+		}
+
+		seedJobs := New(nil, config, logf.ZapLogger(false))
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
@@ -346,7 +420,13 @@ func TestValidateSeedJobs(t *testing.T) {
 		err := fakeClient.Create(context.TODO(), secret)
 		assert.NoError(t, err)
 
-		seedJobs := New(nil, fakeClient, logf.ZapLogger(false))
+		config := configuration.Configuration{
+			Client:        fakeClient,
+			ClientSet:     kubernetes.Clientset{},
+			Notifications: nil,
+		}
+
+		seedJobs := New(nil, config, logf.ZapLogger(false))
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
@@ -380,7 +460,13 @@ func TestValidateSeedJobs(t *testing.T) {
 		err := fakeClient.Create(context.TODO(), secret)
 		assert.NoError(t, err)
 
-		seedJobs := New(nil, fakeClient, logf.ZapLogger(false))
+		config := configuration.Configuration{
+			Client:        fakeClient,
+			ClientSet:     kubernetes.Clientset{},
+			Notifications: nil,
+		}
+
+		seedJobs := New(nil, config, logf.ZapLogger(false))
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
@@ -413,7 +499,13 @@ func TestValidateSeedJobs(t *testing.T) {
 		err := fakeClient.Create(context.TODO(), secret)
 		assert.NoError(t, err)
 
-		seedJobs := New(nil, fakeClient, logf.ZapLogger(false))
+		config := configuration.Configuration{
+			Client:        fakeClient,
+			ClientSet:     kubernetes.Clientset{},
+			Notifications: nil,
+		}
+
+		seedJobs := New(nil, config, logf.ZapLogger(false))
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
@@ -446,7 +538,13 @@ func TestValidateSeedJobs(t *testing.T) {
 		err := fakeClient.Create(context.TODO(), secret)
 		assert.NoError(t, err)
 
-		seedJobs := New(nil, fakeClient, logf.ZapLogger(false))
+		config := configuration.Configuration{
+			Client:        fakeClient,
+			ClientSet:     kubernetes.Clientset{},
+			Notifications: nil,
+		}
+
+		seedJobs := New(nil, config, logf.ZapLogger(false))
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
@@ -470,7 +568,15 @@ func TestValidateSeedJobs(t *testing.T) {
 			},
 		}
 
-		seedJobs := New(nil, fake.NewFakeClient(), logf.ZapLogger(false))
+		fakeClient := fake.NewFakeClient()
+
+		config := configuration.Configuration{
+			Client:        fakeClient,
+			ClientSet:     kubernetes.Clientset{},
+			Notifications: nil,
+		}
+
+		seedJobs := New(nil, config, logf.ZapLogger(false))
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
@@ -495,7 +601,15 @@ func TestValidateSeedJobs(t *testing.T) {
 			},
 		}
 
-		seedJobs := New(nil, fake.NewFakeClient(), logf.ZapLogger(false))
+		fakeClient := fake.NewFakeClient()
+
+		config := configuration.Configuration{
+			Client:        fakeClient,
+			ClientSet:     kubernetes.Clientset{},
+			Notifications: nil,
+		}
+
+		seedJobs := New(nil, config, logf.ZapLogger(false))
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
@@ -518,7 +632,15 @@ func TestValidateSeedJobs(t *testing.T) {
 			},
 		}
 
-		seedJobs := New(nil, fake.NewFakeClient(), logf.ZapLogger(false))
+		fakeClient := fake.NewFakeClient()
+
+		config := configuration.Configuration{
+			Client:        fakeClient,
+			ClientSet:     kubernetes.Clientset{},
+			Notifications: nil,
+		}
+
+		seedJobs := New(nil, config, logf.ZapLogger(false))
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
@@ -547,7 +669,15 @@ func TestValidateSeedJobs(t *testing.T) {
 			},
 		}
 
-		seedJobs := New(nil, fake.NewFakeClient(), logf.ZapLogger(false))
+		fakeClient := fake.NewFakeClient()
+
+		config := configuration.Configuration{
+			Client:        fakeClient,
+			ClientSet:     kubernetes.Clientset{},
+			Notifications: nil,
+		}
+
+		seedJobs := New(nil, config, logf.ZapLogger(false))
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
@@ -560,7 +690,14 @@ func TestValidateIfIDIsUnique(t *testing.T) {
 		seedJobs := []v1alpha2.SeedJob{
 			{ID: "first"}, {ID: "second"},
 		}
-		ctrl := New(nil, nil, logf.ZapLogger(false))
+
+		config := configuration.Configuration{
+			Client:        nil,
+			ClientSet:     kubernetes.Clientset{},
+			Notifications: nil,
+		}
+
+		ctrl := New(nil, config, logf.ZapLogger(false))
 		got := ctrl.validateIfIDIsUnique(seedJobs)
 		assert.Nil(t, got)
 	})
@@ -568,7 +705,14 @@ func TestValidateIfIDIsUnique(t *testing.T) {
 		seedJobs := []v1alpha2.SeedJob{
 			{ID: "first"}, {ID: "first"},
 		}
-		ctrl := New(nil, nil, logf.ZapLogger(false))
+
+		config := configuration.Configuration{
+			Client:        nil,
+			ClientSet:     kubernetes.Clientset{},
+			Notifications: nil,
+		}
+
+		ctrl := New(nil, config, logf.ZapLogger(false))
 		got := ctrl.validateIfIDIsUnique(seedJobs)
 
 		assert.Equal(t, got, []string{"'first' seed job ID is not unique"})

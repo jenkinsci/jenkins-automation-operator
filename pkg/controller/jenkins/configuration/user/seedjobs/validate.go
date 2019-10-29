@@ -57,7 +57,7 @@ func (s *SeedJobs) ValidateSeedJobs(jenkins v1alpha2.Jenkins) ([]string, error) 
 		if seedJob.JenkinsCredentialType == v1alpha2.BasicSSHCredentialType || seedJob.JenkinsCredentialType == v1alpha2.UsernamePasswordCredentialType {
 			secret := &v1.Secret{}
 			namespaceName := types.NamespacedName{Namespace: jenkins.Namespace, Name: seedJob.CredentialID}
-			err := s.k8sClient.Get(context.TODO(), namespaceName, secret)
+			err := s.Client.Get(context.TODO(), namespaceName, secret)
 			if err != nil && apierrors.IsNotFound(err) {
 				messages = append(messages, fmt.Sprintf("seedJob `%s` required secret '%s' with Jenkins credential not found", seedJob.ID, seedJob.CredentialID))
 			} else if err != nil {
