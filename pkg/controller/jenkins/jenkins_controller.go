@@ -3,11 +3,11 @@ package jenkins
 import (
 	"context"
 	"fmt"
-	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration"
 	"reflect"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/user"
@@ -202,13 +202,16 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request, logger logr.Logg
 	if err != nil {
 		return reconcile.Result{}, jenkins, err
 	}
-	// Reconcile base configuration
-	baseConfiguration := base.New(configuration.Configuration{
+
+	config := configuration.Configuration{
 		Client:        r.client,
 		ClientSet:     r.clientSet,
 		Notifications: r.notificationEvents,
 		Jenkins:       jenkins,
-	}, r.scheme, logger, r.local, r.minikube, &r.config)
+	}
+
+	// Reconcile base configuration
+	baseConfiguration := base.New(config, r.scheme, logger, r.local, r.minikube, &r.config)
 
 	messages, err := baseConfiguration.Validate(jenkins)
 	if err != nil {
@@ -261,12 +264,7 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request, logger logr.Logg
 		logger.Info(message)
 	}
 	// Reconcile user configuration
-	userConfiguration := user.New(configuration.Configuration{
-		Client:        r.client,
-		ClientSet:     r.clientSet,
-		Notifications: r.notificationEvents,
-		Jenkins:       jenkins,
-	}, jenkinsClient, logger, r.config)
+	userConfiguration := user.New(config, jenkinsClient, logger, r.config)
 
 	messages, err = userConfiguration.Validate(jenkins)
 	if err != nil {
