@@ -143,7 +143,7 @@ data:
     echo "Running backup #${backup_number}"
 
     BACKUP_TMP_DIR=$(mktemp -d)
-    tar -C ${JENKINS_HOME} -czf "${BACKUP_TMP_DIR}/${backup_number}.tar.gz" --exclude jobs/*/config.xml --exclude jobs/*/workspace* -c jobs && \
+    tar -C ${JENKINS_HOME} -czf "${BACKUP_TMP_DIR}/${backup_number}.tar.gz" --exclude jobs/*/workspace* -c jobs && \
 
     aws s3 cp ${BACKUP_TMP_DIR}/${backup_number}.tar.gz s3://${BACKUP_BUCKET}/${BACKUP_PATH}/${backup_number}.tar.gz
     echo Done
