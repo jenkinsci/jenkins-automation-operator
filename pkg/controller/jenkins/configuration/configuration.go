@@ -2,11 +2,11 @@ package configuration
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
-	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/notifications"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/notifications/event"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/notifications/reason"
 
 	stackerr "github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -19,23 +19,22 @@ import (
 type Configuration struct {
 	Client        client.Client
 	ClientSet     kubernetes.Clientset
-	Notifications *chan notifications.Event
+	Notifications *chan event.Event
 	Jenkins       *v1alpha2.Jenkins
 }
 
 // RestartJenkinsMasterPod terminate Jenkins master pod and notifies about it
-func (c *Configuration) RestartJenkinsMasterPod() error {
+func (c *Configuration) RestartJenkinsMasterPod(reason reason.Reason) error {
 	currentJenkinsMasterPod, err := c.getJenkinsMasterPod()
 	if err != nil {
 		return err
 	}
 
-	*c.Notifications <- notifications.Event{
-		Jenkins:         *c.Jenkins,
-		Phase:           notifications.PhaseBase,
-		LogLevel:        v1alpha2.NotificationLogLevelInfo,
-		Message:         fmt.Sprintf("Terminating Jenkins Master Pod %s/%s.", currentJenkinsMasterPod.Namespace, currentJenkinsMasterPod.Name),
-		MessagesVerbose: []string{},
+	*c.Notifications <- event.Event{
+		Jenkins: *c.Jenkins,
+		Phase:   event.PhaseBase,
+		Level:   v1alpha2.NotificationLevelInfo,
+		Reason:  reason,
 	}
 
 	return stackerr.WithStack(c.Client.Delete(context.TODO(), currentJenkinsMasterPod))

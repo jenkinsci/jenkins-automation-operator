@@ -1,4 +1,4 @@
-package notifications
+package smtp
 
 import (
 	"context"
@@ -13,6 +13,8 @@ import (
 	"time"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/notifications/event"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/notifications/reason"
 
 	"github.com/emersion/go-smtp"
 	"github.com/stretchr/testify/assert"
@@ -37,8 +39,20 @@ const (
 	subjectHeader = "Subject"
 )
 
+var (
+	testPhase     = event.PhaseUser
+	testCrName    = "test-cr"
+	testNamespace = "default"
+	testReason    = reason.NewPodRestart(
+		reason.KubernetesSource,
+		[]string{"test-reason-1"},
+		[]string{"test-verbose-1"}...,
+	)
+	testLevel = v1alpha2.NotificationLevelWarning
+)
+
 type testServer struct {
-	event Event
+	event event.Event
 }
 
 // Login handles a login command with username and password.
@@ -56,7 +70,7 @@ func (bkd *testServer) AnonymousLogin(state *smtp.ConnectionState) (smtp.Session
 
 // A Session is returned after successful login.
 type testSession struct {
-	event Event
+	event event.Event
 }
 
 func (s *testSession) Mail(from string) error {
@@ -111,17 +125,16 @@ func (s *testSession) Logout() error {
 }
 
 func TestSMTP_Send(t *testing.T) {
-	event := Event{
+	event := event.Event{
 		Jenkins: v1alpha2.Jenkins{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      testCrName,
 				Namespace: testNamespace,
 			},
 		},
-		Phase:           testPhase,
-		Message:         testMessage,
-		MessagesVerbose: testMessageVerbose,
-		LogLevel:        testLoggingLevel,
+		Phase:  testPhase,
+		Level:  testLevel,
+		Reason: testReason,
 	}
 
 	fakeClient := fake.NewFakeClient()
@@ -129,7 +142,27 @@ func TestSMTP_Send(t *testing.T) {
 	testPasswordSelectorKeyName := "test-password-selector"
 	testSecretName := "test-secret"
 
-	smtpClient := SMTP{k8sClient: fakeClient}
+	smtpClient := SMTP{k8sClient: fakeClient, config: v1alpha2.Notification{
+		SMTP: &v1alpha2.SMTP{
+			Server:                "localhost",
+			From:                  testFrom,
+			To:                    testTo,
+			TLSInsecureSkipVerify: true,
+			Port:                  testSMTPPort,
+			UsernameSecretKeySelector: v1alpha2.SecretKeySelector{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: testSecretName,
+				},
+				Key: testUsernameSelectorKeyName,
+			},
+			PasswordSecretKeySelector: v1alpha2.SecretKeySelector{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: testSecretName,
+				},
+				Key: testPasswordSelectorKeyName,
+			},
+		},
+	}}
 
 	ts := &testServer{event: event}
 
@@ -169,27 +202,108 @@ func TestSMTP_Send(t *testing.T) {
 		assert.NoError(t, err)
 	}()
 
-	err = smtpClient.Send(event, v1alpha2.Notification{
-		SMTP: &v1alpha2.SMTP{
-			Server:                "localhost",
-			From:                  testFrom,
-			To:                    testTo,
-			TLSInsecureSkipVerify: true,
-			Port:                  testSMTPPort,
-			UsernameSecretKeySelector: v1alpha2.SecretKeySelector{
-				LocalObjectReference: corev1.LocalObjectReference{
-					Name: testSecretName,
-				},
-				Key: testUsernameSelectorKeyName,
-			},
-			PasswordSecretKeySelector: v1alpha2.SecretKeySelector{
-				LocalObjectReference: corev1.LocalObjectReference{
-					Name: testSecretName,
-				},
-				Key: testPasswordSelectorKeyName,
-			},
-		},
-	})
+	err = smtpClient.Send(event)
 
 	assert.NoError(t, err)
+}
+
+func TestGenerateMessage(t *testing.T) {
+	t.Run("happy", func(t *testing.T) {
+		crName := "test-jenkins"
+		phase := event.PhaseBase
+		level := v1alpha2.NotificationLevelInfo
+		res := reason.NewUndefined(reason.KubernetesSource, []string{"test"}, []string{"test-verbose"}...)
+
+		from := "from@jenkins.local"
+		to := "to@jenkins.local"
+
+		e := event.Event{
+			Jenkins: v1alpha2.Jenkins{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: crName,
+				},
+			},
+			Phase:  phase,
+			Level:  level,
+			Reason: res,
+		}
+		s := SMTP{
+			k8sClient: fake.NewFakeClient(),
+			config: v1alpha2.Notification{
+				LoggingLevel: level,
+				SMTP: &v1alpha2.SMTP{
+					From: from,
+					To:   to,
+				},
+			},
+		}
+		message := s.generateMessage(e)
+		assert.NotNil(t, message)
+	})
+
+	t.Run("with nils", func(t *testing.T) {
+		crName := "nil"
+		phase := event.PhaseBase
+		level := v1alpha2.NotificationLevelInfo
+		res := reason.NewUndefined(reason.KubernetesSource, []string{"nil"}, []string{"nil"}...)
+
+		from := "nil"
+		to := "nil"
+
+		e := event.Event{
+			Jenkins: v1alpha2.Jenkins{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: crName,
+				},
+			},
+			Phase:  phase,
+			Level:  level,
+			Reason: res,
+		}
+		s := SMTP{
+			k8sClient: fake.NewFakeClient(),
+			config: v1alpha2.Notification{
+				LoggingLevel: level,
+				SMTP: &v1alpha2.SMTP{
+					From: from,
+					To:   to,
+				},
+			},
+		}
+		message := s.generateMessage(e)
+		assert.NotNil(t, message)
+	})
+
+	t.Run("with empty strings", func(t *testing.T) {
+		crName := ""
+		phase := event.PhaseBase
+		level := v1alpha2.NotificationLevelInfo
+		res := reason.NewUndefined(reason.KubernetesSource, []string{""}, []string{""}...)
+
+		from := ""
+		to := ""
+
+		e := event.Event{
+			Jenkins: v1alpha2.Jenkins{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: crName,
+				},
+			},
+			Phase:  phase,
+			Level:  level,
+			Reason: res,
+		}
+		s := SMTP{
+			k8sClient: fake.NewFakeClient(),
+			config: v1alpha2.Notification{
+				LoggingLevel: level,
+				SMTP: &v1alpha2.SMTP{
+					From: from,
+					To:   to,
+				},
+			},
+		}
+		message := s.generateMessage(e)
+		assert.NotNil(t, message)
+	})
 }

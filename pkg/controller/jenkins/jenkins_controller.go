@@ -12,7 +12,8 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/user"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
-	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/notifications"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/notifications/event"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/notifications/reason"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/plugins"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
 	"github.com/jenkinsci/kubernetes-operator/version"
@@ -44,12 +45,12 @@ var reconcileErrors = map[string]reconcileError{}
 
 // Add creates a new Jenkins Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
-func Add(mgr manager.Manager, local, minikube bool, clientSet kubernetes.Clientset, config rest.Config, notificationEvents *chan notifications.Event) error {
+func Add(mgr manager.Manager, local, minikube bool, clientSet kubernetes.Clientset, config rest.Config, notificationEvents *chan event.Event) error {
 	return add(mgr, newReconciler(mgr, local, minikube, clientSet, config, notificationEvents))
 }
 
 // newReconciler returns a new reconcile.Reconciler
-func newReconciler(mgr manager.Manager, local, minikube bool, clientSet kubernetes.Clientset, config rest.Config, notificationEvents *chan notifications.Event) reconcile.Reconciler {
+func newReconciler(mgr manager.Manager, local, minikube bool, clientSet kubernetes.Clientset, config rest.Config, notificationEvents *chan event.Event) reconcile.Reconciler {
 	return &ReconcileJenkins{
 		client:             mgr.GetClient(),
 		scheme:             mgr.GetScheme(),
@@ -116,7 +117,7 @@ type ReconcileJenkins struct {
 	local, minikube    bool
 	clientSet          kubernetes.Clientset
 	config             rest.Config
-	notificationEvents *chan notifications.Event
+	notificationEvents *chan event.Event
 }
 
 // Reconcile it's a main reconciliation loop which maintain desired state based on Jenkins.Spec
@@ -151,12 +152,14 @@ func (r *ReconcileJenkins) Reconcile(request reconcile.Request) (reconcile.Resul
 				logger.V(log.VWarn).Info(fmt.Sprintf("Reconcile loop failed %d times with the same error, giving up: %s", reconcileFailLimit, err))
 			}
 
-			*r.notificationEvents <- notifications.Event{
-				Jenkins:         *jenkins,
-				Phase:           notifications.PhaseBase,
-				LogLevel:        v1alpha2.NotificationLogLevelWarning,
-				Message:         fmt.Sprintf("Reconcile loop failed %d times with the same error, giving up: %s", reconcileFailLimit, err),
-				MessagesVerbose: []string{fmt.Sprintf("Reconcile loop failed %d times with the same error, giving up: %+v", reconcileFailLimit, err)},
+			*r.notificationEvents <- event.Event{
+				Jenkins: *jenkins,
+				Phase:   event.PhaseBase,
+				Level:   v1alpha2.NotificationLevelWarning,
+				Reason: reason.NewReconcileLoopFailed(
+					reason.OperatorSource,
+					[]string{fmt.Sprintf("Reconcile loop failed %d times with the same error, giving up: %s", reconcileFailLimit, err)},
+				),
 			}
 			return reconcile.Result{Requeue: false}, nil
 		}
@@ -170,12 +173,15 @@ func (r *ReconcileJenkins) Reconcile(request reconcile.Request) (reconcile.Resul
 		}
 
 		if groovyErr, ok := err.(*jenkinsclient.GroovyScriptExecutionFailed); ok {
-			*r.notificationEvents <- notifications.Event{
-				Jenkins:         *jenkins,
-				Phase:           notifications.PhaseBase,
-				LogLevel:        v1alpha2.NotificationLogLevelWarning,
-				Message:         fmt.Sprintf("%s Source '%s' Name '%s' groovy script execution failed, logs:", groovyErr.ConfigurationType, groovyErr.Source, groovyErr.Name),
-				MessagesVerbose: []string{groovyErr.Logs},
+			*r.notificationEvents <- event.Event{
+				Jenkins: *jenkins,
+				Phase:   event.PhaseBase,
+				Level:   v1alpha2.NotificationLevelWarning,
+				Reason: reason.NewGroovyScriptExecutionFailed(
+					reason.OperatorSource,
+					[]string{fmt.Sprintf("%s Source '%s' Name '%s' groovy script execution failed", groovyErr.ConfigurationType, groovyErr.Source, groovyErr.Name)},
+					[]string{fmt.Sprintf("%s Source '%s' Name '%s' groovy script execution failed, logs: %+v", groovyErr.ConfigurationType, groovyErr.Source, groovyErr.Name, groovyErr.Logs)}...,
+				),
 			}
 			return reconcile.Result{Requeue: false}, nil
 		}
@@ -213,21 +219,20 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request, logger logr.Logg
 	// Reconcile base configuration
 	baseConfiguration := base.New(config, r.scheme, logger, r.local, r.minikube, &r.config)
 
-	messages, err := baseConfiguration.Validate(jenkins)
+	baseMessages, err := baseConfiguration.Validate(jenkins)
 	if err != nil {
 		return reconcile.Result{}, jenkins, err
 	}
-	if len(messages) > 0 {
+	if len(baseMessages) > 0 {
 		message := "Validation of base configuration failed, please correct Jenkins CR."
-		*r.notificationEvents <- notifications.Event{
-			Jenkins:         *jenkins,
-			Phase:           notifications.PhaseBase,
-			LogLevel:        v1alpha2.NotificationLogLevelWarning,
-			Message:         message,
-			MessagesVerbose: messages,
+		*r.notificationEvents <- event.Event{
+			Jenkins: *jenkins,
+			Phase:   event.PhaseBase,
+			Level:   v1alpha2.NotificationLevelWarning,
+			Reason:  reason.NewBaseConfigurationFailed(reason.HumanSource, []string{message}, append([]string{message}, baseMessages...)...),
 		}
 		logger.V(log.VWarn).Info(message)
-		for _, msg := range messages {
+		for _, msg := range baseMessages {
 			logger.V(log.VWarn).Info(msg)
 		}
 		return reconcile.Result{}, jenkins, nil // don't requeue
@@ -254,30 +259,28 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request, logger logr.Logg
 
 		message := fmt.Sprintf("Base configuration phase is complete, took %s",
 			jenkins.Status.BaseConfigurationCompletedTime.Sub(jenkins.Status.ProvisionStartTime.Time))
-		*r.notificationEvents <- notifications.Event{
-			Jenkins:         *jenkins,
-			Phase:           notifications.PhaseBase,
-			LogLevel:        v1alpha2.NotificationLogLevelInfo,
-			Message:         message,
-			MessagesVerbose: messages,
+		*r.notificationEvents <- event.Event{
+			Jenkins: *jenkins,
+			Phase:   event.PhaseBase,
+			Level:   v1alpha2.NotificationLevelInfo,
+			Reason:  reason.NewBaseConfigurationComplete(reason.OperatorSource, []string{message}),
 		}
 		logger.Info(message)
 	}
 	// Reconcile user configuration
 	userConfiguration := user.New(config, jenkinsClient, logger, r.config)
 
-	messages, err = userConfiguration.Validate(jenkins)
+	messages, err := userConfiguration.Validate(jenkins)
 	if err != nil {
 		return reconcile.Result{}, jenkins, err
 	}
 	if len(messages) > 0 {
 		message := fmt.Sprintf("Validation of user configuration failed, please correct Jenkins CR")
-		*r.notificationEvents <- notifications.Event{
-			Jenkins:         *jenkins,
-			Phase:           notifications.PhaseUser,
-			LogLevel:        v1alpha2.NotificationLogLevelWarning,
-			Message:         message,
-			MessagesVerbose: messages,
+		*r.notificationEvents <- event.Event{
+			Jenkins: *jenkins,
+			Phase:   event.PhaseUser,
+			Level:   v1alpha2.NotificationLevelWarning,
+			Reason:  reason.NewUserConfigurationFailed(reason.HumanSource, []string{message}, append([]string{message}, messages...)...),
 		}
 
 		logger.V(log.VWarn).Info(message)
@@ -304,12 +307,11 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request, logger logr.Logg
 		}
 		message := fmt.Sprintf("User configuration phase is complete, took %s",
 			jenkins.Status.UserConfigurationCompletedTime.Sub(jenkins.Status.ProvisionStartTime.Time))
-		*r.notificationEvents <- notifications.Event{
-			Jenkins:         *jenkins,
-			Phase:           notifications.PhaseUser,
-			LogLevel:        v1alpha2.NotificationLogLevelInfo,
-			Message:         message,
-			MessagesVerbose: messages,
+		*r.notificationEvents <- event.Event{
+			Jenkins: *jenkins,
+			Phase:   event.PhaseUser,
+			Level:   v1alpha2.NotificationLevelInfo,
+			Reason:  reason.NewUserConfigurationComplete(reason.OperatorSource, []string{message}),
 		}
 		logger.Info(message)
 	}
