@@ -219,19 +219,19 @@ func triggerBackup(ticker *time.Ticker, k8sClient k8s.Client, logger logr.Logger
 func (bar *BackupAndRestore) EnsureBackupTrigger() error {
 	trigger, found := triggers.get(bar.jenkins.Namespace, bar.jenkins.Name)
 
-	isBackupConfigured := len(bar.jenkins.Spec.Backup.ContainerName) == 0 || bar.jenkins.Spec.Backup.Interval == 0
+	isBackupConfigured := len(bar.jenkins.Spec.Backup.ContainerName) > 0 && bar.jenkins.Spec.Backup.Interval > 0
 	if found && !isBackupConfigured {
 		bar.StopBackupTrigger()
 		return nil
 	}
 
 	// configured backup has no trigger
-	if !found {
+	if !found && isBackupConfigured {
 		bar.startBackupTrigger()
+		return nil
 	}
 
-	// configured interval has changes
-	if found && bar.jenkins.Spec.Backup.Interval != trigger.interval {
+	if found && isBackupConfigured && bar.jenkins.Spec.Backup.Interval != trigger.interval {
 		bar.StopBackupTrigger()
 		bar.startBackupTrigger()
 	}
