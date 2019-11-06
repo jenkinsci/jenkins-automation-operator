@@ -39,12 +39,12 @@ func TestUndefined_HasMessages(t *testing.T) {
 		podRestart := NewUndefined(KubernetesSource, []string{"test", "another-test"})
 		assert.True(t, podRestart.HasMessages())
 	})
-	
+
 	t.Run("verbose full", func(t *testing.T) {
 		podRestart := NewUndefined(KubernetesSource, []string{}, []string{"test", "another-test"}...)
 		assert.True(t, podRestart.HasMessages())
 	})
-	
+
 	t.Run("short empty", func(t *testing.T) {
 		podRestart := NewUndefined(KubernetesSource, []string{})
 		assert.False(t, podRestart.HasMessages())

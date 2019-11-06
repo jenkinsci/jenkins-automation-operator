@@ -14,6 +14,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -27,7 +28,36 @@ type backupTrigger struct {
 	ticker   *time.Ticker
 }
 
-var backupTriggers = map[string]backupTrigger{}
+type backupTriggers struct {
+	triggers map[string]backupTrigger
+}
+
+func (t *backupTriggers) stop(logger logr.Logger, namespace string, name string) {
+	key := t.key(namespace, name)
+	trigger, found := t.triggers[key]
+	if found {
+		logger.Info(fmt.Sprintf("Stopping backup trigger for '%s'", key))
+		trigger.ticker.Stop()
+		delete(t.triggers, key)
+	} else {
+		logger.V(log.VWarn).Info(fmt.Sprintf("Can't stop backup trigger for '%s', not found, skipping", key))
+	}
+}
+
+func (t *backupTriggers) get(namespace, name string) (backupTrigger, bool) {
+	trigger, found := t.triggers[t.key(namespace, name)]
+	return trigger, found
+}
+
+func (t *backupTriggers) key(namespace, name string) string {
+	return namespace + "/" + name
+}
+
+func (t *backupTriggers) add(namespace string, name string, trigger backupTrigger) {
+	t.triggers[t.key(namespace, name)] = trigger
+}
+
+var triggers = backupTriggers{triggers: make(map[string]backupTrigger)}
 
 // BackupAndRestore represents Jenkins backup and restore client
 type BackupAndRestore struct {
@@ -169,7 +199,10 @@ func triggerBackup(ticker *time.Ticker, k8sClient k8s.Client, logger logr.Logger
 	for range ticker.C {
 		jenkins := &v1alpha2.Jenkins{}
 		err := k8sClient.Get(context.TODO(), types.NamespacedName{Namespace: namespace, Name: name}, jenkins)
-		if err != nil {
+		if err != nil && apierrors.IsNotFound(err) {
+			triggers.stop(logger, namespace, name)
+			return // abort
+		} else if err != nil {
 			logger.V(log.VWarn).Info(fmt.Sprintf("backup trigger, error when fetching CR: %s", err))
 		}
 		if jenkins.Status.LastBackup == jenkins.Status.PendingBackup {
@@ -184,21 +217,22 @@ func triggerBackup(ticker *time.Ticker, k8sClient k8s.Client, logger logr.Logger
 
 // EnsureBackupTrigger creates or update trigger which update CR to make backup
 func (bar *BackupAndRestore) EnsureBackupTrigger() error {
-	jenkins := bar.jenkins
-	trigger, found := backupTriggers[jenkins.Name]
-	if len(jenkins.Spec.Backup.ContainerName) == 0 || jenkins.Spec.Backup.Interval == 0 {
-		bar.logger.V(log.VDebug).Info("Skipping create backup trigger")
-		if found {
-			bar.stopBackupTrigger(trigger)
-		}
+	trigger, found := triggers.get(bar.jenkins.Namespace, bar.jenkins.Name)
+
+	isBackupConfigured := len(bar.jenkins.Spec.Backup.ContainerName) > 0 && bar.jenkins.Spec.Backup.Interval > 0
+	if found && !isBackupConfigured {
+		bar.StopBackupTrigger()
 		return nil
 	}
 
-	if !found {
+	// configured backup has no trigger
+	if !found && isBackupConfigured {
 		bar.startBackupTrigger()
+		return nil
 	}
-	if found && jenkins.Spec.Backup.Interval != trigger.interval {
-		bar.stopBackupTrigger(trigger)
+
+	if found && isBackupConfigured && bar.jenkins.Spec.Backup.Interval != trigger.interval {
+		bar.StopBackupTrigger()
 		bar.startBackupTrigger()
 	}
 
@@ -207,26 +241,17 @@ func (bar *BackupAndRestore) EnsureBackupTrigger() error {
 
 // StopBackupTrigger stops trigger which update CR to make backup
 func (bar *BackupAndRestore) StopBackupTrigger() {
-	trigger, found := backupTriggers[bar.jenkins.Name]
-	if found {
-		bar.stopBackupTrigger(trigger)
-	}
+	triggers.stop(bar.logger, bar.jenkins.Namespace, bar.jenkins.Name)
 }
 
 func (bar *BackupAndRestore) startBackupTrigger() {
 	bar.logger.Info("Starting backup trigger")
 	ticker := time.NewTicker(time.Duration(bar.jenkins.Spec.Backup.Interval) * time.Second)
-	backupTriggers[bar.jenkins.Name] = backupTrigger{
+	triggers.add(bar.jenkins.Namespace, bar.jenkins.Name, backupTrigger{
 		interval: bar.jenkins.Spec.Backup.Interval,
 		ticker:   ticker,
-	}
+	})
 	go triggerBackup(ticker, bar.k8sClient, bar.logger, bar.jenkins.Namespace, bar.jenkins.Name)
-}
-
-func (bar *BackupAndRestore) stopBackupTrigger(trigger backupTrigger) {
-	bar.logger.Info("Stopping backup trigger")
-	trigger.ticker.Stop()
-	delete(backupTriggers, bar.jenkins.Name)
 }
 
 func (bar *BackupAndRestore) exec(podName, containerName string, command []string) (stdout, stderr bytes.Buffer, err error) {

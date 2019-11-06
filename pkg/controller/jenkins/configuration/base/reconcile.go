@@ -28,7 +28,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -42,17 +41,15 @@ const (
 // ReconcileJenkinsBaseConfiguration defines values required for Jenkins base configuration
 type ReconcileJenkinsBaseConfiguration struct {
 	configuration.Configuration
-	scheme          *runtime.Scheme
 	logger          logr.Logger
 	local, minikube bool
 	config          *rest.Config
 }
 
 // New create structure which takes care of base configuration
-func New(config configuration.Configuration, scheme *runtime.Scheme, logger logr.Logger, local, minikube bool, restConfig *rest.Config) *ReconcileJenkinsBaseConfiguration {
+func New(config configuration.Configuration, logger logr.Logger, local, minikube bool, restConfig *rest.Config) *ReconcileJenkinsBaseConfiguration {
 	return &ReconcileJenkinsBaseConfiguration{
 		Configuration: config,
-		scheme:        scheme,
 		logger:        logger,
 		local:         local,
 		minikube:      minikube,
@@ -255,7 +252,7 @@ func (r *ReconcileJenkinsBaseConfiguration) createOperatorCredentialsSecret(meta
 	err := r.Configuration.Client.Get(context.TODO(), types.NamespacedName{Name: resources.GetOperatorCredentialsSecretName(r.Configuration.Jenkins), Namespace: r.Configuration.Jenkins.ObjectMeta.Namespace}, found)
 
 	if err != nil && apierrors.IsNotFound(err) {
-		return stackerr.WithStack(r.createResource(resources.NewOperatorCredentialsSecret(meta, r.Configuration.Jenkins)))
+		return stackerr.WithStack(r.CreateResource(resources.NewOperatorCredentialsSecret(meta, r.Configuration.Jenkins)))
 	} else if err != nil && !apierrors.IsNotFound(err) {
 		return stackerr.WithStack(err)
 	}
@@ -265,7 +262,7 @@ func (r *ReconcileJenkinsBaseConfiguration) createOperatorCredentialsSecret(meta
 		return nil
 	}
 
-	return stackerr.WithStack(r.updateResource(resources.NewOperatorCredentialsSecret(meta, r.Configuration.Jenkins)))
+	return stackerr.WithStack(r.UpdateResource(resources.NewOperatorCredentialsSecret(meta, r.Configuration.Jenkins)))
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) createScriptsConfigMap(meta metav1.ObjectMeta) error {
@@ -273,7 +270,7 @@ func (r *ReconcileJenkinsBaseConfiguration) createScriptsConfigMap(meta metav1.O
 	if err != nil {
 		return err
 	}
-	return stackerr.WithStack(r.createOrUpdateResource(configMap))
+	return stackerr.WithStack(r.CreateOrUpdateResource(configMap))
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) createInitConfigurationConfigMap(meta metav1.ObjectMeta) error {
@@ -281,12 +278,12 @@ func (r *ReconcileJenkinsBaseConfiguration) createInitConfigurationConfigMap(met
 	if err != nil {
 		return err
 	}
-	return stackerr.WithStack(r.createOrUpdateResource(configMap))
+	return stackerr.WithStack(r.CreateOrUpdateResource(configMap))
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) createBaseConfigurationConfigMap(meta metav1.ObjectMeta) error {
 	configMap := resources.NewBaseConfigurationConfigMap(meta, r.Configuration.Jenkins)
-	return stackerr.WithStack(r.createOrUpdateResource(configMap))
+	return stackerr.WithStack(r.CreateOrUpdateResource(configMap))
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) addLabelForWatchesResources(customization v1alpha2.Customization) error {
@@ -339,19 +336,19 @@ func (r *ReconcileJenkinsBaseConfiguration) addLabelForWatchesResources(customiz
 
 func (r *ReconcileJenkinsBaseConfiguration) createRBAC(meta metav1.ObjectMeta) error {
 	serviceAccount := resources.NewServiceAccount(meta)
-	err := r.createResource(serviceAccount)
+	err := r.CreateResource(serviceAccount)
 	if err != nil && !errors.IsAlreadyExists(err) {
 		return stackerr.WithStack(err)
 	}
 
 	role := resources.NewRole(meta)
-	err = r.createOrUpdateResource(role)
+	err = r.CreateOrUpdateResource(role)
 	if err != nil {
 		return stackerr.WithStack(err)
 	}
 
 	roleBinding := resources.NewRoleBinding(meta)
-	err = r.createOrUpdateResource(roleBinding)
+	err = r.CreateOrUpdateResource(roleBinding)
 	if err != nil {
 		return stackerr.WithStack(err)
 	}
@@ -373,7 +370,7 @@ func (r *ReconcileJenkinsBaseConfiguration) createService(meta metav1.ObjectMeta
 				Selector: meta.Labels,
 			},
 		}, config)
-		if err = r.createResource(&service); err != nil {
+		if err = r.CreateResource(&service); err != nil {
 			return stackerr.WithStack(err)
 		}
 	} else if err != nil {
@@ -381,7 +378,7 @@ func (r *ReconcileJenkinsBaseConfiguration) createService(meta metav1.ObjectMeta
 	}
 
 	service = resources.UpdateService(service, config)
-	return stackerr.WithStack(r.updateResource(&service))
+	return stackerr.WithStack(r.UpdateResource(&service))
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) getJenkinsMasterPod() (*corev1.Pod, error) {
@@ -416,7 +413,7 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsMasterPod(meta metav1.O
 			Reason:  reason.NewPodCreation(reason.OperatorSource, []string{"Creating a new Jenkins Master Pod"}),
 		}
 		r.logger.Info(fmt.Sprintf("Creating a new Jenkins Master Pod %s/%s", jenkinsMasterPod.Namespace, jenkinsMasterPod.Name))
-		err = r.createResource(jenkinsMasterPod)
+		err = r.CreateResource(jenkinsMasterPod)
 		if err != nil {
 			return reconcile.Result{}, stackerr.WithStack(err)
 		}
@@ -827,7 +824,7 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsClient(meta metav1.Obje
 		credentialsSecret.Data[resources.OperatorCredentialsSecretTokenKey] = []byte(token.GetToken())
 		now, _ := time.Now().UTC().MarshalText()
 		credentialsSecret.Data[resources.OperatorCredentialsSecretTokenCreationKey] = now
-		err = r.updateResource(credentialsSecret)
+		err = r.UpdateResource(credentialsSecret)
 		if err != nil {
 			return nil, stackerr.WithStack(err)
 		}
