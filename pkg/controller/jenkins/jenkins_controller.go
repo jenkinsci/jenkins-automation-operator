@@ -214,10 +214,11 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request, logger logr.Logg
 		ClientSet:     r.clientSet,
 		Notifications: r.notificationEvents,
 		Jenkins:       jenkins,
+		Scheme:        r.scheme,
 	}
 
 	// Reconcile base configuration
-	baseConfiguration := base.New(config, r.scheme, logger, r.local, r.minikube, &r.config)
+	baseConfiguration := base.New(config, logger, r.local, r.minikube, &r.config)
 
 	baseMessages, err := baseConfiguration.Validate(jenkins)
 	if err != nil {
