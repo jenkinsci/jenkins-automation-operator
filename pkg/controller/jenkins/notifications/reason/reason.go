@@ -72,11 +72,17 @@ func NewUndefined(source Source, short []string, verbose ...string) *Undefined {
 
 // NewPodRestart returns new instance of PodRestart
 func NewPodRestart(source Source, short []string, verbose ...string) *PodRestart {
-	restartPodMessage := "Jenkins master pod restarted by:"
+	restartPodMessage := fmt.Sprintf("Jenkins master pod restarted by %s:", source)
 	if len(short) == 1 {
-		short[0] = fmt.Sprintf("%s %s", restartPodMessage, short[0])
+		short = []string{fmt.Sprintf("%s %s", restartPodMessage, short[0])}
 	} else if len(short) > 1 {
 		short = append([]string{restartPodMessage}, short...)
+	}
+
+	if len(verbose) == 1 {
+		verbose = []string{fmt.Sprintf("%s %s", restartPodMessage, verbose[0])}
+	} else if len(verbose) > 1 {
+		verbose = append([]string{restartPodMessage}, verbose...)
 	}
 
 	return &PodRestart{
@@ -138,7 +144,7 @@ func NewBaseConfigurationComplete(source Source, short []string, verbose ...stri
 		Undefined{
 			source:  source,
 			short:   short,
-			verbose: verbose,
+			verbose: checkIfVerboseEmpty(short, verbose),
 		},
 	}
 }

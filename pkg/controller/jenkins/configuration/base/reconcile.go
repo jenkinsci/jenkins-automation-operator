@@ -433,9 +433,15 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsMasterPod(meta metav1.O
 		return reconcile.Result{}, stackerr.WithStack(err)
 	}
 
-	if currentJenkinsMasterPod != nil && isPodTerminating(*currentJenkinsMasterPod) && r.Configuration.Jenkins.Status.UserConfigurationCompletedTime != nil {
+	if currentJenkinsMasterPod == nil {
+		return reconcile.Result{Requeue: true}, nil
+	}
+
+	if r.IsJenkinsTerminating(*currentJenkinsMasterPod) && r.Configuration.Jenkins.Status.UserConfigurationCompletedTime != nil {
 		backupAndRestore := backuprestore.New(r.Client, r.ClientSet, r.logger, r.Configuration.Jenkins, *r.config)
-		backupAndRestore.StopBackupTrigger()
+		if backupAndRestore.IsBackupTriggerEnabled() {
+			backupAndRestore.StopBackupTrigger()
+		}
 		if r.Configuration.Jenkins.Spec.Backup.MakeBackupBeforePodDeletion {
 			if r.Configuration.Jenkins.Status.LastBackup == r.Configuration.Jenkins.Status.PendingBackup && !r.Configuration.Jenkins.Status.BackupDoneBeforePodDeletion {
 				r.Configuration.Jenkins.Status.PendingBackup = r.Configuration.Jenkins.Status.PendingBackup + 1
@@ -449,10 +455,6 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsMasterPod(meta metav1.O
 				return reconcile.Result{}, err
 			}
 		}
-		return reconcile.Result{Requeue: true}, nil
-	}
-
-	if currentJenkinsMasterPod == nil {
 		return reconcile.Result{Requeue: true}, nil
 	}
 
@@ -479,10 +481,6 @@ func (r *ReconcileJenkinsBaseConfiguration) calculateUserAndPasswordHash() (stri
 	hash.Write(credentialsSecret.Data[resources.OperatorCredentialsSecretUserNameKey])
 	hash.Write(credentialsSecret.Data[resources.OperatorCredentialsSecretPasswordKey])
 	return base64.StdEncoding.EncodeToString(hash.Sum(nil)), nil
-}
-
-func isPodTerminating(pod corev1.Pod) bool {
-	return pod.ObjectMeta.DeletionTimestamp != nil
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) checkForPodRecreation(currentJenkinsMasterPod corev1.Pod, userAndPasswordHash string) reason.Reason {
@@ -578,7 +576,7 @@ func (r *ReconcileJenkinsBaseConfiguration) checkForPodRecreation(currentJenkins
 		verbose = append(verbose, verboseMessages...)
 	}
 
-	return reason.NewPodRestart(reason.KubernetesSource, messages, verbose...)
+	return reason.NewPodRestart(reason.OperatorSource, messages, verbose...)
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) compareContainers(expected corev1.Container, actual corev1.Container) (messages []string, verbose []string) {
@@ -713,17 +711,17 @@ func (r *ReconcileJenkinsBaseConfiguration) detectJenkinsMasterPodStartingIssues
 
 func (r *ReconcileJenkinsBaseConfiguration) filterEvents(source corev1.EventList, jenkinsMasterPod corev1.Pod) []string {
 	events := []string{}
-	for _, event := range source.Items {
-		if r.Configuration.Jenkins.Status.ProvisionStartTime.UTC().After(event.LastTimestamp.UTC()) {
+	for _, eventItem := range source.Items {
+		if r.Configuration.Jenkins.Status.ProvisionStartTime.UTC().After(eventItem.LastTimestamp.UTC()) {
 			continue
 		}
-		if event.Type == corev1.EventTypeNormal {
+		if eventItem.Type == corev1.EventTypeNormal {
 			continue
 		}
-		if !strings.HasPrefix(event.ObjectMeta.Name, jenkinsMasterPod.Name) {
+		if !strings.HasPrefix(eventItem.ObjectMeta.Name, jenkinsMasterPod.Name) {
 			continue
 		}
-		events = append(events, fmt.Sprintf("Message: %s Subobject: %s", event.Message, event.InvolvedObject.FieldPath))
+		events = append(events, fmt.Sprintf("Message: %s Subobject: %s", eventItem.Message, eventItem.InvolvedObject.FieldPath))
 	}
 
 	return events
@@ -735,7 +733,7 @@ func (r *ReconcileJenkinsBaseConfiguration) waitForJenkins(meta metav1.ObjectMet
 		return reconcile.Result{}, err
 	}
 
-	if jenkinsMasterPod.ObjectMeta.DeletionTimestamp != nil {
+	if r.IsJenkinsTerminating(*jenkinsMasterPod) {
 		r.logger.V(log.VDebug).Info("Jenkins master pod is terminating")
 		return reconcile.Result{Requeue: true, RequeueAfter: time.Second * 5}, nil
 	}

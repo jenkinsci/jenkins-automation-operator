@@ -35,6 +35,10 @@ func (c *Configuration) RestartJenkinsMasterPod(reason reason.Reason) error {
 		return err
 	}
 
+	if c.IsJenkinsTerminating(*currentJenkinsMasterPod) {
+		return nil
+	}
+
 	*c.Notifications <- event.Event{
 		Jenkins: *c.Jenkins,
 		Phase:   event.PhaseBase,
@@ -53,6 +57,10 @@ func (c *Configuration) getJenkinsMasterPod() (*corev1.Pod, error) {
 		return nil, err // don't wrap error
 	}
 	return currentJenkinsMasterPod, nil
+}
+
+func (c *Configuration) IsJenkinsTerminating(pod corev1.Pod) bool {
+	return pod.ObjectMeta.DeletionTimestamp != nil
 }
 
 // CreateResource is creating kubernetes resource and references it to Jenkins CR

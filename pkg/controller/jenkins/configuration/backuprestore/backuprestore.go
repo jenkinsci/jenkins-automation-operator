@@ -244,6 +244,12 @@ func (bar *BackupAndRestore) StopBackupTrigger() {
 	triggers.stop(bar.logger, bar.jenkins.Namespace, bar.jenkins.Name)
 }
 
+//IsBackupTriggerEnabled returns true if the backup trigger is enabled
+func (bar *BackupAndRestore) IsBackupTriggerEnabled() bool {
+	_, enabled := triggers.get(bar.jenkins.Namespace, bar.jenkins.Name)
+	return enabled
+}
+
 func (bar *BackupAndRestore) startBackupTrigger() {
 	bar.logger.Info("Starting backup trigger")
 	ticker := time.NewTicker(time.Duration(bar.jenkins.Spec.Backup.Interval) * time.Second)
