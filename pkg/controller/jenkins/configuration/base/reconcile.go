@@ -377,6 +377,7 @@ func (r *ReconcileJenkinsBaseConfiguration) createService(meta metav1.ObjectMeta
 		return stackerr.WithStack(err)
 	}
 
+	service.Spec.Selector = meta.Labels // make sure that user won't break service by hand
 	service = resources.UpdateService(service, config)
 	return stackerr.WithStack(r.UpdateResource(&service))
 }
