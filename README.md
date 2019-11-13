@@ -37,7 +37,7 @@ Some of the problems we want to solve:
 
 ## Documentation
 
-Go to [**our documentation website**](https://jenkinsci.github.io/kubernetes-operator/) for more informaiton.
+Go to [**our documentation website**](https://jenkinsci.github.io/kubernetes-operator/) for more information.
 
 Selected content:
 1. [Installation](https://jenkinsci.github.io/kubernetes-operator/docs/installation/)
