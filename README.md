@@ -5,7 +5,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/jenkinsci/kubernetes-operator "Go Report Card")](https://goreportcard.com/report/github.com/jenkinsci/kubernetes-operator)
 [![Docker Pulls](https://img.shields.io/docker/pulls/virtuslab/jenkins-operator.svg)](https://hub.docker.com/r/virtuslab/jenkins-operator/tags)
 
-Go to [**our documentation website**](https://jenkinsci.github.io/kubernetes-operator/) for more informaiton, with examples and guides.
+Go to [**our documentation website**](https://jenkinsci.github.io/kubernetes-operator/) for more information, with examples and guides.
 
 ![logo](/assets/jenkins_gopher_wide.png)
 
