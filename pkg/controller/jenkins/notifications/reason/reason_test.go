@@ -67,12 +67,12 @@ func TestPodRestartPrepend(t *testing.T) {
 		res := "test-reason"
 		podRestart := NewPodRestart(KubernetesSource, []string{res})
 
-		assert.Equal(t, podRestart.short[0], fmt.Sprintf("Jenkins master pod restarted by: %s", res))
+		assert.Equal(t, fmt.Sprintf("Jenkins master pod restarted by %s: %s", KubernetesSource, res), podRestart.short[0])
 	})
 
 	t.Run("happy with multiple message", func(t *testing.T) {
 		podRestart := NewPodRestart(KubernetesSource, []string{"first-reason", "second-reason", "third-reason"})
 
-		assert.Equal(t, podRestart.short[0], "Jenkins master pod restarted by:")
+		assert.Equal(t, fmt.Sprintf("Jenkins master pod restarted by %s:", KubernetesSource), podRestart.short[0])
 	})
 }

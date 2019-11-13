@@ -59,6 +59,7 @@ func (c *Configuration) getJenkinsMasterPod() (*corev1.Pod, error) {
 	return currentJenkinsMasterPod, nil
 }
 
+// IsJenkinsTerminating returns true if the Jenkins pod is terminating
 func (c *Configuration) IsJenkinsTerminating(pod corev1.Pod) bool {
 	return pod.ObjectMeta.DeletionTimestamp != nil
 }
