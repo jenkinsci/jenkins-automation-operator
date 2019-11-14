@@ -36,3 +36,7 @@ cache:
   directories:
     - vendor
     - /home/travis/.minikube/
+
+notifications:
+  slack:
+    secure: Cke1jTwG9TE7/Oe4dXYPnu3fO49NbrqZX6S75hv6LKwoclTHG2rwjZXEFqpn7g7o1au743lzj12RyeosSWIYA0jN8xU3WHrJApUBq3oOr/oG0Br9jr4EyonWkcwjnpGUZ8UehvYaMZCSRLr2a2ZEShai2ftrYd5CEd066986NEG+Q/dnxhkmWPk7CW37bm5I3duW62mW/QGi3iIzNOSNJtMjbYFP2USHrnEoV2KZ9irKLpBNSyxqVH820FvTUjp+imisP4v27m/dSyuZzbWsc6BGtL+CTwMHMuJVUfTOGpTjW4H9qb42kZO3zFuFdP235Zo+Uxx+OA14n3wNdSgseAEuX6ecMnbglK95ZL/lm5p5wPH/F+05Xu9dh3bqCex9VIjcszzTj/ZJ+mDjMd11nSU++Dbr7e1ynTii+B6tOpiuFGzW5n4yPEjwdrMakohRM+Pukp2fSCQf8YfSutbfTqaYLuTl5UV+kKN4QlAgCyZokSq1tGJ/H21ScI09reJPinM565J9h4Nbkul50XD5pcktBsq9gyLCzJDyG1sNWPOyHV1lG8PsAEGKoCG9+PlP7L48e+QfUuQO9fNM00sjgVHxkXBVqBNMI/UDhlqVgDx4S+WFQivwS894XZNLDwrzXpTfswzMbd08EevyyT1fqbZEIX83V2B0H7A8Oxrb7nM=
