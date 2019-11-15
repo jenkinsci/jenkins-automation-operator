@@ -954,12 +954,12 @@ spec:
         
         
 
-&lt;p&gt;Jenkins can be customized using by groovy scripts or the Jenkins Configuration as Code Plugin. All custom configuration is stored in
+&lt;p&gt;Jenkins can be customized by using groovy scripts or the Jenkins Configuration as a Code Plugin. All custom configuration is stored in
 the &lt;strong&gt;jenkins-operator-user-configuration-&lt;cr_name&gt;&lt;/strong&gt; ConfigMap, which is automatically created by the &lt;strong&gt;Jenkins Operator&lt;/strong&gt;.&lt;/p&gt;
 
 &lt;p&gt;The &lt;strong&gt;Jenkins Operator&lt;/strong&gt; creates a &lt;strong&gt;jenkins-operator-user-configuration-&lt;cr_name&gt;&lt;/strong&gt; secret where the user can store sensitive
 information used for custom configuration. If you have an entry in the secret named &lt;code&gt;PASSWORD&lt;/code&gt; then you can use it in the
-Jenkins Configuration as Code Plugin as &lt;code&gt;adminAddress: &amp;quot;${PASSWORD}&amp;quot;&lt;/code&gt;.&lt;/p&gt;
+Jenkins Configuration as a Code Plugin as &lt;code&gt;adminAddress: &amp;quot;${PASSWORD}&amp;quot;&lt;/code&gt;.&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;kubectl get secret jenkins-operator-user-configuration-&amp;lt;cr_name&amp;gt; -o yaml
 
@@ -1411,7 +1411,7 @@ for backup and restore are required, e.g.:&lt;/p&gt;
 &lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;    &lt;/span&gt;echo&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;&amp;#34;Running backup #${backup_number}&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
 &lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
 &lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;    &lt;/span&gt;BACKUP_TMP_DIR=$(mktemp&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;-d)&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
-&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;    &lt;/span&gt;tar&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;-C&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;${JENKINS_HOME}&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;-czf&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;&amp;#34;${BACKUP_TMP_DIR}/${backup_number}.tar.gz&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;--exclude&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;jobs/&lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;*/config.xml&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;--exclude&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;jobs/&lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;*/workspace*&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;-c&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;jobs&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;&amp;amp;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;\&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;    &lt;/span&gt;tar&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;-C&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;${JENKINS_HOME}&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;-czf&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;&amp;#34;${BACKUP_TMP_DIR}/${backup_number}.tar.gz&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;--exclude&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;jobs/&lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;*/workspace*&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;-c&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;jobs&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;&amp;amp;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;\&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
 &lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
 &lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;    &lt;/span&gt;aws&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;s3&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;cp&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;${BACKUP_TMP_DIR}/${backup_number}.tar.gz&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;s3&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;//${BACKUP_BUCKET}/${BACKUP_PATH}/${backup_number}.tar.gz&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
 &lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;    &lt;/span&gt;echo&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;Done&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
@@ -1460,7 +1460,7 @@ the number of backups under control, e.g. Cloud Formation fragment:&lt;/p&gt;
         
         &lt;p&gt;&lt;strong&gt;Jenkins Operator&lt;/strong&gt; is fully compatible with &lt;strong&gt;&lt;code&gt;jenkins:lts&lt;/code&gt;&lt;/strong&gt; Docker image and does not introduce any hidden changes to the upstream Jenkins.&lt;/p&gt;
 
-&lt;p&gt;If needed, the Docker image can easily be changed in custom resource manifest as long as it supports standard Jenkins file system structure.&lt;/p&gt;
+&lt;p&gt;If needed, the Docker image can be easily changed in custom resource manifest as long as it supports standard Jenkins file system structure.&lt;/p&gt;
 
       </description>
     </item>
@@ -1489,7 +1489,7 @@ the number of backups under control, e.g. Cloud Formation fragment:&lt;/p&gt;
 &lt;p&gt;In &lt;code&gt;v0.1.x&lt;/code&gt; &lt;strong&gt;Jenkins Operator&lt;/strong&gt; user configuration application was implemented using &lt;strong&gt;Jenkins&lt;/strong&gt; jobs
 and this mechanism was replaced since &lt;code&gt;v0.2.0&lt;/code&gt; with Groovy scripts implementing the same functionality.&lt;/p&gt;
 
-&lt;p&gt;As a result the &lt;strong&gt;Jenkins&lt;/strong&gt; configuration jobs (&amp;ldquo;Configure Seed Jobs&amp;rdquo;, &amp;ldquo;jenkins-operator-base-configuration&amp;rdquo;, &amp;ldquo;jenkins-operator-user-configuration&amp;rdquo;) are no longer visible in &lt;strong&gt;Jenkins&lt;/strong&gt; UI.&lt;/p&gt;
+&lt;p&gt;As a result, the &lt;strong&gt;Jenkins&lt;/strong&gt; configuration jobs (&amp;ldquo;Configure Seed Jobs&amp;rdquo;, &amp;ldquo;jenkins-operator-base-configuration&amp;rdquo;, &amp;ldquo;jenkins-operator-user-configuration&amp;rdquo;) are no longer visible in &lt;strong&gt;Jenkins&lt;/strong&gt; UI.&lt;/p&gt;
 
 &lt;p&gt;In &lt;code&gt;v0.1.x&lt;/code&gt; you can see if any of the configuration jobs failed or succeded in the &lt;strong&gt;Jenkins&lt;/strong&gt; UI (job build logs).
 Instead, you can make sure the operator is running correctly by inspecting its logs, e.g.:&lt;/p&gt;
