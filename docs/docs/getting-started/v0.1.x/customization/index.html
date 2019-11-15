@@ -35,7 +35,7 @@
 
 <meta itemprop="datePublished" content="2019-08-05T00:00:00&#43;00:00" />
 <meta itemprop="dateModified" content="2019-08-05T00:00:00&#43;00:00" />
-<meta itemprop="wordCount" content="242">
+<meta itemprop="wordCount" content="244">
 
 
 
@@ -489,12 +489,12 @@
 	<div class="lead">How to customize Jenkins</div>
 	
 
-<p>Jenkins can be customized using by groovy scripts or the Jenkins Configuration as Code Plugin. All custom configuration is stored in
+<p>Jenkins can be customized by using groovy scripts or the Jenkins Configuration as a Code Plugin. All custom configuration is stored in
 the <strong>jenkins-operator-user-configuration-<cr_name></strong> ConfigMap, which is automatically created by the <strong>Jenkins Operator</strong>.</p>
 
 <p>The <strong>Jenkins Operator</strong> creates a <strong>jenkins-operator-user-configuration-<cr_name></strong> secret where the user can store sensitive
 information used for custom configuration. If you have an entry in the secret named <code>PASSWORD</code> then you can use it in the
-Jenkins Configuration as Code Plugin as <code>adminAddress: &quot;${PASSWORD}&quot;</code>.</p>
+Jenkins Configuration as a Code Plugin as <code>adminAddress: &quot;${PASSWORD}&quot;</code>.</p>
 
 <pre><code>kubectl get secret jenkins-operator-user-configuration-&lt;cr_name&gt; -o yaml
 

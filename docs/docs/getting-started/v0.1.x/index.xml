@@ -366,12 +366,12 @@ The &lt;code&gt;/sbin/tini -s -- /usr/local/bin/jenkins.sh&lt;/code&gt; command 
         
         
 
-&lt;p&gt;Jenkins can be customized using by groovy scripts or the Jenkins Configuration as Code Plugin. All custom configuration is stored in
+&lt;p&gt;Jenkins can be customized by using groovy scripts or the Jenkins Configuration as a Code Plugin. All custom configuration is stored in
 the &lt;strong&gt;jenkins-operator-user-configuration-&lt;cr_name&gt;&lt;/strong&gt; ConfigMap, which is automatically created by the &lt;strong&gt;Jenkins Operator&lt;/strong&gt;.&lt;/p&gt;
 
 &lt;p&gt;The &lt;strong&gt;Jenkins Operator&lt;/strong&gt; creates a &lt;strong&gt;jenkins-operator-user-configuration-&lt;cr_name&gt;&lt;/strong&gt; secret where the user can store sensitive
 information used for custom configuration. If you have an entry in the secret named &lt;code&gt;PASSWORD&lt;/code&gt; then you can use it in the
-Jenkins Configuration as Code Plugin as &lt;code&gt;adminAddress: &amp;quot;${PASSWORD}&amp;quot;&lt;/code&gt;.&lt;/p&gt;
+Jenkins Configuration as a Code Plugin as &lt;code&gt;adminAddress: &amp;quot;${PASSWORD}&amp;quot;&lt;/code&gt;.&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;kubectl get secret jenkins-operator-user-configuration-&amp;lt;cr_name&amp;gt; -o yaml
 
