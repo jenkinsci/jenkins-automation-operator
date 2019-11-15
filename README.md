@@ -47,6 +47,10 @@ Selected content:
 5. [Developer Guide](https://jenkinsci.github.io/kubernetes-operator/docs/developer-guide/)
 5. [Jenkins Custom Resource Definition scheme](https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/scheme/)
 
+## Common Jenkins issues and workarounds
+
+- Multibranch pipelines and backup issues: https://github.com/jenkinsci/kubernetes-operator/issues/104#issuecomment-554289768
+
 ## Community & Contribution
 
 There is a dedicated channel `#jenkins-operator` on [virtuslab-oss.slack.com](https://virtuslab-oss.slack.com) ([Invite form](https://forms.gle/X3X8qA1XMirdBuEH7))
