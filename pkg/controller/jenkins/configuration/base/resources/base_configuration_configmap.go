@@ -9,6 +9,17 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const (
+	basicSettingsGroovyScriptName               = "1-basic-settings.groovy"
+	enableCSRFGroovyScriptName                  = "2-enable-csrf.groovy"
+	disableUsageStatsGroovyScriptName           = "3-disable-usage-stats.groovy"
+	enableMasterAccessControlGroovyScriptName   = "4-enable-master-access-control.groovy"
+	disableInsecureFeaturesGroovyScriptName     = "5-disable-insecure-features.groovy"
+	configureKubernetesPluginGroovyScriptName   = "6-configure-kubernetes-plugin.groovy"
+	configureViewsGroovyScriptName              = "7-configure-views.groovy"
+	disableJobDslScriptApprovalGroovyScriptName = "8-disable-job-dsl-script-approval.groovy"
+)
+
 const basicSettingsFmt = `
 import jenkins.model.Jenkins
 import jenkins.model.JenkinsLocationConfiguration
@@ -168,23 +179,26 @@ func GetBaseConfigurationConfigMapName(jenkins *v1alpha2.Jenkins) string {
 // NewBaseConfigurationConfigMap builds Kubernetes config map used to base configuration
 func NewBaseConfigurationConfigMap(meta metav1.ObjectMeta, jenkins *v1alpha2.Jenkins) *corev1.ConfigMap {
 	meta.Name = GetBaseConfigurationConfigMapName(jenkins)
-
+	groovyScriptsMap := map[string]string{
+		basicSettingsGroovyScriptName:             fmt.Sprintf(basicSettingsFmt, constants.DefaultAmountOfExecutors),
+		enableCSRFGroovyScriptName:                enableCSRF,
+		disableUsageStatsGroovyScriptName:         disableUsageStats,
+		enableMasterAccessControlGroovyScriptName: enableMasterAccessControl,
+		disableInsecureFeaturesGroovyScriptName:   disableInsecureFeatures,
+		configureKubernetesPluginGroovyScriptName: fmt.Sprintf(configureKubernetesPluginFmt,
+			jenkins.ObjectMeta.Namespace,
+			fmt.Sprintf("http://%s.%s:%d", GetJenkinsHTTPServiceName(jenkins), jenkins.ObjectMeta.Namespace, jenkins.Spec.Service.Port),
+			fmt.Sprintf("%s.%s:%d", GetJenkinsSlavesServiceName(jenkins), jenkins.ObjectMeta.Namespace, jenkins.Spec.SlaveService.Port),
+		),
+		configureViewsGroovyScriptName:              configureViews,
+		disableJobDslScriptApprovalGroovyScriptName: disableJobDSLScriptApproval,
+	}
+	if jenkins.Spec.Master.DisableCSRFProtection {
+		delete(groovyScriptsMap, enableCSRFGroovyScriptName)
+	}
 	return &corev1.ConfigMap{
 		TypeMeta:   buildConfigMapTypeMeta(),
 		ObjectMeta: meta,
-		Data: map[string]string{
-			"1-basic-settings.groovy":               fmt.Sprintf(basicSettingsFmt, constants.DefaultAmountOfExecutors),
-			"2-enable-csrf.groovy":                  enableCSRF,
-			"3-disable-usage-stats.groovy":          disableUsageStats,
-			"4-enable-master-access-control.groovy": enableMasterAccessControl,
-			"5-disable-insecure-features.groovy":    disableInsecureFeatures,
-			"6-configure-kubernetes-plugin.groovy": fmt.Sprintf(configureKubernetesPluginFmt,
-				jenkins.ObjectMeta.Namespace,
-				fmt.Sprintf("http://%s.%s:%d", GetJenkinsHTTPServiceName(jenkins), jenkins.ObjectMeta.Namespace, jenkins.Spec.Service.Port),
-				fmt.Sprintf("%s.%s:%d", GetJenkinsSlavesServiceName(jenkins), jenkins.ObjectMeta.Namespace, jenkins.Spec.SlaveService.Port),
-			),
-			"7-configure-views.groovy":                 configureViews,
-			"8-disable-job-dsl-script-approval.groovy": disableJobDSLScriptApproval,
-		},
+		Data:       groovyScriptsMap,
 	}
 }
