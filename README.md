@@ -57,6 +57,8 @@ There is a dedicated channel `#jenkins-operator` on [virtuslab-oss.slack.com](ht
 
 Feel free to file [issues](https://github.com/jenkinsci/kubernetes-operator/issues) or [pull requests](https://github.com/jenkinsci/kubernetes-operator/pulls).    
 
+Before any big pull request please consult the maintainers to ensure a common direction.
+
 ## About the authors
 
 This project was originally developed by [VirtusLab](https://virtuslab.com/) and the following [CONTRIBUTORS](https://github.com/jenkinsci/kubernetes-operator/graphs/contributors).
