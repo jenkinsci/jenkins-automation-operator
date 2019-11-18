@@ -36,7 +36,7 @@ if (!operatorUserCreatedFile.exists()) {
 }
 `))
 
-func buildCreateJenkinsOperatorUserGroovyScript() (*string, error) {
+func buildCreateJenkinsOperatorUserGroovyScript(jenkins *v1alpha2.Jenkins) (*string, error) {
 	data := struct {
 		OperatorCredentialsPath     string
 		OperatorUserNameFile        string
@@ -46,7 +46,7 @@ func buildCreateJenkinsOperatorUserGroovyScript() (*string, error) {
 		OperatorCredentialsPath:     jenkinsOperatorCredentialsVolumePath,
 		OperatorUserNameFile:        OperatorCredentialsSecretUserNameKey,
 		OperatorPasswordFile:        OperatorCredentialsSecretPasswordKey,
-		OperatorUserCreatedFilePath: jenkinsHomePath + "/operatorUserCreated",
+		OperatorUserCreatedFilePath: getJenkinsHomePath(jenkins) + "/operatorUserCreated",
 	}
 
 	output, err := render.Render(createOperatorUserGroovyFmtTemplate, data)
@@ -66,7 +66,7 @@ func GetInitConfigurationConfigMapName(jenkins *v1alpha2.Jenkins) string {
 func NewInitConfigurationConfigMap(meta metav1.ObjectMeta, jenkins *v1alpha2.Jenkins) (*corev1.ConfigMap, error) {
 	meta.Name = GetInitConfigurationConfigMapName(jenkins)
 
-	createJenkinsOperatorUserGroovy, err := buildCreateJenkinsOperatorUserGroovyScript()
+	createJenkinsOperatorUserGroovy, err := buildCreateJenkinsOperatorUserGroovyScript(jenkins)
 	if err != nil {
 		return nil, err
 	}

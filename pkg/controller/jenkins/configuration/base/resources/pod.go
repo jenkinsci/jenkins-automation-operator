@@ -16,7 +16,6 @@ const (
 	// JenkinsHomeVolumeName is the Jenkins home volume name
 	JenkinsHomeVolumeName = "jenkins-home"
 	jenkinsPath           = "/var/jenkins"
-	jenkinsHomePath       = jenkinsPath + "/home"
 
 	jenkinsScriptsVolumeName = "scripts"
 	// JenkinsScriptsVolumePath is a path where are scripts used to configure Jenkins
@@ -62,12 +61,7 @@ func GetJenkinsMasterContainerBaseCommand() []string {
 
 // GetJenkinsMasterContainerBaseEnvs returns Jenkins master pod envs required by operator
 func GetJenkinsMasterContainerBaseEnvs(jenkins *v1alpha2.Jenkins) []corev1.EnvVar {
-	envVars := []corev1.EnvVar{
-		{
-			Name:  "JENKINS_HOME",
-			Value: jenkinsHomePath,
-		},
-	}
+	envVars := []corev1.EnvVar{}
 
 	if len(jenkins.Spec.ConfigurationAsCode.Secret.Name) > 0 {
 		envVars = append(envVars, corev1.EnvVar{
@@ -77,6 +71,17 @@ func GetJenkinsMasterContainerBaseEnvs(jenkins *v1alpha2.Jenkins) []corev1.EnvVa
 	}
 
 	return envVars
+}
+
+// getJenkinsHomePath fetches the Home Path for Jenkins
+func getJenkinsHomePath(jenkins *v1alpha2.Jenkins) string {
+	defaultJenkinsHomePath := jenkinsPath + "/jenkins"
+	for _, envVar := range jenkins.Spec.Master.Containers[0].Env {
+		if envVar.Name == "JENKINS_HOME" {
+			return envVar.Value
+		}
+	}
+	return defaultJenkinsHomePath
 }
 
 // GetJenkinsMasterPodBaseVolumes returns Jenkins master pod volumes required by operator
@@ -163,7 +168,7 @@ func GetJenkinsMasterContainerBaseVolumeMounts(jenkins *v1alpha2.Jenkins) []core
 	volumeMounts := []corev1.VolumeMount{
 		{
 			Name:      JenkinsHomeVolumeName,
-			MountPath: jenkinsHomePath,
+			MountPath: getJenkinsHomePath(jenkins),
 			ReadOnly:  false,
 		},
 		{
@@ -204,8 +209,26 @@ func GetJenkinsMasterContainerBaseVolumeMounts(jenkins *v1alpha2.Jenkins) []core
 // NewJenkinsMasterContainer returns Jenkins master Kubernetes container
 func NewJenkinsMasterContainer(jenkins *v1alpha2.Jenkins) corev1.Container {
 	jenkinsContainer := jenkins.Spec.Master.Containers[0]
+
 	envs := GetJenkinsMasterContainerBaseEnvs(jenkins)
 	envs = append(envs, jenkinsContainer.Env...)
+
+	jenkinsHomeEnvVar := corev1.EnvVar{
+		Name:  "JENKINS_HOME",
+		Value: getJenkinsHomePath(jenkins),
+	}
+
+	jenkinsHomeEnvVarExists := false
+	for _, env := range jenkinsContainer.Env {
+		if env.Name == jenkinsHomeEnvVar.Name {
+			jenkinsHomeEnvVarExists = true
+			break
+		}
+	}
+
+	if !jenkinsHomeEnvVarExists {
+		envs = append(envs, jenkinsHomeEnvVar)
+	}
 
 	return corev1.Container{
 		Name:            JenkinsMasterContainerName,
