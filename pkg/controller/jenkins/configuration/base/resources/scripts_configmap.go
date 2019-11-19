@@ -280,7 +280,7 @@ func buildInitBashScript(jenkins *v1alpha2.Jenkins) (*string, error) {
 		BasePlugins              []v1alpha2.Plugin
 		UserPlugins              []v1alpha2.Plugin
 	}{
-		JenkinsHomePath:          jenkinsHomePath,
+		JenkinsHomePath:          getJenkinsHomePath(jenkins),
 		InitConfigurationPath:    jenkinsInitConfigurationVolumePath,
 		BasePlugins:              jenkins.Spec.Master.BasePlugins,
 		UserPlugins:              jenkins.Spec.Master.Plugins,
@@ -314,7 +314,7 @@ func NewScriptsConfigMap(meta metav1.ObjectMeta, jenkins *v1alpha2.Jenkins) (*co
 		ObjectMeta: meta,
 		Data: map[string]string{
 			InitScriptName:        *initBashScript,
-			installPluginsCommand: fmt.Sprintf(installPluginsBashFmt, jenkinsHomePath),
+			installPluginsCommand: fmt.Sprintf(installPluginsBashFmt, getJenkinsHomePath(jenkins)),
 		},
 	}, nil
 }
