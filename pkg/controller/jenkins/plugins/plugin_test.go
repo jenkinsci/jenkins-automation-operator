@@ -8,6 +8,48 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestValidatePlugin(t *testing.T) {
+	validPluginName := "valid"
+	validPluginVersion := "0.1.2"
+	t.Run("version 1.6+build.162", func(t *testing.T) {
+		got := validatePlugin(validPluginName, "1.6+build.162")
+		assert.NoError(t, got)
+	})
+	t.Run("version 1.8+build.201601050116", func(t *testing.T) {
+		got := validatePlugin(validPluginName, "1.8+build.201601050116")
+		assert.NoError(t, got)
+	})
+	t.Run("version 1.8-RELEASE", func(t *testing.T) {
+		got := validatePlugin(validPluginName, "1.8-RELEASE")
+		assert.NoError(t, got)
+	})
+	t.Run("version 20.810504d7462", func(t *testing.T) {
+		got := validatePlugin(validPluginName, "20.810504d7462")
+		assert.NoError(t, got)
+	})
+
+	t.Run("version 3.0-rc1", func(t *testing.T) {
+		got := validatePlugin(validPluginName, "3.0-rc1")
+		assert.NoError(t, got)
+	})
+	t.Run("version 3.1.20180605-140134.c2e96c4", func(t *testing.T) {
+		got := validatePlugin(validPluginName, "3.1.20180605-140134.c2e96c4")
+		assert.NoError(t, got)
+	})
+	t.Run("invalid version !", func(t *testing.T) {
+		got := validatePlugin(validPluginName, "0.5.1!")
+		assert.Error(t, got)
+	})
+	t.Run("name 01234567890-abcdefghijklmnoprstuwxz_ABCDEFGHIJKLMNOPQRSTUVWXYZ", func(t *testing.T) {
+		got := validatePlugin("01234567890-abcdefghijklmnoprstuwxz_ABCDEFGHIJKLMNOPQRSTUVWXYZ", validPluginVersion)
+		assert.NoError(t, got)
+	})
+	t.Run("invalid name !", func(t *testing.T) {
+		got := validatePlugin("!", validPluginVersion)
+		assert.Error(t, got)
+	})
+}
+
 func TestVerifyDependencies(t *testing.T) {
 	log.SetupLogger(false)
 

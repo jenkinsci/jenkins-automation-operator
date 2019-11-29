@@ -20,8 +20,8 @@ func (p Plugin) String() string {
 }
 
 var (
-	namePattern    = regexp.MustCompile(`(?i)^[0-9a-z-_]+$`)
-	versionPattern = regexp.MustCompile(`^[0-9\\.-]+(\..+)?$`)
+	namePattern    = regexp.MustCompile(`^[0-9a-zA-Z-_]+$`)
+	versionPattern = regexp.MustCompile(`^[0-9a-zA-Z+\\.-]+$`)
 )
 
 // New creates plugin from string, for example "name-of-plugin:0.0.1"
