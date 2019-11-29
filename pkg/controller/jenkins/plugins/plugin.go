@@ -20,8 +20,10 @@ func (p Plugin) String() string {
 }
 
 var (
-	namePattern    = regexp.MustCompile(`^[0-9a-zA-Z-_]+$`)
-	versionPattern = regexp.MustCompile(`^[0-9a-zA-Z+\\.-]+$`)
+	// NamePattern is the plugin name regex pattern
+	NamePattern = regexp.MustCompile(`^[0-9a-zA-Z-_]+$`)
+	// VersionPattern is the plugin version regex pattern
+	VersionPattern = regexp.MustCompile(`^[0-9a-zA-Z+\\.-]+$`)
 )
 
 // New creates plugin from string, for example "name-of-plugin:0.0.1"
@@ -56,11 +58,11 @@ func NewPlugin(name, version string) (*Plugin, error) {
 }
 
 func validatePlugin(name, version string) error {
-	if ok := namePattern.MatchString(name); !ok {
-		return errors.Errorf("invalid plugin name '%s:%s', must follow pattern '%s'", name, version, namePattern.String())
+	if ok := NamePattern.MatchString(name); !ok {
+		return errors.Errorf("invalid plugin name '%s:%s', must follow pattern '%s'", name, version, NamePattern.String())
 	}
-	if ok := versionPattern.MatchString(version); !ok {
-		return errors.Errorf("invalid plugin version '%s:%s', must follow pattern '%s'", name, version, versionPattern.String())
+	if ok := VersionPattern.MatchString(version); !ok {
+		return errors.Errorf("invalid plugin version '%s:%s', must follow pattern '%s'", name, version, VersionPattern.String())
 	}
 	return nil
 }
