@@ -104,6 +104,7 @@ func (r *ReconcileJenkinsBaseConfiguration) Reconcile() (reconcile.Result, jenki
 		return reconcile.Result{}, nil, err
 	}
 	if !ok {
+		//TODO add what plugins have been changed
 		message := "Some plugins have changed, restarting Jenkins"
 		r.logger.Info(message)
 
