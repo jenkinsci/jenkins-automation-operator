@@ -492,6 +492,7 @@ func (r *ReconcileJenkinsBaseConfiguration) checkForPodRecreation(currentJenkins
 	if currentJenkinsMasterPod.Status.Phase == corev1.PodFailed ||
 		currentJenkinsMasterPod.Status.Phase == corev1.PodSucceeded ||
 		currentJenkinsMasterPod.Status.Phase == corev1.PodUnknown {
+		//TODO add Jenkins last 10 line logs
 		messages = append(messages, fmt.Sprintf("Invalid Jenkins pod phase '%s'", currentJenkinsMasterPod.Status.Phase))
 		verbose = append(verbose, fmt.Sprintf("Invalid Jenkins pod phase '%+v'", currentJenkinsMasterPod.Status))
 		return reason.NewPodRestart(reason.KubernetesSource, messages, verbose...)
