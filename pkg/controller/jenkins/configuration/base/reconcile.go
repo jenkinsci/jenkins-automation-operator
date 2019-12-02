@@ -460,13 +460,15 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsMasterPod(meta metav1.O
 		return reconcile.Result{Requeue: true}, nil
 	}
 
-	restartReason := r.checkForPodRecreation(*currentJenkinsMasterPod, userAndPasswordHash)
-	if restartReason.HasMessages() {
-		for _, msg := range restartReason.Verbose() {
-			r.logger.Info(msg)
-		}
+	if !r.IsJenkinsTerminating(*currentJenkinsMasterPod) {
+		restartReason := r.checkForPodRecreation(*currentJenkinsMasterPod, userAndPasswordHash)
+		if restartReason.HasMessages() {
+			for _, msg := range restartReason.Verbose() {
+				r.logger.Info(msg)
+			}
 
-		return reconcile.Result{Requeue: true}, r.Configuration.RestartJenkinsMasterPod(restartReason)
+			return reconcile.Result{Requeue: true}, r.Configuration.RestartJenkinsMasterPod(restartReason)
+		}
 	}
 
 	return reconcile.Result{}, nil
@@ -498,7 +500,10 @@ func (r *ReconcileJenkinsBaseConfiguration) checkForPodRecreation(currentJenkins
 		return reason.NewPodRestart(reason.KubernetesSource, messages, verbose...)
 	}
 
-	if userAndPasswordHash != r.Configuration.Jenkins.Status.UserAndPasswordHash {
+	userAndPasswordHashIsDifferent := userAndPasswordHash != r.Configuration.Jenkins.Status.UserAndPasswordHash
+	userAndPasswordHashStatusNotEmpty := r.Configuration.Jenkins.Status.UserAndPasswordHash != ""
+
+	if userAndPasswordHashIsDifferent && userAndPasswordHashStatusNotEmpty {
 		messages = append(messages, "User or password have changed")
 		verbose = append(verbose, "User or password have changed, recreating pod")
 	}
@@ -549,6 +554,15 @@ func (r *ReconcileJenkinsBaseConfiguration) checkForPodRecreation(currentJenkins
 		messages = append(messages, "Jenkins amount of containers has changed")
 		verbose = append(verbose, fmt.Sprintf("Jenkins amount of containers has changed, actual '%+v' required '%+v'",
 			len(currentJenkinsMasterPod.Spec.Containers), len(r.Configuration.Jenkins.Spec.Master.Containers)))
+	}
+
+	customResourceReplaced := (r.Configuration.Jenkins.Status.BaseConfigurationCompletedTime == nil ||
+		r.Configuration.Jenkins.Status.UserConfigurationCompletedTime == nil) &&
+		r.Configuration.Jenkins.Status.UserAndPasswordHash == ""
+
+	if customResourceReplaced {
+		messages = append(messages, "Jenkins CR has been replaced")
+		verbose = append(verbose, "Jenkins CR has been replaced")
 	}
 
 	for _, actualContainer := range currentJenkinsMasterPod.Spec.Containers {
