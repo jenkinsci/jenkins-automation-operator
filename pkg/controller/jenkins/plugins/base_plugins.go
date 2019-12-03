@@ -1,14 +1,14 @@
 package plugins
 
 const (
-	configurationAsCodePlugin           = "configuration-as-code:1.32"
+	configurationAsCodePlugin           = "configuration-as-code:1.34"
 	configurationAsCodeSupportPlugin    = "configuration-as-code-support:1.19"
-	gitPlugin                           = "git:3.12.1"
+	gitPlugin                           = "git:4.0.0"
 	jobDslPlugin                        = "job-dsl:1.76"
-	kubernetesCredentialsProviderPlugin = "kubernetes-credentials-provider:0.12.1"
-	kubernetesPlugin                    = "kubernetes:1.19.3"
+	kubernetesCredentialsProviderPlugin = "kubernetes-credentials-provider:0.13"
+	kubernetesPlugin                    = "kubernetes:1.21.3"
 	workflowAggregatorPlugin            = "workflow-aggregator:2.6"
-	workflowJobPlugin                   = "workflow-job:2.35"
+	workflowJobPlugin                   = "workflow-job:2.36"
 )
 
 // basePluginsList contains plugins to install by operator
