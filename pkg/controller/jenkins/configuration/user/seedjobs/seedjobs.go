@@ -340,6 +340,16 @@ func agentDeployment(jenkins *v1alpha2.Jenkins, namespace string, agentName stri
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      agentDeploymentName(*jenkins, agentName),
 			Namespace: namespace,
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					BlockOwnerDeletion: &[]bool{true}[0],
+					Controller:         &[]bool{true}[0],
+					Kind:               jenkins.Kind,
+					Name:               jenkins.Name,
+					APIVersion:         jenkins.APIVersion,
+					UID:                jenkins.UID,
+				},
+			},
 		},
 		Spec: apps.DeploymentSpec{
 			Template: corev1.PodTemplateSpec{
