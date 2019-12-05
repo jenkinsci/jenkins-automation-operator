@@ -17,8 +17,8 @@ It was built with immutability and declarative configuration as code in mind.
 Out of the box it provides:
 - integration with Kubernetes ([Jenkins kubernetes-plugin](https://github.com/jenkinsci/kubernetes-plugin))
 - pipelines as code ([Jenkins pipelines](https://jenkins.io/doc/book/pipeline/))
-- extensibility via groovy scripts (simmilar to [Jenkins script console](https://wiki.jenkins.io/display/JENKINS/Jenkins+Script+Console)) or ([configuration as code plugin](https://github.com/jenkinsci/configuration-as-code-plugin))
-- secure defaults and hardening (see [the security section](https://jenkinsci.github.io/kubernetes-operator/docs/security/) of the documentaiton)
+- extensibility via groovy scripts (similar to [Jenkins script console](https://wiki.jenkins.io/display/JENKINS/Jenkins+Script+Console)) or ([configuration as code plugin](https://github.com/jenkinsci/configuration-as-code-plugin))
+- secure defaults and hardening (see [the security section](https://jenkinsci.github.io/kubernetes-operator/docs/security/) of the documentation)
 
 ## Problem statement and goals
 
