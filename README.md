@@ -59,6 +59,10 @@ Feel free to file [issues](https://github.com/jenkinsci/kubernetes-operator/issu
 
 Before any big pull request please consult the maintainers to ensure a common direction.
 
+## Presentations
+
+- [Jenkins World 2019 Lisbon](assets/Jenkins_World_Lisbon_2019%20-Jenkins_Kubernetes_Operator.pdf)
+
 ## About the authors
 
 This project was originally developed by [VirtusLab](https://virtuslab.com/) and the following [CONTRIBUTORS](https://github.com/jenkinsci/kubernetes-operator/graphs/contributors).
