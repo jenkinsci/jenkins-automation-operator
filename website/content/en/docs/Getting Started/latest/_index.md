@@ -15,4 +15,4 @@ This document describes a getting started guide for **Jenkins Operator** `v0.2.x
 
 Prepare your Kubernetes cluster and set up your `kubectl` access.
 
-Once you have running Kubernetes cluster you can focus on installing **Jenkins Operator** according to the [Installation](/docs/installation/) guide.
+Once you have running Kubernetes cluster you can focus on installing **Jenkins Operator** according to the [Installation](/kubernetes-operator/docs/installation/) guide.
