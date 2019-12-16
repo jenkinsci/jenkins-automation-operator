@@ -293,7 +293,11 @@ docker-login: ## Log in into the Docker repository
 .PHONY: docker-build
 docker-build: check-env ## Build the container
 	@echo "+ $@"
-	docker build . -t $(DOCKER_REGISTRY):$(GITCOMMIT) --file build/Dockerfile
+	docker build \
+	--build-arg GO_VERSION=$(GO_VERSION) \
+	--build-arg OPERATOR_SDK_VERSION=$(OPERATOR_SDK_VERSION) \
+	-t $(DOCKER_REGISTRY):$(GITCOMMIT) . \
+	--file build/Dockerfile
 
 .PHONY: docker-images
 docker-images: ## List all local containers
@@ -414,30 +418,6 @@ endif
 	@echo "Dependencies:"
 	go mod vendor -v
 	@echo
-
-.PHONY: image
-image: ## Create the docker image from the Dockerfile. This image is used to build linux binary regardless of the system on the host
-	@echo "+ $@"
-	docker build --rm --force-rm --no-cache \
-	--build-arg GO_VERSION=$(GO_VERSION) \
-	--build-arg MINIKUBE_VERSION=$(MINIKUBE_VERSION) \
-	--build-arg OPERATOR_SDK_VERSION=$(OPERATOR_SDK_VERSION) \
-	-t jenkins-operator/runner .
-
-.PHONY: indocker
-PWD := $(shell pwd)
-DOCKER_HOST_IP := $(shell minikube docker-env | grep DOCKER_HOST | cut -d '"' -f 2 2> /dev/null)
-MINIKUBE_IP := $(shell minikube ip 2> /dev/null)
-indocker: minikube-start image ## Run make in a docker container
-	@echo "+ $@"
-	docker run --rm -it $(DOCKER_FLAGS) \
-		-v /var/run/docker.sock:/var/run/docker.sock \
-		--mount type=bind,source=$(PWD),target=/go/src/github.com/jenkinsci/kubernetes-operator \
-		--mount type=bind,source=$(HOME)/.minikube,target=/minikube \
-		--mount type=bind,source=$(HOME)/.kube,target=/home/builder/.kube \
-		-e DOCKER_HOST=$(DOCKER_HOST_IP) \
-		-e MINIKUBE_IP=$(MINIKUBE_IP) \
-		jenkins-operator/runner
 
 .PHONY: travis-prepare
 travis-prepare:
