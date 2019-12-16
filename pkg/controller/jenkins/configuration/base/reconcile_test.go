@@ -647,3 +647,54 @@ func Test_compareEnv(t *testing.T) {
 		assert.False(t, got)
 	})
 }
+
+func TestComparePodAnnotations(t *testing.T) {
+	t.Run("empty", func(t *testing.T) {
+		expectedAnnotations := map[string]string{}
+		actualAnnotations := map[string]string{}
+
+		got := comparePodAnnotations(expectedAnnotations, actualAnnotations)
+
+		assert.True(t, got)
+	})
+	t.Run("the same", func(t *testing.T) {
+		expectedAnnotations := map[string]string{"one": "two"}
+		actualAnnotations := expectedAnnotations
+
+		got := comparePodAnnotations(expectedAnnotations, actualAnnotations)
+
+		assert.True(t, got)
+	})
+	t.Run("one extra annotation in pod", func(t *testing.T) {
+		expectedAnnotations := map[string]string{"one": "two"}
+		actualAnnotations := map[string]string{"one": "two", "three": "four"}
+
+		got := comparePodAnnotations(expectedAnnotations, actualAnnotations)
+
+		assert.True(t, got)
+	})
+	t.Run("one missing annotation", func(t *testing.T) {
+		expectedAnnotations := map[string]string{"one": "two"}
+		actualAnnotations := map[string]string{"three": "four"}
+
+		got := comparePodAnnotations(expectedAnnotations, actualAnnotations)
+
+		assert.False(t, got)
+	})
+	t.Run("one value is different", func(t *testing.T) {
+		expectedAnnotations := map[string]string{"one": "two"}
+		actualAnnotations := map[string]string{"one": "three"}
+
+		got := comparePodAnnotations(expectedAnnotations, actualAnnotations)
+
+		assert.False(t, got)
+	})
+	t.Run("one missing annotation and one value is different", func(t *testing.T) {
+		expectedAnnotations := map[string]string{"one": "two", "missing": "something"}
+		actualAnnotations := map[string]string{"one": "three"}
+
+		got := comparePodAnnotations(expectedAnnotations, actualAnnotations)
+
+		assert.False(t, got)
+	})
+}

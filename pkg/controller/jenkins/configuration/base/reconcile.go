@@ -76,7 +76,7 @@ func (r *ReconcileJenkinsBaseConfiguration) Reconcile() (reconcile.Result, jenki
 	}
 	r.logger.V(log.VDebug).Info("Jenkins master pod is present")
 
-	stopReconcileLoop, err := r.detectJenkinsMasterPodStartingIssues(metaObject)
+	stopReconcileLoop, err := r.detectJenkinsMasterPodStartingIssues()
 	if err != nil {
 		return reconcile.Result{}, nil, err
 	}
@@ -84,7 +84,7 @@ func (r *ReconcileJenkinsBaseConfiguration) Reconcile() (reconcile.Result, jenki
 		return reconcile.Result{Requeue: false}, nil, nil
 	}
 
-	result, err = r.waitForJenkins(metaObject)
+	result, err = r.waitForJenkins()
 	if err != nil {
 		return reconcile.Result{}, nil, err
 	}
@@ -93,7 +93,7 @@ func (r *ReconcileJenkinsBaseConfiguration) Reconcile() (reconcile.Result, jenki
 	}
 	r.logger.V(log.VDebug).Info("Jenkins master pod is ready")
 
-	jenkinsClient, err := r.ensureJenkinsClient(metaObject)
+	jenkinsClient, err := r.ensureJenkinsClient()
 	if err != nil {
 		return reconcile.Result{}, nil, err
 	}
@@ -538,7 +538,7 @@ func (r *ReconcileJenkinsBaseConfiguration) checkForPodRecreation(currentJenkins
 	}
 
 	if len(r.Configuration.Jenkins.Spec.Master.Annotations) > 0 &&
-		!reflect.DeepEqual(r.Configuration.Jenkins.Spec.Master.Annotations, currentJenkinsMasterPod.ObjectMeta.Annotations) {
+		!comparePodAnnotations(r.Configuration.Jenkins.Spec.Master.Annotations, currentJenkinsMasterPod.ObjectMeta.Annotations) {
 		messages = append(messages, "Jenkins pod annotations have changed")
 		verbose = append(verbose, fmt.Sprintf("Jenkins pod annotations have changed, actual '%+v' required '%+v'",
 			currentJenkinsMasterPod.ObjectMeta.Annotations, r.Configuration.Jenkins.Spec.Master.Annotations))
@@ -657,6 +657,20 @@ func (r *ReconcileJenkinsBaseConfiguration) compareContainers(expected corev1.Co
 	return messages, verbose
 }
 
+func comparePodAnnotations(expected, actual map[string]string) bool {
+	for expectedKey, expectedValue := range expected {
+		actualValue, found := actual[expectedKey]
+		if !found {
+			return false
+		}
+		if expectedValue != actualValue {
+			return false
+		}
+	}
+
+	return true
+}
+
 func compareEnv(expected, actual []corev1.EnvVar) bool {
 	var actualEnv []corev1.EnvVar
 	for _, env := range actual {
@@ -696,7 +710,7 @@ func (r *ReconcileJenkinsBaseConfiguration) compareVolumes(actualPod corev1.Pod)
 	)
 }
 
-func (r *ReconcileJenkinsBaseConfiguration) detectJenkinsMasterPodStartingIssues(meta metav1.ObjectMeta) (stopReconcileLoop bool, err error) {
+func (r *ReconcileJenkinsBaseConfiguration) detectJenkinsMasterPodStartingIssues() (stopReconcileLoop bool, err error) {
 	jenkinsMasterPod, err := r.getJenkinsMasterPod()
 	if err != nil {
 		return false, err
@@ -744,7 +758,7 @@ func (r *ReconcileJenkinsBaseConfiguration) filterEvents(source corev1.EventList
 	return events
 }
 
-func (r *ReconcileJenkinsBaseConfiguration) waitForJenkins(meta metav1.ObjectMeta) (reconcile.Result, error) {
+func (r *ReconcileJenkinsBaseConfiguration) waitForJenkins() (reconcile.Result, error) {
 	jenkinsMasterPod, err := r.getJenkinsMasterPod()
 	if err != nil {
 		return reconcile.Result{}, err
@@ -785,7 +799,7 @@ func (r *ReconcileJenkinsBaseConfiguration) waitForJenkins(meta metav1.ObjectMet
 	return reconcile.Result{}, nil
 }
 
-func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsClient(meta metav1.ObjectMeta) (jenkinsclient.Jenkins, error) {
+func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsClient() (jenkinsclient.Jenkins, error) {
 	jenkinsURL, err := jenkinsclient.BuildJenkinsAPIUrl(
 		r.Configuration.Jenkins.ObjectMeta.Namespace, resources.GetJenkinsHTTPServiceName(r.Configuration.Jenkins), r.Configuration.Jenkins.Spec.Service.Port, r.local, r.minikube)
 
