@@ -279,6 +279,13 @@ func (in *JenkinsMaster) DeepCopyInto(out *JenkinsMaster) {
 			(*out)[key] = val
 		}
 	}
+	if in.AnnotationsDeprecated != nil {
+		in, out := &in.AnnotationsDeprecated, &out.AnnotationsDeprecated
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	if in.NodeSelector != nil {
 		in, out := &in.NodeSelector, &out.NodeSelector
 		*out = make(map[string]string, len(*in))

@@ -222,7 +222,15 @@ type JenkinsMaster struct {
 	// queryable and should be preserved when modifying objects.
 	// More info: http://kubernetes.io/docs/user-guide/annotations
 	// +optional
-	Annotations map[string]string `json:"masterAnnotations,omitempty"`
+	Annotations map[string]string `json:"annotations,omitempty"`
+
+	// Annotations is an unstructured key value map stored with a resource that may be
+	// set by external tools to store and retrieve arbitrary metadata. They are not
+	// queryable and should be preserved when modifying objects.
+	// More info: http://kubernetes.io/docs/user-guide/annotations
+	// Deprecated: will be removed in the future, please use Annotations(annotations)
+	// +optional
+	AnnotationsDeprecated map[string]string `json:"masterAnnotations,omitempty"`
 
 	// NodeSelector is a selector which must be true for the pod to fit on a node.
 	// Selector which must match a node's labels for the pod to be scheduled on that node.

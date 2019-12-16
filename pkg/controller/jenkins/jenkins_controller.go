@@ -193,7 +193,8 @@ func (r *ReconcileJenkins) Reconcile(request reconcile.Request) (reconcile.Resul
 func (r *ReconcileJenkins) reconcile(request reconcile.Request, logger logr.Logger) (reconcile.Result, *v1alpha2.Jenkins, error) {
 	// Fetch the Jenkins instance
 	jenkins := &v1alpha2.Jenkins{}
-	err := r.client.Get(context.TODO(), request.NamespacedName, jenkins)
+	var err error
+	err = r.client.Get(context.TODO(), request.NamespacedName, jenkins)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
@@ -204,9 +205,21 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request, logger logr.Logg
 		// Error reading the object - requeue the request.
 		return reconcile.Result{}, nil, errors.WithStack(err)
 	}
-	err = r.setDefaults(jenkins, logger)
+	var requeue bool
+	requeue, err = r.setDefaults(jenkins, logger)
 	if err != nil {
 		return reconcile.Result{}, jenkins, err
+	}
+	if requeue {
+		return reconcile.Result{Requeue: true}, jenkins, nil
+	}
+
+	requeue, err = r.handleDeprecatedData(jenkins, logger)
+	if err != nil {
+		return reconcile.Result{}, jenkins, err
+	}
+	if requeue {
+		return reconcile.Result{Requeue: true}, jenkins, nil
 	}
 
 	config := configuration.Configuration{
@@ -220,7 +233,8 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request, logger logr.Logg
 	// Reconcile base configuration
 	baseConfiguration := base.New(config, logger, r.local, r.minikube, &r.config)
 
-	baseMessages, err := baseConfiguration.Validate(jenkins)
+	var baseMessages []string
+	baseMessages, err = baseConfiguration.Validate(jenkins)
 	if err != nil {
 		return reconcile.Result{}, jenkins, err
 	}
@@ -239,7 +253,9 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request, logger logr.Logg
 		return reconcile.Result{}, jenkins, nil // don't requeue
 	}
 
-	result, jenkinsClient, err := baseConfiguration.Reconcile()
+	var result reconcile.Result
+	var jenkinsClient jenkinsclient.Jenkins
+	result, jenkinsClient, err = baseConfiguration.Reconcile()
 	if err != nil {
 		return reconcile.Result{}, jenkins, err
 	}
@@ -271,7 +287,8 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request, logger logr.Logg
 	// Reconcile user configuration
 	userConfiguration := user.New(config, jenkinsClient, logger, r.config)
 
-	messages, err := userConfiguration.Validate(jenkins)
+	var messages []string
+	messages, err = userConfiguration.Validate(jenkins)
 	if err != nil {
 		return reconcile.Result{}, jenkins, err
 	}
@@ -324,7 +341,7 @@ func (r *ReconcileJenkins) buildLogger(jenkinsName string) logr.Logger {
 	return log.Log.WithValues("cr", jenkinsName)
 }
 
-func (r *ReconcileJenkins) setDefaults(jenkins *v1alpha2.Jenkins, logger logr.Logger) error {
+func (r *ReconcileJenkins) setDefaults(jenkins *v1alpha2.Jenkins, logger logr.Logger) (requeue bool, err error) {
 	changed := false
 
 	var jenkinsContainer v1alpha2.Container
@@ -333,7 +350,7 @@ func (r *ReconcileJenkins) setDefaults(jenkins *v1alpha2.Jenkins, logger logr.Lo
 		jenkinsContainer = v1alpha2.Container{Name: resources.JenkinsMasterContainerName}
 	} else {
 		if jenkins.Spec.Master.Containers[0].Name != resources.JenkinsMasterContainerName {
-			return errors.Errorf("first container in spec.master.containers must be Jenkins container with name '%s', please correct CR", resources.JenkinsMasterContainerName)
+			return false, errors.Errorf("first container in spec.master.containers must be Jenkins container with name '%s', please correct CR", resources.JenkinsMasterContainerName)
 		}
 		jenkinsContainer = jenkins.Spec.Master.Containers[0]
 	}
@@ -479,9 +496,9 @@ func (r *ReconcileJenkins) setDefaults(jenkins *v1alpha2.Jenkins, logger logr.Lo
 	}
 
 	if changed {
-		return errors.WithStack(r.client.Update(context.TODO(), jenkins))
+		return changed, errors.WithStack(r.client.Update(context.TODO(), jenkins))
 	}
-	return nil
+	return changed, nil
 }
 
 func isJavaOpsVariableNotSet(container v1alpha2.Container) bool {
@@ -533,4 +550,20 @@ func basePlugins() (result []v1alpha2.Plugin) {
 		result = append(result, v1alpha2.Plugin{Name: value.Name, Version: value.Version})
 	}
 	return
+}
+
+func (r *ReconcileJenkins) handleDeprecatedData(jenkins *v1alpha2.Jenkins, logger logr.Logger) (requeue bool, err error) {
+	changed := false
+
+	if len(jenkins.Spec.Master.AnnotationsDeprecated) > 0 {
+		changed = true
+		jenkins.Spec.Master.Annotations = jenkins.Spec.Master.AnnotationsDeprecated
+		jenkins.Spec.Master.AnnotationsDeprecated = map[string]string{}
+		logger.V(log.VWarn).Info("spec.master.masterAnnotations is deprecated, the annotations have been moved to spec.master.annotations")
+	}
+
+	if changed {
+		return changed, errors.WithStack(r.client.Update(context.TODO(), jenkins))
+	}
+	return changed, nil
 }
