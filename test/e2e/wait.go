@@ -2,6 +2,7 @@ package e2e
 
 import (
 	goctx "context"
+	"golang.org/x/net/context"
 	"net/http"
 	"testing"
 	"time"
@@ -16,10 +17,12 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var (
@@ -92,7 +95,7 @@ func waitForRecreateJenkinsMasterPod(t *testing.T, jenkins *v1alpha2.Jenkins) {
 
 func waitForJenkinsUserConfigurationToComplete(t *testing.T, jenkins *v1alpha2.Jenkins) {
 	t.Log("Waiting for Jenkins user configuration to complete")
-	_, err := WaitUntilJenkinsConditionSet(retryInterval, 70, jenkins, func(jenkins *v1alpha2.Jenkins, err error) bool {
+	_, err := WaitUntilJenkinsConditionSet(retryInterval, 80, jenkins, func(jenkins *v1alpha2.Jenkins, err error) bool {
 		t.Logf("Current Jenkins status: '%+v', error '%s'", jenkins.Status, err)
 		return err == nil && jenkins.Status.UserConfigurationCompletedTime != nil
 	})
@@ -128,4 +131,26 @@ func WaitUntilJenkinsConditionSet(retryInterval time.Duration, retries int, jenk
 		return nil, err
 	}
 	return jenkinsStatus, nil
+}
+
+func waitUntilNamespaceDestroyed(namespace string) error {
+	err := try.Until(func() (bool, error) {
+		var namespaceList v1.NamespaceList
+		err := framework.Global.Client.List(context.TODO(), &client.ListOptions{}, &namespaceList)
+		if err != nil {
+			return true, err
+		}
+
+		exists := false
+		for _, namespaceItem := range namespaceList.Items {
+			if namespaceItem.Name == namespace {
+				exists = true
+				break
+			}
+		}
+
+		return !exists, nil
+	}, time.Second, time.Second*120)
+
+	return err
 }

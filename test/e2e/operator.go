@@ -126,13 +126,13 @@ func printKubernetesPods(t *testing.T, namespace string) {
 }
 
 func showLogsAndCleanup(t *testing.T, ctx *framework.TestCtx) {
+	namespace, err := ctx.GetNamespace()
+	if err != nil {
+		t.Fatalf("Failed to get '%s' namespace", err)
+	}
+
 	if t.Failed() {
 		t.Log("Test failed. Bellow here you can check logs:")
-
-		namespace, err := ctx.GetNamespace()
-		if err != nil {
-			t.Fatalf("Failed to get '%s' namespace", err)
-		}
 
 		printOperatorLogs(t, namespace)
 		printKubernetesEvents(t, namespace)
@@ -140,4 +140,8 @@ func showLogsAndCleanup(t *testing.T, ctx *framework.TestCtx) {
 	}
 
 	ctx.Cleanup()
+	err = waitUntilNamespaceDestroyed(namespace)
+	if err != nil {
+		t.Fatalf("Failed to wait for namespace until destroyed '%s'", err)
+	}
 }
