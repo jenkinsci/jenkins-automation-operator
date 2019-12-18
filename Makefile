@@ -368,7 +368,7 @@ minikube-start: ## Start minikube
 
 .PHONY: bump-version
 BUMP := patch
-bump-version: prepare-all-in-one-deploy-file ## Bump the version in the version file. Set BUMP to [ patch | major | minor ]
+bump-version: ## Bump the version in the version file. Set BUMP to [ patch | major | minor ]
 	@echo "+ $@"
 	#@go get -u github.com/jessfraz/junk/sembump # update sembump tool FIXME
 	$(eval NEW_VERSION=$(shell sembump --kind $(BUMP) $(VERSION)))
