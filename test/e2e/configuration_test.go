@@ -27,7 +27,7 @@ func TestConfiguration(t *testing.T) {
 	namespace, ctx := setupTest(t)
 
 	defer showLogsAndCleanup(t, ctx)
-  
+
 	jenkinsCRName := "e2e"
 	numberOfExecutors := 6
 	numberOfExecutorsEnvName := "NUMBER_OF_EXECUTORS"
