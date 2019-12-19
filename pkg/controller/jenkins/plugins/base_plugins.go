@@ -6,7 +6,7 @@ const (
 	gitPlugin                           = "git:4.0.0"
 	jobDslPlugin                        = "job-dsl:1.76"
 	kubernetesCredentialsProviderPlugin = "kubernetes-credentials-provider:0.13"
-	kubernetesPlugin                    = "kubernetes:1.21.3"
+	kubernetesPlugin                    = "kubernetes:1.22.1"
 	workflowAggregatorPlugin            = "workflow-aggregator:2.6"
 	workflowJobPlugin                   = "workflow-job:2.36"
 )
