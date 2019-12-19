@@ -116,7 +116,7 @@ func createJenkinsWithBackupAndRestoreConfigured(t *testing.T, name, namespace s
 					},
 					{
 						Name:            containerName,
-						Image:           "virtuslab/jenkins-operator-backup-pvc:v0.0.3",
+						Image:           "virtuslab/jenkins-operator-backup-pvc:v0.0.6",
 						ImagePullPolicy: corev1.PullIfNotPresent,
 						Env: []corev1.EnvVar{
 							{

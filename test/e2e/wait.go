@@ -95,7 +95,7 @@ func waitForRecreateJenkinsMasterPod(t *testing.T, jenkins *v1alpha2.Jenkins) {
 
 func waitForJenkinsUserConfigurationToComplete(t *testing.T, jenkins *v1alpha2.Jenkins) {
 	t.Log("Waiting for Jenkins user configuration to complete")
-	_, err := WaitUntilJenkinsConditionSet(retryInterval, 80, jenkins, func(jenkins *v1alpha2.Jenkins, err error) bool {
+	_, err := WaitUntilJenkinsConditionSet(retryInterval, 90, jenkins, func(jenkins *v1alpha2.Jenkins, err error) bool {
 		t.Logf("Current Jenkins status: '%+v', error '%s'", jenkins.Status, err)
 		return err == nil && jenkins.Status.UserConfigurationCompletedTime != nil
 	})
