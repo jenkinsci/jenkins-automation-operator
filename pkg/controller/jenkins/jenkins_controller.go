@@ -3,7 +3,9 @@ package jenkins
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"reflect"
+	"time"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
@@ -186,6 +188,9 @@ func (r *ReconcileJenkins) Reconcile(request reconcile.Request) (reconcile.Resul
 			return reconcile.Result{Requeue: false}, nil
 		}
 		return reconcile.Result{Requeue: true}, nil
+	}
+	if result.Requeue && result.RequeueAfter == 0 {
+		result.RequeueAfter = time.Duration(rand.Intn(10)) * time.Millisecond
 	}
 	return result, nil
 }
