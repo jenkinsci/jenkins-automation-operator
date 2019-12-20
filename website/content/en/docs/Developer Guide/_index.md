@@ -13,9 +13,9 @@ This document explains how to setup your development environment.
 
 ## Prerequisites
 
-- [operator_sdk][operator_sdk] version v0.8.1
+- [operator_sdk][operator_sdk] version v0.10.0
 - [git][git_tool]
-- [go][go_tool] version v1.12+
+- [go][go_tool] version v1.13+
 - [goimports, golint, checkmake and staticcheck][install_dev_tools]
 - [minikube][minikube] version v1.1.0+ (preferred Hypervisor - [virtualbox][virtualbox])
 - [docker][docker_tool] version 17.03+
@@ -70,45 +70,20 @@ Run unit tests:
 make test
 ```
 
-### Running E2E tests on Linux
+### Running E2E tests
 
 Run e2e tests with minikube:
 
 ```bash
 make minikube-start
 eval $(minikube docker-env)
-make build e2e
+make e2e
 ```
 
 Run the specific e2e test:
 
 ```bash
 make build e2e E2E_TEST_SELECTOR='^TestConfiguration$'
-```
-
-### Running E2E tests on macOS
-
-At first, you need to start minikube:
-```bash
-$ make minikube-start
-$ eval $(minikube docker-env) 
-```
-
-Build a Docker image inside the provided Linux container by:
-```bash
-$ make indocker
-```
-
-Build **Jenkins Operator** inside a container using:
-
-
-```bash
-$ make build
-```
-
-Then exit the container and run:
-```
-make e2e
 ```
 
 ## Tips & Tricks
@@ -147,5 +122,4 @@ kubectl get secret jenkins-operator-credentials-<cr_name> -o 'jsonpath={.data.pa
 [kubectl_tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
 [minikube]:https://kubernetes.io/docs/tasks/tools/install-minikube/
 [virtualbox]:https://www.virtualbox.org/wiki/Downloads
-[jenkins-operator]:../README.md
-[install_dev_tools]:install_dev_tools.md
+[install_dev_tools]:https://jenkinsci.github.io/kubernetes-operator/docs/developer-guide/tools/
