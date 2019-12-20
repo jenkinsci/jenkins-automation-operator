@@ -3,17 +3,22 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
+    <loc>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/deploy-jenkins/</loc>
+    <lastmod>2019-12-20T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
     <loc>https://jenkinsci.github.io/kubernetes-operator/docs/how-it-works/architecture-and-design/</loc>
     <lastmod>2019-08-05T00:00:00+00:00</lastmod>
   </url>
   
   <url>
-    <loc>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/deploy-jenkins/</loc>
+    <loc>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/v0.1.x/deploy-jenkins/</loc>
     <lastmod>2019-08-05T00:00:00+00:00</lastmod>
   </url>
   
   <url>
-    <loc>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/v0.1.x/deploy-jenkins/</loc>
+    <loc>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/v0.2.x/deploy-jenkins/</loc>
     <lastmod>2019-08-05T00:00:00+00:00</lastmod>
   </url>
   
@@ -24,7 +29,7 @@
   
   <url>
     <loc>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/configuration/</loc>
-    <lastmod>2019-08-05T00:00:00+00:00</lastmod>
+    <lastmod>2019-12-20T00:00:00+00:00</lastmod>
   </url>
   
   <url>
@@ -33,12 +38,22 @@
   </url>
   
   <url>
-    <loc>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/customization/</loc>
+    <loc>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/v0.2.x/configuration/</loc>
     <lastmod>2019-08-05T00:00:00+00:00</lastmod>
   </url>
   
   <url>
+    <loc>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/customization/</loc>
+    <lastmod>2019-12-20T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
     <loc>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/v0.1.x/customization/</loc>
+    <lastmod>2019-08-05T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/v0.2.x/customization/</loc>
     <lastmod>2019-08-05T00:00:00+00:00</lastmod>
   </url>
   
@@ -49,7 +64,27 @@
   
   <url>
     <loc>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/aks/</loc>
-    <lastmod>2019-08-05T00:00:00+00:00</lastmod>
+    <lastmod>2019-12-20T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/configure-backup-and-restore/</loc>
+    <lastmod>2019-12-20T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/custom-backup-and-restore/</loc>
+    <lastmod>2019-12-20T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/</loc>
+    <lastmod>2019-12-20T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/notifications/</loc>
+    <lastmod>2019-12-20T00:00:00+00:00</lastmod>
   </url>
   
   <url>
@@ -58,7 +93,7 @@
   </url>
   
   <url>
-    <loc>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/configure-backup-and-restore/</loc>
+    <loc>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/v0.2.x/aks/</loc>
     <lastmod>2019-08-05T00:00:00+00:00</lastmod>
   </url>
   
@@ -68,7 +103,12 @@
   </url>
   
   <url>
-    <loc>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/custom-backup-and-restore/</loc>
+    <loc>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/v0.2.x/configure-backup-and-restore/</loc>
+    <lastmod>2019-08-05T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/v0.2.x/custom-backup-and-restore/</loc>
     <lastmod>2019-08-05T00:00:00+00:00</lastmod>
   </url>
   
@@ -83,12 +123,12 @@
   </url>
   
   <url>
-    <loc>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/</loc>
+    <loc>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/v0.2.x/</loc>
     <lastmod>2019-08-05T00:00:00+00:00</lastmod>
   </url>
   
   <url>
-    <loc>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/migration/</loc>
+    <loc>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/v0.2.x/migration/</loc>
     <lastmod>2019-08-05T00:00:00+00:00</lastmod>
   </url>
   
@@ -119,7 +159,12 @@
   
   <url>
     <loc>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/diagnostics/</loc>
-    <lastmod>2019-08-05T00:00:00+00:00</lastmod>
+    <lastmod>2019-12-20T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/schema/</loc>
+    <lastmod>2019-12-20T00:00:00+00:00</lastmod>
   </url>
   
   <url>
@@ -128,7 +173,12 @@
   </url>
   
   <url>
-    <loc>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/schema/</loc>
+    <loc>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/v0.2.x/diagnostics/</loc>
+    <lastmod>2019-08-05T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/v0.2.x/schema/</loc>
     <lastmod>2019-08-05T00:00:00+00:00</lastmod>
   </url>
   
@@ -154,7 +204,7 @@
   
   <url>
     <loc>https://jenkinsci.github.io/kubernetes-operator/</loc>
-    <lastmod>2019-08-05T00:00:00+00:00</lastmod>
+    <lastmod>2019-12-20T00:00:00+00:00</lastmod>
   </url>
   
   <url>

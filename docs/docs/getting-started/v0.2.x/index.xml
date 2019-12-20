@@ -1,17 +1,17 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Jenkins Operator – Latest (v0.3.x)</title>
-    <link>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/</link>
+    <title>Jenkins Operator – Latest (v0.2.x)</title>
+    <link>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/v0.2.x/</link>
     <description>Recent Hugo news from gohugo.io</description>
     <generator>Hugo -- gohugo.io</generator>
-    <lastBuildDate>Fri, 20 Dec 2019 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Mon, 05 Aug 2019 00:00:00 +0000</lastBuildDate>
     <image>
       <url>https://jenkinsci.github.io/kubernetes-operator/img/hugo.png</url>
       <title>GoHugo.io</title>
-      <link>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/</link>
+      <link>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/v0.2.x/</link>
     </image>
     
-	  <atom:link href="https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/index.xml" rel="self" type="application/rss+xml" />
+	  <atom:link href="https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/v0.2.x/index.xml" rel="self" type="application/rss+xml" />
     
     
       
@@ -21,10 +21,10 @@
     
     <item>
       <title>Docs: Deploy Jenkins</title>
-      <link>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/deploy-jenkins/</link>
-      <pubDate>Fri, 20 Dec 2019 00:00:00 +0000</pubDate>
+      <link>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/v0.2.x/deploy-jenkins/</link>
+      <pubDate>Mon, 05 Aug 2019 00:00:00 +0000</pubDate>
       
-      <guid>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/deploy-jenkins/</guid>
+      <guid>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/v0.2.x/deploy-jenkins/</guid>
       <description>
         
         
@@ -92,10 +92,10 @@ kubectl get secret jenkins-operator-credentials-&amp;lt;cr_name&amp;gt; -o &lt;s
     
     <item>
       <title>Docs: Configuration</title>
-      <link>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/configuration/</link>
-      <pubDate>Fri, 20 Dec 2019 00:00:00 +0000</pubDate>
+      <link>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/v0.2.x/configuration/</link>
+      <pubDate>Mon, 05 Aug 2019 00:00:00 +0000</pubDate>
       
-      <guid>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/configuration/</guid>
+      <guid>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/v0.2.x/configuration/</guid>
       <description>
         
         
@@ -394,10 +394,10 @@ stringData:
     
     <item>
       <title>Docs: Customization</title>
-      <link>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/customization/</link>
-      <pubDate>Fri, 20 Dec 2019 00:00:00 +0000</pubDate>
+      <link>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/v0.2.x/customization/</link>
+      <pubDate>Mon, 05 Aug 2019 00:00:00 +0000</pubDate>
       
-      <guid>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/customization/</guid>
+      <guid>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/v0.2.x/customization/</guid>
       <description>
         
         
@@ -560,10 +560,10 @@ spec:
     
     <item>
       <title>Docs: AKS</title>
-      <link>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/aks/</link>
-      <pubDate>Fri, 20 Dec 2019 00:00:00 +0000</pubDate>
+      <link>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/v0.2.x/aks/</link>
+      <pubDate>Mon, 05 Aug 2019 00:00:00 +0000</pubDate>
       
-      <guid>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/aks/</guid>
+      <guid>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/v0.2.x/aks/</guid>
       <description>
         
         
@@ -584,10 +584,10 @@ restart of a Jenkins pod over and over again.&lt;/p&gt;
     
     <item>
       <title>Docs: Configure backup and restore</title>
-      <link>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/configure-backup-and-restore/</link>
-      <pubDate>Fri, 20 Dec 2019 00:00:00 +0000</pubDate>
+      <link>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/v0.2.x/configure-backup-and-restore/</link>
+      <pubDate>Mon, 05 Aug 2019 00:00:00 +0000</pubDate>
       
-      <guid>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/configure-backup-and-restore/</guid>
+      <guid>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/v0.2.x/configure-backup-and-restore/</guid>
       <description>
         
         
@@ -666,10 +666,10 @@ restart of a Jenkins pod over and over again.&lt;/p&gt;
     
     <item>
       <title>Docs: Custom Backup and Restore Providers</title>
-      <link>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/custom-backup-and-restore/</link>
-      <pubDate>Fri, 20 Dec 2019 00:00:00 +0000</pubDate>
+      <link>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/v0.2.x/custom-backup-and-restore/</link>
+      <pubDate>Mon, 05 Aug 2019 00:00:00 +0000</pubDate>
       
-      <guid>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/custom-backup-and-restore/</guid>
+      <guid>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/v0.2.x/custom-backup-and-restore/</guid>
       <description>
         
         
@@ -848,125 +848,74 @@ the number of backups under control, e.g. Cloud Formation fragment:&lt;/p&gt;
     </item>
     
     <item>
-      <title>Docs: Notifications</title>
-      <link>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/notifications/</link>
-      <pubDate>Fri, 20 Dec 2019 00:00:00 +0000</pubDate>
+      <title>Docs: Migration from v0.1.x</title>
+      <link>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/v0.2.x/migration/</link>
+      <pubDate>Mon, 05 Aug 2019 00:00:00 +0000</pubDate>
       
-      <guid>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/notifications/</guid>
+      <guid>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/v0.2.x/migration/</guid>
       <description>
         
         
         
 
-&lt;h2 id=&#34;slack&#34;&gt;Slack&lt;/h2&gt;
+&lt;h3 id=&#34;major-changes&#34;&gt;Major Changes&lt;/h3&gt;
 
-&lt;p&gt;Please follow &lt;a href=&#34;https://api.slack.com/incoming-webhooks&#34; target=&#34;_blank&#34;&gt;this&lt;/a&gt; instructions to get web hook URL.&lt;/p&gt;
+&lt;h4 id=&#34;adding-the-seed-job-agent&#34;&gt;Adding the seed job agent&lt;/h4&gt;
 
-&lt;p&gt;Create web hook secret with name &lt;code&gt;jenkins-operator-notification-data&lt;/code&gt;. Contains key &lt;code&gt;url&lt;/code&gt; with provided web hook URL.&lt;/p&gt;
-&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;$ kubectl create secret generic jenkins-operator-notification-data --from-literal&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#000&#34;&gt;url&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;&amp;lt;webhook_url&amp;gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-&lt;p&gt;Example configuration for Slack:&lt;/p&gt;
+&lt;p&gt;From version &lt;code&gt;v0.2.0&lt;/code&gt; seed jobs are not run by master executors, but by a dedicated agent deployed as a Kubernetes Pod.&lt;/p&gt;
 
-&lt;pre&gt;&lt;code&gt;kind: Jenkins
-spec:
-  master:
-    notifications:
-    - loggingLevel: info
-      verbose: true
-      name: &amp;lt;name&amp;gt;
-      slack:
-        webHookURLSecretKeySelector:
-          secret:
-            name: &amp;lt;secret_name&amp;gt;
-          key: &amp;lt;key&amp;gt;
-&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;We&amp;rsquo;ve had disabled master executors for security reasons.&lt;/p&gt;
 
-&lt;h2 id=&#34;microsoft-teams&#34;&gt;Microsoft Teams&lt;/h2&gt;
+&lt;h4 id=&#34;replacing-configuration-jobs-with-groovy-scripts&#34;&gt;Replacing configuration jobs with Groovy scripts&lt;/h4&gt;
 
-&lt;p&gt;Please follow &lt;a href=&#34;https://docs.microsoft.com/en-gb/outlook/actionable-messages/send-via-connectors&#34; target=&#34;_blank&#34;&gt;this&lt;/a&gt; instructions to get web hook URL.&lt;/p&gt;
+&lt;p&gt;In &lt;code&gt;v0.1.x&lt;/code&gt; &lt;strong&gt;Jenkins Operator&lt;/strong&gt; user configuration application was implemented using &lt;strong&gt;Jenkins&lt;/strong&gt; jobs
+and this mechanism was replaced since &lt;code&gt;v0.2.0&lt;/code&gt; with Groovy scripts implementing the same functionality.&lt;/p&gt;
 
-&lt;p&gt;Example configuration for Microsoft Teams:&lt;/p&gt;
+&lt;p&gt;As a result, the &lt;strong&gt;Jenkins&lt;/strong&gt; configuration jobs (&amp;ldquo;Configure Seed Jobs&amp;rdquo;, &amp;ldquo;jenkins-operator-base-configuration&amp;rdquo;, &amp;ldquo;jenkins-operator-user-configuration&amp;rdquo;) are no longer visible in &lt;strong&gt;Jenkins&lt;/strong&gt; UI.&lt;/p&gt;
 
-&lt;pre&gt;&lt;code&gt;kind: Jenkins
-spec:
-  master:
-    notifications:
-    - loggingLevel: info
-      verbose: true
-      name: &amp;lt;name&amp;gt;
-      teams:
-        webHookURLSecretKeySelector:
-          secret:
-            name: &amp;lt;secret_name&amp;gt;
-          key: &amp;lt;key&amp;gt;
-&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;In &lt;code&gt;v0.1.x&lt;/code&gt; you can see if any of the configuration jobs failed or succeded in the &lt;strong&gt;Jenkins&lt;/strong&gt; UI (job build logs).
+Instead, you can make sure the operator is running correctly by inspecting its logs, e.g.:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;$ kubectl -n logs deployment/jenkins-operator&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;h4 id=&#34;making-user-configuration-sources-configurable&#34;&gt;Making User Configuration sources configurable&lt;/h4&gt;
 
-&lt;h2 id=&#34;mailgun&#34;&gt;Mailgun&lt;/h2&gt;
+&lt;p&gt;In &lt;code&gt;v0.1.x&lt;/code&gt; &lt;strong&gt;Jenkins Operator&lt;/strong&gt; user configuration was stored in a &lt;code&gt;ConfigMap&lt;/code&gt; and a &lt;code&gt;Secret&lt;/code&gt;
+named &lt;code&gt;jenkins-operator-user-configuration-&amp;lt;cr_name&amp;gt;&lt;/code&gt;, and its name was hardcoded in the operator.&lt;/p&gt;
 
-&lt;p&gt;Example configuration for Mailgun:&lt;/p&gt;
+&lt;p&gt;Since &lt;code&gt;v0.2.0&lt;/code&gt; the user configuration can be stored in a multiple &lt;code&gt;ConfigMap&lt;/code&gt; and &lt;code&gt;Secret&lt;/code&gt; manifests
+and has to be explicitly pointed to with &lt;code&gt;spec.configurationAsCode.configurations&lt;/code&gt; and &lt;code&gt;spec.configurationAsCode.secret&lt;/code&gt;
+for the Configuration as Code plugin,
+and &lt;code&gt;spec.groovyScripts.configurations&lt;/code&gt; and &lt;code&gt;spec.groovyScripts.secret&lt;/code&gt; for the more advanced groovy scripts.&lt;/p&gt;
 
-&lt;pre&gt;&lt;code&gt;kind: Jenkins
-spec:
-  master:
-    notifications:
-    - loggingLevel: info
-      verbose: true
-      name: &amp;lt;name&amp;gt;
-      mailgun:
-        domain: &amp;lt;domain&amp;gt;
-        apiKeySecretKeySelector:
-          secret:
-            name: &amp;lt;secret_name&amp;gt;
-          key: &amp;lt;key&amp;gt;
-        recipient: &amp;lt;your_email&amp;gt;
-        from: &amp;lt;mailgun_email&amp;gt;
-&lt;/code&gt;&lt;/pre&gt;
+&lt;h3 id=&#34;migration&#34;&gt;Migration&lt;/h3&gt;
 
-&lt;h2 id=&#34;debug-options&#34;&gt;Debug options&lt;/h2&gt;
-
-&lt;p&gt;As you see there is two debugging options:&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;&lt;code&gt;loggingLevel&lt;/code&gt; (warning/info) - Set level of messages to send.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;&lt;code&gt;verbose&lt;/code&gt; - Print stacktrace and additional error messages&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h2 id=&#34;multiple-providers&#34;&gt;Multiple providers&lt;/h2&gt;
-
-&lt;p&gt;You can use multiple providers to send notification to another communication channels at the same time.
-For example you will send notifications to Slack and Teams.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;kind: Jenkins
-spec:
-  master:
-    notifications:
-    - loggingLevel: info
-      verbose: true
-      name: nslack
-      slack:
-        webHookURLSecretKeySelector:
-          secret:
-            name: &amp;lt;secret_name&amp;gt;
-          key: &amp;lt;key&amp;gt;
-    - loggingLevel: info
-      verbose: true
-      name: nteams
-      teams:
-        webHookURLSecretKeySelector:
-          secret:
-            name: &amp;lt;secret_name&amp;gt;
-          key: &amp;lt;key&amp;gt;
-&lt;/code&gt;&lt;/pre&gt;
-
+&lt;p&gt;If you want to use &lt;code&gt;v0.1.x&lt;/code&gt; operator configuration with &lt;code&gt;v0.2.x&lt;/code&gt; you have to modify your Jenkins Custom Resource(s)
+and add explicit references to the existing &lt;code&gt;ConfigMap&lt;/code&gt; and &lt;code&gt;Secret&lt;/code&gt;, e.g.:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-yaml&#34; data-lang=&#34;yaml&#34;&gt;apiVersion&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;jenkins.io/v1alpha2&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;&lt;/span&gt;kind&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;Jenkins&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;&lt;/span&gt;metadata&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;  &lt;/span&gt;name&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&amp;lt;cr_name&amp;gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;&lt;/span&gt;spec&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;  &lt;/span&gt;...&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;  &lt;/span&gt;configurationAsCode&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;    &lt;/span&gt;configurations&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; 
+&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;    &lt;/span&gt;-&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;name&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;jenkins-operator-user-configuration-&amp;lt;cr_name&lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;&amp;gt;
+&lt;/span&gt;&lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;    secret:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;      &lt;/span&gt;name&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;jenkins-operator-user-configuration-&amp;lt;cr_name&lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;&amp;gt;
+&lt;/span&gt;&lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;  groovyScripts:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;    &lt;/span&gt;configurations&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;    &lt;/span&gt;-&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;name&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;jenkins-operator-user-configuration-&amp;lt;cr_name&lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;&amp;gt;
+&lt;/span&gt;&lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;    secret:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;      &lt;/span&gt;name&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;jenkins-operator-user-configuration-&amp;lt;cr_name&lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;&amp;gt;
+&lt;/span&gt;&lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;  ...&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
       </description>
     </item>
     
     <item>
       <title>Docs: Diagnostics</title>
-      <link>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/diagnostics/</link>
-      <pubDate>Fri, 20 Dec 2019 00:00:00 +0000</pubDate>
+      <link>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/v0.2.x/diagnostics/</link>
+      <pubDate>Mon, 05 Aug 2019 00:00:00 +0000</pubDate>
       
-      <guid>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/diagnostics/</guid>
+      <guid>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/v0.2.x/diagnostics/</guid>
       <description>
         
         
@@ -990,10 +939,10 @@ kubectl apply -f deploy/operator.yaml&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
     
     <item>
       <title>Docs: Schema</title>
-      <link>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/schema/</link>
-      <pubDate>Fri, 20 Dec 2019 00:00:00 +0000</pubDate>
+      <link>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/v0.2.x/schema/</link>
+      <pubDate>Mon, 05 Aug 2019 00:00:00 +0000</pubDate>
       
-      <guid>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/schema/</guid>
+      <guid>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/v0.2.x/schema/</guid>
       <description>
         
         
@@ -1013,7 +962,7 @@ kubectl apply -f deploy/operator.yaml&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 &lt;/ul&gt;
 &lt;h2 id=&#34;jenkins.io&#34;&gt;jenkins.io&lt;/h2&gt;
 &lt;p&gt;
-&lt;p&gt;Package v1alpha2 contains API Schema definitions for the jenkins.io v1alpha2 API group&lt;/p&gt;
+&lt;p&gt;Package v1alpha2 contains the API Schema definitions for the jenkins.io v1alpha2 API group&lt;/p&gt;
 &lt;/p&gt;
 Resource Types:
 &lt;ul&gt;&lt;li&gt;
@@ -1102,22 +1051,8 @@ Every single change here requires a pod restart.&lt;/p&gt;
 &lt;/td&gt;
 &lt;td&gt;
 &lt;em&gt;(Optional)&lt;/em&gt;
-&lt;p&gt;SeedJobs defines list of Jenkins Seed Job configurations
+&lt;p&gt;SeedJobs defines a list of Jenkins Seed Job configurations
 More info: &lt;a href=&#34;https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-seed-jobs-and-pipelines&#34;&gt;https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-seed-jobs-and-pipelines&lt;/a&gt;&lt;/p&gt;
-&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;
-&lt;code&gt;notifications&lt;/code&gt;&lt;/br&gt;
-&lt;em&gt;
-&lt;a href=&#34;#github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Notification&#34;&gt;
-[][]github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Notification
-&lt;/a&gt;
-&lt;/em&gt;
-&lt;/td&gt;
-&lt;td&gt;
-&lt;p&gt;Notifications defines list of a services which are used to inform about Jenkins status
-Can be used to integrate chat services like Slack, Microsoft Teams or Mailgun&lt;/p&gt;
 &lt;/td&gt;
 &lt;/tr&gt;
 &lt;tr&gt;
@@ -1131,7 +1066,7 @@ Service
 &lt;/td&gt;
 &lt;td&gt;
 &lt;em&gt;(Optional)&lt;/em&gt;
-&lt;p&gt;Service is Kubernetes service of Jenkins master HTTP pod
+&lt;p&gt;Service is the Kubernetes service of the Jenkins master HTTP pod
 Defaults to :
 port: 8080
 type: ClusterIP&lt;/p&gt;
@@ -1148,7 +1083,7 @@ Service
 &lt;/td&gt;
 &lt;td&gt;
 &lt;em&gt;(Optional)&lt;/em&gt;
-&lt;p&gt;Service is Kubernetes service of Jenkins slave pods
+&lt;p&gt;Service is the Kubernetes service of the Jenkins slave pods
 Defaults to :
 port: 50000
 type: ClusterIP&lt;/p&gt;
@@ -1165,7 +1100,7 @@ Backup
 &lt;/td&gt;
 &lt;td&gt;
 &lt;em&gt;(Optional)&lt;/em&gt;
-&lt;p&gt;Backup defines configuration of Jenkins backup
+&lt;p&gt;Backup defines the configuration of a Jenkins backup
 More info: &lt;a href=&#34;https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-backup-and-restore&#34;&gt;https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-backup-and-restore&lt;/a&gt;&lt;/p&gt;
 &lt;/td&gt;
 &lt;/tr&gt;
@@ -1180,7 +1115,7 @@ Restore
 &lt;/td&gt;
 &lt;td&gt;
 &lt;em&gt;(Optional)&lt;/em&gt;
-&lt;p&gt;Backup defines configuration of Jenkins backup restore
+&lt;p&gt;Backup defines the configuration of a Jenkins backup restore
 More info: &lt;a href=&#34;https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-backup-and-restore&#34;&gt;https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-backup-and-restore&lt;/a&gt;&lt;/p&gt;
 &lt;/td&gt;
 &lt;/tr&gt;
@@ -1195,7 +1130,7 @@ GroovyScripts
 &lt;/td&gt;
 &lt;td&gt;
 &lt;em&gt;(Optional)&lt;/em&gt;
-&lt;p&gt;GroovyScripts defines configuration of Jenkins customization via groovy scripts&lt;/p&gt;
+&lt;p&gt;GroovyScripts defines the configuration of Jenkins customization via groovy scripts&lt;/p&gt;
 &lt;/td&gt;
 &lt;/tr&gt;
 &lt;tr&gt;
@@ -1209,7 +1144,7 @@ ConfigurationAsCode
 &lt;/td&gt;
 &lt;td&gt;
 &lt;em&gt;(Optional)&lt;/em&gt;
-&lt;p&gt;ConfigurationAsCode defines configuration of Jenkins customization via Configuration as Code Jenkins plugin&lt;/p&gt;
+&lt;p&gt;ConfigurationAsCode defines the configuration of Jenkins customization via the Configuration as Code Jenkins plugin&lt;/p&gt;
 &lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;
@@ -1300,7 +1235,7 @@ string
 &lt;a href=&#34;#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.JenkinsSpec&#34;&gt;JenkinsSpec&lt;/a&gt;)
 &lt;/p&gt;
 &lt;p&gt;
-&lt;p&gt;Backup defines configuration of Jenkins backup&lt;/p&gt;
+&lt;p&gt;Backup defines the configuration of a Jenkins backup&lt;/p&gt;
 &lt;/p&gt;
 &lt;table&gt;
 &lt;thead&gt;
@@ -1331,7 +1266,7 @@ Handler
 &lt;/em&gt;
 &lt;/td&gt;
 &lt;td&gt;
-&lt;p&gt;Action defines action which performs backup in backup container sidecar&lt;/p&gt;
+&lt;p&gt;Action defines the action which performs the backup in the backup container sidecar&lt;/p&gt;
 &lt;/td&gt;
 &lt;/tr&gt;
 &lt;tr&gt;
@@ -1342,7 +1277,7 @@ uint64
 &lt;/em&gt;
 &lt;/td&gt;
 &lt;td&gt;
-&lt;p&gt;Interval tells how often make backup in seconds
+&lt;p&gt;Interval tells you how often the backup is made in seconds
 Defaults to 30.&lt;/p&gt;
 &lt;/td&gt;
 &lt;/tr&gt;
@@ -1354,7 +1289,7 @@ bool
 &lt;/em&gt;
 &lt;/td&gt;
 &lt;td&gt;
-&lt;p&gt;MakeBackupBeforePodDeletion tells operator to make backup before Jenkins master pod deletion&lt;/p&gt;
+&lt;p&gt;MakeBackupBeforePodDeletion tells the operator to make a backup before Jenkins master pod deletion&lt;/p&gt;
 &lt;/td&gt;
 &lt;/tr&gt;
 &lt;/tbody&gt;
@@ -1366,7 +1301,7 @@ bool
 &lt;a href=&#34;#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.Customization&#34;&gt;Customization&lt;/a&gt;)
 &lt;/p&gt;
 &lt;p&gt;
-&lt;p&gt;ConfigMapRef is reference to Kubernetes ConfigMap&lt;/p&gt;
+&lt;p&gt;ConfigMapRef is the reference to Kubernetes ConfigMap&lt;/p&gt;
 &lt;/p&gt;
 &lt;table&gt;
 &lt;thead&gt;
@@ -1395,7 +1330,7 @@ string
 &lt;a href=&#34;#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.JenkinsSpec&#34;&gt;JenkinsSpec&lt;/a&gt;)
 &lt;/p&gt;
 &lt;p&gt;
-&lt;p&gt;ConfigurationAsCode defines configuration of Jenkins customization via Configuration as Code Jenkins plugin&lt;/p&gt;
+&lt;p&gt;ConfigurationAsCode defines configuration of Jenkins customization via the Configuration as Code Jenkins plugin&lt;/p&gt;
 &lt;/p&gt;
 &lt;table&gt;
 &lt;thead&gt;
@@ -1426,7 +1361,7 @@ Customization
 &lt;a href=&#34;#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.JenkinsMaster&#34;&gt;JenkinsMaster&lt;/a&gt;)
 &lt;/p&gt;
 &lt;p&gt;
-&lt;p&gt;Container defines Kubernetes container attributes&lt;/p&gt;
+&lt;p&gt;Container defines the Kubernetes container attributes&lt;/p&gt;
 &lt;/p&gt;
 &lt;table&gt;
 &lt;thead&gt;
@@ -1781,7 +1716,7 @@ Kubernetes core/v1.ExecAction
 &lt;a href=&#34;#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.SeedJob&#34;&gt;SeedJob&lt;/a&gt;)
 &lt;/p&gt;
 &lt;p&gt;
-&lt;p&gt;JenkinsCredentialType defines type of Jenkins credential used to seed job mechanism&lt;/p&gt;
+&lt;p&gt;JenkinsCredentialType defines the type of Jenkins credential used in the seed job mechanism&lt;/p&gt;
 &lt;/p&gt;
 &lt;h3 id=&#34;github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.JenkinsMaster&#34;&gt;JenkinsMaster
 &lt;/h3&gt;
@@ -1803,21 +1738,6 @@ every single change requires a Jenkins master pod restart&lt;/p&gt;
 &lt;tbody&gt;
 &lt;tr&gt;
 &lt;td&gt;
-&lt;code&gt;annotations&lt;/code&gt;&lt;/br&gt;
-&lt;em&gt;
-map[string]string
-&lt;/em&gt;
-&lt;/td&gt;
-&lt;td&gt;
-&lt;em&gt;(Optional)&lt;/em&gt;
-&lt;p&gt;Annotations is an unstructured key value map stored with a resource that may be
-set by external tools to store and retrieve arbitrary metadata. They are not
-queryable and should be preserved when modifying objects.
-More info: &lt;a href=&#34;http://kubernetes.io/docs/user-guide/annotations&#34;&gt;http://kubernetes.io/docs/user-guide/annotations&lt;/a&gt;&lt;/p&gt;
-&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;
 &lt;code&gt;masterAnnotations&lt;/code&gt;&lt;/br&gt;
 &lt;em&gt;
 map[string]string
@@ -1828,8 +1748,7 @@ map[string]string
 &lt;p&gt;Annotations is an unstructured key value map stored with a resource that may be
 set by external tools to store and retrieve arbitrary metadata. They are not
 queryable and should be preserved when modifying objects.
-More info: &lt;a href=&#34;http://kubernetes.io/docs/user-guide/annotations&#34;&gt;http://kubernetes.io/docs/user-guide/annotations&lt;/a&gt;
-Deprecated: will be removed in the future, please use Annotations(annotations)&lt;/p&gt;
+More info: &lt;a href=&#34;http://kubernetes.io/docs/user-guide/annotations&#34;&gt;http://kubernetes.io/docs/user-guide/annotations&lt;/a&gt;&lt;/p&gt;
 &lt;/td&gt;
 &lt;/tr&gt;
 &lt;tr&gt;
@@ -1987,17 +1906,6 @@ version: 0.12.1&lt;/p&gt;
 &lt;p&gt;Plugins contains plugins required by user&lt;/p&gt;
 &lt;/td&gt;
 &lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;
-&lt;code&gt;disableCSRFProtection&lt;/code&gt;&lt;/br&gt;
-&lt;em&gt;
-bool
-&lt;/em&gt;
-&lt;/td&gt;
-&lt;td&gt;
-&lt;p&gt;DisableCSRFProtection allows you to toggle CSRF Protection on Jenkins&lt;/p&gt;
-&lt;/td&gt;
-&lt;/tr&gt;
 &lt;/tbody&gt;
 &lt;/table&gt;
 &lt;h3 id=&#34;github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.JenkinsSpec&#34;&gt;JenkinsSpec
@@ -2044,20 +1952,6 @@ Every single change here requires a pod restart.&lt;/p&gt;
 &lt;em&gt;(Optional)&lt;/em&gt;
 &lt;p&gt;SeedJobs defines list of Jenkins Seed Job configurations
 More info: &lt;a href=&#34;https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-seed-jobs-and-pipelines&#34;&gt;https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-seed-jobs-and-pipelines&lt;/a&gt;&lt;/p&gt;
-&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;
-&lt;code&gt;notifications&lt;/code&gt;&lt;/br&gt;
-&lt;em&gt;
-&lt;a href=&#34;#github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Notification&#34;&gt;
-[][]github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Notification
-&lt;/a&gt;
-&lt;/em&gt;
-&lt;/td&gt;
-&lt;td&gt;
-&lt;p&gt;Notifications defines list of a services which are used to inform about Jenkins status
-Can be used to integrate chat services like Slack, Microsoft Teams or Mailgun&lt;/p&gt;
 &lt;/td&gt;
 &lt;/tr&gt;
 &lt;tr&gt;
@@ -2282,7 +2176,7 @@ string
 &lt;/td&gt;
 &lt;td&gt;
 &lt;em&gt;(Optional)&lt;/em&gt;
-&lt;p&gt;UserAndPasswordHash is a SHA256 hash made from user and password&lt;/p&gt;
+&lt;p&gt;UserAndPasswordHash is a SHA256 hash made from the username and password&lt;/p&gt;
 &lt;/td&gt;
 &lt;/tr&gt;
 &lt;tr&gt;
@@ -2294,7 +2188,7 @@ string
 &lt;/td&gt;
 &lt;td&gt;
 &lt;em&gt;(Optional)&lt;/em&gt;
-&lt;p&gt;CreatedSeedJobs contains list of seed job id already created in Jenkins&lt;/p&gt;
+&lt;p&gt;CreatedSeedJobs contains list of seed job ids already created in Jenkins&lt;/p&gt;
 &lt;/td&gt;
 &lt;/tr&gt;
 &lt;tr&gt;
@@ -2409,10 +2303,6 @@ SecretKeySelector
 &lt;h3 id=&#34;github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Notification&#34;&gt;Notification
 &lt;/h3&gt;
 &lt;p&gt;
-(&lt;em&gt;Appears on:&lt;/em&gt;
-&lt;a href=&#34;#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.JenkinsSpec&#34;&gt;JenkinsSpec&lt;/a&gt;)
-&lt;/p&gt;
-&lt;p&gt;
 &lt;p&gt;Notification is a service configuration used to send notifications about Jenkins status&lt;/p&gt;
 &lt;/p&gt;
 &lt;table&gt;
@@ -2425,10 +2315,10 @@ SecretKeySelector
 &lt;tbody&gt;
 &lt;tr&gt;
 &lt;td&gt;
-&lt;code&gt;level&lt;/code&gt;&lt;/br&gt;
+&lt;code&gt;loggingLevel&lt;/code&gt;&lt;/br&gt;
 &lt;em&gt;
-&lt;a href=&#34;#github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.NotificationLevel&#34;&gt;
-NotificationLevel
+&lt;a href=&#34;#github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.NotificationLogLevel&#34;&gt;
+NotificationLogLevel
 &lt;/a&gt;
 &lt;/em&gt;
 &lt;/td&gt;
@@ -2491,28 +2381,16 @@ github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Mailgun
 &lt;td&gt;
 &lt;/td&gt;
 &lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;
-&lt;code&gt;smtp&lt;/code&gt;&lt;/br&gt;
-&lt;em&gt;
-&lt;a href=&#34;#github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.SMTP&#34;&gt;
-github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.SMTP
-&lt;/a&gt;
-&lt;/em&gt;
-&lt;/td&gt;
-&lt;td&gt;
-&lt;/td&gt;
-&lt;/tr&gt;
 &lt;/tbody&gt;
 &lt;/table&gt;
-&lt;h3 id=&#34;github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.NotificationLevel&#34;&gt;NotificationLevel
+&lt;h3 id=&#34;github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.NotificationLogLevel&#34;&gt;NotificationLogLevel
 (&lt;code&gt;string&lt;/code&gt; alias)&lt;/p&gt;&lt;/h3&gt;
 &lt;p&gt;
 (&lt;em&gt;Appears on:&lt;/em&gt;
 &lt;a href=&#34;#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.Notification&#34;&gt;Notification&lt;/a&gt;)
 &lt;/p&gt;
 &lt;p&gt;
-&lt;p&gt;NotificationLevel defines the level of a Notification&lt;/p&gt;
+&lt;p&gt;NotificationLogLevel defines logging level of Notification&lt;/p&gt;
 &lt;/p&gt;
 &lt;h3 id=&#34;github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Plugin&#34;&gt;Plugin
 &lt;/h3&gt;
@@ -2610,106 +2488,12 @@ uint64
 &lt;/tr&gt;
 &lt;/tbody&gt;
 &lt;/table&gt;
-&lt;h3 id=&#34;github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.SMTP&#34;&gt;SMTP
-&lt;/h3&gt;
-&lt;p&gt;
-(&lt;em&gt;Appears on:&lt;/em&gt;
-&lt;a href=&#34;#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.Notification&#34;&gt;Notification&lt;/a&gt;)
-&lt;/p&gt;
-&lt;p&gt;
-&lt;p&gt;SMTP is handler for sending emails via this protocol&lt;/p&gt;
-&lt;/p&gt;
-&lt;table&gt;
-&lt;thead&gt;
-&lt;tr&gt;
-&lt;th&gt;Field&lt;/th&gt;
-&lt;th&gt;Description&lt;/th&gt;
-&lt;/tr&gt;
-&lt;/thead&gt;
-&lt;tbody&gt;
-&lt;tr&gt;
-&lt;td&gt;
-&lt;code&gt;usernameSecretKeySelector&lt;/code&gt;&lt;/br&gt;
-&lt;em&gt;
-&lt;a href=&#34;#github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.SecretKeySelector&#34;&gt;
-SecretKeySelector
-&lt;/a&gt;
-&lt;/em&gt;
-&lt;/td&gt;
-&lt;td&gt;
-&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;
-&lt;code&gt;passwordSecretKeySelector&lt;/code&gt;&lt;/br&gt;
-&lt;em&gt;
-&lt;a href=&#34;#github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.SecretKeySelector&#34;&gt;
-SecretKeySelector
-&lt;/a&gt;
-&lt;/em&gt;
-&lt;/td&gt;
-&lt;td&gt;
-&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;
-&lt;code&gt;port&lt;/code&gt;&lt;/br&gt;
-&lt;em&gt;
-int
-&lt;/em&gt;
-&lt;/td&gt;
-&lt;td&gt;
-&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;
-&lt;code&gt;server&lt;/code&gt;&lt;/br&gt;
-&lt;em&gt;
-string
-&lt;/em&gt;
-&lt;/td&gt;
-&lt;td&gt;
-&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;
-&lt;code&gt;tlsInsecureSkipVerify&lt;/code&gt;&lt;/br&gt;
-&lt;em&gt;
-bool
-&lt;/em&gt;
-&lt;/td&gt;
-&lt;td&gt;
-&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;
-&lt;code&gt;from&lt;/code&gt;&lt;/br&gt;
-&lt;em&gt;
-string
-&lt;/em&gt;
-&lt;/td&gt;
-&lt;td&gt;
-&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;
-&lt;code&gt;to&lt;/code&gt;&lt;/br&gt;
-&lt;em&gt;
-string
-&lt;/em&gt;
-&lt;/td&gt;
-&lt;td&gt;
-&lt;/td&gt;
-&lt;/tr&gt;
-&lt;/tbody&gt;
-&lt;/table&gt;
 &lt;h3 id=&#34;github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.SecretKeySelector&#34;&gt;SecretKeySelector
 &lt;/h3&gt;
 &lt;p&gt;
 (&lt;em&gt;Appears on:&lt;/em&gt;
 &lt;a href=&#34;#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.Mailgun&#34;&gt;Mailgun&lt;/a&gt;, 
 &lt;a href=&#34;#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.MicrosoftTeams&#34;&gt;MicrosoftTeams&lt;/a&gt;, 
-&lt;a href=&#34;#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.SMTP&#34;&gt;SMTP&lt;/a&gt;, 
 &lt;a href=&#34;#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.Slack&#34;&gt;Slack&lt;/a&gt;)
 &lt;/p&gt;
 &lt;p&gt;
@@ -2838,7 +2622,7 @@ string
 &lt;/em&gt;
 &lt;/td&gt;
 &lt;td&gt;
-&lt;p&gt;Targets is the repository path where are seed job definitions&lt;/p&gt;
+&lt;p&gt;Targets is the repository path where the seed job definitions are&lt;/p&gt;
 &lt;/td&gt;
 &lt;/tr&gt;
 &lt;tr&gt;
@@ -2849,7 +2633,7 @@ string
 &lt;/em&gt;
 &lt;/td&gt;
 &lt;td&gt;
-&lt;p&gt;RepositoryBranch is the repository branch where are seed job definitions&lt;/p&gt;
+&lt;p&gt;RepositoryBranch is the repository branch where the seed job definitions are&lt;/p&gt;
 &lt;/td&gt;
 &lt;/tr&gt;
 &lt;tr&gt;
@@ -3046,7 +2830,7 @@ int32
 &lt;/em&gt;
 &lt;/td&gt;
 &lt;td&gt;
-&lt;p&gt;The port that are exposed by this service.
+&lt;p&gt;The port that is exposed by this service.
 More info: &lt;a href=&#34;https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies&#34;&gt;https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies&lt;/a&gt;&lt;/p&gt;
 &lt;/td&gt;
 &lt;/tr&gt;
@@ -3061,7 +2845,7 @@ int32
 &lt;em&gt;(Optional)&lt;/em&gt;
 &lt;p&gt;The port on each node on which this service is exposed when type=NodePort or LoadBalancer.
 Usually assigned by the system. If specified, it will be allocated to the service
-if unused or else creation of the service will fail.
+if unused, or else creation of the service will fail.
 Default is to auto-allocate a port if the ServiceType of this Service requires one.
 More info: &lt;a href=&#34;https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport&#34;&gt;https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport&lt;/a&gt;&lt;/p&gt;
 &lt;/td&gt;
@@ -3076,7 +2860,7 @@ More info: &lt;a href=&#34;https://kubernetes.io/docs/concepts/services-networki
 &lt;td&gt;
 &lt;em&gt;(Optional)&lt;/em&gt;
 &lt;p&gt;If specified and supported by the platform, this will restrict traffic through the cloud-provider
-load-balancer will be restricted to the specified client IPs. This field will be ignored if the
+the load-balancer will be restricted to the specified client IPs. This field will be ignored if the
 cloud-provider does not support the feature.&amp;rdquo;
 More info: &lt;a href=&#34;https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/&#34;&gt;https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/&lt;/a&gt;&lt;/p&gt;
 &lt;/td&gt;
@@ -3134,7 +2918,7 @@ SecretKeySelector
 &lt;hr/&gt;
 &lt;p&gt;&lt;em&gt;
 Generated with &lt;code&gt;gen-crd-api-reference-docs&lt;/code&gt;
-on git commit &lt;code&gt;b6e1057&lt;/code&gt;.
+on git commit &lt;code&gt;f4c4235&lt;/code&gt;.
 &lt;/em&gt;&lt;/p&gt;
 
       </description>

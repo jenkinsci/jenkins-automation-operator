@@ -24,7 +24,7 @@
 <meta property="og:description" content="Prevent loss of job history
 " />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/v0.1.x/configure-backup-and-restore/" />
+<meta property="og:url" content="https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/v0.2.x/configure-backup-and-restore/" />
 <meta property="article:published_time" content="2019-08-05T00:00:00+00:00" />
 <meta property="article:modified_time" content="2019-08-05T00:00:00+00:00" /><meta property="og:site_name" content="Jenkins Operator" />
 <meta itemprop="name" content="Configure backup and restore">
@@ -34,7 +34,7 @@
 
 <meta itemprop="datePublished" content="2019-08-05T00:00:00&#43;00:00" />
 <meta itemprop="dateModified" content="2019-08-05T00:00:00&#43;00:00" />
-<meta itemprop="wordCount" content="158">
+<meta itemprop="wordCount" content="156">
 
 
 
@@ -282,10 +282,10 @@
 
 <ul class="td-sidebar-nav__section pr-md-3">
   <li class="td-sidebar-nav__section-title">
-    <a  href="/kubernetes-operator/docs/getting-started/v0.2.x/" class="align-left pl-0 pr-2 collapsed td-sidebar-link td-sidebar-link__section">Latest (v0.2.x)</a>
+    <a  href="/kubernetes-operator/docs/getting-started/v0.2.x/" class="align-left pl-0 pr-2 active td-sidebar-link td-sidebar-link__section">Latest (v0.2.x)</a>
   </li>
   <ul>
-    <li class="collapse " id="kubernetes-operator-docs-getting-started-v0-2-x">
+    <li class="collapse show" id="kubernetes-operator-docs-getting-started-v0-2-x">
       
       
       
@@ -316,7 +316,7 @@
       
       
       
-      <a class="td-sidebar-link td-sidebar-link__page " id="m-kubernetes-operator-docs-getting-started-v0-2-x-configure-backup-and-restore" href="/kubernetes-operator/docs/getting-started/v0.2.x/configure-backup-and-restore/">Configure backup and restore</a>
+      <a class="td-sidebar-link td-sidebar-link__page  active" id="m-kubernetes-operator-docs-getting-started-v0-2-x-configure-backup-and-restore" href="/kubernetes-operator/docs/getting-started/v0.2.x/configure-backup-and-restore/">Configure backup and restore</a>
       
       
       
@@ -359,10 +359,10 @@
 
 <ul class="td-sidebar-nav__section pr-md-3">
   <li class="td-sidebar-nav__section-title">
-    <a  href="/kubernetes-operator/docs/getting-started/v0.1.x/" class="align-left pl-0 pr-2 active td-sidebar-link td-sidebar-link__section">v0.1.x</a>
+    <a  href="/kubernetes-operator/docs/getting-started/v0.1.x/" class="align-left pl-0 pr-2 collapsed td-sidebar-link td-sidebar-link__section">v0.1.x</a>
   </li>
   <ul>
-    <li class="collapse show" id="kubernetes-operator-docs-getting-started-v0-1-x">
+    <li class="collapse " id="kubernetes-operator-docs-getting-started-v0-1-x">
       
       
       
@@ -393,7 +393,7 @@
       
       
       
-      <a class="td-sidebar-link td-sidebar-link__page  active" id="m-kubernetes-operator-docs-getting-started-v0-1-x-configure-backup-and-restore" href="/kubernetes-operator/docs/getting-started/v0.1.x/configure-backup-and-restore/">Configure backup and restore</a>
+      <a class="td-sidebar-link td-sidebar-link__page " id="m-kubernetes-operator-docs-getting-started-v0-1-x-configure-backup-and-restore" href="/kubernetes-operator/docs/getting-started/v0.1.x/configure-backup-and-restore/">Configure backup and restore</a>
       
       
       
@@ -498,7 +498,7 @@
           
           
           
-        <a href="https://github.com/jenkinsci/kubernetes-operator/edit/master/website/content/en/docs/Getting%20Started/v0.1.x/configure-backup-and-restore.md" target="_blank"><i class="fa fa-edit fa-fw"></i> Edit this page</a>
+        <a href="https://github.com/jenkinsci/kubernetes-operator/edit/master/website/content/en/docs/Getting%20Started/v0.2.x/configure-backup-and-restore.md" target="_blank"><i class="fa fa-edit fa-fw"></i> Edit this page</a>
         <a href="https://github.com/jenkinsci/kubernetes-operator/issues/new?title=Configure%20backup%20and%20restore" target="_blank"><i class="fab fa-github fa-fw"></i> Create documentation issue</a>
           
               
@@ -517,7 +517,7 @@
 <ul>
 <li>
 <ul>
-<li>
+<li><a href="#pvc">PVC</a>
 <ul>
 <li><a href="#create-pvc">Create PVC</a></li>
 <li><a href="#configure-jenkins-cr">Configure Jenkins CR</a></li>
@@ -562,14 +562,14 @@
 
 
 <li class="breadcrumb-item" >
-	<a href="https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/v0.1.x/">v0.1.x</a>
+	<a href="https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/v0.2.x/">Latest (v0.2.x)</a>
 </li>
 
 
 
 
 <li class="breadcrumb-item active" aria-current="page">
-	<a href="https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/v0.1.x/configure-backup-and-restore/">Configure backup and restore</a>
+	<a href="https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/v0.2.x/configure-backup-and-restore/">Configure backup and restore</a>
 </li>
 
 	</ol>
@@ -582,6 +582,8 @@
 	
 
 <p>Backup and restore is done by a container sidecar.</p>
+
+<h3 id="pvc">PVC</h3>
 
 <h4 id="create-pvc">Create PVC</h4>
 
@@ -638,14 +640,14 @@
 </span><span style="color:#f8f8f8;text-decoration:underline">      </span>exec<span style="color:#000;font-weight:bold">:</span><span style="color:#f8f8f8;text-decoration:underline">
 </span><span style="color:#f8f8f8;text-decoration:underline">        </span>command<span style="color:#000;font-weight:bold">:</span><span style="color:#f8f8f8;text-decoration:underline">
 </span><span style="color:#f8f8f8;text-decoration:underline">        </span>-<span style="color:#f8f8f8;text-decoration:underline"> </span>/home/user/bin/backup.sh<span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#8f5902;font-style:italic"># this command is invoked on &#34;backup&#34; container to make backup, for example /home/user/bin/backup.sh &lt;backup_number&gt;, &lt;backup_number&gt; is passed by operator</span><span style="color:#f8f8f8;text-decoration:underline">
-</span><span style="color:#f8f8f8;text-decoration:underline">    </span>interval<span style="color:#000;font-weight:bold">:</span><span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#0000cf;font-weight:bold">30</span><span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#8f5902;font-style:italic"># how often to make a backup, in seconds</span><span style="color:#f8f8f8;text-decoration:underline">
+</span><span style="color:#f8f8f8;text-decoration:underline">    </span>interval<span style="color:#000;font-weight:bold">:</span><span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#0000cf;font-weight:bold">30</span><span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#8f5902;font-style:italic"># how often make backup in seconds</span><span style="color:#f8f8f8;text-decoration:underline">
 </span><span style="color:#f8f8f8;text-decoration:underline">    </span>makeBackupBeforePodDeletion<span style="color:#000;font-weight:bold">:</span><span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#204a87;font-weight:bold">true</span><span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#8f5902;font-style:italic"># make a backup before pod deletion</span><span style="color:#f8f8f8;text-decoration:underline">
 </span><span style="color:#f8f8f8;text-decoration:underline">  </span>restore<span style="color:#000;font-weight:bold">:</span><span style="color:#f8f8f8;text-decoration:underline">
-</span><span style="color:#f8f8f8;text-decoration:underline">    </span>containerName<span style="color:#000;font-weight:bold">:</span><span style="color:#f8f8f8;text-decoration:underline"> </span>backup<span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#8f5902;font-style:italic"># container name is responsible to restore the backup</span><span style="color:#f8f8f8;text-decoration:underline">
+</span><span style="color:#f8f8f8;text-decoration:underline">    </span>containerName<span style="color:#000;font-weight:bold">:</span><span style="color:#f8f8f8;text-decoration:underline"> </span>backup<span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#8f5902;font-style:italic"># container name is responsible for restore backup</span><span style="color:#f8f8f8;text-decoration:underline">
 </span><span style="color:#f8f8f8;text-decoration:underline">    </span>action<span style="color:#000;font-weight:bold">:</span><span style="color:#f8f8f8;text-decoration:underline">
 </span><span style="color:#f8f8f8;text-decoration:underline">      </span>exec<span style="color:#000;font-weight:bold">:</span><span style="color:#f8f8f8;text-decoration:underline">
 </span><span style="color:#f8f8f8;text-decoration:underline">        </span>command<span style="color:#000;font-weight:bold">:</span><span style="color:#f8f8f8;text-decoration:underline">
-</span><span style="color:#f8f8f8;text-decoration:underline">        </span>-<span style="color:#f8f8f8;text-decoration:underline"> </span>/home/user/bin/restore.sh<span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#8f5902;font-style:italic"># this command is invoked on &#34;backup&#34; container to restore the backup, for example /home/user/bin/restore.sh &lt;backup_number&gt;, &lt;backup_number&gt; is passed by operator</span><span style="color:#f8f8f8;text-decoration:underline">
+</span><span style="color:#f8f8f8;text-decoration:underline">        </span>-<span style="color:#f8f8f8;text-decoration:underline"> </span>/home/user/bin/restore.sh<span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#8f5902;font-style:italic"># this command is invoked on &#34;backup&#34; container to make restore backup, for example /home/user/bin/restore.sh &lt;backup_number&gt;, &lt;backup_number&gt; is passed by operator</span><span style="color:#f8f8f8;text-decoration:underline">
 </span><span style="color:#f8f8f8;text-decoration:underline">    </span><span style="color:#8f5902;font-style:italic">#recoveryOnce: &lt;backup_number&gt; # if want to restore specific backup configure this field and then Jenkins will be restarted and desired backup will be restored</span></code></pre></div>
 	
 	
