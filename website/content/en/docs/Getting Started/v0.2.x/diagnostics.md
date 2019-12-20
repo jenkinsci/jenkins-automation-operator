@@ -2,7 +2,7 @@
 title: "Diagnostics"
 linkTitle: "Diagnostics"
 weight: 40
-date: 2019-12-20
+date: 2019-08-05
 description: >
   How to deal with Jenkins Operator problems
 ---

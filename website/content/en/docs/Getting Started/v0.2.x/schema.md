@@ -2,7 +2,7 @@
 title: "Schema"
 linkTitle: "Schema"
 weight: 40
-date: 2019-12-20
+date: 2019-08-05
 description: >
   API Schema definitions for Jenkins CRD
 ---
@@ -19,7 +19,7 @@ This document contains API scheme for `jenkins-operator` Custom Resource Definit
 </ul>
 <h2 id="jenkins.io">jenkins.io</h2>
 <p>
-<p>Package v1alpha2 contains API Schema definitions for the jenkins.io v1alpha2 API group</p>
+<p>Package v1alpha2 contains the API Schema definitions for the jenkins.io v1alpha2 API group</p>
 </p>
 Resource Types:
 <ul><li>
@@ -108,22 +108,8 @@ Every single change here requires a pod restart.</p>
 </td>
 <td>
 <em>(Optional)</em>
-<p>SeedJobs defines list of Jenkins Seed Job configurations
+<p>SeedJobs defines a list of Jenkins Seed Job configurations
 More info: <a href="https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-seed-jobs-and-pipelines">https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-seed-jobs-and-pipelines</a></p>
-</td>
-</tr>
-<tr>
-<td>
-<code>notifications</code></br>
-<em>
-<a href="#github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Notification">
-[][]github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Notification
-</a>
-</em>
-</td>
-<td>
-<p>Notifications defines list of a services which are used to inform about Jenkins status
-Can be used to integrate chat services like Slack, Microsoft Teams or Mailgun</p>
 </td>
 </tr>
 <tr>
@@ -137,7 +123,7 @@ Service
 </td>
 <td>
 <em>(Optional)</em>
-<p>Service is Kubernetes service of Jenkins master HTTP pod
+<p>Service is the Kubernetes service of the Jenkins master HTTP pod
 Defaults to :
 port: 8080
 type: ClusterIP</p>
@@ -154,7 +140,7 @@ Service
 </td>
 <td>
 <em>(Optional)</em>
-<p>Service is Kubernetes service of Jenkins slave pods
+<p>Service is the Kubernetes service of the Jenkins slave pods
 Defaults to :
 port: 50000
 type: ClusterIP</p>
@@ -171,7 +157,7 @@ Backup
 </td>
 <td>
 <em>(Optional)</em>
-<p>Backup defines configuration of Jenkins backup
+<p>Backup defines the configuration of a Jenkins backup
 More info: <a href="https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-backup-and-restore">https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-backup-and-restore</a></p>
 </td>
 </tr>
@@ -186,7 +172,7 @@ Restore
 </td>
 <td>
 <em>(Optional)</em>
-<p>Backup defines configuration of Jenkins backup restore
+<p>Backup defines the configuration of a Jenkins backup restore
 More info: <a href="https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-backup-and-restore">https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-backup-and-restore</a></p>
 </td>
 </tr>
@@ -201,7 +187,7 @@ GroovyScripts
 </td>
 <td>
 <em>(Optional)</em>
-<p>GroovyScripts defines configuration of Jenkins customization via groovy scripts</p>
+<p>GroovyScripts defines the configuration of Jenkins customization via groovy scripts</p>
 </td>
 </tr>
 <tr>
@@ -215,7 +201,7 @@ ConfigurationAsCode
 </td>
 <td>
 <em>(Optional)</em>
-<p>ConfigurationAsCode defines configuration of Jenkins customization via Configuration as Code Jenkins plugin</p>
+<p>ConfigurationAsCode defines the configuration of Jenkins customization via the Configuration as Code Jenkins plugin</p>
 </td>
 </tr>
 </table>
@@ -306,7 +292,7 @@ string
 <a href="#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.JenkinsSpec">JenkinsSpec</a>)
 </p>
 <p>
-<p>Backup defines configuration of Jenkins backup</p>
+<p>Backup defines the configuration of a Jenkins backup</p>
 </p>
 <table>
 <thead>
@@ -337,7 +323,7 @@ Handler
 </em>
 </td>
 <td>
-<p>Action defines action which performs backup in backup container sidecar</p>
+<p>Action defines the action which performs the backup in the backup container sidecar</p>
 </td>
 </tr>
 <tr>
@@ -348,7 +334,7 @@ uint64
 </em>
 </td>
 <td>
-<p>Interval tells how often make backup in seconds
+<p>Interval tells you how often the backup is made in seconds
 Defaults to 30.</p>
 </td>
 </tr>
@@ -360,7 +346,7 @@ bool
 </em>
 </td>
 <td>
-<p>MakeBackupBeforePodDeletion tells operator to make backup before Jenkins master pod deletion</p>
+<p>MakeBackupBeforePodDeletion tells the operator to make a backup before Jenkins master pod deletion</p>
 </td>
 </tr>
 </tbody>
@@ -372,7 +358,7 @@ bool
 <a href="#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.Customization">Customization</a>)
 </p>
 <p>
-<p>ConfigMapRef is reference to Kubernetes ConfigMap</p>
+<p>ConfigMapRef is the reference to Kubernetes ConfigMap</p>
 </p>
 <table>
 <thead>
@@ -401,7 +387,7 @@ string
 <a href="#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.JenkinsSpec">JenkinsSpec</a>)
 </p>
 <p>
-<p>ConfigurationAsCode defines configuration of Jenkins customization via Configuration as Code Jenkins plugin</p>
+<p>ConfigurationAsCode defines configuration of Jenkins customization via the Configuration as Code Jenkins plugin</p>
 </p>
 <table>
 <thead>
@@ -432,7 +418,7 @@ Customization
 <a href="#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.JenkinsMaster">JenkinsMaster</a>)
 </p>
 <p>
-<p>Container defines Kubernetes container attributes</p>
+<p>Container defines the Kubernetes container attributes</p>
 </p>
 <table>
 <thead>
@@ -787,7 +773,7 @@ Kubernetes core/v1.ExecAction
 <a href="#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.SeedJob">SeedJob</a>)
 </p>
 <p>
-<p>JenkinsCredentialType defines type of Jenkins credential used to seed job mechanism</p>
+<p>JenkinsCredentialType defines the type of Jenkins credential used in the seed job mechanism</p>
 </p>
 <h3 id="github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.JenkinsMaster">JenkinsMaster
 </h3>
@@ -809,21 +795,6 @@ every single change requires a Jenkins master pod restart</p>
 <tbody>
 <tr>
 <td>
-<code>annotations</code></br>
-<em>
-map[string]string
-</em>
-</td>
-<td>
-<em>(Optional)</em>
-<p>Annotations is an unstructured key value map stored with a resource that may be
-set by external tools to store and retrieve arbitrary metadata. They are not
-queryable and should be preserved when modifying objects.
-More info: <a href="http://kubernetes.io/docs/user-guide/annotations">http://kubernetes.io/docs/user-guide/annotations</a></p>
-</td>
-</tr>
-<tr>
-<td>
 <code>masterAnnotations</code></br>
 <em>
 map[string]string
@@ -834,8 +805,7 @@ map[string]string
 <p>Annotations is an unstructured key value map stored with a resource that may be
 set by external tools to store and retrieve arbitrary metadata. They are not
 queryable and should be preserved when modifying objects.
-More info: <a href="http://kubernetes.io/docs/user-guide/annotations">http://kubernetes.io/docs/user-guide/annotations</a>
-Deprecated: will be removed in the future, please use Annotations(annotations)</p>
+More info: <a href="http://kubernetes.io/docs/user-guide/annotations">http://kubernetes.io/docs/user-guide/annotations</a></p>
 </td>
 </tr>
 <tr>
@@ -993,17 +963,6 @@ version: 0.12.1</p>
 <p>Plugins contains plugins required by user</p>
 </td>
 </tr>
-<tr>
-<td>
-<code>disableCSRFProtection</code></br>
-<em>
-bool
-</em>
-</td>
-<td>
-<p>DisableCSRFProtection allows you to toggle CSRF Protection on Jenkins</p>
-</td>
-</tr>
 </tbody>
 </table>
 <h3 id="github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.JenkinsSpec">JenkinsSpec
@@ -1050,20 +1009,6 @@ Every single change here requires a pod restart.</p>
 <em>(Optional)</em>
 <p>SeedJobs defines list of Jenkins Seed Job configurations
 More info: <a href="https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-seed-jobs-and-pipelines">https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-seed-jobs-and-pipelines</a></p>
-</td>
-</tr>
-<tr>
-<td>
-<code>notifications</code></br>
-<em>
-<a href="#github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Notification">
-[][]github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Notification
-</a>
-</em>
-</td>
-<td>
-<p>Notifications defines list of a services which are used to inform about Jenkins status
-Can be used to integrate chat services like Slack, Microsoft Teams or Mailgun</p>
 </td>
 </tr>
 <tr>
@@ -1288,7 +1233,7 @@ string
 </td>
 <td>
 <em>(Optional)</em>
-<p>UserAndPasswordHash is a SHA256 hash made from user and password</p>
+<p>UserAndPasswordHash is a SHA256 hash made from the username and password</p>
 </td>
 </tr>
 <tr>
@@ -1300,7 +1245,7 @@ string
 </td>
 <td>
 <em>(Optional)</em>
-<p>CreatedSeedJobs contains list of seed job id already created in Jenkins</p>
+<p>CreatedSeedJobs contains list of seed job ids already created in Jenkins</p>
 </td>
 </tr>
 <tr>
@@ -1415,10 +1360,6 @@ SecretKeySelector
 <h3 id="github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Notification">Notification
 </h3>
 <p>
-(<em>Appears on:</em>
-<a href="#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.JenkinsSpec">JenkinsSpec</a>)
-</p>
-<p>
 <p>Notification is a service configuration used to send notifications about Jenkins status</p>
 </p>
 <table>
@@ -1431,10 +1372,10 @@ SecretKeySelector
 <tbody>
 <tr>
 <td>
-<code>level</code></br>
+<code>loggingLevel</code></br>
 <em>
-<a href="#github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.NotificationLevel">
-NotificationLevel
+<a href="#github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.NotificationLogLevel">
+NotificationLogLevel
 </a>
 </em>
 </td>
@@ -1497,28 +1438,16 @@ github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Mailgun
 <td>
 </td>
 </tr>
-<tr>
-<td>
-<code>smtp</code></br>
-<em>
-<a href="#github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.SMTP">
-github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.SMTP
-</a>
-</em>
-</td>
-<td>
-</td>
-</tr>
 </tbody>
 </table>
-<h3 id="github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.NotificationLevel">NotificationLevel
+<h3 id="github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.NotificationLogLevel">NotificationLogLevel
 (<code>string</code> alias)</p></h3>
 <p>
 (<em>Appears on:</em>
 <a href="#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.Notification">Notification</a>)
 </p>
 <p>
-<p>NotificationLevel defines the level of a Notification</p>
+<p>NotificationLogLevel defines logging level of Notification</p>
 </p>
 <h3 id="github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Plugin">Plugin
 </h3>
@@ -1616,106 +1545,12 @@ uint64
 </tr>
 </tbody>
 </table>
-<h3 id="github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.SMTP">SMTP
-</h3>
-<p>
-(<em>Appears on:</em>
-<a href="#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.Notification">Notification</a>)
-</p>
-<p>
-<p>SMTP is handler for sending emails via this protocol</p>
-</p>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>
-<code>usernameSecretKeySelector</code></br>
-<em>
-<a href="#github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.SecretKeySelector">
-SecretKeySelector
-</a>
-</em>
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td>
-<code>passwordSecretKeySelector</code></br>
-<em>
-<a href="#github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.SecretKeySelector">
-SecretKeySelector
-</a>
-</em>
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td>
-<code>port</code></br>
-<em>
-int
-</em>
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td>
-<code>server</code></br>
-<em>
-string
-</em>
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td>
-<code>tlsInsecureSkipVerify</code></br>
-<em>
-bool
-</em>
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td>
-<code>from</code></br>
-<em>
-string
-</em>
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td>
-<code>to</code></br>
-<em>
-string
-</em>
-</td>
-<td>
-</td>
-</tr>
-</tbody>
-</table>
 <h3 id="github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.SecretKeySelector">SecretKeySelector
 </h3>
 <p>
 (<em>Appears on:</em>
 <a href="#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.Mailgun">Mailgun</a>, 
 <a href="#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.MicrosoftTeams">MicrosoftTeams</a>, 
-<a href="#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.SMTP">SMTP</a>, 
 <a href="#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.Slack">Slack</a>)
 </p>
 <p>
@@ -1844,7 +1679,7 @@ string
 </em>
 </td>
 <td>
-<p>Targets is the repository path where are seed job definitions</p>
+<p>Targets is the repository path where the seed job definitions are</p>
 </td>
 </tr>
 <tr>
@@ -1855,7 +1690,7 @@ string
 </em>
 </td>
 <td>
-<p>RepositoryBranch is the repository branch where are seed job definitions</p>
+<p>RepositoryBranch is the repository branch where the seed job definitions are</p>
 </td>
 </tr>
 <tr>
@@ -2052,7 +1887,7 @@ int32
 </em>
 </td>
 <td>
-<p>The port that are exposed by this service.
+<p>The port that is exposed by this service.
 More info: <a href="https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies">https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies</a></p>
 </td>
 </tr>
@@ -2067,7 +1902,7 @@ int32
 <em>(Optional)</em>
 <p>The port on each node on which this service is exposed when type=NodePort or LoadBalancer.
 Usually assigned by the system. If specified, it will be allocated to the service
-if unused or else creation of the service will fail.
+if unused, or else creation of the service will fail.
 Default is to auto-allocate a port if the ServiceType of this Service requires one.
 More info: <a href="https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport">https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport</a></p>
 </td>
@@ -2082,7 +1917,7 @@ More info: <a href="https://kubernetes.io/docs/concepts/services-networking/serv
 <td>
 <em>(Optional)</em>
 <p>If specified and supported by the platform, this will restrict traffic through the cloud-provider
-load-balancer will be restricted to the specified client IPs. This field will be ignored if the
+the load-balancer will be restricted to the specified client IPs. This field will be ignored if the
 cloud-provider does not support the feature.&rdquo;
 More info: <a href="https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/">https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/</a></p>
 </td>
@@ -2140,5 +1975,5 @@ SecretKeySelector
 <hr/>
 <p><em>
 Generated with <code>gen-crd-api-reference-docs</code>
-on git commit <code>b6e1057</code>.
+on git commit <code>f4c4235</code>.
 </em></p>
