@@ -368,9 +368,19 @@ container-runtime-run: ## Run the container in docker, you can use EXTRA_ARGS
 .PHONY: minikube-run
 minikube-run: export WATCH_NAMESPACE = $(NAMESPACE)
 minikube-run: export OPERATOR_NAME = $(NAME)
-minikube-run: minikube-start ## Run the operator locally and use minikube as Kubernetes cluster, you can use EXTRA_ARGS
+minikube-run: minikube-start ## Run the operator locally and use minikube as Kubernetes cluster, you can use OPERATOR_ARGS
 	@echo "+ $@"
 	kubectl config use-context minikube
+	kubectl apply -f deploy/crds/jenkins_$(API_VERSION)_jenkins_crd.yaml
+	@echo "Watching '$(WATCH_NAMESPACE)' namespace"
+	build/_output/bin/jenkins-operator $(OPERATOR_ARGS)
+
+.PHONY: crc-run
+crc-run: export WATCH_NAMESPACE = $(NAMESPACE)
+crc-run: export OPERATOR_NAME = $(NAME)
+crc-run: crc-start ## Run the operator locally and use CodeReady Containers as Kubernetes cluster, you can use OPERATOR_ARGS
+	@echo "+ $@"
+	oc project $(CRC_OC_PROJECT)
 	kubectl apply -f deploy/crds/jenkins_$(API_VERSION)_jenkins_crd.yaml
 	@echo "Watching '$(WATCH_NAMESPACE)' namespace"
 	build/_output/bin/jenkins-operator $(OPERATOR_ARGS)
@@ -392,11 +402,32 @@ ifndef HAS_GEN_CRD_API_REFERENCE_DOCS
 endif
 	$(GEN_CRD_API)/$(GEN_CRD_API) -config gen-crd-api-config.json -api-dir github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/$(API_VERSION) -template-dir $(GEN_CRD_API)/template -out-file documentation/$(VERSION)/jenkins-$(API_VERSION)-scheme.md
 
+.PHONY: check-minikube
+check-minikube: ## Checks if KUBERNETES_PROVIDER is set to minikube
+	@echo "+ $@"
+	@echo "KUBERNETES_PROVIDER '$(KUBERNETES_PROVIDER)'"
+ifneq ($(KUBERNETES_PROVIDER),minikube)
+	$(error KUBERNETES_PROVIDER not set to 'minikube')
+endif
+
+.PHONY: check-crc
+check-crc: ## Checks if KUBERNETES_PROVIDER is set to crc
+	@echo "+ $@"
+	@echo "KUBERNETES_PROVIDER '$(KUBERNETES_PROVIDER)'"
+ifneq ($(KUBERNETES_PROVIDER),crc)
+	$(error KUBERNETES_PROVIDER not set to 'crc')
+endif
+
 .PHONY: minikube-start
-minikube-start: ## Start minikube
+minikube-start: check-minikube ## Start minikube
 	@echo "+ $@"
 	@minikube status && exit 0 || \
 	minikube start --kubernetes-version $(MINIKUBE_KUBERNETES_VERSION) --vm-driver=$(MINIKUBE_DRIVER) --memory 4096 --cpus 3
+
+.PHONY: crc-start
+crc-start: check-crc ## Start CodeReady Containers Kubernetes cluster
+	@echo "+ $@"
+	crc start
 
 .PHONY: bump-version
 BUMP := patch
