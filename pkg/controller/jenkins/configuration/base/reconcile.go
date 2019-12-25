@@ -41,19 +41,18 @@ const (
 // ReconcileJenkinsBaseConfiguration defines values required for Jenkins base configuration
 type ReconcileJenkinsBaseConfiguration struct {
 	configuration.Configuration
-	logger          logr.Logger
-	local, minikube bool
-	config          *rest.Config
+	logger                       logr.Logger
+	jenkinsAPIConnectionSettings jenkinsclient.JenkinsAPIConnectionSettings
+	config                       *rest.Config
 }
 
 // New create structure which takes care of base configuration
-func New(config configuration.Configuration, logger logr.Logger, local, minikube bool, restConfig *rest.Config) *ReconcileJenkinsBaseConfiguration {
+func New(config configuration.Configuration, logger logr.Logger, jenkinsAPIConnectionSettings jenkinsclient.JenkinsAPIConnectionSettings, restConfig *rest.Config) *ReconcileJenkinsBaseConfiguration {
 	return &ReconcileJenkinsBaseConfiguration{
-		Configuration: config,
-		logger:        logger,
-		local:         local,
-		minikube:      minikube,
-		config:        restConfig,
+		Configuration:                config,
+		logger:                       logger,
+		jenkinsAPIConnectionSettings: jenkinsAPIConnectionSettings,
+		config:                       restConfig,
 	}
 }
 
@@ -800,16 +799,23 @@ func (r *ReconcileJenkinsBaseConfiguration) waitForJenkins() (reconcile.Result, 
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsClient() (jenkinsclient.Jenkins, error) {
-	jenkinsURL, err := jenkinsclient.BuildJenkinsAPIUrl(
-		r.Configuration.Jenkins.ObjectMeta.Namespace, resources.GetJenkinsHTTPServiceName(r.Configuration.Jenkins), r.Configuration.Jenkins.Spec.Service.Port, r.local, r.minikube)
+	var service corev1.Service
+
+	err := r.Client.Get(context.TODO(), types.NamespacedName{
+		Namespace: r.Configuration.Jenkins.ObjectMeta.Namespace,
+		Name:      resources.GetJenkinsHTTPServiceName(r.Configuration.Jenkins),
+	}, &service)
+
+	if err != nil {
+		return nil, err
+	}
+
+	jenkinsURL := r.jenkinsAPIConnectionSettings.BuildJenkinsAPIUrl(service.Name, service.Namespace, service.Spec.Ports[0].Port, service.Spec.Ports[0].NodePort)
 
 	if prefix, ok := GetJenkinsOpts(*r.Configuration.Jenkins)["prefix"]; ok {
 		jenkinsURL = jenkinsURL + prefix
 	}
 
-	if err != nil {
-		return nil, err
-	}
 	r.logger.V(log.VDebug).Info(fmt.Sprintf("Jenkins API URL '%s'", jenkinsURL))
 
 	credentialsSecret := &corev1.Secret{}

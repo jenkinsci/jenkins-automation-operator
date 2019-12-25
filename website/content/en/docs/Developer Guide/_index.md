@@ -112,7 +112,6 @@ kubectl get secret jenkins-operator-credentials-<cr_name> -o 'jsonpath={.data.us
 kubectl get secret jenkins-operator-credentials-<cr_name> -o 'jsonpath={.data.password}' | base64 -d
 ```
 
-
 [dep_tool]:https://golang.github.io/dep/docs/installation.html
 [git_tool]:https://git-scm.com/downloads
 [go_tool]:https://golang.org/dl/
