@@ -1,10 +1,10 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Jenkins Operator – Latest (v0.2.x)</title>
+    <title>Jenkins Operator – Latest (v0.3.x)</title>
     <link>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/</link>
     <description>Recent Hugo news from gohugo.io</description>
     <generator>Hugo -- gohugo.io</generator>
-    <lastBuildDate>Mon, 05 Aug 2019 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Fri, 20 Dec 2019 00:00:00 +0000</lastBuildDate>
     <image>
       <url>https://jenkinsci.github.io/kubernetes-operator/img/hugo.png</url>
       <title>GoHugo.io</title>
@@ -22,7 +22,7 @@
     <item>
       <title>Docs: Deploy Jenkins</title>
       <link>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/deploy-jenkins/</link>
-      <pubDate>Mon, 05 Aug 2019 00:00:00 +0000</pubDate>
+      <pubDate>Fri, 20 Dec 2019 00:00:00 +0000</pubDate>
       
       <guid>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/deploy-jenkins/</guid>
       <description>
@@ -93,7 +93,7 @@ kubectl get secret jenkins-operator-credentials-&amp;lt;cr_name&amp;gt; -o &lt;s
     <item>
       <title>Docs: Configuration</title>
       <link>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/configuration/</link>
-      <pubDate>Mon, 05 Aug 2019 00:00:00 +0000</pubDate>
+      <pubDate>Fri, 20 Dec 2019 00:00:00 +0000</pubDate>
       
       <guid>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/configuration/</guid>
       <description>
@@ -395,7 +395,7 @@ stringData:
     <item>
       <title>Docs: Customization</title>
       <link>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/customization/</link>
-      <pubDate>Mon, 05 Aug 2019 00:00:00 +0000</pubDate>
+      <pubDate>Fri, 20 Dec 2019 00:00:00 +0000</pubDate>
       
       <guid>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/customization/</guid>
       <description>
@@ -536,13 +536,13 @@ spec:
 &lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;  &lt;/span&gt;master&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
 &lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;    &lt;/span&gt;basePlugins&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
 &lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;    &lt;/span&gt;-&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;name&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;kubernetes&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
-&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;      &lt;/span&gt;version&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&lt;span style=&#34;color:#0000cf;font-weight:bold&#34;&gt;1.18&lt;/span&gt;.&lt;span style=&#34;color:#0000cf;font-weight:bold&#34;&gt;3&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;      &lt;/span&gt;version&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&lt;span style=&#34;color:#0000cf;font-weight:bold&#34;&gt;1.18.3&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
 &lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;    &lt;/span&gt;-&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;name&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;workflow-job&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
 &lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;      &lt;/span&gt;version&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;&amp;#34;2.34&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
 &lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;    &lt;/span&gt;-&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;name&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;workflow-aggregator&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
 &lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;      &lt;/span&gt;version&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;&amp;#34;2.6&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
 &lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;    &lt;/span&gt;-&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;name&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;git&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
-&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;      &lt;/span&gt;version&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&lt;span style=&#34;color:#0000cf;font-weight:bold&#34;&gt;3.12&lt;/span&gt;.&lt;span style=&#34;color:#0000cf;font-weight:bold&#34;&gt;0&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;      &lt;/span&gt;version&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&lt;span style=&#34;color:#0000cf;font-weight:bold&#34;&gt;3.12.0&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
 &lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;    &lt;/span&gt;-&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;name&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;job-dsl&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
 &lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;      &lt;/span&gt;version&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;&amp;#34;1.76&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
 &lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;    &lt;/span&gt;-&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;name&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;configuration-as-code&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
@@ -550,7 +550,7 @@ spec:
 &lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;    &lt;/span&gt;-&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;name&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;configuration-as-code-support&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
 &lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;      &lt;/span&gt;version&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;&amp;#34;1.19&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
 &lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;    &lt;/span&gt;-&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;name&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;kubernetes-credentials-provider&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
-&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;      &lt;/span&gt;version&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&lt;span style=&#34;color:#0000cf;font-weight:bold&#34;&gt;0.12&lt;/span&gt;.&lt;span style=&#34;color:#0000cf;font-weight:bold&#34;&gt;1&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;      &lt;/span&gt;version&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&lt;span style=&#34;color:#0000cf;font-weight:bold&#34;&gt;0.12.1&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 &lt;p&gt;You can change their versions.&lt;/p&gt;
 
 &lt;p&gt;The &lt;strong&gt;Jenkins Operator&lt;/strong&gt; will then automatically install plugins after the Jenkins master pod restarts.&lt;/p&gt;
@@ -561,7 +561,7 @@ spec:
     <item>
       <title>Docs: AKS</title>
       <link>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/aks/</link>
-      <pubDate>Mon, 05 Aug 2019 00:00:00 +0000</pubDate>
+      <pubDate>Fri, 20 Dec 2019 00:00:00 +0000</pubDate>
       
       <guid>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/aks/</guid>
       <description>
@@ -585,7 +585,7 @@ restart of a Jenkins pod over and over again.&lt;/p&gt;
     <item>
       <title>Docs: Configure backup and restore</title>
       <link>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/configure-backup-and-restore/</link>
-      <pubDate>Mon, 05 Aug 2019 00:00:00 +0000</pubDate>
+      <pubDate>Fri, 20 Dec 2019 00:00:00 +0000</pubDate>
       
       <guid>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/configure-backup-and-restore/</guid>
       <description>
@@ -635,7 +635,7 @@ restart of a Jenkins pod over and over again.&lt;/p&gt;
 &lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;        &lt;/span&gt;value&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;/jenkins-home&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
 &lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;      &lt;/span&gt;-&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;name&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;BACKUP_COUNT&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
 &lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;        &lt;/span&gt;value&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;&amp;#34;3&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;# keep only the 2 most recent backups&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
-&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;      &lt;/span&gt;image&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;virtuslab/jenkins-operator-backup-pvc&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;v0.&lt;span style=&#34;color:#0000cf;font-weight:bold&#34;&gt;0.7&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;# look at backup/pvc directory&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;      &lt;/span&gt;image&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;virtuslab/jenkins-operator-backup-pvc&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;v0&lt;span style=&#34;color:#0000cf;font-weight:bold&#34;&gt;.0.7&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;# look at backup/pvc directory&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
 &lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;      &lt;/span&gt;imagePullPolicy&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;IfNotPresent&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
 &lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;      &lt;/span&gt;volumeMounts&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
 &lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;      &lt;/span&gt;-&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;mountPath&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;/jenkins-home&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;# Jenkins home volume&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
@@ -667,7 +667,7 @@ restart of a Jenkins pod over and over again.&lt;/p&gt;
     <item>
       <title>Docs: Custom Backup and Restore Providers</title>
       <link>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/custom-backup-and-restore/</link>
-      <pubDate>Mon, 05 Aug 2019 00:00:00 +0000</pubDate>
+      <pubDate>Fri, 20 Dec 2019 00:00:00 +0000</pubDate>
       
       <guid>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/custom-backup-and-restore/</guid>
       <description>
@@ -736,7 +736,7 @@ for backup and restore are required, e.g.:&lt;/p&gt;
 &lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;      &lt;/span&gt;-&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;name&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;jenkins-master&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
 &lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;        &lt;/span&gt;...&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
 &lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;      &lt;/span&gt;-&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;name&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;backup&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;# container responsible for backup and restore&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
-&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;        &lt;/span&gt;image&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;quay.io/virtuslab/aws-cli&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#0000cf;font-weight:bold&#34;&gt;1.16&lt;/span&gt;.&lt;span style=&#34;color:#0000cf;font-weight:bold&#34;&gt;263&lt;/span&gt;-&lt;span style=&#34;color:#0000cf;font-weight:bold&#34;&gt;2&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;        &lt;/span&gt;image&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;quay.io/virtuslab/aws-cli&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#0000cf;font-weight:bold&#34;&gt;1.16.263-2&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
 &lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;        &lt;/span&gt;workingDir&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;/home/user/bin/&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
 &lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;        &lt;/span&gt;command&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;# our container entry point&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
 &lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;          &lt;/span&gt;-&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;sleep&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
@@ -848,72 +848,123 @@ the number of backups under control, e.g. Cloud Formation fragment:&lt;/p&gt;
     </item>
     
     <item>
-      <title>Docs: Migration from v0.1.x</title>
-      <link>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/migration/</link>
-      <pubDate>Mon, 05 Aug 2019 00:00:00 +0000</pubDate>
+      <title>Docs: Notifications</title>
+      <link>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/notifications/</link>
+      <pubDate>Fri, 20 Dec 2019 00:00:00 +0000</pubDate>
       
-      <guid>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/migration/</guid>
+      <guid>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/notifications/</guid>
       <description>
         
         
         
 
-&lt;h3 id=&#34;major-changes&#34;&gt;Major Changes&lt;/h3&gt;
+&lt;h2 id=&#34;slack&#34;&gt;Slack&lt;/h2&gt;
 
-&lt;h4 id=&#34;adding-the-seed-job-agent&#34;&gt;Adding the seed job agent&lt;/h4&gt;
+&lt;p&gt;Please follow &lt;a href=&#34;https://api.slack.com/incoming-webhooks&#34; target=&#34;_blank&#34;&gt;this&lt;/a&gt; instructions to get web hook URL.&lt;/p&gt;
 
-&lt;p&gt;From version &lt;code&gt;v0.2.0&lt;/code&gt; seed jobs are not run by master executors, but by a dedicated agent deployed as a Kubernetes Pod.&lt;/p&gt;
+&lt;p&gt;Create web hook secret with name &lt;code&gt;jenkins-operator-notification-data&lt;/code&gt;. Contains key &lt;code&gt;url&lt;/code&gt; with provided web hook URL.&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;$ kubectl create secret generic jenkins-operator-notification-data --from-literal&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#000&#34;&gt;url&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;&amp;lt;webhook_url&amp;gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Example configuration for Slack:&lt;/p&gt;
 
-&lt;p&gt;We&amp;rsquo;ve had disabled master executors for security reasons.&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;kind: Jenkins
+spec:
+  master:
+    notifications:
+    - loggingLevel: info
+      verbose: true
+      name: &amp;lt;name&amp;gt;
+      slack:
+        webHookURLSecretKeySelector:
+          secret:
+            name: &amp;lt;secret_name&amp;gt;
+          key: &amp;lt;key&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
 
-&lt;h4 id=&#34;replacing-configuration-jobs-with-groovy-scripts&#34;&gt;Replacing configuration jobs with Groovy scripts&lt;/h4&gt;
+&lt;h2 id=&#34;microsoft-teams&#34;&gt;Microsoft Teams&lt;/h2&gt;
 
-&lt;p&gt;In &lt;code&gt;v0.1.x&lt;/code&gt; &lt;strong&gt;Jenkins Operator&lt;/strong&gt; user configuration application was implemented using &lt;strong&gt;Jenkins&lt;/strong&gt; jobs
-and this mechanism was replaced since &lt;code&gt;v0.2.0&lt;/code&gt; with Groovy scripts implementing the same functionality.&lt;/p&gt;
+&lt;p&gt;Please follow &lt;a href=&#34;https://docs.microsoft.com/en-gb/outlook/actionable-messages/send-via-connectors&#34; target=&#34;_blank&#34;&gt;this&lt;/a&gt; instructions to get web hook URL.&lt;/p&gt;
 
-&lt;p&gt;As a result, the &lt;strong&gt;Jenkins&lt;/strong&gt; configuration jobs (&amp;ldquo;Configure Seed Jobs&amp;rdquo;, &amp;ldquo;jenkins-operator-base-configuration&amp;rdquo;, &amp;ldquo;jenkins-operator-user-configuration&amp;rdquo;) are no longer visible in &lt;strong&gt;Jenkins&lt;/strong&gt; UI.&lt;/p&gt;
+&lt;p&gt;Example configuration for Microsoft Teams:&lt;/p&gt;
 
-&lt;p&gt;In &lt;code&gt;v0.1.x&lt;/code&gt; you can see if any of the configuration jobs failed or succeded in the &lt;strong&gt;Jenkins&lt;/strong&gt; UI (job build logs).
-Instead, you can make sure the operator is running correctly by inspecting its logs, e.g.:&lt;/p&gt;
-&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;$ kubectl -n logs deployment/jenkins-operator&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-&lt;h4 id=&#34;making-user-configuration-sources-configurable&#34;&gt;Making User Configuration sources configurable&lt;/h4&gt;
+&lt;pre&gt;&lt;code&gt;kind: Jenkins
+spec:
+  master:
+    notifications:
+    - loggingLevel: info
+      verbose: true
+      name: &amp;lt;name&amp;gt;
+      teams:
+        webHookURLSecretKeySelector:
+          secret:
+            name: &amp;lt;secret_name&amp;gt;
+          key: &amp;lt;key&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;In &lt;code&gt;v0.1.x&lt;/code&gt; &lt;strong&gt;Jenkins Operator&lt;/strong&gt; user configuration was stored in a &lt;code&gt;ConfigMap&lt;/code&gt; and a &lt;code&gt;Secret&lt;/code&gt;
-named &lt;code&gt;jenkins-operator-user-configuration-&amp;lt;cr_name&amp;gt;&lt;/code&gt;, and its name was hardcoded in the operator.&lt;/p&gt;
+&lt;h2 id=&#34;mailgun&#34;&gt;Mailgun&lt;/h2&gt;
 
-&lt;p&gt;Since &lt;code&gt;v0.2.0&lt;/code&gt; the user configuration can be stored in a multiple &lt;code&gt;ConfigMap&lt;/code&gt; and &lt;code&gt;Secret&lt;/code&gt; manifests
-and has to be explicitly pointed to with &lt;code&gt;spec.configurationAsCode.configurations&lt;/code&gt; and &lt;code&gt;spec.configurationAsCode.secret&lt;/code&gt;
-for the Configuration as Code plugin,
-and &lt;code&gt;spec.groovyScripts.configurations&lt;/code&gt; and &lt;code&gt;spec.groovyScripts.secret&lt;/code&gt; for the more advanced groovy scripts.&lt;/p&gt;
+&lt;p&gt;Example configuration for Mailgun:&lt;/p&gt;
 
-&lt;h3 id=&#34;migration&#34;&gt;Migration&lt;/h3&gt;
+&lt;pre&gt;&lt;code&gt;kind: Jenkins
+spec:
+  master:
+    notifications:
+    - loggingLevel: info
+      verbose: true
+      name: &amp;lt;name&amp;gt;
+      mailgun:
+        domain: &amp;lt;domain&amp;gt;
+        apiKeySecretKeySelector:
+          secret:
+            name: &amp;lt;secret_name&amp;gt;
+          key: &amp;lt;key&amp;gt;
+        recipient: &amp;lt;your_email&amp;gt;
+        from: &amp;lt;mailgun_email&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;If you want to use &lt;code&gt;v0.1.x&lt;/code&gt; operator configuration with &lt;code&gt;v0.2.x&lt;/code&gt; you have to modify your Jenkins Custom Resource(s)
-and add explicit references to the existing &lt;code&gt;ConfigMap&lt;/code&gt; and &lt;code&gt;Secret&lt;/code&gt;, e.g.:&lt;/p&gt;
-&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-yaml&#34; data-lang=&#34;yaml&#34;&gt;apiVersion&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;jenkins.io/v1alpha2&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
-&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;&lt;/span&gt;kind&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;Jenkins&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
-&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;&lt;/span&gt;metadata&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
-&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;  &lt;/span&gt;name&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&amp;lt;cr_name&amp;gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
-&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;&lt;/span&gt;spec&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
-&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;  &lt;/span&gt;...&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
-&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;  &lt;/span&gt;configurationAsCode&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
-&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;    &lt;/span&gt;configurations&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; 
-&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;    &lt;/span&gt;-&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;name&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;jenkins-operator-user-configuration-&amp;lt;cr_name&lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;&amp;gt;
-&lt;/span&gt;&lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;    secret:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
-&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;      &lt;/span&gt;name&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;jenkins-operator-user-configuration-&amp;lt;cr_name&lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;&amp;gt;
-&lt;/span&gt;&lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;  groovyScripts:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
-&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;    &lt;/span&gt;configurations&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
-&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;    &lt;/span&gt;-&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;name&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;jenkins-operator-user-configuration-&amp;lt;cr_name&lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;&amp;gt;
-&lt;/span&gt;&lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;    secret:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
-&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;      &lt;/span&gt;name&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;jenkins-operator-user-configuration-&amp;lt;cr_name&lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;&amp;gt;
-&lt;/span&gt;&lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;  ...&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;h2 id=&#34;debug-options&#34;&gt;Debug options&lt;/h2&gt;
+
+&lt;p&gt;As you see there is two debugging options:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;code&gt;loggingLevel&lt;/code&gt; (warning/info) - Set level of messages to send.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;code&gt;verbose&lt;/code&gt; - Print stacktrace and additional error messages&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;multiple-providers&#34;&gt;Multiple providers&lt;/h2&gt;
+
+&lt;p&gt;You can use multiple providers to send notification to another communication channels at the same time.
+For example you will send notifications to Slack and Teams.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;kind: Jenkins
+spec:
+  master:
+    notifications:
+    - loggingLevel: info
+      verbose: true
+      name: nslack
+      slack:
+        webHookURLSecretKeySelector:
+          secret:
+            name: &amp;lt;secret_name&amp;gt;
+          key: &amp;lt;key&amp;gt;
+    - loggingLevel: info
+      verbose: true
+      name: nteams
+      teams:
+        webHookURLSecretKeySelector:
+          secret:
+            name: &amp;lt;secret_name&amp;gt;
+          key: &amp;lt;key&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
       </description>
     </item>
     
     <item>
       <title>Docs: Diagnostics</title>
       <link>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/diagnostics/</link>
-      <pubDate>Mon, 05 Aug 2019 00:00:00 +0000</pubDate>
+      <pubDate>Fri, 20 Dec 2019 00:00:00 +0000</pubDate>
       
       <guid>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/diagnostics/</guid>
       <description>
@@ -940,7 +991,7 @@ kubectl apply -f deploy/operator.yaml&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
     <item>
       <title>Docs: Schema</title>
       <link>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/schema/</link>
-      <pubDate>Mon, 05 Aug 2019 00:00:00 +0000</pubDate>
+      <pubDate>Fri, 20 Dec 2019 00:00:00 +0000</pubDate>
       
       <guid>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/schema/</guid>
       <description>
@@ -962,7 +1013,7 @@ kubectl apply -f deploy/operator.yaml&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 &lt;/ul&gt;
 &lt;h2 id=&#34;jenkins.io&#34;&gt;jenkins.io&lt;/h2&gt;
 &lt;p&gt;
-&lt;p&gt;Package v1alpha2 contains the API Schema definitions for the jenkins.io v1alpha2 API group&lt;/p&gt;
+&lt;p&gt;Package v1alpha2 contains API Schema definitions for the jenkins.io v1alpha2 API group&lt;/p&gt;
 &lt;/p&gt;
 Resource Types:
 &lt;ul&gt;&lt;li&gt;
@@ -1051,8 +1102,22 @@ Every single change here requires a pod restart.&lt;/p&gt;
 &lt;/td&gt;
 &lt;td&gt;
 &lt;em&gt;(Optional)&lt;/em&gt;
-&lt;p&gt;SeedJobs defines a list of Jenkins Seed Job configurations
+&lt;p&gt;SeedJobs defines list of Jenkins Seed Job configurations
 More info: &lt;a href=&#34;https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-seed-jobs-and-pipelines&#34;&gt;https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-seed-jobs-and-pipelines&lt;/a&gt;&lt;/p&gt;
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;
+&lt;code&gt;notifications&lt;/code&gt;&lt;/br&gt;
+&lt;em&gt;
+&lt;a href=&#34;#github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Notification&#34;&gt;
+[][]github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Notification
+&lt;/a&gt;
+&lt;/em&gt;
+&lt;/td&gt;
+&lt;td&gt;
+&lt;p&gt;Notifications defines list of a services which are used to inform about Jenkins status
+Can be used to integrate chat services like Slack, Microsoft Teams or Mailgun&lt;/p&gt;
 &lt;/td&gt;
 &lt;/tr&gt;
 &lt;tr&gt;
@@ -1066,7 +1131,7 @@ Service
 &lt;/td&gt;
 &lt;td&gt;
 &lt;em&gt;(Optional)&lt;/em&gt;
-&lt;p&gt;Service is the Kubernetes service of the Jenkins master HTTP pod
+&lt;p&gt;Service is Kubernetes service of Jenkins master HTTP pod
 Defaults to :
 port: 8080
 type: ClusterIP&lt;/p&gt;
@@ -1083,7 +1148,7 @@ Service
 &lt;/td&gt;
 &lt;td&gt;
 &lt;em&gt;(Optional)&lt;/em&gt;
-&lt;p&gt;Service is the Kubernetes service of the Jenkins slave pods
+&lt;p&gt;Service is Kubernetes service of Jenkins slave pods
 Defaults to :
 port: 50000
 type: ClusterIP&lt;/p&gt;
@@ -1100,7 +1165,7 @@ Backup
 &lt;/td&gt;
 &lt;td&gt;
 &lt;em&gt;(Optional)&lt;/em&gt;
-&lt;p&gt;Backup defines the configuration of a Jenkins backup
+&lt;p&gt;Backup defines configuration of Jenkins backup
 More info: &lt;a href=&#34;https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-backup-and-restore&#34;&gt;https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-backup-and-restore&lt;/a&gt;&lt;/p&gt;
 &lt;/td&gt;
 &lt;/tr&gt;
@@ -1115,7 +1180,7 @@ Restore
 &lt;/td&gt;
 &lt;td&gt;
 &lt;em&gt;(Optional)&lt;/em&gt;
-&lt;p&gt;Backup defines the configuration of a Jenkins backup restore
+&lt;p&gt;Backup defines configuration of Jenkins backup restore
 More info: &lt;a href=&#34;https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-backup-and-restore&#34;&gt;https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-backup-and-restore&lt;/a&gt;&lt;/p&gt;
 &lt;/td&gt;
 &lt;/tr&gt;
@@ -1130,7 +1195,7 @@ GroovyScripts
 &lt;/td&gt;
 &lt;td&gt;
 &lt;em&gt;(Optional)&lt;/em&gt;
-&lt;p&gt;GroovyScripts defines the configuration of Jenkins customization via groovy scripts&lt;/p&gt;
+&lt;p&gt;GroovyScripts defines configuration of Jenkins customization via groovy scripts&lt;/p&gt;
 &lt;/td&gt;
 &lt;/tr&gt;
 &lt;tr&gt;
@@ -1144,7 +1209,7 @@ ConfigurationAsCode
 &lt;/td&gt;
 &lt;td&gt;
 &lt;em&gt;(Optional)&lt;/em&gt;
-&lt;p&gt;ConfigurationAsCode defines the configuration of Jenkins customization via the Configuration as Code Jenkins plugin&lt;/p&gt;
+&lt;p&gt;ConfigurationAsCode defines configuration of Jenkins customization via Configuration as Code Jenkins plugin&lt;/p&gt;
 &lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;
@@ -1235,7 +1300,7 @@ string
 &lt;a href=&#34;#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.JenkinsSpec&#34;&gt;JenkinsSpec&lt;/a&gt;)
 &lt;/p&gt;
 &lt;p&gt;
-&lt;p&gt;Backup defines the configuration of a Jenkins backup&lt;/p&gt;
+&lt;p&gt;Backup defines configuration of Jenkins backup&lt;/p&gt;
 &lt;/p&gt;
 &lt;table&gt;
 &lt;thead&gt;
@@ -1266,7 +1331,7 @@ Handler
 &lt;/em&gt;
 &lt;/td&gt;
 &lt;td&gt;
-&lt;p&gt;Action defines the action which performs the backup in the backup container sidecar&lt;/p&gt;
+&lt;p&gt;Action defines action which performs backup in backup container sidecar&lt;/p&gt;
 &lt;/td&gt;
 &lt;/tr&gt;
 &lt;tr&gt;
@@ -1277,7 +1342,7 @@ uint64
 &lt;/em&gt;
 &lt;/td&gt;
 &lt;td&gt;
-&lt;p&gt;Interval tells you how often the backup is made in seconds
+&lt;p&gt;Interval tells how often make backup in seconds
 Defaults to 30.&lt;/p&gt;
 &lt;/td&gt;
 &lt;/tr&gt;
@@ -1289,7 +1354,7 @@ bool
 &lt;/em&gt;
 &lt;/td&gt;
 &lt;td&gt;
-&lt;p&gt;MakeBackupBeforePodDeletion tells the operator to make a backup before Jenkins master pod deletion&lt;/p&gt;
+&lt;p&gt;MakeBackupBeforePodDeletion tells operator to make backup before Jenkins master pod deletion&lt;/p&gt;
 &lt;/td&gt;
 &lt;/tr&gt;
 &lt;/tbody&gt;
@@ -1301,7 +1366,7 @@ bool
 &lt;a href=&#34;#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.Customization&#34;&gt;Customization&lt;/a&gt;)
 &lt;/p&gt;
 &lt;p&gt;
-&lt;p&gt;ConfigMapRef is the reference to Kubernetes ConfigMap&lt;/p&gt;
+&lt;p&gt;ConfigMapRef is reference to Kubernetes ConfigMap&lt;/p&gt;
 &lt;/p&gt;
 &lt;table&gt;
 &lt;thead&gt;
@@ -1330,7 +1395,7 @@ string
 &lt;a href=&#34;#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.JenkinsSpec&#34;&gt;JenkinsSpec&lt;/a&gt;)
 &lt;/p&gt;
 &lt;p&gt;
-&lt;p&gt;ConfigurationAsCode defines configuration of Jenkins customization via the Configuration as Code Jenkins plugin&lt;/p&gt;
+&lt;p&gt;ConfigurationAsCode defines configuration of Jenkins customization via Configuration as Code Jenkins plugin&lt;/p&gt;
 &lt;/p&gt;
 &lt;table&gt;
 &lt;thead&gt;
@@ -1361,7 +1426,7 @@ Customization
 &lt;a href=&#34;#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.JenkinsMaster&#34;&gt;JenkinsMaster&lt;/a&gt;)
 &lt;/p&gt;
 &lt;p&gt;
-&lt;p&gt;Container defines the Kubernetes container attributes&lt;/p&gt;
+&lt;p&gt;Container defines Kubernetes container attributes&lt;/p&gt;
 &lt;/p&gt;
 &lt;table&gt;
 &lt;thead&gt;
@@ -1716,7 +1781,7 @@ Kubernetes core/v1.ExecAction
 &lt;a href=&#34;#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.SeedJob&#34;&gt;SeedJob&lt;/a&gt;)
 &lt;/p&gt;
 &lt;p&gt;
-&lt;p&gt;JenkinsCredentialType defines the type of Jenkins credential used in the seed job mechanism&lt;/p&gt;
+&lt;p&gt;JenkinsCredentialType defines type of Jenkins credential used to seed job mechanism&lt;/p&gt;
 &lt;/p&gt;
 &lt;h3 id=&#34;github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.JenkinsMaster&#34;&gt;JenkinsMaster
 &lt;/h3&gt;
@@ -1738,7 +1803,7 @@ every single change requires a Jenkins master pod restart&lt;/p&gt;
 &lt;tbody&gt;
 &lt;tr&gt;
 &lt;td&gt;
-&lt;code&gt;masterAnnotations&lt;/code&gt;&lt;/br&gt;
+&lt;code&gt;annotations&lt;/code&gt;&lt;/br&gt;
 &lt;em&gt;
 map[string]string
 &lt;/em&gt;
@@ -1749,6 +1814,22 @@ map[string]string
 set by external tools to store and retrieve arbitrary metadata. They are not
 queryable and should be preserved when modifying objects.
 More info: &lt;a href=&#34;http://kubernetes.io/docs/user-guide/annotations&#34;&gt;http://kubernetes.io/docs/user-guide/annotations&lt;/a&gt;&lt;/p&gt;
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;
+&lt;code&gt;masterAnnotations&lt;/code&gt;&lt;/br&gt;
+&lt;em&gt;
+map[string]string
+&lt;/em&gt;
+&lt;/td&gt;
+&lt;td&gt;
+&lt;em&gt;(Optional)&lt;/em&gt;
+&lt;p&gt;Annotations is an unstructured key value map stored with a resource that may be
+set by external tools to store and retrieve arbitrary metadata. They are not
+queryable and should be preserved when modifying objects.
+More info: &lt;a href=&#34;http://kubernetes.io/docs/user-guide/annotations&#34;&gt;http://kubernetes.io/docs/user-guide/annotations&lt;/a&gt;
+Deprecated: will be removed in the future, please use Annotations(annotations)&lt;/p&gt;
 &lt;/td&gt;
 &lt;/tr&gt;
 &lt;tr&gt;
@@ -1906,6 +1987,17 @@ version: 0.12.1&lt;/p&gt;
 &lt;p&gt;Plugins contains plugins required by user&lt;/p&gt;
 &lt;/td&gt;
 &lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;
+&lt;code&gt;disableCSRFProtection&lt;/code&gt;&lt;/br&gt;
+&lt;em&gt;
+bool
+&lt;/em&gt;
+&lt;/td&gt;
+&lt;td&gt;
+&lt;p&gt;DisableCSRFProtection allows you to toggle CSRF Protection on Jenkins&lt;/p&gt;
+&lt;/td&gt;
+&lt;/tr&gt;
 &lt;/tbody&gt;
 &lt;/table&gt;
 &lt;h3 id=&#34;github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.JenkinsSpec&#34;&gt;JenkinsSpec
@@ -1952,6 +2044,20 @@ Every single change here requires a pod restart.&lt;/p&gt;
 &lt;em&gt;(Optional)&lt;/em&gt;
 &lt;p&gt;SeedJobs defines list of Jenkins Seed Job configurations
 More info: &lt;a href=&#34;https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-seed-jobs-and-pipelines&#34;&gt;https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-seed-jobs-and-pipelines&lt;/a&gt;&lt;/p&gt;
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;
+&lt;code&gt;notifications&lt;/code&gt;&lt;/br&gt;
+&lt;em&gt;
+&lt;a href=&#34;#github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Notification&#34;&gt;
+[][]github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Notification
+&lt;/a&gt;
+&lt;/em&gt;
+&lt;/td&gt;
+&lt;td&gt;
+&lt;p&gt;Notifications defines list of a services which are used to inform about Jenkins status
+Can be used to integrate chat services like Slack, Microsoft Teams or Mailgun&lt;/p&gt;
 &lt;/td&gt;
 &lt;/tr&gt;
 &lt;tr&gt;
@@ -2176,7 +2282,7 @@ string
 &lt;/td&gt;
 &lt;td&gt;
 &lt;em&gt;(Optional)&lt;/em&gt;
-&lt;p&gt;UserAndPasswordHash is a SHA256 hash made from the username and password&lt;/p&gt;
+&lt;p&gt;UserAndPasswordHash is a SHA256 hash made from user and password&lt;/p&gt;
 &lt;/td&gt;
 &lt;/tr&gt;
 &lt;tr&gt;
@@ -2188,7 +2294,7 @@ string
 &lt;/td&gt;
 &lt;td&gt;
 &lt;em&gt;(Optional)&lt;/em&gt;
-&lt;p&gt;CreatedSeedJobs contains list of seed job ids already created in Jenkins&lt;/p&gt;
+&lt;p&gt;CreatedSeedJobs contains list of seed job id already created in Jenkins&lt;/p&gt;
 &lt;/td&gt;
 &lt;/tr&gt;
 &lt;tr&gt;
@@ -2303,6 +2409,10 @@ SecretKeySelector
 &lt;h3 id=&#34;github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Notification&#34;&gt;Notification
 &lt;/h3&gt;
 &lt;p&gt;
+(&lt;em&gt;Appears on:&lt;/em&gt;
+&lt;a href=&#34;#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.JenkinsSpec&#34;&gt;JenkinsSpec&lt;/a&gt;)
+&lt;/p&gt;
+&lt;p&gt;
 &lt;p&gt;Notification is a service configuration used to send notifications about Jenkins status&lt;/p&gt;
 &lt;/p&gt;
 &lt;table&gt;
@@ -2315,10 +2425,10 @@ SecretKeySelector
 &lt;tbody&gt;
 &lt;tr&gt;
 &lt;td&gt;
-&lt;code&gt;loggingLevel&lt;/code&gt;&lt;/br&gt;
+&lt;code&gt;level&lt;/code&gt;&lt;/br&gt;
 &lt;em&gt;
-&lt;a href=&#34;#github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.NotificationLogLevel&#34;&gt;
-NotificationLogLevel
+&lt;a href=&#34;#github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.NotificationLevel&#34;&gt;
+NotificationLevel
 &lt;/a&gt;
 &lt;/em&gt;
 &lt;/td&gt;
@@ -2381,16 +2491,28 @@ github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Mailgun
 &lt;td&gt;
 &lt;/td&gt;
 &lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;
+&lt;code&gt;smtp&lt;/code&gt;&lt;/br&gt;
+&lt;em&gt;
+&lt;a href=&#34;#github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.SMTP&#34;&gt;
+github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.SMTP
+&lt;/a&gt;
+&lt;/em&gt;
+&lt;/td&gt;
+&lt;td&gt;
+&lt;/td&gt;
+&lt;/tr&gt;
 &lt;/tbody&gt;
 &lt;/table&gt;
-&lt;h3 id=&#34;github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.NotificationLogLevel&#34;&gt;NotificationLogLevel
+&lt;h3 id=&#34;github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.NotificationLevel&#34;&gt;NotificationLevel
 (&lt;code&gt;string&lt;/code&gt; alias)&lt;/p&gt;&lt;/h3&gt;
 &lt;p&gt;
 (&lt;em&gt;Appears on:&lt;/em&gt;
 &lt;a href=&#34;#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.Notification&#34;&gt;Notification&lt;/a&gt;)
 &lt;/p&gt;
 &lt;p&gt;
-&lt;p&gt;NotificationLogLevel defines logging level of Notification&lt;/p&gt;
+&lt;p&gt;NotificationLevel defines the level of a Notification&lt;/p&gt;
 &lt;/p&gt;
 &lt;h3 id=&#34;github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Plugin&#34;&gt;Plugin
 &lt;/h3&gt;
@@ -2488,12 +2610,106 @@ uint64
 &lt;/tr&gt;
 &lt;/tbody&gt;
 &lt;/table&gt;
+&lt;h3 id=&#34;github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.SMTP&#34;&gt;SMTP
+&lt;/h3&gt;
+&lt;p&gt;
+(&lt;em&gt;Appears on:&lt;/em&gt;
+&lt;a href=&#34;#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.Notification&#34;&gt;Notification&lt;/a&gt;)
+&lt;/p&gt;
+&lt;p&gt;
+&lt;p&gt;SMTP is handler for sending emails via this protocol&lt;/p&gt;
+&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;Field&lt;/th&gt;
+&lt;th&gt;Description&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;
+&lt;code&gt;usernameSecretKeySelector&lt;/code&gt;&lt;/br&gt;
+&lt;em&gt;
+&lt;a href=&#34;#github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.SecretKeySelector&#34;&gt;
+SecretKeySelector
+&lt;/a&gt;
+&lt;/em&gt;
+&lt;/td&gt;
+&lt;td&gt;
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;
+&lt;code&gt;passwordSecretKeySelector&lt;/code&gt;&lt;/br&gt;
+&lt;em&gt;
+&lt;a href=&#34;#github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.SecretKeySelector&#34;&gt;
+SecretKeySelector
+&lt;/a&gt;
+&lt;/em&gt;
+&lt;/td&gt;
+&lt;td&gt;
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;
+&lt;code&gt;port&lt;/code&gt;&lt;/br&gt;
+&lt;em&gt;
+int
+&lt;/em&gt;
+&lt;/td&gt;
+&lt;td&gt;
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;
+&lt;code&gt;server&lt;/code&gt;&lt;/br&gt;
+&lt;em&gt;
+string
+&lt;/em&gt;
+&lt;/td&gt;
+&lt;td&gt;
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;
+&lt;code&gt;tlsInsecureSkipVerify&lt;/code&gt;&lt;/br&gt;
+&lt;em&gt;
+bool
+&lt;/em&gt;
+&lt;/td&gt;
+&lt;td&gt;
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;
+&lt;code&gt;from&lt;/code&gt;&lt;/br&gt;
+&lt;em&gt;
+string
+&lt;/em&gt;
+&lt;/td&gt;
+&lt;td&gt;
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;
+&lt;code&gt;to&lt;/code&gt;&lt;/br&gt;
+&lt;em&gt;
+string
+&lt;/em&gt;
+&lt;/td&gt;
+&lt;td&gt;
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
 &lt;h3 id=&#34;github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.SecretKeySelector&#34;&gt;SecretKeySelector
 &lt;/h3&gt;
 &lt;p&gt;
 (&lt;em&gt;Appears on:&lt;/em&gt;
 &lt;a href=&#34;#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.Mailgun&#34;&gt;Mailgun&lt;/a&gt;, 
 &lt;a href=&#34;#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.MicrosoftTeams&#34;&gt;MicrosoftTeams&lt;/a&gt;, 
+&lt;a href=&#34;#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.SMTP&#34;&gt;SMTP&lt;/a&gt;, 
 &lt;a href=&#34;#github.com%2fjenkinsci%2fkubernetes-operator%2fpkg%2fapis%2fjenkins%2fv1alpha2.Slack&#34;&gt;Slack&lt;/a&gt;)
 &lt;/p&gt;
 &lt;p&gt;
@@ -2622,7 +2838,7 @@ string
 &lt;/em&gt;
 &lt;/td&gt;
 &lt;td&gt;
-&lt;p&gt;Targets is the repository path where the seed job definitions are&lt;/p&gt;
+&lt;p&gt;Targets is the repository path where are seed job definitions&lt;/p&gt;
 &lt;/td&gt;
 &lt;/tr&gt;
 &lt;tr&gt;
@@ -2633,7 +2849,7 @@ string
 &lt;/em&gt;
 &lt;/td&gt;
 &lt;td&gt;
-&lt;p&gt;RepositoryBranch is the repository branch where the seed job definitions are&lt;/p&gt;
+&lt;p&gt;RepositoryBranch is the repository branch where are seed job definitions&lt;/p&gt;
 &lt;/td&gt;
 &lt;/tr&gt;
 &lt;tr&gt;
@@ -2830,7 +3046,7 @@ int32
 &lt;/em&gt;
 &lt;/td&gt;
 &lt;td&gt;
-&lt;p&gt;The port that is exposed by this service.
+&lt;p&gt;The port that are exposed by this service.
 More info: &lt;a href=&#34;https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies&#34;&gt;https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies&lt;/a&gt;&lt;/p&gt;
 &lt;/td&gt;
 &lt;/tr&gt;
@@ -2845,7 +3061,7 @@ int32
 &lt;em&gt;(Optional)&lt;/em&gt;
 &lt;p&gt;The port on each node on which this service is exposed when type=NodePort or LoadBalancer.
 Usually assigned by the system. If specified, it will be allocated to the service
-if unused, or else creation of the service will fail.
+if unused or else creation of the service will fail.
 Default is to auto-allocate a port if the ServiceType of this Service requires one.
 More info: &lt;a href=&#34;https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport&#34;&gt;https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport&lt;/a&gt;&lt;/p&gt;
 &lt;/td&gt;
@@ -2860,7 +3076,7 @@ More info: &lt;a href=&#34;https://kubernetes.io/docs/concepts/services-networki
 &lt;td&gt;
 &lt;em&gt;(Optional)&lt;/em&gt;
 &lt;p&gt;If specified and supported by the platform, this will restrict traffic through the cloud-provider
-the load-balancer will be restricted to the specified client IPs. This field will be ignored if the
+load-balancer will be restricted to the specified client IPs. This field will be ignored if the
 cloud-provider does not support the feature.&amp;rdquo;
 More info: &lt;a href=&#34;https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/&#34;&gt;https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/&lt;/a&gt;&lt;/p&gt;
 &lt;/td&gt;
@@ -2918,146 +3134,11 @@ SecretKeySelector
 &lt;hr/&gt;
 &lt;p&gt;&lt;em&gt;
 Generated with &lt;code&gt;gen-crd-api-reference-docs&lt;/code&gt;
-on git commit &lt;code&gt;f4c4235&lt;/code&gt;.
+on git commit &lt;code&gt;b6e1057&lt;/code&gt;.
 &lt;/em&gt;&lt;/p&gt;
 
       </description>
     </item>
-    
-    <item>
-      <title>Docs: Developer Guide</title>
-      <link>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/developer-guide/</link>
-      <pubDate>Mon, 05 Aug 2019 00:00:00 +0000</pubDate>
-      
-      <guid>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/developer-guide/</guid>
-      <description>
-        
-        
-        
 
-
-
-&lt;div class=&#34;pageinfo pageinfo-primary&#34;&gt;
-&lt;p&gt;This document explains how to setup your development environment.&lt;/p&gt;
-
-&lt;/div&gt;
-
-
-&lt;h2 id=&#34;prerequisites&#34;&gt;Prerequisites&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;a href=&#34;https://github.com/operator-framework/operator-sdk&#34; target=&#34;_blank&#34;&gt;operator_sdk&lt;/a&gt; version v0.8.1&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://git-scm.com/downloads&#34; target=&#34;_blank&#34;&gt;git&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://golang.org/dl/&#34; target=&#34;_blank&#34;&gt;go&lt;/a&gt; version v1.12+&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;install_dev_tools.md&#34; target=&#34;_blank&#34;&gt;goimports, golint, checkmake and staticcheck&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://kubernetes.io/docs/tasks/tools/install-minikube/&#34; target=&#34;_blank&#34;&gt;minikube&lt;/a&gt; version v1.1.0+ (preferred Hypervisor - &lt;a href=&#34;https://www.virtualbox.org/wiki/Downloads&#34; target=&#34;_blank&#34;&gt;virtualbox&lt;/a&gt;)&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://docs.docker.com/install/&#34; target=&#34;_blank&#34;&gt;docker&lt;/a&gt; version 17.03+&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h2 id=&#34;clone-repository-and-download-dependencies&#34;&gt;Clone repository and download dependencies&lt;/h2&gt;
-&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;mkdir -p &lt;span style=&#34;color:#000&#34;&gt;$GOPATH&lt;/span&gt;/src/github.com/jenkinsci
-&lt;span style=&#34;color:#204a87&#34;&gt;cd&lt;/span&gt; &lt;span style=&#34;color:#000&#34;&gt;$GOPATH&lt;/span&gt;/src/github.com/jenkinsci/
-git clone git@github.com:jenkinsci/kubernetes-operator.git
-&lt;span style=&#34;color:#204a87&#34;&gt;cd&lt;/span&gt; kubernetes-operator
-make go-dependencies&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-&lt;h2 id=&#34;build-and-run-with-a-minikube&#34;&gt;Build and run with a minikube&lt;/h2&gt;
-
-&lt;p&gt;Build and run &lt;strong&gt;Jenkins Operator&lt;/strong&gt; locally:&lt;/p&gt;
-&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;make build minikube-run &lt;span style=&#34;color:#000&#34;&gt;EXTRA_ARGS&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;&amp;#39;--minikube --local&amp;#39;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-&lt;p&gt;Once minikube and &lt;strong&gt;Jenkins Operator&lt;/strong&gt; are up and running, apply Jenkins custom resource:&lt;/p&gt;
-&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;kubectl apply -f deploy/crds/jenkins_v1alpha2_jenkins_cr.yaml
-kubectl get jenkins -o yaml
-kubectl get po&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-&lt;h2 id=&#34;build-and-run-with-a-remote-kubernetes-cluster&#34;&gt;Build and run with a remote Kubernetes cluster&lt;/h2&gt;
-
-&lt;p&gt;You can also run the controller locally and make it listen to a remote Kubernetes server.&lt;/p&gt;
-&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;make run &lt;span style=&#34;color:#000&#34;&gt;NAMESPACE&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;default &lt;span style=&#34;color:#000&#34;&gt;KUBECTL_CONTEXT&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;remote-k8s &lt;span style=&#34;color:#000&#34;&gt;EXTRA_ARGS&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;&amp;#39;--kubeconfig ~/.kube/config&amp;#39;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-&lt;p&gt;Once minikube and &lt;strong&gt;Jenkins Operator&lt;/strong&gt; are up and running, apply Jenkins custom resource:&lt;/p&gt;
-&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;kubectl --context remote-k8s --namespace default apply -f deploy/crds/jenkins_v1alpha2_jenkins_cr.yaml
-kubectl --context remote-k8s --namespace default get jenkins -o yaml
-kubectl --context remote-k8s --namespace default get po&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-&lt;h2 id=&#34;testing&#34;&gt;Testing&lt;/h2&gt;
-
-&lt;p&gt;Run unit tests:&lt;/p&gt;
-&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;make test&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-&lt;h3 id=&#34;running-e2e-tests-on-linux&#34;&gt;Running E2E tests on Linux&lt;/h3&gt;
-
-&lt;p&gt;Run e2e tests with minikube:&lt;/p&gt;
-&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;make minikube-start
-&lt;span style=&#34;color:#204a87&#34;&gt;eval&lt;/span&gt; &lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;$(&lt;/span&gt;minikube docker-env&lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;)&lt;/span&gt;
-make build e2e&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-&lt;p&gt;Run the specific e2e test:&lt;/p&gt;
-&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;make build e2e &lt;span style=&#34;color:#000&#34;&gt;E2E_TEST_SELECTOR&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;&amp;#39;^TestConfiguration$&amp;#39;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-&lt;h3 id=&#34;running-e2e-tests-on-macos&#34;&gt;Running E2E tests on macOS&lt;/h3&gt;
-
-&lt;p&gt;At first, you need to start minikube:&lt;/p&gt;
-&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;$ make minikube-start
-$ &lt;span style=&#34;color:#204a87&#34;&gt;eval&lt;/span&gt; &lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;$(&lt;/span&gt;minikube docker-env&lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;)&lt;/span&gt; &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-&lt;p&gt;Build a Docker image inside the provided Linux container by:&lt;/p&gt;
-&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;$ make indocker&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-&lt;p&gt;Build &lt;strong&gt;Jenkins Operator&lt;/strong&gt; inside a container using:&lt;/p&gt;
-&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;$ make build&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-&lt;p&gt;Then exit the container and run:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;make e2e
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;h2 id=&#34;tips-tricks&#34;&gt;Tips &amp;amp; Tricks&lt;/h2&gt;
-
-&lt;h3 id=&#34;building-docker-image-on-minikube-for-e2e-tests&#34;&gt;Building docker image on minikube (for e2e tests)&lt;/h3&gt;
-
-&lt;p&gt;To be able to work with the docker daemon on &lt;code&gt;minikube&lt;/code&gt; machine run the following command before building an image:&lt;/p&gt;
-&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;color:#204a87&#34;&gt;eval&lt;/span&gt; &lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;$(&lt;/span&gt;minikube docker-env&lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-&lt;h3 id=&#34;when-pkg-apis-jenkinsio-jenkins-types-go-has-changed&#34;&gt;When &lt;code&gt;pkg/apis/jenkinsio/*/jenkins_types.go&lt;/code&gt; has changed&lt;/h3&gt;
-
-&lt;p&gt;Run:&lt;/p&gt;
-&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;make deepcopy-gen&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-&lt;h3 id=&#34;getting-the-jenkins-url-and-basic-credentials&#34;&gt;Getting the Jenkins URL and basic credentials&lt;/h3&gt;
-&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;minikube service jenkins-operator-http-&amp;lt;cr_name&amp;gt; --url
-kubectl get secret jenkins-operator-credentials-&amp;lt;cr_name&amp;gt; -o &lt;span style=&#34;color:#4e9a06&#34;&gt;&amp;#39;jsonpath={.data.user}&amp;#39;&lt;/span&gt; &lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;|&lt;/span&gt; base64 -d
-kubectl get secret jenkins-operator-credentials-&amp;lt;cr_name&amp;gt; -o &lt;span style=&#34;color:#4e9a06&#34;&gt;&amp;#39;jsonpath={.data.password}&amp;#39;&lt;/span&gt; &lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;|&lt;/span&gt; base64 -d&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-&lt;h1 id=&#34;tools&#34;&gt;Tools&lt;/h1&gt;
-
-&lt;h2 id=&#34;configure-environment-variables&#34;&gt;Configure environment variables&lt;/h2&gt;
-&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;color:#204a87&#34;&gt;export&lt;/span&gt; &lt;span style=&#34;color:#000&#34;&gt;GOPATH&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;/home/go &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;# example value&lt;/span&gt;
-&lt;span style=&#34;color:#204a87&#34;&gt;export&lt;/span&gt; &lt;span style=&#34;color:#000&#34;&gt;GOROOT&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;/usr/lib/go-1.12 &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;# example value&lt;/span&gt;
-&lt;span style=&#34;color:#204a87&#34;&gt;export&lt;/span&gt; &lt;span style=&#34;color:#000&#34;&gt;PATH&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#000&#34;&gt;$GOPATH&lt;/span&gt;/bin:&lt;span style=&#34;color:#000&#34;&gt;$PATH&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-&lt;h2 id=&#34;goimports&#34;&gt;goimports&lt;/h2&gt;
-
-&lt;pre&gt;&lt;code&gt;go get golang.org/x/tools/cmd/goimports
-cd $GOPATH/src/golang.org/x/tools/cmd/goimports
-go build
-go install
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;h2 id=&#34;golint&#34;&gt;golint&lt;/h2&gt;
-
-&lt;pre&gt;&lt;code&gt;go get -u golang.org/x/lint/golint
-cd  $GOPATH/src/golang.org/x/lint/golint
-go build
-go install
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;h2 id=&#34;checkmake&#34;&gt;checkmake&lt;/h2&gt;
-
-&lt;pre&gt;&lt;code&gt;go get github.com/mrtazz/checkmake
-cd $GOPATH/src/github.com/mrtazz/checkmake
-go build
-go install
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;h2 id=&#34;staticcheck&#34;&gt;staticcheck&lt;/h2&gt;
-
-&lt;pre&gt;&lt;code&gt;mkdir -p $GOPATH/src/github.com/dominikh/
-cd $GOPATH/src/github.com/dominikh/
-git clone https://github.com/dominikh/go-tools.git
-cd  $GOPATH/src/github.com/dominikh/go-tools/staticcheck
-go build
-go install
-&lt;/code&gt;&lt;/pre&gt;
-
-      </description>
-    </item>
-    
   </channel>
 </rss>
