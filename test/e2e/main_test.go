@@ -8,7 +8,6 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
 
-	f "github.com/operator-framework/operator-sdk/pkg/test"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -35,7 +34,7 @@ func TestMain(m *testing.M) {
 	port = flag.Int(portParameterName, -1, "The port on which Jenkins API is working. Note: If you want to use nodePort don't set this setting and --jenkins-api-use-nodeport must be false.")
 	useNodePort = flag.Bool(nodePortParameterName, false, "Connect to Jenkins API using the nodePort instead of service port. If you want to set this as true - don't set --jenkins-api-port.")
 
-	f.MainEntry(m)
+	framework.MainEntry(m)
 }
 
 func setupTest(t *testing.T) (string, *framework.TestCtx) {

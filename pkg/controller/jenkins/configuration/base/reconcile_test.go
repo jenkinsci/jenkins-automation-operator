@@ -698,3 +698,38 @@ func TestComparePodAnnotations(t *testing.T) {
 		assert.False(t, got)
 	})
 }
+
+func TestCompareImagePullSecrets(t *testing.T) {
+	t.Run("empty", func(t *testing.T) {
+		var expected []corev1.LocalObjectReference
+		var actual []corev1.LocalObjectReference
+
+		got := compareImagePullSecrets(expected, actual)
+
+		assert.True(t, got)
+	})
+	t.Run("the same", func(t *testing.T) {
+		expected := []corev1.LocalObjectReference{{Name: "test"}}
+		actual := []corev1.LocalObjectReference{{Name: "test"}}
+
+		got := compareImagePullSecrets(expected, actual)
+
+		assert.True(t, got)
+	})
+	t.Run("one extra pull secret in pod", func(t *testing.T) {
+		var expected []corev1.LocalObjectReference
+		actual := []corev1.LocalObjectReference{{Name: "test"}}
+
+		got := compareImagePullSecrets(expected, actual)
+
+		assert.True(t, got)
+	})
+	t.Run("one missing image pull secret", func(t *testing.T) {
+		expected := []corev1.LocalObjectReference{{Name: "test"}}
+		var actual []corev1.LocalObjectReference
+
+		got := compareImagePullSecrets(expected, actual)
+
+		assert.False(t, got)
+	})
+}

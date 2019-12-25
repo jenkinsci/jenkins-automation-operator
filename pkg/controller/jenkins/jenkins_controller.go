@@ -297,7 +297,7 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request, logger logr.Logg
 		return reconcile.Result{}, jenkins, err
 	}
 	if len(messages) > 0 {
-		message := fmt.Sprintf("Validation of user configuration failed, please correct Jenkins CR")
+		message := "Validation of user configuration failed, please correct Jenkins CR"
 		*r.notificationEvents <- event.Event{
 			Jenkins: *jenkins,
 			Phase:   event.PhaseUser,

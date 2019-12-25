@@ -25,7 +25,6 @@ import (
 	"github.com/go-logr/logr"
 	stackerr "github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -337,7 +336,7 @@ func (r *ReconcileJenkinsBaseConfiguration) addLabelForWatchesResources(customiz
 func (r *ReconcileJenkinsBaseConfiguration) createRBAC(meta metav1.ObjectMeta) error {
 	serviceAccount := resources.NewServiceAccount(meta)
 	err := r.CreateResource(serviceAccount)
-	if err != nil && !errors.IsAlreadyExists(err) {
+	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return stackerr.WithStack(err)
 	}
 
@@ -359,7 +358,7 @@ func (r *ReconcileJenkinsBaseConfiguration) createRBAC(meta metav1.ObjectMeta) e
 func (r *ReconcileJenkinsBaseConfiguration) createService(meta metav1.ObjectMeta, name string, config v1alpha2.Service) error {
 	service := corev1.Service{}
 	err := r.Client.Get(context.TODO(), types.NamespacedName{Name: name, Namespace: meta.Namespace}, &service)
-	if err != nil && errors.IsNotFound(err) {
+	if err != nil && apierrors.IsNotFound(err) {
 		service = resources.UpdateService(corev1.Service{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      name,
@@ -400,7 +399,7 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsMasterPod(meta metav1.O
 
 	// Check if this Pod already exists
 	currentJenkinsMasterPod, err := r.getJenkinsMasterPod()
-	if err != nil && errors.IsNotFound(err) {
+	if err != nil && apierrors.IsNotFound(err) {
 		jenkinsMasterPod := resources.NewJenkinsMasterPod(meta, r.Configuration.Jenkins)
 		if !reflect.DeepEqual(jenkinsMasterPod.Spec.Containers[0].Command, resources.GetJenkinsMasterContainerBaseCommand()) {
 			r.logger.Info(fmt.Sprintf("spec.master.containers[%s].command has been overridden make sure the command looks like: '%v', otherwise the operator won't configure default user and install plugins",
@@ -430,7 +429,7 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsMasterPod(meta metav1.O
 			return reconcile.Result{Requeue: true}, err
 		}
 		return reconcile.Result{}, nil
-	} else if err != nil && !errors.IsNotFound(err) {
+	} else if err != nil && !apierrors.IsNotFound(err) {
 		return reconcile.Result{}, stackerr.WithStack(err)
 	}
 
@@ -519,12 +518,12 @@ func (r *ReconcileJenkinsBaseConfiguration) checkForPodRecreation(currentJenkins
 	}
 
 	if !reflect.DeepEqual(r.Configuration.Jenkins.Spec.Master.SecurityContext, currentJenkinsMasterPod.Spec.SecurityContext) {
-		messages = append(messages, fmt.Sprintf("Jenkins pod security context has changed"))
+		messages = append(messages, "Jenkins pod security context has changed")
 		verbose = append(verbose, fmt.Sprintf("Jenkins pod security context has changed, actual '%+v' required '%+v'",
 			currentJenkinsMasterPod.Spec.SecurityContext, r.Configuration.Jenkins.Spec.Master.SecurityContext))
 	}
 
-	if !reflect.DeepEqual(r.Configuration.Jenkins.Spec.Master.ImagePullSecrets, currentJenkinsMasterPod.Spec.ImagePullSecrets) {
+	if !compareImagePullSecrets(r.Configuration.Jenkins.Spec.Master.ImagePullSecrets, currentJenkinsMasterPod.Spec.ImagePullSecrets) {
 		messages = append(messages, "Jenkins Pod ImagePullSecrets has changed")
 		verbose = append(verbose, fmt.Sprintf("Jenkins Pod ImagePullSecrets has changed, actual '%+v' required '%+v'",
 			currentJenkinsMasterPod.Spec.ImagePullSecrets, r.Configuration.Jenkins.Spec.Master.ImagePullSecrets))
@@ -654,6 +653,22 @@ func (r *ReconcileJenkinsBaseConfiguration) compareContainers(expected corev1.Co
 	}
 
 	return messages, verbose
+}
+
+func compareImagePullSecrets(expected, actual []corev1.LocalObjectReference) bool {
+	for _, expected := range expected {
+		found := false
+		for _, actual := range actual {
+			if expected.Name == actual.Name {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return false
+		}
+	}
+	return true
 }
 
 func comparePodAnnotations(expected, actual map[string]string) bool {

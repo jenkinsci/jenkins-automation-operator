@@ -90,7 +90,7 @@ func (bar *BackupAndRestore) Validate() []string {
 			messages = append(messages, fmt.Sprintf("restore container '%s' not found in CR spec.master.containers", restore.ContainerName))
 		}
 		if restore.Action.Exec == nil {
-			messages = append(messages, fmt.Sprintf("spec.restore.action.exec is not configured"))
+			messages = append(messages, "spec.restore.action.exec is not configured")
 		}
 	}
 
@@ -101,10 +101,10 @@ func (bar *BackupAndRestore) Validate() []string {
 			messages = append(messages, fmt.Sprintf("backup container '%s' not found in CR spec.master.containers", backup.ContainerName))
 		}
 		if backup.Action.Exec == nil {
-			messages = append(messages, fmt.Sprintf("spec.backup.action.exec is not configured"))
+			messages = append(messages, "spec.backup.action.exec is not configured")
 		}
 		if backup.Interval == 0 {
-			messages = append(messages, fmt.Sprintf("spec.backup.interval is not configured"))
+			messages = append(messages, "spec.backup.interval is not configured")
 		}
 	}
 

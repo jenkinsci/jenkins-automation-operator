@@ -9,7 +9,6 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
-	"k8s.io/api/core/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -32,7 +31,7 @@ func getJenkins(t *testing.T, namespace, name string) *v1alpha2.Jenkins {
 	return jenkins
 }
 
-func getJenkinsMasterPod(t *testing.T, jenkins *v1alpha2.Jenkins) *v1.Pod {
+func getJenkinsMasterPod(t *testing.T, jenkins *v1alpha2.Jenkins) *corev1.Pod {
 	lo := metav1.ListOptions{
 		LabelSelector: labels.SelectorFromSet(resources.BuildResourceLabels(jenkins)).String(),
 	}
@@ -47,7 +46,7 @@ func getJenkinsMasterPod(t *testing.T, jenkins *v1alpha2.Jenkins) *v1.Pod {
 }
 
 func createJenkinsAPIClient(jenkins *v1alpha2.Jenkins, hostname string, port int, useNodePort bool) (jenkinsclient.Jenkins, error) {
-	adminSecret := &v1.Secret{}
+	adminSecret := &corev1.Secret{}
 	namespaceName := types.NamespacedName{Namespace: jenkins.Namespace, Name: resources.GetOperatorCredentialsSecretName(jenkins)}
 	if err := framework.Global.Client.Get(context.TODO(), namespaceName, adminSecret); err != nil {
 		return nil, err
@@ -97,7 +96,7 @@ func createJenkinsCR(t *testing.T, name, namespace string, seedJob *[]v1alpha2.S
 				Containers: []v1alpha2.Container{
 					{
 						Name: resources.JenkinsMasterContainerName,
-						Env: []v1.EnvVar{
+						Env: []corev1.EnvVar{
 							{
 								Name:  "TEST_ENV",
 								Value: "test_env_value",

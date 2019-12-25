@@ -19,7 +19,6 @@ import (
 
 	"github.com/go-logr/logr"
 	stackerr "github.com/pkg/errors"
-	apps "k8s.io/api/apps/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -361,8 +360,8 @@ func agentDeploymentName(jenkins v1alpha2.Jenkins, agentName string) string {
 	return fmt.Sprintf("%s-%s", agentName, jenkins.Name)
 }
 
-func agentDeployment(jenkins *v1alpha2.Jenkins, namespace string, agentName string, secret string) *apps.Deployment {
-	return &apps.Deployment{
+func agentDeployment(jenkins *v1alpha2.Jenkins, namespace string, agentName string, secret string) *appsv1.Deployment {
+	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      agentDeploymentName(*jenkins, agentName),
 			Namespace: namespace,
@@ -377,7 +376,7 @@ func agentDeployment(jenkins *v1alpha2.Jenkins, namespace string, agentName stri
 				},
 			},
 		},
-		Spec: apps.DeploymentSpec{
+		Spec: appsv1.DeploymentSpec{
 			Template: corev1.PodTemplateSpec{
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
