@@ -417,6 +417,14 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsMasterPod(meta metav1.O
 		if err != nil {
 			return reconcile.Result{}, stackerr.WithStack(err)
 		}
+
+		currentJenkinsMasterPod, err := r.waitUntilCreateJenkinsMasterPod()
+		if err == nil {
+			r.handleAdmissionControllerChanges(currentJenkinsMasterPod)
+		} else {
+			r.logger.V(log.VWarn).Info(fmt.Sprintf("waitUntilCreateJenkinsMasterPod has failed: %s", err))
+		}
+
 		now := metav1.Now()
 		r.Configuration.Jenkins.Status = v1alpha2.JenkinsStatus{
 			ProvisionStartTime:  &now,
@@ -424,11 +432,7 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsMasterPod(meta metav1.O
 			PendingBackup:       r.Configuration.Jenkins.Status.LastBackup,
 			UserAndPasswordHash: userAndPasswordHash,
 		}
-		err = r.Client.Update(context.TODO(), r.Configuration.Jenkins)
-		if err != nil {
-			return reconcile.Result{Requeue: true}, err
-		}
-		return reconcile.Result{}, nil
+		return reconcile.Result{Requeue: true}, r.Client.Update(context.TODO(), r.Configuration.Jenkins)
 	} else if err != nil && !apierrors.IsNotFound(err) {
 		return reconcile.Result{}, stackerr.WithStack(err)
 	}
@@ -903,4 +907,32 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureBaseConfiguration(jenkinsClien
 	})
 
 	return reconcile.Result{Requeue: requeue}, err
+}
+
+func (r *ReconcileJenkinsBaseConfiguration) waitUntilCreateJenkinsMasterPod() (currentJenkinsMasterPod *corev1.Pod, err error) {
+	currentJenkinsMasterPod, err = r.getJenkinsMasterPod()
+	for {
+		if err != nil && !apierrors.IsNotFound(err) {
+			return nil, stackerr.WithStack(err)
+		} else if err == nil {
+			break
+		}
+		currentJenkinsMasterPod, err = r.getJenkinsMasterPod()
+		time.Sleep(time.Millisecond * 10)
+	}
+
+	return
+}
+
+func (r *ReconcileJenkinsBaseConfiguration) handleAdmissionControllerChanges(currentJenkinsMasterPod *corev1.Pod) {
+	if !reflect.DeepEqual(r.Configuration.Jenkins.Spec.Master.SecurityContext, currentJenkinsMasterPod.Spec.SecurityContext) {
+		r.Configuration.Jenkins.Spec.Master.SecurityContext = currentJenkinsMasterPod.Spec.SecurityContext
+		r.logger.Info(fmt.Sprintf("The Admission controller has changed the Jenkins master pod spec.securityContext, changing the Jenkinc CR spec.master.securityContext to '%+v'", currentJenkinsMasterPod.Spec.SecurityContext))
+	}
+	for i, container := range r.Configuration.Jenkins.Spec.Master.Containers {
+		if !reflect.DeepEqual(container.SecurityContext, currentJenkinsMasterPod.Spec.Containers[i].SecurityContext) {
+			r.Configuration.Jenkins.Spec.Master.Containers[i].SecurityContext = currentJenkinsMasterPod.Spec.Containers[i].SecurityContext
+			r.logger.Info(fmt.Sprintf("The Admission controller has changed the securityContext, changing the Jenkins CR spec.master.containers[%s].securityContext to '+%v'", container.Name, currentJenkinsMasterPod.Spec.Containers[i].SecurityContext))
+		}
+	}
 }
