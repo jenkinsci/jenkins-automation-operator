@@ -127,8 +127,6 @@ func (r *ReconcileJenkinsBaseConfiguration) validateVolumes() ([]string, error) 
 			} else if len(msg) > 0 {
 				messages = append(messages, msg...)
 			}
-		default: //TODO add support for rest of volumes
-			messages = append(messages, fmt.Sprintf("Unsupported volume '%v'", volume))
 		}
 	}
 
