@@ -3514,6 +3514,20 @@ More info: &lt;a href=&#34;https://kubernetes.io/docs/concepts/storage/volumes&#
 &lt;/tr&gt;
 &lt;tr&gt;
 &lt;td&gt;
+&lt;code&gt;tolerations&lt;/code&gt;&lt;/br&gt;
+&lt;em&gt;
+&lt;a href=&#34;https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.12/#toleration-v1-core&#34;&gt;
+[]Kubernetes core/v1.Toleration
+&lt;/a&gt;
+&lt;/em&gt;
+&lt;/td&gt;
+&lt;td&gt;
+&lt;em&gt;(Optional)&lt;/em&gt;
+&lt;p&gt;If specified, the pod&amp;rsquo;s tolerations.&lt;/p&gt;
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;
 &lt;code&gt;basePlugins&lt;/code&gt;&lt;/br&gt;
 &lt;em&gt;
 &lt;a href=&#34;#github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Plugin&#34;&gt;
@@ -4703,7 +4717,7 @@ SecretKeySelector
 &lt;hr/&gt;
 &lt;p&gt;&lt;em&gt;
 Generated with &lt;code&gt;gen-crd-api-reference-docs&lt;/code&gt;
-on git commit &lt;code&gt;b6e1057&lt;/code&gt;.
+on git commit &lt;code&gt;b2d3902&lt;/code&gt;.
 &lt;/em&gt;&lt;/p&gt;
 
       </description>
