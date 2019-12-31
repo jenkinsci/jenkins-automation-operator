@@ -295,6 +295,10 @@ type JenkinsMaster struct {
 	// +optional
 	Volumes []corev1.Volume `json:"volumes,omitempty"`
 
+	// If specified, the pod's tolerations.
+	// +optional
+	Tolerations []corev1.Toleration `json:"tolerations,omitempty"`
+
 	// BasePlugins contains plugins required by operator
 	// Defaults to :
 	// - name: kubernetes

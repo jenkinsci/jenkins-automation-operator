@@ -38,8 +38,6 @@ const (
 
 	httpPortName  = "http"
 	slavePortName = "slavelistener"
-	// HTTPPortInt defines Jenkins master HTTP port
-	HTTPPortInt = 8080
 )
 
 func buildPodTypeMeta() metav1.TypeMeta {
@@ -309,6 +307,7 @@ func NewJenkinsMasterPod(objectMeta metav1.ObjectMeta, jenkins *v1alpha2.Jenkins
 			Volumes:            append(GetJenkinsMasterPodBaseVolumes(jenkins), jenkins.Spec.Master.Volumes...),
 			SecurityContext:    jenkins.Spec.Master.SecurityContext,
 			ImagePullSecrets:   jenkins.Spec.Master.ImagePullSecrets,
+			Tolerations:        jenkins.Spec.Master.Tolerations,
 		},
 	}
 }
