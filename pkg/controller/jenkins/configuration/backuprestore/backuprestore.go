@@ -130,7 +130,7 @@ func (bar *BackupAndRestore) Restore(jenkinsClient jenkinsclient.Jenkins) error 
 		return nil
 	}
 	if jenkins.Status.LastBackup == 0 {
-		bar.logger.Info("Skipping restore backup")
+		bar.logger.V(log.VDebug).Info("Skipping restore backup")
 		if jenkins.Status.PendingBackup == 0 {
 			jenkins.Status.PendingBackup = 1
 			return bar.k8sClient.Update(context.TODO(), jenkins)
