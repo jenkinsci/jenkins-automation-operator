@@ -244,6 +244,17 @@ var initBashTemplate = template.Must(template.New(InitScriptName).Parse(`#!/usr/
 set -e
 set -x
 
+if [ "${DEBUG}" == "true" ]; then
+	echo "Printing debug messages - begin"
+	whoami
+	id
+	env
+	ls -la {{ .JenkinsHomePath }}
+	echo "Printing debug messages - end"
+else
+    echo "To print debug messages set environment variable 'DEBUG' to 'true'"
+fi
+
 # https://wiki.jenkins.io/display/JENKINS/Post-initialization+script
 mkdir -p {{ .JenkinsHomePath }}/init.groovy.d
 cp -n {{ .InitConfigurationPath }}/*.groovy {{ .JenkinsHomePath }}/init.groovy.d
