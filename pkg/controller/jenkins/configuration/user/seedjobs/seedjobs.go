@@ -43,6 +43,9 @@ const (
 	AgentName = "seed-job-agent"
 
 	creatingGroovyScriptName = "seed-job-groovy-script.groovy"
+
+	homeVolumeName = "home"
+	homeVolumePath = "/home/jenkins/agent"
 )
 
 var seedJobGroovyScriptTemplate = template.Must(template.New(creatingGroovyScriptName).Parse(`
@@ -409,8 +412,22 @@ func agentDeployment(jenkins *v1alpha2.Jenkins, namespace string, agentName stri
 								},
 								{
 									Name:  "JENKINS_AGENT_WORKDIR",
-									Value: "/home/jenkins/agent",
+									Value: homeVolumePath,
 								},
+							},
+							VolumeMounts: []corev1.VolumeMount{
+								{
+									Name:      homeVolumeName,
+									MountPath: homeVolumePath,
+								},
+							},
+						},
+					},
+					Volumes: []corev1.Volume{
+						{
+							Name: homeVolumeName,
+							VolumeSource: corev1.VolumeSource{
+								EmptyDir: &corev1.EmptyDirVolumeSource{},
 							},
 						},
 					},
