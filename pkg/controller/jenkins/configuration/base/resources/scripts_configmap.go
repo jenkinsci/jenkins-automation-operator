@@ -251,7 +251,7 @@ if [ "${DEBUG_JENKINS_OPERATOR}" == "true" ]; then
 	ls -la {{ .JenkinsHomePath }}
 	echo "Printing debug messages - end"
 else
-    echo "To print debug messages set environment variable 'DEBUG' to 'true'"
+    echo "To print debug messages set environment variable 'DEBUG_JENKINS_OPERATOR' to 'true'"
 fi
 
 # https://wiki.jenkins.io/display/JENKINS/Post-initialization+script

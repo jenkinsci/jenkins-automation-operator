@@ -210,9 +210,10 @@ func (r *ReconcileJenkinsBaseConfiguration) verifyPlugins(jenkinsClient jenkinsc
 	allRequiredPlugins := [][]v1alpha2.Plugin{r.Configuration.Jenkins.Spec.Master.BasePlugins, r.Configuration.Jenkins.Spec.Master.Plugins}
 	for _, requiredPlugins := range allRequiredPlugins {
 		for _, plugin := range requiredPlugins {
-			if found, ok := isPluginInstalled(allPluginsInJenkins, plugin); !ok {
-				r.logger.V(log.VWarn).Info(fmt.Sprintf("Missing plugin '%s', actual '%+v'", plugin, found))
+			if _, ok := isPluginInstalled(allPluginsInJenkins, plugin); !ok {
+				r.logger.V(log.VWarn).Info(fmt.Sprintf("Missing plugin '%s'", plugin))
 				status = false
+				continue
 			}
 			if found, ok := isPluginVersionCompatible(allPluginsInJenkins, plugin); !ok {
 				r.logger.V(log.VWarn).Info(fmt.Sprintf("Incompatible plugin '%s' version, actual '%+v'", plugin, found.Version))
