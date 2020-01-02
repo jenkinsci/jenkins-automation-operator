@@ -44,6 +44,13 @@ func setupTest(t *testing.T) (string, *framework.TestCtx) {
 		t.Fatalf("could not initialize cluster resources: %v", err)
 	}
 
+	defer func() {
+		showLogsIfTestHasFailed(t, ctx)
+		if t.Failed() && ctx != nil {
+			ctx.Cleanup()
+		}
+	}()
+
 	jenkinsServiceList := &v1alpha2.JenkinsList{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       v1alpha2.Kind,

@@ -125,7 +125,7 @@ func printKubernetesPods(t *testing.T, namespace string) {
 	}
 }
 
-func showLogsAndCleanup(t *testing.T, ctx *framework.TestCtx) {
+func showLogsIfTestHasFailed(t *testing.T, ctx *framework.TestCtx) {
 	namespace, err := ctx.GetNamespace()
 	if err != nil {
 		t.Fatalf("Failed to get '%s' namespace", err)
@@ -134,14 +134,22 @@ func showLogsAndCleanup(t *testing.T, ctx *framework.TestCtx) {
 	if t.Failed() {
 		t.Log("Test failed. Bellow here you can check logs:")
 
-		printOperatorLogs(t, namespace)
 		printKubernetesEvents(t, namespace)
 		printKubernetesPods(t, namespace)
+		printOperatorLogs(t, namespace)
+	}
+}
+
+func showLogsAndCleanup(t *testing.T, ctx *framework.TestCtx) {
+	namespace, err := ctx.GetNamespace()
+	if err != nil {
+		t.Fatalf("Failed to get '%s' namespace", err)
 	}
 
+	showLogsIfTestHasFailed(t, ctx)
+
 	ctx.Cleanup()
-	err = waitUntilNamespaceDestroyed(namespace)
-	if err != nil {
+	if err = waitUntilNamespaceDestroyed(namespace); err != nil {
 		t.Fatalf("Failed to wait for namespace until destroyed '%s'", err)
 	}
 }
