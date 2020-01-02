@@ -244,9 +244,8 @@ var initBashTemplate = template.Must(template.New(InitScriptName).Parse(`#!/usr/
 set -e
 set -x
 
-if [ "${DEBUG}" == "true" ]; then
+if [ "${DEBUG_JENKINS_OPERATOR}" == "true" ]; then
 	echo "Printing debug messages - begin"
-	whoami
 	id
 	env
 	ls -la {{ .JenkinsHomePath }}
@@ -267,11 +266,30 @@ chmod +x {{ .JenkinsHomePath }}/scripts/*.sh
 {{- $installPluginsCommand := .InstallPluginsCommand }}
 
 echo "Installing plugins required by Operator - begin"
-{{ $installPluginsCommand }} {{ range $index, $plugin := .BasePlugins }}{{ $plugin.Name }}:{{ $plugin.Version }} {{ end }}
+cat > {{ .JenkinsHomePath }}/base-plugins << EOF
+{{ range $index, $plugin := .BasePlugins }}
+{{ $plugin.Name }}:{{ $plugin.Version }}
+{{ end }}
+EOF
+
+if [[ -z "${OPENSHIFT_JENKINS_IMAGE_VERSION}" ]]; then
+  {{ $installPluginsCommand }} < {{ .JenkinsHomePath }}/base-plugins
+else
+  {{ $installPluginsCommand }} {{ .JenkinsHomePath }}/base-plugins
+fi
 echo "Installing plugins required by Operator - end"
 
 echo "Installing plugins required by user - begin"
-{{ $installPluginsCommand }} {{ range $index, $plugin := .UserPlugins }}{{ $plugin.Name }}:{{ $plugin.Version }} {{ end }}
+cat > {{ .JenkinsHomePath }}/user-plugins << EOF
+{{ range $index, $plugin := .UserPlugins }}
+{{ $plugin.Name }}:{{ $plugin.Version }}
+{{ end }}
+EOF
+if [[ -z "${OPENSHIFT_JENKINS_IMAGE_VERSION}" ]]; then
+  {{ $installPluginsCommand }} < {{ .JenkinsHomePath }}/user-plugins
+else
+  {{ $installPluginsCommand }} {{ .JenkinsHomePath }}/user-plugins
+fi
 echo "Installing plugins required by user - end"
 `))
 
