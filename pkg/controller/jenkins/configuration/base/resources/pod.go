@@ -87,7 +87,7 @@ func GetJenkinsMasterContainerBaseEnvs(jenkins *v1alpha2.Jenkins) []corev1.EnvVa
 
 // getJenkinsHomePath fetches the Home Path for Jenkins
 func getJenkinsHomePath(jenkins *v1alpha2.Jenkins) string {
-	defaultJenkinsHomePath := jenkinsPath + "/jenkins"
+	defaultJenkinsHomePath := "/var/lib/jenkins"
 	for _, envVar := range jenkins.Spec.Master.Containers[0].Env {
 		if envVar.Name == "JENKINS_HOME" {
 			return envVar.Value
