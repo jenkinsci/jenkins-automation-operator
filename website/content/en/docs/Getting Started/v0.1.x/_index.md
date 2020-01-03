@@ -4,7 +4,7 @@ linkTitle: "v0.1.x"
 weight: 10
 date: 2019-08-05
 description: >
-  How to work with jenkins-operator legacy version. We recommend migration to a latest version
+  How to work with jenkins-operator legacy version. We recommend migration to a newer version.
 ---
 
 {{% pageinfo %}}
