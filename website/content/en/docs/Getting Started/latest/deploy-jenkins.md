@@ -86,4 +86,5 @@ Connect to the Jenkins instance (actual Kubernetes cluster):
 kubectl port-forward jenkins-<cr_name> 8080:8080
 ```
 Then open browser with address `http://localhost:8080`.
+
 ![jenkins](/kubernetes-operator/img/jenkins.png)
