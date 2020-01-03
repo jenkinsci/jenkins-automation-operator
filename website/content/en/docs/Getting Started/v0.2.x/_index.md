@@ -1,6 +1,6 @@
 ---
-title: "Latest (v0.2.x)"
-linkTitle: "Latest (v0.2.x)"
+title: "v0.2.x"
+linkTitle: "v0.2.x"
 weight: 10
 date: 2019-08-05
 description: >
