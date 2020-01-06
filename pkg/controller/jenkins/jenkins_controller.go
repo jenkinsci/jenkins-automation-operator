@@ -496,30 +496,10 @@ func (r *ReconcileJenkins) setDefaults(jenkins *v1alpha2.Jenkins, logger logr.Lo
 		jenkins.Spec.Master.SecurityContext = &securityContext
 	}
 
-	if !refVolumeSet(*jenkins) {
-		logger.Info("Setting default Jenkins master volume with preinstalled plugins")
-		changed = true
-		jenkins.Spec.Master.Volumes = append(jenkins.Spec.Master.Volumes, corev1.Volume{
-			Name: resources.RefVolumeName,
-			VolumeSource: corev1.VolumeSource{
-				EmptyDir: &corev1.EmptyDirVolumeSource{},
-			},
-		})
-	}
-
 	if changed {
 		return changed, errors.WithStack(r.client.Update(context.TODO(), jenkins))
 	}
 	return changed, nil
-}
-
-func refVolumeSet(jenkins v1alpha2.Jenkins) bool {
-	for _, volume := range jenkins.Spec.Master.Volumes {
-		if volume.Name == resources.RefVolumeName {
-			return true
-		}
-	}
-	return false
 }
 
 func isJavaOpsVariableNotSet(container v1alpha2.Container) bool {

@@ -29,11 +29,6 @@ const (
 	jenkinsInitConfigurationVolumeName = "init-configuration"
 	jenkinsInitConfigurationVolumePath = jenkinsPath + "/init-configuration"
 
-	refEnvironmentName = "REF"
-	// RefVolumeName is the Jenkins volume with preinstalled plugins volume name
-	RefVolumeName = "ref"
-	refVolumePath = "/usr/share/jenkins/ref/plugins"
-
 	// GroovyScriptsSecretVolumePath is a path where are groovy scripts used to configure Jenkins
 	// This script is provided by user
 	GroovyScriptsSecretVolumePath = jenkinsPath + "/groovy-scripts-secrets"
@@ -65,10 +60,6 @@ func GetJenkinsMasterContainerBaseCommand() []string {
 // GetJenkinsMasterContainerBaseEnvs returns Jenkins master pod envs required by operator
 func GetJenkinsMasterContainerBaseEnvs(jenkins *v1alpha2.Jenkins) []corev1.EnvVar {
 	envVars := []corev1.EnvVar{
-		{
-			Name:  refEnvironmentName,
-			Value: refVolumePath,
-		},
 		{
 			Name:  "COPY_REFERENCE_FILE_LOG",
 			Value: fmt.Sprintf("%s/%s", getJenkinsHomePath(jenkins), "copy_reference_file.log"),
@@ -181,11 +172,6 @@ func GetJenkinsMasterContainerBaseVolumeMounts(jenkins *v1alpha2.Jenkins) []core
 		{
 			Name:      JenkinsHomeVolumeName,
 			MountPath: getJenkinsHomePath(jenkins),
-			ReadOnly:  false,
-		},
-		{
-			Name:      RefVolumeName,
-			MountPath: refVolumePath,
 			ReadOnly:  false,
 		},
 		{
