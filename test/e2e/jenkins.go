@@ -148,7 +148,7 @@ func createJenkinsCR(t *testing.T, name, namespace string, seedJob *[]v1alpha2.S
 			Roles: []rbacv1.RoleRef{
 				{
 					APIGroup: "rbac.authorization.k8s.io",
-					Kind:     "Role",
+					Kind:     "ClusterRole",
 					Name:     "view",
 				},
 			},
