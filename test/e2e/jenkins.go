@@ -145,13 +145,13 @@ func createJenkinsCR(t *testing.T, name, namespace string, seedJob *[]v1alpha2.S
 				Type: corev1.ServiceTypeNodePort,
 				Port: constants.DefaultHTTPPortInt32,
 			},
-			Roles: []rbacv1.RoleRef{
-				{
-					APIGroup: "rbac.authorization.k8s.io",
-					Kind:     "ClusterRole",
-					Name:     "view",
-				},
-			},
+		},
+	}
+	jenkins.Spec.Roles = []rbacv1.RoleRef{
+		{
+			APIGroup: "rbac.authorization.k8s.io",
+			Kind:     "Role",
+			Name:     resources.GetResourceName(jenkins),
 		},
 	}
 

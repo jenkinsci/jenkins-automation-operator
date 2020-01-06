@@ -39,6 +39,7 @@ rules:
     verbs:
       - create
       - update
+      - list
   - apiGroups:
       - ""
     resources:
