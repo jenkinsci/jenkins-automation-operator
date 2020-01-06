@@ -6,6 +6,7 @@ package v1alpha2
 
 import (
 	v1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -369,6 +370,11 @@ func (in *JenkinsSpec) DeepCopyInto(out *JenkinsSpec) {
 	in.Restore.DeepCopyInto(&out.Restore)
 	in.GroovyScripts.DeepCopyInto(&out.GroovyScripts)
 	in.ConfigurationAsCode.DeepCopyInto(&out.ConfigurationAsCode)
+	if in.Roles != nil {
+		in, out := &in.Roles, &out.Roles
+		*out = make([]rbacv1.RoleRef, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 

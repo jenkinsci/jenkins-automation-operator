@@ -1,6 +1,7 @@
 package base
 
 import (
+	"context"
 	"testing"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
@@ -13,6 +14,11 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes/scheme"
+	k8sclient "sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 func TestGetJenkinsOpts(t *testing.T) {
@@ -731,5 +737,186 @@ func TestCompareImagePullSecrets(t *testing.T) {
 		got := compareImagePullSecrets(expected, actual)
 
 		assert.False(t, got)
+	})
+}
+
+func TestEnsureExtraRBAC(t *testing.T) {
+	namespace := "default"
+	jenkinsName := "example"
+	log.SetupLogger(true)
+
+	fetchAllRoleBindings := func(client k8sclient.Client) (roleBindings *rbacv1.RoleBindingList, err error) {
+		roleBindings = &rbacv1.RoleBindingList{}
+		err = client.List(context.TODO(), &k8sclient.ListOptions{Namespace: namespace}, roleBindings)
+		return
+	}
+
+	t.Run("empty", func(t *testing.T) {
+		// given
+		fakeClient := fake.NewFakeClient()
+		err := v1alpha2.SchemeBuilder.AddToScheme(scheme.Scheme)
+		assert.NoError(t, err)
+
+		jenkins := &v1alpha2.Jenkins{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      jenkinsName,
+				Namespace: namespace,
+			},
+			Spec: v1alpha2.JenkinsSpec{
+				Roles: []rbacv1.RoleRef{},
+			},
+		}
+		reconciler := New(configuration.Configuration{Client: fakeClient, Jenkins: jenkins, Scheme: scheme.Scheme}, nil, client.JenkinsAPIConnectionSettings{}, nil)
+		metaObject := resources.NewResourceObjectMeta(jenkins)
+
+		// when
+		err = reconciler.createRBAC(metaObject)
+		assert.NoError(t, err)
+		err = reconciler.ensureExtraRBAC(metaObject)
+		assert.NoError(t, err)
+
+		// then
+		roleBindings, err := fetchAllRoleBindings(fakeClient)
+		assert.NoError(t, err)
+		assert.Equal(t, 1, len(roleBindings.Items))
+		assert.Equal(t, metaObject.Name, roleBindings.Items[0].Name)
+	})
+	clusterRoleKind := "ClusterRole"
+	t.Run("one extra", func(t *testing.T) {
+		// given
+		fakeClient := fake.NewFakeClient()
+		err := v1alpha2.SchemeBuilder.AddToScheme(scheme.Scheme)
+		assert.NoError(t, err)
+
+		jenkins := &v1alpha2.Jenkins{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      jenkinsName,
+				Namespace: namespace,
+			},
+			Spec: v1alpha2.JenkinsSpec{
+				Roles: []rbacv1.RoleRef{
+					{APIGroup: "rbac.authorization.k8s.io",
+						Kind: clusterRoleKind,
+						Name: "edit",
+					},
+				},
+			},
+		}
+		reconciler := New(configuration.Configuration{Client: fakeClient, Jenkins: jenkins, Scheme: scheme.Scheme}, nil, client.JenkinsAPIConnectionSettings{}, nil)
+		metaObject := resources.NewResourceObjectMeta(jenkins)
+
+		// when
+		err = reconciler.createRBAC(metaObject)
+		assert.NoError(t, err)
+		err = reconciler.ensureExtraRBAC(metaObject)
+		assert.NoError(t, err)
+
+		// then
+		roleBindings, err := fetchAllRoleBindings(fakeClient)
+		assert.NoError(t, err)
+		assert.Equal(t, 2, len(roleBindings.Items))
+		assert.Equal(t, metaObject.Name, roleBindings.Items[0].Name)
+		assert.Equal(t, jenkins.Spec.Roles[0], roleBindings.Items[1].RoleRef)
+	})
+	t.Run("two extra", func(t *testing.T) {
+		// given
+		fakeClient := fake.NewFakeClient()
+		err := v1alpha2.SchemeBuilder.AddToScheme(scheme.Scheme)
+		assert.NoError(t, err)
+
+		jenkins := &v1alpha2.Jenkins{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      jenkinsName,
+				Namespace: namespace,
+			},
+			Spec: v1alpha2.JenkinsSpec{
+				Roles: []rbacv1.RoleRef{
+					{
+						APIGroup: "rbac.authorization.k8s.io",
+						Kind:     clusterRoleKind,
+						Name:     "admin",
+					},
+					{
+						APIGroup: "rbac.authorization.k8s.io",
+						Kind:     clusterRoleKind,
+						Name:     "edit",
+					},
+				},
+			},
+		}
+		reconciler := New(configuration.Configuration{Client: fakeClient, Jenkins: jenkins, Scheme: scheme.Scheme}, nil, client.JenkinsAPIConnectionSettings{}, nil)
+		metaObject := resources.NewResourceObjectMeta(jenkins)
+
+		// when
+		err = reconciler.createRBAC(metaObject)
+		assert.NoError(t, err)
+		err = reconciler.ensureExtraRBAC(metaObject)
+		assert.NoError(t, err)
+
+		// then
+		roleBindings, err := fetchAllRoleBindings(fakeClient)
+		assert.NoError(t, err)
+		assert.Equal(t, 3, len(roleBindings.Items))
+		assert.Equal(t, metaObject.Name, roleBindings.Items[0].Name)
+		assert.Equal(t, jenkins.Spec.Roles[0], roleBindings.Items[1].RoleRef)
+		assert.Equal(t, jenkins.Spec.Roles[1], roleBindings.Items[2].RoleRef)
+	})
+	t.Run("delete one extra", func(t *testing.T) {
+		// given
+		fakeClient := fake.NewFakeClient()
+		err := v1alpha2.SchemeBuilder.AddToScheme(scheme.Scheme)
+		assert.NoError(t, err)
+
+		jenkins := &v1alpha2.Jenkins{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      jenkinsName,
+				Namespace: namespace,
+			},
+			Spec: v1alpha2.JenkinsSpec{
+				Roles: []rbacv1.RoleRef{
+					{
+						APIGroup: "rbac.authorization.k8s.io",
+						Kind:     clusterRoleKind,
+						Name:     "admin",
+					},
+					{
+						APIGroup: "rbac.authorization.k8s.io",
+						Kind:     clusterRoleKind,
+						Name:     "edit",
+					},
+				},
+			},
+		}
+		reconciler := New(configuration.Configuration{Client: fakeClient, Jenkins: jenkins, Scheme: scheme.Scheme}, log.Log, client.JenkinsAPIConnectionSettings{}, nil)
+		metaObject := resources.NewResourceObjectMeta(jenkins)
+
+		// when
+		roleBindingSkipMe := resources.NewRoleBinding("skip-me", namespace, metaObject.Name, rbacv1.RoleRef{
+			APIGroup: "rbac.authorization.k8s.io",
+			Kind:     clusterRoleKind,
+			Name:     "edit",
+		})
+		err = reconciler.CreateOrUpdateResource(roleBindingSkipMe)
+		assert.NoError(t, err)
+		err = reconciler.createRBAC(metaObject)
+		assert.NoError(t, err)
+		err = reconciler.ensureExtraRBAC(metaObject)
+		assert.NoError(t, err)
+		jenkins.Spec.Roles = []rbacv1.RoleRef{
+			{
+				APIGroup: "rbac.authorization.k8s.io",
+				Kind:     clusterRoleKind,
+				Name:     "admin",
+			},
+		}
+		err = reconciler.ensureExtraRBAC(metaObject)
+		assert.NoError(t, err)
+
+		// then
+		roleBindings, err := fetchAllRoleBindings(fakeClient)
+		assert.NoError(t, err)
+		assert.Equal(t, 3, len(roleBindings.Items))
+		assert.Equal(t, metaObject.Name, roleBindings.Items[1].Name)
+		assert.Equal(t, jenkins.Spec.Roles[0], roleBindings.Items[2].RoleRef)
 	})
 }

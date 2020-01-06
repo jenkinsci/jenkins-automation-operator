@@ -10,6 +10,7 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
@@ -143,6 +144,13 @@ func createJenkinsCR(t *testing.T, name, namespace string, seedJob *[]v1alpha2.S
 			Service: v1alpha2.Service{
 				Type: corev1.ServiceTypeNodePort,
 				Port: constants.DefaultHTTPPortInt32,
+			},
+			Roles: []rbacv1.RoleRef{
+				{
+					APIGroup: "rbac.authorization.k8s.io",
+					Kind:     "Role",
+					Name:     "view",
+				},
 			},
 		},
 	}

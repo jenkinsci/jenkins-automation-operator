@@ -54,23 +54,22 @@ func NewRole(meta metav1.ObjectMeta) *v1.Role {
 }
 
 // NewRoleBinding returns rbac role binding for jenkins master
-func NewRoleBinding(meta metav1.ObjectMeta) *v1.RoleBinding {
+func NewRoleBinding(name, namespace, serviceAccountName string, roleRef v1.RoleRef) *v1.RoleBinding {
 	return &v1.RoleBinding{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "RoleBinding",
 			APIVersion: "rbac.authorization.k8s.io/v1",
 		},
-		ObjectMeta: meta,
-		RoleRef: v1.RoleRef{
-			APIGroup: "rbac.authorization.k8s.io",
-			Kind:     "Role",
-			Name:     meta.Name,
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
 		},
+		RoleRef: roleRef,
 		Subjects: []v1.Subject{
 			{
 				Kind:      "ServiceAccount",
-				Name:      meta.Name,
-				Namespace: meta.Namespace,
+				Name:      serviceAccountName,
+				Namespace: namespace,
 			},
 		},
 	}

@@ -2,6 +2,7 @@ package v1alpha2
 
 import (
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -52,6 +53,10 @@ type JenkinsSpec struct {
 	// ConfigurationAsCode defines configuration of Jenkins customization via Configuration as Code Jenkins plugin
 	// +optional
 	ConfigurationAsCode ConfigurationAsCode `json:"configurationAsCode,omitempty"`
+
+	// Roles defines list of extra RBAC roles for the Jenkins Master pod service account
+	// +optional
+	Roles []rbacv1.RoleRef `json:"roles,omitempty"`
 }
 
 // NotificationLevel defines the level of a Notification
