@@ -46,6 +46,9 @@ const (
 
 	homeVolumeName = "home"
 	homeVolumePath = "/home/jenkins/agent"
+
+	workspaceVolumeName = "workspace"
+	workspaceVolumePath = "/home/jenkins/workspace"
 )
 
 var seedJobGroovyScriptTemplate = template.Must(template.New(creatingGroovyScriptName).Parse(`
@@ -420,12 +423,22 @@ func agentDeployment(jenkins *v1alpha2.Jenkins, namespace string, agentName stri
 									Name:      homeVolumeName,
 									MountPath: homeVolumePath,
 								},
+								{
+									Name:      workspaceVolumeName,
+									MountPath: workspaceVolumePath,
+								},
 							},
 						},
 					},
 					Volumes: []corev1.Volume{
 						{
 							Name: homeVolumeName,
+							VolumeSource: corev1.VolumeSource{
+								EmptyDir: &corev1.EmptyDirVolumeSource{},
+							},
+						},
+						{
+							Name: workspaceVolumeName,
 							VolumeSource: corev1.VolumeSource{
 								EmptyDir: &corev1.EmptyDirVolumeSource{},
 							},
