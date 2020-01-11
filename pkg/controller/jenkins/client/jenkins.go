@@ -172,3 +172,17 @@ func (jenkins *jenkins) GetNodeSecret(name string) (string, error) {
 
 	return result["secret"], nil
 }
+
+// Returns the list of all plugins installed on the Jenkins server.
+// You can supply depth parameter, to limit how much data is returned.
+func (jenkins *jenkins) GetPlugins(depth int) (*gojenkins.Plugins, error) {
+	p := gojenkins.Plugins{Jenkins: &jenkins.Jenkins, Raw: new(gojenkins.PluginResponse), Base: "/pluginManager", Depth: depth}
+	statusCode, err := p.Poll()
+	if err != nil {
+		return nil, err
+	}
+	if statusCode != http.StatusOK {
+		return nil, fmt.Errorf("invalid status code returned: %d", statusCode)
+	}
+	return &p, nil
+}
