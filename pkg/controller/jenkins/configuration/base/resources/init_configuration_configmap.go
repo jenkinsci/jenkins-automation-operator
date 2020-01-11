@@ -17,6 +17,7 @@ const createOperatorUserFileName = "createOperatorUser.groovy"
 var createOperatorUserGroovyFmtTemplate = template.Must(template.New(createOperatorUserFileName).Parse(`
 import hudson.security.*
 
+{{- if .Enable }}
 def jenkins = jenkins.model.Jenkins.getInstance()
 def operatorUserCreatedFile = new File('{{ .OperatorUserCreatedFilePath }}')
 
@@ -34,15 +35,18 @@ if (!operatorUserCreatedFile.exists()) {
 
 	operatorUserCreatedFile.createNewFile()
 }
+{{- end }}
 `))
 
 func buildCreateJenkinsOperatorUserGroovyScript(jenkins *v1alpha2.Jenkins) (*string, error) {
 	data := struct {
+		Enable                      bool
 		OperatorCredentialsPath     string
 		OperatorUserNameFile        string
 		OperatorPasswordFile        string
 		OperatorUserCreatedFilePath string
 	}{
+		Enable:                      jenkins.Spec.JenkinsAPISettings.AuthorizationStrategy == v1alpha2.CreateUserAuthorizationStrategy,
 		OperatorCredentialsPath:     jenkinsOperatorCredentialsVolumePath,
 		OperatorUserNameFile:        OperatorCredentialsSecretUserNameKey,
 		OperatorPasswordFile:        OperatorCredentialsSecretPasswordKey,

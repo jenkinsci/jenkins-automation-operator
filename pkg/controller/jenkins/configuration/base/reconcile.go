@@ -29,7 +29,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -43,16 +42,14 @@ type ReconcileJenkinsBaseConfiguration struct {
 	configuration.Configuration
 	logger                       logr.Logger
 	jenkinsAPIConnectionSettings jenkinsclient.JenkinsAPIConnectionSettings
-	config                       *rest.Config
 }
 
 // New create structure which takes care of base configuration
-func New(config configuration.Configuration, logger logr.Logger, jenkinsAPIConnectionSettings jenkinsclient.JenkinsAPIConnectionSettings, restConfig *rest.Config) *ReconcileJenkinsBaseConfiguration {
+func New(config configuration.Configuration, logger logr.Logger, jenkinsAPIConnectionSettings jenkinsclient.JenkinsAPIConnectionSettings) *ReconcileJenkinsBaseConfiguration {
 	return &ReconcileJenkinsBaseConfiguration{
 		Configuration:                config,
 		logger:                       logger,
 		jenkinsAPIConnectionSettings: jenkinsAPIConnectionSettings,
-		config:                       restConfig,
 	}
 }
 
@@ -528,7 +525,7 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsMasterPod(meta metav1.O
 	}
 
 	if r.IsJenkinsTerminating(*currentJenkinsMasterPod) && r.Configuration.Jenkins.Status.UserConfigurationCompletedTime != nil {
-		backupAndRestore := backuprestore.New(r.Client, r.ClientSet, r.logger, r.Configuration.Jenkins, *r.config)
+		backupAndRestore := backuprestore.New(r.Configuration, r.logger)
 		if backupAndRestore.IsBackupTriggerEnabled() {
 			backupAndRestore.StopBackupTrigger()
 		}
@@ -904,6 +901,17 @@ func (r *ReconcileJenkinsBaseConfiguration) waitForJenkins() (reconcile.Result, 
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsClient() (jenkinsclient.Jenkins, error) {
+	switch r.Configuration.Jenkins.Spec.JenkinsAPISettings.AuthorizationStrategy {
+	case v1alpha2.ServiceAccountAuthorizationStrategy:
+		return r.ensureJenkinsClientFromServiceAccount()
+	case v1alpha2.CreateUserAuthorizationStrategy:
+		return r.ensureJenkinsClientFromSecret()
+	default:
+		return nil, stackerr.Errorf("unrecognized '%s' spec.jenkinsAPISettings.authorizationStrategy", r.Configuration.Jenkins.Spec.JenkinsAPISettings.AuthorizationStrategy)
+	}
+}
+
+func (r *ReconcileJenkinsBaseConfiguration) getJenkinsAPIUrl() (string, error) {
 	var service corev1.Service
 
 	err := r.Client.Get(context.TODO(), types.NamespacedName{
@@ -912,13 +920,37 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsClient() (jenkinsclient
 	}, &service)
 
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	jenkinsURL := r.jenkinsAPIConnectionSettings.BuildJenkinsAPIUrl(service.Name, service.Namespace, service.Spec.Ports[0].Port, service.Spec.Ports[0].NodePort)
 
 	if prefix, ok := GetJenkinsOpts(*r.Configuration.Jenkins)["prefix"]; ok {
 		jenkinsURL = jenkinsURL + prefix
+	}
+
+	return jenkinsURL, nil
+}
+
+func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsClientFromServiceAccount() (jenkinsclient.Jenkins, error) {
+	jenkinsAPIUrl, err := r.getJenkinsAPIUrl()
+	if err != nil {
+		return nil, err
+	}
+
+	podName := resources.GetJenkinsMasterPodName(*r.Configuration.Jenkins)
+	token, _, err := r.Configuration.Exec(podName, resources.JenkinsMasterContainerName, []string{"cat", "/var/run/secrets/kubernetes.io/serviceaccount/token"})
+	if err != nil {
+		return nil, err
+	}
+
+	return jenkinsclient.NewBearerTokenAuthorization(jenkinsAPIUrl, token.String())
+}
+
+func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsClientFromSecret() (jenkinsclient.Jenkins, error) {
+	jenkinsURL, err := r.getJenkinsAPIUrl()
+	if err != nil {
+		return nil, err
 	}
 
 	r.logger.V(log.VDebug).Info(fmt.Sprintf("Jenkins API URL '%s'", jenkinsURL))
@@ -948,7 +980,7 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsClient() (jenkinsclient
 		currentJenkinsMasterPod.ObjectMeta.CreationTimestamp.Time.UTC().After(tokenCreationTime.UTC()) {
 		r.logger.Info("Generating Jenkins API token for operator")
 		userName := string(credentialsSecret.Data[resources.OperatorCredentialsSecretUserNameKey])
-		jenkinsClient, err := jenkinsclient.New(
+		jenkinsClient, err := jenkinsclient.NewUserAndPasswordAuthorization(
 			jenkinsURL,
 			userName,
 			string(credentialsSecret.Data[resources.OperatorCredentialsSecretPasswordKey]))
@@ -970,7 +1002,7 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsClient() (jenkinsclient
 		}
 	}
 
-	return jenkinsclient.New(
+	return jenkinsclient.NewUserAndPasswordAuthorization(
 		jenkinsURL,
 		string(credentialsSecret.Data[resources.OperatorCredentialsSecretUserNameKey]),
 		string(credentialsSecret.Data[resources.OperatorCredentialsSecretTokenKey]))

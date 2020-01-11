@@ -1,6 +1,7 @@
 package configuration
 
 import (
+	"bytes"
 	"context"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
@@ -15,6 +16,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/remotecommand"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
@@ -26,6 +30,7 @@ type Configuration struct {
 	Notifications *chan event.Event
 	Jenkins       *v1alpha2.Jenkins
 	Scheme        *runtime.Scheme
+	Config        *rest.Config
 }
 
 // RestartJenkinsMasterPod terminate Jenkins master pod and notifies about it
@@ -110,4 +115,38 @@ func (c *Configuration) CreateOrUpdateResource(obj metav1.Object) error {
 	}
 
 	return nil
+}
+
+// Exec executes command in the given pod and it's container
+func (c *Configuration) Exec(podName, containerName string, command []string) (stdout, stderr bytes.Buffer, err error) {
+	req := c.ClientSet.CoreV1().RESTClient().Post().
+		Resource("pods").
+		Name(podName).
+		Namespace(c.Jenkins.Namespace).
+		SubResource("exec")
+	req.VersionedParams(&corev1.PodExecOptions{
+		Command:   command,
+		Container: containerName,
+		Stdin:     false,
+		Stdout:    true,
+		Stderr:    true,
+		TTY:       false,
+	}, scheme.ParameterCodec)
+
+	exec, err := remotecommand.NewSPDYExecutor(c.Config, "POST", req.URL())
+	if err != nil {
+		return stdout, stderr, stackerr.Wrap(err, "pod exec error while creating Executor")
+	}
+
+	err = exec.Stream(remotecommand.StreamOptions{
+		Stdin:  nil,
+		Stdout: &stdout,
+		Stderr: &stderr,
+		Tty:    false,
+	})
+	if err != nil {
+		return stdout, stderr, stackerr.Wrapf(err, "pod exec error operation on stream: stdout '%s' stderr '%s'", stdout.String(), stderr.String())
+	}
+
+	return
 }

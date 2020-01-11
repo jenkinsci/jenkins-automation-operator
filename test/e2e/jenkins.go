@@ -70,7 +70,7 @@ func createJenkinsAPIClient(jenkins *v1alpha2.Jenkins, hostname string, port int
 		UseNodePort: useNodePort,
 	}.BuildJenkinsAPIUrl(service.Name, service.Namespace, service.Spec.Ports[0].Port, service.Spec.Ports[0].NodePort)
 
-	return jenkinsclient.New(
+	return jenkinsclient.NewUserAndPasswordAuthorization(
 		jenkinsAPIURL,
 		string(adminSecret.Data[resources.OperatorCredentialsSecretUserNameKey]),
 		string(adminSecret.Data[resources.OperatorCredentialsSecretTokenKey]),

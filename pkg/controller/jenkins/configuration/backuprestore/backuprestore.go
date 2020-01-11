@@ -1,25 +1,19 @@
 package backuprestore
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"time"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
 
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
-	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/remotecommand"
 	k8s "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -61,29 +55,27 @@ var triggers = backupTriggers{triggers: make(map[string]backupTrigger)}
 
 // BackupAndRestore represents Jenkins backup and restore client
 type BackupAndRestore struct {
-	config    rest.Config
-	k8sClient k8s.Client
-	clientSet kubernetes.Clientset
-
-	logger  logr.Logger
-	jenkins *v1alpha2.Jenkins
+	configuration.Configuration
+	logger logr.Logger
 }
 
 // New returns Jenkins backup and restore client
-func New(k8sClient k8s.Client, clientSet kubernetes.Clientset,
-	logger logr.Logger, jenkins *v1alpha2.Jenkins, config rest.Config) *BackupAndRestore {
-	return &BackupAndRestore{k8sClient: k8sClient, clientSet: clientSet, logger: logger, jenkins: jenkins, config: config}
+func New(configuration configuration.Configuration, logger logr.Logger) *BackupAndRestore {
+	return &BackupAndRestore{
+		Configuration: configuration,
+		logger:        logger,
+	}
 }
 
 // Validate validates backup and restore configuration
 func (bar *BackupAndRestore) Validate() []string {
 	var messages []string
 	allContainers := map[string]v1alpha2.Container{}
-	for _, container := range bar.jenkins.Spec.Master.Containers {
+	for _, container := range bar.Configuration.Jenkins.Spec.Master.Containers {
 		allContainers[container.Name] = container
 	}
 
-	restore := bar.jenkins.Spec.Restore
+	restore := bar.Configuration.Jenkins.Spec.Restore
 	if len(restore.ContainerName) > 0 {
 		_, found := allContainers[restore.ContainerName]
 		if !found {
@@ -94,7 +86,7 @@ func (bar *BackupAndRestore) Validate() []string {
 		}
 	}
 
-	backup := bar.jenkins.Spec.Backup
+	backup := bar.Configuration.Jenkins.Spec.Backup
 	if len(backup.ContainerName) > 0 {
 		_, found := allContainers[backup.ContainerName]
 		if !found {
@@ -120,7 +112,7 @@ func (bar *BackupAndRestore) Validate() []string {
 
 // Restore performs Jenkins restore backup operation
 func (bar *BackupAndRestore) Restore(jenkinsClient jenkinsclient.Jenkins) error {
-	jenkins := bar.jenkins
+	jenkins := bar.Configuration.Jenkins
 	if len(jenkins.Spec.Restore.ContainerName) == 0 || jenkins.Spec.Restore.Action.Exec == nil {
 		bar.logger.V(log.VDebug).Info("Skipping restore backup, backup restore not configured")
 		return nil
@@ -133,7 +125,7 @@ func (bar *BackupAndRestore) Restore(jenkinsClient jenkinsclient.Jenkins) error 
 		bar.logger.V(log.VDebug).Info("Skipping restore backup")
 		if jenkins.Status.PendingBackup == 0 {
 			jenkins.Status.PendingBackup = 1
-			return bar.k8sClient.Update(context.TODO(), jenkins)
+			return bar.Client.Update(context.TODO(), jenkins)
 		}
 		return nil
 	}
@@ -148,7 +140,7 @@ func (bar *BackupAndRestore) Restore(jenkinsClient jenkinsclient.Jenkins) error 
 	podName := resources.GetJenkinsMasterPodName(*jenkins)
 	command := jenkins.Spec.Restore.Action.Exec.Command
 	command = append(command, fmt.Sprintf("%d", backupNumber))
-	_, _, err := bar.exec(podName, jenkins.Spec.Restore.ContainerName, command)
+	_, _, err := bar.Exec(podName, jenkins.Spec.Restore.ContainerName, command)
 
 	if err == nil {
 		_, err := jenkinsClient.ExecuteScript("Jenkins.instance.reload()")
@@ -159,7 +151,7 @@ func (bar *BackupAndRestore) Restore(jenkinsClient jenkinsclient.Jenkins) error 
 		jenkins.Spec.Restore.RecoveryOnce = 0
 		jenkins.Status.RestoredBackup = backupNumber
 		jenkins.Status.PendingBackup = backupNumber + 1
-		return bar.k8sClient.Update(context.TODO(), jenkins)
+		return bar.Client.Update(context.TODO(), jenkins)
 	}
 
 	return err
@@ -167,7 +159,7 @@ func (bar *BackupAndRestore) Restore(jenkinsClient jenkinsclient.Jenkins) error 
 
 // Backup performs Jenkins backup operation
 func (bar *BackupAndRestore) Backup() error {
-	jenkins := bar.jenkins
+	jenkins := bar.Configuration.Jenkins
 	if len(jenkins.Spec.Backup.ContainerName) == 0 || jenkins.Spec.Backup.Action.Exec == nil {
 		bar.logger.V(log.VDebug).Info("Skipping restore backup, backup restore not configured")
 		return nil
@@ -181,7 +173,7 @@ func (bar *BackupAndRestore) Backup() error {
 	podName := resources.GetJenkinsMasterPodName(*jenkins)
 	command := jenkins.Spec.Backup.Action.Exec.Command
 	command = append(command, fmt.Sprintf("%d", backupNumber))
-	_, _, err := bar.exec(podName, jenkins.Spec.Backup.ContainerName, command)
+	_, _, err := bar.Exec(podName, jenkins.Spec.Backup.ContainerName, command)
 
 	if err == nil {
 		if jenkins.Status.RestoredBackup == 0 {
@@ -189,7 +181,7 @@ func (bar *BackupAndRestore) Backup() error {
 		}
 		jenkins.Status.LastBackup = backupNumber
 		jenkins.Status.PendingBackup = backupNumber
-		return bar.k8sClient.Update(context.TODO(), jenkins)
+		return bar.Client.Update(context.TODO(), jenkins)
 	}
 
 	return err
@@ -217,9 +209,9 @@ func triggerBackup(ticker *time.Ticker, k8sClient k8s.Client, logger logr.Logger
 
 // EnsureBackupTrigger creates or update trigger which update CR to make backup
 func (bar *BackupAndRestore) EnsureBackupTrigger() error {
-	trigger, found := triggers.get(bar.jenkins.Namespace, bar.jenkins.Name)
+	trigger, found := triggers.get(bar.Configuration.Jenkins.Namespace, bar.Configuration.Jenkins.Name)
 
-	isBackupConfigured := len(bar.jenkins.Spec.Backup.ContainerName) > 0 && bar.jenkins.Spec.Backup.Interval > 0
+	isBackupConfigured := len(bar.Configuration.Jenkins.Spec.Backup.ContainerName) > 0 && bar.Configuration.Jenkins.Spec.Backup.Interval > 0
 	if found && !isBackupConfigured {
 		bar.StopBackupTrigger()
 		return nil
@@ -231,7 +223,7 @@ func (bar *BackupAndRestore) EnsureBackupTrigger() error {
 		return nil
 	}
 
-	if found && isBackupConfigured && bar.jenkins.Spec.Backup.Interval != trigger.interval {
+	if found && isBackupConfigured && bar.Configuration.Jenkins.Spec.Backup.Interval != trigger.interval {
 		bar.StopBackupTrigger()
 		bar.startBackupTrigger()
 	}
@@ -241,55 +233,21 @@ func (bar *BackupAndRestore) EnsureBackupTrigger() error {
 
 // StopBackupTrigger stops trigger which update CR to make backup
 func (bar *BackupAndRestore) StopBackupTrigger() {
-	triggers.stop(bar.logger, bar.jenkins.Namespace, bar.jenkins.Name)
+	triggers.stop(bar.logger, bar.Configuration.Jenkins.Namespace, bar.Configuration.Jenkins.Name)
 }
 
 //IsBackupTriggerEnabled returns true if the backup trigger is enabled
 func (bar *BackupAndRestore) IsBackupTriggerEnabled() bool {
-	_, enabled := triggers.get(bar.jenkins.Namespace, bar.jenkins.Name)
+	_, enabled := triggers.get(bar.Configuration.Jenkins.Namespace, bar.Configuration.Jenkins.Name)
 	return enabled
 }
 
 func (bar *BackupAndRestore) startBackupTrigger() {
 	bar.logger.Info("Starting backup trigger")
-	ticker := time.NewTicker(time.Duration(bar.jenkins.Spec.Backup.Interval) * time.Second)
-	triggers.add(bar.jenkins.Namespace, bar.jenkins.Name, backupTrigger{
-		interval: bar.jenkins.Spec.Backup.Interval,
+	ticker := time.NewTicker(time.Duration(bar.Configuration.Jenkins.Spec.Backup.Interval) * time.Second)
+	triggers.add(bar.Configuration.Jenkins.Namespace, bar.Configuration.Jenkins.Name, backupTrigger{
+		interval: bar.Configuration.Jenkins.Spec.Backup.Interval,
 		ticker:   ticker,
 	})
-	go triggerBackup(ticker, bar.k8sClient, bar.logger, bar.jenkins.Namespace, bar.jenkins.Name)
-}
-
-func (bar *BackupAndRestore) exec(podName, containerName string, command []string) (stdout, stderr bytes.Buffer, err error) {
-	req := bar.clientSet.CoreV1().RESTClient().Post().
-		Resource("pods").
-		Name(podName).
-		Namespace(bar.jenkins.Namespace).
-		SubResource("exec")
-	req.VersionedParams(&corev1.PodExecOptions{
-		Command:   command,
-		Container: containerName,
-		Stdin:     false,
-		Stdout:    true,
-		Stderr:    true,
-		TTY:       false,
-	}, scheme.ParameterCodec)
-
-	exec, err := remotecommand.NewSPDYExecutor(&bar.config, "POST", req.URL())
-	if err != nil {
-		return stdout, stderr, errors.Wrap(err, "pod exec error while creating Executor")
-	}
-
-	err = exec.Stream(remotecommand.StreamOptions{
-		Stdin:  nil,
-		Stdout: &stdout,
-		Stderr: &stderr,
-		Tty:    false,
-	})
-	bar.logger.V(log.VDebug).Info(fmt.Sprintf("pod exec: stdout '%s' stderr '%s'", stdout.String(), stderr.String()))
-	if err != nil {
-		return stdout, stderr, errors.Wrapf(err, "pod exec error operation on stream: stdout '%s' stderr '%s'", stdout.String(), stderr.String())
-	}
-
-	return
+	go triggerBackup(ticker, bar.Client, bar.logger, bar.Configuration.Jenkins.Namespace, bar.Configuration.Jenkins.Name)
 }

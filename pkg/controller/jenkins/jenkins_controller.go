@@ -232,10 +232,11 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request, logger logr.Logg
 		Notifications: r.notificationEvents,
 		Jenkins:       jenkins,
 		Scheme:        r.scheme,
+		Config:        &r.config,
 	}
 
 	// Reconcile base configuration
-	baseConfiguration := base.New(config, logger, r.jenkinsAPIConnectionSettings, &r.config)
+	baseConfiguration := base.New(config, logger, r.jenkinsAPIConnectionSettings)
 
 	var baseMessages []string
 	baseMessages, err = baseConfiguration.Validate(jenkins)
@@ -289,7 +290,7 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request, logger logr.Logg
 		logger.Info(message)
 	}
 	// Reconcile user configuration
-	userConfiguration := user.New(config, jenkinsClient, logger, r.config)
+	userConfiguration := user.New(config, jenkinsClient, logger)
 
 	var messages []string
 	messages, err = userConfiguration.Validate(jenkins)
@@ -494,6 +495,18 @@ func (r *ReconcileJenkins) setDefaults(jenkins *v1alpha2.Jenkins, logger logr.Lo
 			FSGroup:   &id,
 		}
 		jenkins.Spec.Master.SecurityContext = &securityContext
+	}
+
+	if reflect.DeepEqual(jenkins.Spec.JenkinsAPISettings, v1alpha2.JenkinsAPISettings{}) {
+		logger.Info("Setting default Jenkins API settings")
+		changed = true
+		jenkins.Spec.JenkinsAPISettings = v1alpha2.JenkinsAPISettings{AuthorizationStrategy: v1alpha2.CreateUserAuthorizationStrategy}
+	}
+
+	if jenkins.Spec.JenkinsAPISettings.AuthorizationStrategy == "" {
+		logger.Info("Setting default Jenkins API settings authorization strategy")
+		changed = true
+		jenkins.Spec.JenkinsAPISettings.AuthorizationStrategy = v1alpha2.CreateUserAuthorizationStrategy
 	}
 
 	if changed {

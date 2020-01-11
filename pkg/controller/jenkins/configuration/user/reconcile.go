@@ -12,7 +12,6 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/groovy"
 
 	"github.com/go-logr/logr"
-	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -21,22 +20,20 @@ type ReconcileUserConfiguration struct {
 	configuration.Configuration
 	jenkinsClient jenkinsclient.Jenkins
 	logger        logr.Logger
-	config        rest.Config
 }
 
 // New create structure which takes care of user configuration
-func New(configuration configuration.Configuration, jenkinsClient jenkinsclient.Jenkins, logger logr.Logger, config rest.Config) *ReconcileUserConfiguration {
+func New(configuration configuration.Configuration, jenkinsClient jenkinsclient.Jenkins, logger logr.Logger) *ReconcileUserConfiguration {
 	return &ReconcileUserConfiguration{
 		Configuration: configuration,
 		jenkinsClient: jenkinsClient,
 		logger:        logger,
-		config:        config,
 	}
 }
 
 // Reconcile it's a main reconciliation loop for user supplied configuration
 func (r *ReconcileUserConfiguration) Reconcile() (reconcile.Result, error) {
-	backupAndRestore := backuprestore.New(r.Client, r.ClientSet, r.logger, r.Configuration.Jenkins, r.config)
+	backupAndRestore := backuprestore.New(r.Configuration, r.logger)
 
 	result, err := r.ensureSeedJobs()
 	if err != nil {

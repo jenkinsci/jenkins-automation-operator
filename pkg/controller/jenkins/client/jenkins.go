@@ -68,6 +68,23 @@ type JenkinsAPIConnectionSettings struct {
 	UseNodePort bool
 }
 
+type setBearerToken struct {
+	rt    http.RoundTripper
+	token string
+}
+
+func (t *setBearerToken) transport() http.RoundTripper {
+	if t.rt != nil {
+		return t.rt
+	}
+	return http.DefaultTransport
+}
+
+func (t *setBearerToken) RoundTrip(r *http.Request) (*http.Response, error) {
+	r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", t.token))
+	return t.transport().RoundTrip(r)
+}
+
 // CreateOrUpdateJob creates or updates a job from config
 func (jenkins *jenkins) CreateOrUpdateJob(config, jobName string) (job *gojenkins.Job, created bool, err error) {
 	// create or update
@@ -114,19 +131,37 @@ func (j JenkinsAPIConnectionSettings) Validate() error {
 	return nil
 }
 
-// New creates Jenkins API client
-func New(url, user, passwordOrToken string) (Jenkins, error) {
+// NewUserAndPasswordAuthorization creates Jenkins API client with user and password authorization
+func NewUserAndPasswordAuthorization(url, userName, passwordOrToken string) (Jenkins, error) {
+	return newClient(url, userName, passwordOrToken)
+}
+
+// NewBearerTokenAuthorization creates Jenkins API client with bearer token authorization
+func NewBearerTokenAuthorization(url, token string) (Jenkins, error) {
+	return newClient(url, "", token)
+}
+
+func newClient(url, userName, passwordOrToken string) (Jenkins, error) {
 	if strings.HasSuffix(url, "/") {
 		url = url[:len(url)-1]
 	}
 
 	jenkinsClient := &jenkins{}
 	jenkinsClient.Server = url
+
+	var basicAuth *gojenkins.BasicAuth
+	httpClient := http.DefaultClient
+	if len(userName) > 0 && len(passwordOrToken) > 0 {
+		basicAuth = &gojenkins.BasicAuth{Username: userName, Password: passwordOrToken}
+	} else {
+		httpClient.Transport = &setBearerToken{token: passwordOrToken, rt: httpClient.Transport}
+	}
+
 	jenkinsClient.Requester = &gojenkins.Requester{
 		Base:      url,
 		SslVerify: true,
-		Client:    http.DefaultClient,
-		BasicAuth: &gojenkins.BasicAuth{Username: user, Password: passwordOrToken},
+		Client:    httpClient,
+		BasicAuth: basicAuth,
 	}
 	if _, err := jenkinsClient.Init(); err != nil {
 		return nil, errors.Wrap(err, "couldn't init Jenkins API client")

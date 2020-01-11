@@ -8,7 +8,7 @@ import (
 
 // Validate validates Jenkins CR Spec section
 func (r *ReconcileUserConfiguration) Validate(jenkins *v1alpha2.Jenkins) ([]string, error) {
-	backupAndRestore := backuprestore.New(r.Client, r.ClientSet, r.logger, r.Configuration.Jenkins, r.config)
+	backupAndRestore := backuprestore.New(r.Configuration, r.logger)
 	if msg := backupAndRestore.Validate(); msg != nil {
 		return msg, nil
 	}

@@ -61,6 +61,24 @@ type JenkinsSpec struct {
 	// ServiceAccount defines Jenkins master service account attributes
 	// +optional
 	ServiceAccount ServiceAccount `json:"serviceAccount,omitempty"`
+
+	// JenkinsAPISettings defines configuration used by the operator to gain admin access to the Jenkins API
+	JenkinsAPISettings JenkinsAPISettings `json:"jenkinsAPISettings"`
+}
+
+// AuthorizationStrategy defines authorization strategy of the operator for the Jenkins API
+type AuthorizationStrategy string
+
+const (
+	// CreateUserAuthorizationStrategy operator sets HudsonPrivateSecurityRealm and FullControlOnceLoggedInAuthorizationStrategy than creates user using init.d groovy script
+	CreateUserAuthorizationStrategy AuthorizationStrategy = "createUser"
+	// ServiceAccountAuthorizationStrategy operator gets token associated with Jenkins service account and uses it as bearer token
+	ServiceAccountAuthorizationStrategy AuthorizationStrategy = "serviceAccount"
+)
+
+// JenkinsAPISettings defines configuration used by the operator to gain admin access to the Jenkins API
+type JenkinsAPISettings struct {
+	AuthorizationStrategy AuthorizationStrategy `json:"authorizationStrategy"`
 }
 
 // ServiceAccount defines Kubernetes service account attributes
