@@ -57,6 +57,20 @@ type JenkinsSpec struct {
 	// Roles defines list of extra RBAC roles for the Jenkins Master pod service account
 	// +optional
 	Roles []rbacv1.RoleRef `json:"roles,omitempty"`
+
+	// ServiceAccount defines Jenkins master service account attributes
+	// +optional
+	ServiceAccount ServiceAccount `json:"serviceAccount,omitempty"`
+}
+
+// ServiceAccount defines Kubernetes service account attributes
+type ServiceAccount struct {
+	// Annotations is an unstructured key value map stored with a resource that may be
+	// set by external tools to store and retrieve arbitrary metadata. They are not
+	// queryable and should be preserved when modifying objects.
+	// More info: http://kubernetes.io/docs/user-guide/annotations
+	// +optional
+	Annotations map[string]string `json:"annotations,omitempty"`
 }
 
 // NotificationLevel defines the level of a Notification

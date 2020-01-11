@@ -340,11 +340,34 @@ func (r *ReconcileJenkinsBaseConfiguration) addLabelForWatchesResources(customiz
 	return nil
 }
 
-func (r *ReconcileJenkinsBaseConfiguration) createRBAC(meta metav1.ObjectMeta) error {
-	serviceAccount := resources.NewServiceAccount(meta)
-	err := r.CreateResource(serviceAccount)
-	if err != nil && !apierrors.IsAlreadyExists(err) {
+func (r *ReconcileJenkinsBaseConfiguration) createServiceAccount(meta metav1.ObjectMeta) error {
+	serviceAccount := &corev1.ServiceAccount{}
+	err := r.Client.Get(context.TODO(), types.NamespacedName{Name: meta.Name, Namespace: meta.Namespace}, serviceAccount)
+	if err != nil && apierrors.IsNotFound(err) {
+		serviceAccount = resources.NewServiceAccount(meta, r.Configuration.Jenkins.Spec.ServiceAccount.Annotations)
+		if err = r.CreateResource(serviceAccount); err != nil {
+			return stackerr.WithStack(err)
+		}
+	} else if err != nil {
 		return stackerr.WithStack(err)
+	}
+
+	if !compareAnnotations(r.Configuration.Jenkins.Spec.ServiceAccount.Annotations, serviceAccount.Annotations) {
+		for key, value := range r.Configuration.Jenkins.Spec.ServiceAccount.Annotations {
+			serviceAccount.Annotations[key] = value
+		}
+		if err = r.UpdateResource(serviceAccount); err != nil {
+			return stackerr.WithStack(err)
+		}
+	}
+
+	return nil
+}
+
+func (r *ReconcileJenkinsBaseConfiguration) createRBAC(meta metav1.ObjectMeta) error {
+	err := r.createServiceAccount(meta)
+	if err != nil {
+		return err
 	}
 
 	role := resources.NewRole(meta)
@@ -603,7 +626,7 @@ func (r *ReconcileJenkinsBaseConfiguration) checkForPodRecreation(currentJenkins
 	}
 
 	if len(r.Configuration.Jenkins.Spec.Master.Annotations) > 0 &&
-		!comparePodAnnotations(r.Configuration.Jenkins.Spec.Master.Annotations, currentJenkinsMasterPod.ObjectMeta.Annotations) {
+		!compareAnnotations(r.Configuration.Jenkins.Spec.Master.Annotations, currentJenkinsMasterPod.ObjectMeta.Annotations) {
 		messages = append(messages, "Jenkins pod annotations have changed")
 		verbose = append(verbose, fmt.Sprintf("Jenkins pod annotations have changed, actual '%+v' required '%+v'",
 			currentJenkinsMasterPod.ObjectMeta.Annotations, r.Configuration.Jenkins.Spec.Master.Annotations))
@@ -738,7 +761,7 @@ func compareImagePullSecrets(expected, actual []corev1.LocalObjectReference) boo
 	return true
 }
 
-func comparePodAnnotations(expected, actual map[string]string) bool {
+func compareAnnotations(expected, actual map[string]string) bool {
 	for expectedKey, expectedValue := range expected {
 		actualValue, found := actual[expectedKey]
 		if !found {

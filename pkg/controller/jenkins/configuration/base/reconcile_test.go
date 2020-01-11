@@ -659,7 +659,7 @@ func TestComparePodAnnotations(t *testing.T) {
 		expectedAnnotations := map[string]string{}
 		actualAnnotations := map[string]string{}
 
-		got := comparePodAnnotations(expectedAnnotations, actualAnnotations)
+		got := compareAnnotations(expectedAnnotations, actualAnnotations)
 
 		assert.True(t, got)
 	})
@@ -667,7 +667,7 @@ func TestComparePodAnnotations(t *testing.T) {
 		expectedAnnotations := map[string]string{"one": "two"}
 		actualAnnotations := expectedAnnotations
 
-		got := comparePodAnnotations(expectedAnnotations, actualAnnotations)
+		got := compareAnnotations(expectedAnnotations, actualAnnotations)
 
 		assert.True(t, got)
 	})
@@ -675,7 +675,7 @@ func TestComparePodAnnotations(t *testing.T) {
 		expectedAnnotations := map[string]string{"one": "two"}
 		actualAnnotations := map[string]string{"one": "two", "three": "four"}
 
-		got := comparePodAnnotations(expectedAnnotations, actualAnnotations)
+		got := compareAnnotations(expectedAnnotations, actualAnnotations)
 
 		assert.True(t, got)
 	})
@@ -683,7 +683,7 @@ func TestComparePodAnnotations(t *testing.T) {
 		expectedAnnotations := map[string]string{"one": "two"}
 		actualAnnotations := map[string]string{"three": "four"}
 
-		got := comparePodAnnotations(expectedAnnotations, actualAnnotations)
+		got := compareAnnotations(expectedAnnotations, actualAnnotations)
 
 		assert.False(t, got)
 	})
@@ -691,7 +691,7 @@ func TestComparePodAnnotations(t *testing.T) {
 		expectedAnnotations := map[string]string{"one": "two"}
 		actualAnnotations := map[string]string{"one": "three"}
 
-		got := comparePodAnnotations(expectedAnnotations, actualAnnotations)
+		got := compareAnnotations(expectedAnnotations, actualAnnotations)
 
 		assert.False(t, got)
 	})
@@ -699,7 +699,7 @@ func TestComparePodAnnotations(t *testing.T) {
 		expectedAnnotations := map[string]string{"one": "two", "missing": "something"}
 		actualAnnotations := map[string]string{"one": "three"}
 
-		got := comparePodAnnotations(expectedAnnotations, actualAnnotations)
+		got := compareAnnotations(expectedAnnotations, actualAnnotations)
 
 		assert.False(t, got)
 	})
