@@ -10,6 +10,7 @@ rules:
       - services
       - configmaps
       - secrets
+      - serviceaccounts
     verbs:
       - get
       - create
@@ -25,12 +26,6 @@ rules:
       - statefulsets
     verbs:
       - '*'
-  - apiGroups:
-      - ""
-    resources:
-      - serviceaccounts
-    verbs:
-      - create
   - apiGroups:
       - rbac.authorization.k8s.io
     resources:
