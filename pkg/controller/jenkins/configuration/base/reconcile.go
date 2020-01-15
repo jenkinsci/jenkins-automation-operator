@@ -510,6 +510,7 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsMasterPod(meta metav1.O
 
 		now := metav1.Now()
 		r.Configuration.Jenkins.Status = v1alpha2.JenkinsStatus{
+			OperatorVersion:     version.Version,
 			ProvisionStartTime:  &now,
 			LastBackup:          r.Configuration.Jenkins.Status.LastBackup,
 			PendingBackup:       r.Configuration.Jenkins.Status.LastBackup,

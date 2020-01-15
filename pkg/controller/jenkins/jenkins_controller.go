@@ -18,7 +18,6 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/notifications/reason"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/plugins"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
-	"github.com/jenkinsci/kubernetes-operator/version"
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
@@ -418,16 +417,6 @@ func (r *ReconcileJenkins) setDefaults(jenkins *v1alpha2.Jenkins, logger logr.Lo
 		logger.Info("Setting default operator plugins")
 		changed = true
 		jenkins.Spec.Master.BasePlugins = basePlugins()
-	}
-	if len(jenkins.Status.OperatorVersion) > 0 && version.Version != jenkins.Status.OperatorVersion {
-		logger.Info("Setting default operator plugins after Operator version change")
-		changed = true
-		jenkins.Spec.Master.BasePlugins = basePlugins()
-	}
-	if len(jenkins.Status.OperatorVersion) == 0 {
-		logger.Info("Setting operator version")
-		changed = true
-		jenkins.Status.OperatorVersion = version.Version
 	}
 	if isResourceRequirementsNotSet(jenkinsContainer.Resources) {
 		logger.Info("Setting default Jenkins master container resource requirements")
