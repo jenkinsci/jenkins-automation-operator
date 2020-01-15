@@ -1,12 +1,12 @@
 package plugins
 
 const (
-	configurationAsCodePlugin           = "configuration-as-code:1.34"
+	configurationAsCodePlugin           = "configuration-as-code:1.35"
 	configurationAsCodeSupportPlugin    = "configuration-as-code-support:1.19"
 	gitPlugin                           = "git:4.0.0"
 	jobDslPlugin                        = "job-dsl:1.76"
 	kubernetesCredentialsProviderPlugin = "kubernetes-credentials-provider:0.13"
-	kubernetesPlugin                    = "kubernetes:1.22.2"
+	kubernetesPlugin                    = "kubernetes:1.23.0"
 	workflowAggregatorPlugin            = "workflow-aggregator:2.6"
 	workflowJobPlugin                   = "workflow-job:2.36"
 )
