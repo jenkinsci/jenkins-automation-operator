@@ -16,6 +16,7 @@ fi
 JENKINS_HOME="$(pwd)/jenkins_home"
 BACKUP_DIR="$(pwd)/backup"
 RESTORE_FOLDER="$(pwd)/restore"
+JENKINS_HOME_AFTER_RESTORE="$(pwd)/jenkins_home_after_restore"
 mkdir -p ${BACKUP_DIR}
 mkdir -p ${RESTORE_FOLDER}
 
@@ -35,6 +36,6 @@ backup_file="${BACKUP_DIR}/${backup_number}.tar.gz"
 docker exec -it ${cid} /bin/bash -c "JENKINS_HOME=${RESTORE_FOLDER};/home/user/bin/restore.sh ${backup_number}"
 
 echo "Compare directories"
-diff --brief --recursive ${JENKINS_HOME} ${RESTORE_FOLDER}
+diff --brief --recursive "${RESTORE_FOLDER}" "${JENKINS_HOME_AFTER_RESTORE}"
 echo "Directories are the same"
 echo PASS
