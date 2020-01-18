@@ -28,7 +28,7 @@ trap "docker rm -vf $cid > /dev/null;rm -rf ${BACKUP_DIR};rm -rf ${JENKINS_HOME}
 # container should be running
 echo 'Checking if container is running'
 sleep 11
-docker exec -it ${cid} echo
+docker exec ${cid} echo
 echo 'Container is running'
 
 echo PASS

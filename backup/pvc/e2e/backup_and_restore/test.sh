@@ -28,12 +28,12 @@ echo "Docker container ID '${cid}'"
 trap "docker rm -vf $cid > /dev/null;rm -rf ${BACKUP_DIR};rm -rf ${RESTORE_FOLDER}" EXIT
 
 backup_number=1
-docker exec -it ${cid} /home/user/bin/backup.sh ${backup_number}
+docker exec ${cid} /home/user/bin/backup.sh ${backup_number}
 
 backup_file="${BACKUP_DIR}/${backup_number}.tar.gz"
 [[ ! -f ${backup_file} ]] && echo "Backup file ${backup_file} not found" && exit 1;
 
-docker exec -it ${cid} /bin/bash -c "JENKINS_HOME=${RESTORE_FOLDER};/home/user/bin/restore.sh ${backup_number}"
+docker exec ${cid} /bin/bash -c "JENKINS_HOME=${RESTORE_FOLDER};/home/user/bin/restore.sh ${backup_number}"
 
 echo "Compare directories"
 diff --brief --recursive "${RESTORE_FOLDER}" "${JENKINS_HOME_AFTER_RESTORE}"
