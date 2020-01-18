@@ -69,6 +69,38 @@ func (r *ReconcileJenkinsBaseConfiguration) Validate(jenkins *v1alpha2.Jenkins) 
 	return messages, nil
 }
 
+func (r *ReconcileJenkinsBaseConfiguration) validateJenkinsMasterContainerCommand() []string {
+	masterContainer := r.Configuration.GetJenkinsMasterContainer()
+	if masterContainer == nil {
+		return []string{}
+	}
+
+	jenkinsOperatorInitScript := fmt.Sprintf("%s/%s && ", resources.JenkinsScriptsVolumePath, resources.InitScriptName)
+	correctCommand := []string{
+		"bash",
+		"-c",
+		fmt.Sprintf("%s<optional-custom-command> && exec <command-which-start-jenkins>", jenkinsOperatorInitScript),
+	}
+	invalidCommandMessage := []string{fmt.Sprintf("spec.master.containers[%s].command is invalid, make sure it looks like '%v', otherwise the operator won't configure default user and install plugins. 'exec' is required to propagate signals to the Jenkins.", masterContainer.Name, correctCommand)}
+	if len(masterContainer.Command) != 3 {
+		return invalidCommandMessage
+	}
+	if masterContainer.Command[0] != correctCommand[0] {
+		return invalidCommandMessage
+	}
+	if masterContainer.Command[1] != correctCommand[1] {
+		return invalidCommandMessage
+	}
+	if !strings.HasPrefix(masterContainer.Command[2], jenkinsOperatorInitScript) {
+		return invalidCommandMessage
+	}
+	if !strings.Contains(masterContainer.Command[2], "exec") {
+		return invalidCommandMessage
+	}
+
+	return []string{}
+}
+
 func (r *ReconcileJenkinsBaseConfiguration) validateImagePullSecrets() ([]string, error) {
 	var messages []string
 	for _, sr := range r.Configuration.Jenkins.Spec.Master.ImagePullSecrets {

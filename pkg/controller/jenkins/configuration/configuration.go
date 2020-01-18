@@ -150,3 +150,12 @@ func (c *Configuration) Exec(podName, containerName string, command []string) (s
 
 	return
 }
+
+// GetJenkinsMasterContainer returns the Jenkins master container from the CR
+func (c *Configuration) GetJenkinsMasterContainer() *v1alpha2.Container {
+	if len(c.Jenkins.Spec.Master.Containers) > 0 {
+		// the first container is the Jenkins master, it is forced jenkins_controller.go
+		return &c.Jenkins.Spec.Master.Containers[0]
+	}
+	return nil
+}

@@ -484,11 +484,6 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsMasterPod(meta metav1.O
 	currentJenkinsMasterPod, err := r.getJenkinsMasterPod()
 	if err != nil && apierrors.IsNotFound(err) {
 		jenkinsMasterPod := resources.NewJenkinsMasterPod(meta, r.Configuration.Jenkins)
-		if !reflect.DeepEqual(jenkinsMasterPod.Spec.Containers[0].Command, resources.GetJenkinsMasterContainerBaseCommand()) {
-			r.logger.Info(fmt.Sprintf("spec.master.containers[%s].command has been overridden make sure the command looks like: '%v', otherwise the operator won't configure default user and install plugins",
-				resources.JenkinsMasterContainerName, []string{"bash", "-c", fmt.Sprintf("%s/%s && <custom-command-here> && /sbin/tini -s -- /usr/local/bin/jenkins.sh",
-					resources.JenkinsScriptsVolumePath, resources.InitScriptName)}))
-		}
 		*r.Notifications <- event.Event{
 			Jenkins: *r.Configuration.Jenkins,
 			Phase:   event.PhaseBase,

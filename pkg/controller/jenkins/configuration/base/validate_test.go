@@ -840,3 +840,123 @@ func TestValidateCustomization(t *testing.T) {
 		assert.Equal(t, got, []string{"ConfigMap 'configmap-name' configured in spec.groovyScripts.configurations[0] not found"})
 	})
 }
+
+func TestValidateJenkinsMasterContainerCommand(t *testing.T) {
+	log.SetupLogger(true)
+	t.Run("no Jenkins master container", func(t *testing.T) {
+		jenkins := &v1alpha2.Jenkins{}
+		baseReconcileLoop := New(configuration.Configuration{Jenkins: jenkins}, log.Log, client.JenkinsAPIConnectionSettings{})
+
+		got := baseReconcileLoop.validateJenkinsMasterContainerCommand()
+
+		assert.Empty(t, got)
+	})
+	t.Run("empty command", func(t *testing.T) {
+		jenkins := &v1alpha2.Jenkins{
+			Spec: v1alpha2.JenkinsSpec{
+				Master: v1alpha2.JenkinsMaster{
+					Containers: []v1alpha2.Container{
+						{
+							Name: resources.JenkinsMasterContainerName,
+						},
+					},
+				},
+			},
+		}
+		baseReconcileLoop := New(configuration.Configuration{Jenkins: jenkins}, log.Log, client.JenkinsAPIConnectionSettings{})
+
+		got := baseReconcileLoop.validateJenkinsMasterContainerCommand()
+
+		assert.Len(t, got, 1)
+	})
+	t.Run("command has 3 lines but it's values are invalid", func(t *testing.T) {
+		jenkins := &v1alpha2.Jenkins{
+			Spec: v1alpha2.JenkinsSpec{
+				Master: v1alpha2.JenkinsMaster{
+					Containers: []v1alpha2.Container{
+						{
+							Name: resources.JenkinsMasterContainerName,
+							Command: []string{
+								"invalid",
+								"invalid",
+								"invalid",
+							},
+						},
+					},
+				},
+			},
+		}
+		baseReconcileLoop := New(configuration.Configuration{Jenkins: jenkins}, log.Log, client.JenkinsAPIConnectionSettings{})
+
+		got := baseReconcileLoop.validateJenkinsMasterContainerCommand()
+
+		assert.Len(t, got, 1)
+	})
+	t.Run("valid command", func(t *testing.T) {
+		jenkins := &v1alpha2.Jenkins{
+			Spec: v1alpha2.JenkinsSpec{
+				Master: v1alpha2.JenkinsMaster{
+					Containers: []v1alpha2.Container{
+						{
+							Name:    resources.JenkinsMasterContainerName,
+							Command: resources.GetJenkinsMasterContainerBaseCommand(),
+						},
+					},
+				},
+			},
+		}
+		baseReconcileLoop := New(configuration.Configuration{Jenkins: jenkins}, log.Log, client.JenkinsAPIConnectionSettings{})
+
+		got := baseReconcileLoop.validateJenkinsMasterContainerCommand()
+
+		assert.Len(t, got, 0)
+	})
+	t.Run("custom valid command", func(t *testing.T) {
+		jenkins := &v1alpha2.Jenkins{
+			Spec: v1alpha2.JenkinsSpec{
+				Master: v1alpha2.JenkinsMaster{
+					Containers: []v1alpha2.Container{
+						{
+							Name: resources.JenkinsMasterContainerName,
+							Command: []string{
+								"bash",
+								"-c",
+								fmt.Sprintf("%s/%s && my-extra-command.sh && exec /sbin/tini -s -- /usr/local/bin/jenkins.sh",
+									resources.JenkinsScriptsVolumePath, resources.InitScriptName),
+							},
+						},
+					},
+				},
+			},
+		}
+		baseReconcileLoop := New(configuration.Configuration{Jenkins: jenkins}, log.Log, client.JenkinsAPIConnectionSettings{})
+
+		got := baseReconcileLoop.validateJenkinsMasterContainerCommand()
+
+		assert.Len(t, got, 0)
+	})
+	t.Run("no exec command for the Jenkins", func(t *testing.T) {
+		jenkins := &v1alpha2.Jenkins{
+			Spec: v1alpha2.JenkinsSpec{
+				Master: v1alpha2.JenkinsMaster{
+					Containers: []v1alpha2.Container{
+						{
+							Name: resources.JenkinsMasterContainerName,
+							Command: []string{
+								"bash",
+								"-c",
+								fmt.Sprintf("%s/%s && my-extra-command.sh && /sbin/tini -s -- /usr/local/bin/jenkins.sh",
+									resources.JenkinsScriptsVolumePath, resources.InitScriptName),
+							},
+						},
+					},
+				},
+			},
+		}
+		baseReconcileLoop := New(configuration.Configuration{Jenkins: jenkins}, log.Log, client.JenkinsAPIConnectionSettings{})
+
+		got := baseReconcileLoop.validateJenkinsMasterContainerCommand()
+
+		assert.Len(t, got, 1)
+	})
+}
