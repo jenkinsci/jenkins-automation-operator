@@ -23,11 +23,15 @@ before_install:
 jobs:
   include:
     - stage: unit
-      name: "Unit Tests"
+      name: "Jenkins Operator - unit tests"
       script:
         - travis_wait 15 make verify
+    - stage: pvc_e2e
+      name: "Backup PVC - e2e"
+      script:
+        - travis_wait 10 make -C backup/pvc/ docker-e2e
     - stage: e2e
-      name: "End-to-End Tests"
+      name: "Jenkins Operator - e2e"
       script:
         - travis_wait 10 make travis-prepare
         - travis_wait 45 make build e2e
