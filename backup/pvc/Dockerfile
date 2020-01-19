@@ -1,8 +1,9 @@
 FROM debian:buster-slim
 
+ARG UID
+ARG GID
+
 ENV USER=user
-ENV UID=1000
-ENV GID=1000
 
 RUN addgroup --gid "$GID" "$USER" && \
     adduser \

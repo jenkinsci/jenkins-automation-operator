@@ -24,8 +24,7 @@ jobs:
     - stage: pvc_e2e
       name: "Backup PVC - e2e"
       script:
-        - travis_wait 10 chmod -R 777 backup/pvc/e2e
-        - travis_wait 10 make -C backup/pvc/ docker-e2e
+        - travis_wait 10 make -C backup/pvc/ docker-e2e UID=$(id -u) GID=$(id -g)
     - stage: e2e
       name: "Jenkins Operator - e2e"
       script:
