@@ -29,7 +29,7 @@ jobs:
     - stage: pvc_e2e
       name: "Backup PVC - e2e"
       script:
-        - id
+        - chmod -R 777 backup/pvc/e2e
         - travis_wait 10 make -C backup/pvc/ docker-e2e
     - stage: e2e
       name: "Jenkins Operator - e2e"
