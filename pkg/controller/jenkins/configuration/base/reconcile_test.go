@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/scheme"
 	k8sclient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -918,5 +919,193 @@ func TestEnsureExtraRBAC(t *testing.T) {
 		assert.Equal(t, 3, len(roleBindings.Items))
 		assert.Equal(t, metaObject.Name, roleBindings.Items[1].Name)
 		assert.Equal(t, jenkins.Spec.Roles[0], roleBindings.Items[2].RoleRef)
+	})
+}
+
+func TestCompareContainerResources(t *testing.T) {
+	t.Run("empty", func(t *testing.T) {
+		var expected corev1.ResourceRequirements
+		var actual corev1.ResourceRequirements
+
+		got := compareContainerResources(expected, actual)
+
+		assert.True(t, got)
+	})
+	t.Run("expected resources empty, actual resources set", func(t *testing.T) {
+		var expected corev1.ResourceRequirements
+		actual := corev1.ResourceRequirements{
+			Requests: corev1.ResourceList{
+				corev1.ResourceCPU:    resource.MustParse("50m"),
+				corev1.ResourceMemory: resource.MustParse("50Mi"),
+			},
+			Limits: corev1.ResourceList{
+				corev1.ResourceCPU:    resource.MustParse("100m"),
+				corev1.ResourceMemory: resource.MustParse("100Mi"),
+			},
+		}
+
+		got := compareContainerResources(expected, actual)
+
+		assert.True(t, got)
+	})
+	t.Run("request CPU the same values", func(t *testing.T) {
+		actual := corev1.ResourceRequirements{
+			Requests: corev1.ResourceList{
+				corev1.ResourceCPU: resource.MustParse("50m"),
+			},
+		}
+		expected := actual
+
+		got := compareContainerResources(expected, actual)
+
+		assert.True(t, got)
+	})
+	t.Run("request memory the same values", func(t *testing.T) {
+		actual := corev1.ResourceRequirements{
+			Requests: corev1.ResourceList{
+				corev1.ResourceMemory: resource.MustParse("50Mi"),
+			},
+		}
+		expected := actual
+
+		got := compareContainerResources(expected, actual)
+
+		assert.True(t, got)
+	})
+	t.Run("limit CPU the same values", func(t *testing.T) {
+		actual := corev1.ResourceRequirements{
+			Limits: corev1.ResourceList{
+				corev1.ResourceCPU: resource.MustParse("50m"),
+			},
+		}
+		expected := actual
+
+		got := compareContainerResources(expected, actual)
+
+		assert.True(t, got)
+	})
+	t.Run("limit memory the same values", func(t *testing.T) {
+		actual := corev1.ResourceRequirements{
+			Limits: corev1.ResourceList{
+				corev1.ResourceMemory: resource.MustParse("50Mi"),
+			},
+		}
+		expected := actual
+
+		got := compareContainerResources(expected, actual)
+
+		assert.True(t, got)
+	})
+	t.Run("request CPU different values", func(t *testing.T) {
+		expected := corev1.ResourceRequirements{
+			Requests: corev1.ResourceList{
+				corev1.ResourceCPU: resource.MustParse("5m"),
+			},
+		}
+		actual := corev1.ResourceRequirements{
+			Requests: corev1.ResourceList{
+				corev1.ResourceCPU: resource.MustParse("50m"),
+			},
+		}
+
+		got := compareContainerResources(expected, actual)
+
+		assert.False(t, got)
+	})
+	t.Run("request memory different values", func(t *testing.T) {
+		expected := corev1.ResourceRequirements{
+			Requests: corev1.ResourceList{
+				corev1.ResourceMemory: resource.MustParse("5Mi"),
+			},
+		}
+		actual := corev1.ResourceRequirements{
+			Requests: corev1.ResourceList{
+				corev1.ResourceMemory: resource.MustParse("50Mi"),
+			},
+		}
+
+		got := compareContainerResources(expected, actual)
+
+		assert.False(t, got)
+	})
+	t.Run("limit CPU different values", func(t *testing.T) {
+		expected := corev1.ResourceRequirements{
+			Limits: corev1.ResourceList{
+				corev1.ResourceCPU: resource.MustParse("5m"),
+			},
+		}
+		actual := corev1.ResourceRequirements{
+			Limits: corev1.ResourceList{
+				corev1.ResourceCPU: resource.MustParse("50m"),
+			},
+		}
+
+		got := compareContainerResources(expected, actual)
+
+		assert.False(t, got)
+	})
+	t.Run("limit memory different values", func(t *testing.T) {
+		expected := corev1.ResourceRequirements{
+			Limits: corev1.ResourceList{
+				corev1.ResourceMemory: resource.MustParse("5Mi"),
+			},
+		}
+		actual := corev1.ResourceRequirements{
+			Limits: corev1.ResourceList{
+				corev1.ResourceMemory: resource.MustParse("50Mi"),
+			},
+		}
+
+		got := compareContainerResources(expected, actual)
+
+		assert.False(t, got)
+	})
+	t.Run("request CPU not set in actual", func(t *testing.T) {
+		expected := corev1.ResourceRequirements{
+			Requests: corev1.ResourceList{
+				corev1.ResourceCPU: resource.MustParse("5m"),
+			},
+		}
+		var actual corev1.ResourceRequirements
+
+		got := compareContainerResources(expected, actual)
+
+		assert.False(t, got)
+	})
+	t.Run("request memory not set in actual", func(t *testing.T) {
+		expected := corev1.ResourceRequirements{
+			Requests: corev1.ResourceList{
+				corev1.ResourceMemory: resource.MustParse("5Mi"),
+			},
+		}
+		var actual corev1.ResourceRequirements
+
+		got := compareContainerResources(expected, actual)
+
+		assert.False(t, got)
+	})
+	t.Run("limit CPU not set in actual", func(t *testing.T) {
+		expected := corev1.ResourceRequirements{
+			Limits: corev1.ResourceList{
+				corev1.ResourceCPU: resource.MustParse("5m"),
+			},
+		}
+		var actual corev1.ResourceRequirements
+
+		got := compareContainerResources(expected, actual)
+
+		assert.False(t, got)
+	})
+	t.Run("limit memory not set in actual", func(t *testing.T) {
+		expected := corev1.ResourceRequirements{
+			Limits: corev1.ResourceList{
+				corev1.ResourceMemory: resource.MustParse("5Mi"),
+			},
+		}
+		var actual corev1.ResourceRequirements
+
+		got := compareContainerResources(expected, actual)
+
+		assert.False(t, got)
 	})
 }

@@ -718,7 +718,7 @@ func (r *ReconcileJenkinsBaseConfiguration) compareContainers(expected corev1.Co
 		messages = append(messages, "Readiness probe has changed")
 		verbose = append(verbose, fmt.Sprintf("Readiness probe has changed to '%+v' in container '%s'", expected.ReadinessProbe, expected.Name))
 	}
-	if !reflect.DeepEqual(expected.Resources, actual.Resources) {
+	if !compareContainerResources(expected.Resources, actual.Resources) {
 		messages = append(messages, "Resources have changed")
 		verbose = append(verbose, fmt.Sprintf("Resources have changed to '%+v' in container '%s'", expected.Resources, expected.Name))
 	}
@@ -736,6 +736,33 @@ func (r *ReconcileJenkinsBaseConfiguration) compareContainers(expected corev1.Co
 	}
 
 	return messages, verbose
+}
+
+func compareContainerResources(expected corev1.ResourceRequirements, actual corev1.ResourceRequirements) bool {
+	expectedRequestCPU, expectedRequestCPUSet := expected.Requests[corev1.ResourceCPU]
+	expectedRequestMemory, expectedRequestMemorySet := expected.Requests[corev1.ResourceMemory]
+	expectedLimitCPU, expectedLimitCPUSet := expected.Limits[corev1.ResourceCPU]
+	expectedLimitMemory, expectedLimitMemorySet := expected.Limits[corev1.ResourceMemory]
+
+	actualRequestCPU, actualRequestCPUSet := actual.Requests[corev1.ResourceCPU]
+	actualRequestMemory, actualRequestMemorySet := actual.Requests[corev1.ResourceMemory]
+	actualLimitCPU, actualLimitCPUSet := actual.Limits[corev1.ResourceCPU]
+	actualLimitMemory, actualLimitMemorySet := actual.Limits[corev1.ResourceMemory]
+
+	if expectedRequestCPUSet && (!actualRequestCPUSet || expectedRequestCPU.String() != actualRequestCPU.String()) {
+		return false
+	}
+	if expectedRequestMemorySet && (!actualRequestMemorySet || expectedRequestMemory.String() != actualRequestMemory.String()) {
+		return false
+	}
+	if expectedLimitCPUSet && (!actualLimitCPUSet || expectedLimitCPU.String() != actualLimitCPU.String()) {
+		return false
+	}
+	if expectedLimitMemorySet && (!actualLimitMemorySet || expectedLimitMemory.String() != actualLimitMemory.String()) {
+		return false
+	}
+
+	return true
 }
 
 func compareImagePullSecrets(expected, actual []corev1.LocalObjectReference) bool {
