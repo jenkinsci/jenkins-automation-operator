@@ -349,7 +349,7 @@ func (r *ReconcileJenkinsBaseConfiguration) createServiceAccount(meta metav1.Obj
 		return stackerr.WithStack(err)
 	}
 
-	if !compareAnnotations(r.Configuration.Jenkins.Spec.ServiceAccount.Annotations, serviceAccount.Annotations) {
+	if !compareMap(r.Configuration.Jenkins.Spec.ServiceAccount.Annotations, serviceAccount.Annotations) {
 		for key, value := range r.Configuration.Jenkins.Spec.ServiceAccount.Annotations {
 			serviceAccount.Annotations[key] = value
 		}
@@ -612,14 +612,13 @@ func (r *ReconcileJenkinsBaseConfiguration) checkForPodRecreation(currentJenkins
 			currentJenkinsMasterPod.Spec.ImagePullSecrets, r.Configuration.Jenkins.Spec.Master.ImagePullSecrets))
 	}
 
-	if !reflect.DeepEqual(r.Configuration.Jenkins.Spec.Master.NodeSelector, currentJenkinsMasterPod.Spec.NodeSelector) {
+	if !compareMap(r.Configuration.Jenkins.Spec.Master.NodeSelector, currentJenkinsMasterPod.Spec.NodeSelector) {
 		messages = append(messages, "Jenkins pod node selector has changed")
 		verbose = append(verbose, fmt.Sprintf("Jenkins pod node selector has changed, actual '%+v' required '%+v'",
 			currentJenkinsMasterPod.Spec.NodeSelector, r.Configuration.Jenkins.Spec.Master.NodeSelector))
 	}
 
-	if len(r.Configuration.Jenkins.Spec.Master.Annotations) > 0 &&
-		!compareAnnotations(r.Configuration.Jenkins.Spec.Master.Annotations, currentJenkinsMasterPod.ObjectMeta.Annotations) {
+	if !compareMap(r.Configuration.Jenkins.Spec.Master.Annotations, currentJenkinsMasterPod.ObjectMeta.Annotations) {
 		messages = append(messages, "Jenkins pod annotations have changed")
 		verbose = append(verbose, fmt.Sprintf("Jenkins pod annotations have changed, actual '%+v' required '%+v'",
 			currentJenkinsMasterPod.ObjectMeta.Annotations, r.Configuration.Jenkins.Spec.Master.Annotations))
@@ -781,7 +780,7 @@ func compareImagePullSecrets(expected, actual []corev1.LocalObjectReference) boo
 	return true
 }
 
-func compareAnnotations(expected, actual map[string]string) bool {
+func compareMap(expected, actual map[string]string) bool {
 	for expectedKey, expectedValue := range expected {
 		actualValue, found := actual[expectedKey]
 		if !found {
