@@ -839,6 +839,10 @@ func (r *ReconcileJenkinsBaseConfiguration) detectJenkinsMasterPodStartingIssues
 		return false, err
 	}
 
+	if r.Configuration.Jenkins.Status.ProvisionStartTime == nil {
+		return true, nil
+	}
+
 	if jenkinsMasterPod.Status.Phase == corev1.PodPending {
 		timeout := r.Configuration.Jenkins.Status.ProvisionStartTime.Add(time.Minute * 2).UTC()
 		now := time.Now().UTC()
