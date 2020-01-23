@@ -350,6 +350,9 @@ func (r *ReconcileJenkinsBaseConfiguration) createServiceAccount(meta metav1.Obj
 	}
 
 	if !compareMap(r.Configuration.Jenkins.Spec.ServiceAccount.Annotations, serviceAccount.Annotations) {
+		if serviceAccount.Annotations == nil {
+			serviceAccount.Annotations = map[string]string{}
+		}
 		for key, value := range r.Configuration.Jenkins.Spec.ServiceAccount.Annotations {
 			serviceAccount.Annotations[key] = value
 		}
