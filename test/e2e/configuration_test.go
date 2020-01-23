@@ -89,13 +89,14 @@ func TestConfiguration(t *testing.T) {
 	createKubernetesCredentialsProviderSecret(t, namespace, mySeedJob)
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
 	verifyJenkinsMasterPodAttributes(t, jenkins)
-	client := verifyJenkinsAPIConnection(t, jenkins, *hostname, *port, *useNodePort)
-	verifyPlugins(t, client, jenkins)
+	jenkinsClient, cleanUpFunc := verifyJenkinsAPIConnection(t, jenkins, namespace)
+	defer cleanUpFunc()
+	verifyPlugins(t, jenkinsClient, jenkins)
 
 	// user
 	waitForJenkinsUserConfigurationToComplete(t, jenkins)
-	verifyUserConfiguration(t, client, numberOfExecutors, systemMessage)
-	verifyJenkinsSeedJobs(t, client, []seedJobConfig{mySeedJob})
+	verifyUserConfiguration(t, jenkinsClient, numberOfExecutors, systemMessage)
+	verifyJenkinsSeedJobs(t, jenkinsClient, []seedJobConfig{mySeedJob})
 }
 
 func TestPlugins(t *testing.T) {
@@ -121,7 +122,8 @@ func TestPlugins(t *testing.T) {
 	jenkins := createJenkinsCR(t, "k8s-e2e", namespace, seedJobs, v1alpha2.GroovyScripts{}, v1alpha2.ConfigurationAsCode{})
 	waitForJenkinsUserConfigurationToComplete(t, jenkins)
 
-	jenkinsClient := verifyJenkinsAPIConnection(t, jenkins, *hostname, *port, *useNodePort)
+	jenkinsClient, cleanUpFunc := verifyJenkinsAPIConnection(t, jenkins, namespace)
+	defer cleanUpFunc()
 	waitForJob(t, jenkinsClient, jobID)
 	job, err := jenkinsClient.GetJob(jobID)
 

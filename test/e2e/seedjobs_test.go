@@ -58,12 +58,13 @@ func TestSeedJobs(t *testing.T) {
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
 
 	verifyJenkinsMasterPodAttributes(t, jenkins)
-	client := verifyJenkinsAPIConnection(t, jenkins, *hostname, *port, *useNodePort)
-	verifyPlugins(t, client, jenkins)
+	jenkinsClient, cleanUpFunc := verifyJenkinsAPIConnection(t, jenkins, namespace)
+	defer cleanUpFunc()
+	verifyPlugins(t, jenkinsClient, jenkins)
 
 	// user
 	waitForJenkinsUserConfigurationToComplete(t, jenkins)
-	verifyJenkinsSeedJobs(t, client, seedJobsConfig.SeedJobs)
+	verifyJenkinsSeedJobs(t, jenkinsClient, seedJobsConfig.SeedJobs)
 }
 
 func loadSeedJobsConfig(t *testing.T) seedJobsConfig {

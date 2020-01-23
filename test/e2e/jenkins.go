@@ -46,7 +46,7 @@ func getJenkinsMasterPod(t *testing.T, jenkins *v1alpha2.Jenkins) *corev1.Pod {
 	return &podList.Items[0]
 }
 
-func createJenkinsAPIClient(jenkins *v1alpha2.Jenkins, hostname string, port int, useNodePort bool) (jenkinsclient.Jenkins, error) {
+func createJenkinsAPIClient(jenkins *v1alpha2.Jenkins, hostname string, port int) (jenkinsclient.Jenkins, error) {
 	adminSecret := &corev1.Secret{}
 	namespaceName := types.NamespacedName{Namespace: jenkins.Namespace, Name: resources.GetOperatorCredentialsSecretName(jenkins)}
 	if err := framework.Global.Client.Get(context.TODO(), namespaceName, adminSecret); err != nil {
@@ -67,7 +67,7 @@ func createJenkinsAPIClient(jenkins *v1alpha2.Jenkins, hostname string, port int
 	jenkinsAPIURL := jenkinsclient.JenkinsAPIConnectionSettings{
 		Hostname:    hostname,
 		Port:        port,
-		UseNodePort: useNodePort,
+		UseNodePort: false,
 	}.BuildJenkinsAPIUrl(service.Name, service.Namespace, service.Spec.Ports[0].Port, service.Spec.Ports[0].NodePort)
 
 	return jenkinsclient.NewUserAndPasswordAuthorization(
@@ -163,14 +163,22 @@ func createJenkinsCR(t *testing.T, name, namespace string, seedJob *[]v1alpha2.S
 	return jenkins
 }
 
-func verifyJenkinsAPIConnection(t *testing.T, jenkins *v1alpha2.Jenkins, hostname string, port int, useNodePort bool) jenkinsclient.Jenkins {
-	client, err := createJenkinsAPIClient(jenkins, hostname, port, useNodePort)
+func verifyJenkinsAPIConnection(t *testing.T, jenkins *v1alpha2.Jenkins, namespace string) (jenkinsclient.Jenkins, func()) {
+	podName := resources.GetJenkinsMasterPodName(*jenkins)
+	port, cleanUpFunc, waitFunc, portForwardFunc, err := setupPortForwardToPod(t, namespace, podName, int(constants.DefaultHTTPPortInt32))
 	if err != nil {
+		t.Fatal(err)
+	}
+	go portForwardFunc()
+	waitFunc()
+	client, err := createJenkinsAPIClient(jenkins, "localhost", port)
+	if err != nil {
+		defer cleanUpFunc()
 		t.Fatal(err)
 	}
 
 	t.Log("I can establish connection to Jenkins API")
-	return client
+	return client, cleanUpFunc
 }
 
 func restartJenkinsMasterPod(t *testing.T, jenkins *v1alpha2.Jenkins) {
