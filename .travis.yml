@@ -12,6 +12,8 @@ env:
 go:
   - 1.13.x
 
+sudo: required
+
 before_install:
   - make go-dependencies
 
@@ -28,6 +30,8 @@ jobs:
     - stage: e2e
       name: "Jenkins Operator - e2e"
       script:
+        - sudo apt-get update
+        - sudo apt-get install socat
         - travis_wait 10 make travis-prepare
         - travis_wait 45 make build e2e
 
