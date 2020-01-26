@@ -475,17 +475,6 @@ func (r *ReconcileJenkins) setDefaults(jenkins *v1alpha2.Jenkins, logger logr.Lo
 		jenkins.Spec.Master.Containers = containers
 	}
 
-	if jenkins.Spec.Master.SecurityContext == nil {
-		logger.Info("Setting default Jenkins master security context")
-		changed = true
-		var id int64 = 1000
-		securityContext := corev1.PodSecurityContext{
-			RunAsUser: &id,
-			FSGroup:   &id,
-		}
-		jenkins.Spec.Master.SecurityContext = &securityContext
-	}
-
 	if reflect.DeepEqual(jenkins.Spec.JenkinsAPISettings, v1alpha2.JenkinsAPISettings{}) {
 		logger.Info("Setting default Jenkins API settings")
 		changed = true
