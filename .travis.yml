@@ -31,7 +31,7 @@ jobs:
       name: "Jenkins Operator - unit tests"
       script:
         - travis_wait 15 make verify
-    - stage: pvc_e2e
+    - stage: e2e
       name: "Backup PVC - e2e"
       script:
         - travis_wait 10 make -C backup/pvc/ docker-e2e UID=$(id -u) GID=$(id -g)
