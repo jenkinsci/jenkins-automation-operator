@@ -41,6 +41,7 @@ and stores it in a Kubernetes Secret.
 ## Kubernetes
 
 Kubernetes API permissions are limited by the following roles:
+
 - [jenkins-operator role](../deploy/role.yaml)  
 - [Jenkins Master role](../pkg/controller/jenkins/configuration/base/resources/rbac.go)
 
