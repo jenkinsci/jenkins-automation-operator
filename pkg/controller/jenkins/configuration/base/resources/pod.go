@@ -295,11 +295,26 @@ func GetJenkinsMasterPodName(jenkins v1alpha2.Jenkins) string {
 	return fmt.Sprintf("jenkins-%s", jenkins.Name)
 }
 
+// GetJenkinsMasterPodLabels returns Jenkins pod labels for given CR
+func GetJenkinsMasterPodLabels(jenkins v1alpha2.Jenkins) map[string]string {
+	var labels map[string]string
+	if jenkins.Spec.Master.Labels == nil {
+		labels = map[string]string{}
+	} else {
+		labels = jenkins.Spec.Master.Labels
+	}
+	for key, value := range BuildResourceLabels(&jenkins) {
+		labels[key] = value
+	}
+	return labels
+}
+
 // NewJenkinsMasterPod builds Jenkins Master Kubernetes Pod resource
 func NewJenkinsMasterPod(objectMeta metav1.ObjectMeta, jenkins *v1alpha2.Jenkins) *corev1.Pod {
 	serviceAccountName := objectMeta.Name
 	objectMeta.Annotations = jenkins.Spec.Master.Annotations
 	objectMeta.Name = GetJenkinsMasterPodName(*jenkins)
+	objectMeta.Labels = GetJenkinsMasterPodLabels(*jenkins)
 
 	return &corev1.Pod{
 		TypeMeta:   buildPodTypeMeta(),

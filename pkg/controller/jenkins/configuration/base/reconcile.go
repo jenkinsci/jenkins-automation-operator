@@ -621,6 +621,12 @@ func (r *ReconcileJenkinsBaseConfiguration) checkForPodRecreation(currentJenkins
 			currentJenkinsMasterPod.Spec.NodeSelector, r.Configuration.Jenkins.Spec.Master.NodeSelector))
 	}
 
+	if !compareMap(r.Configuration.Jenkins.Spec.Master.Labels, currentJenkinsMasterPod.Labels) {
+		messages = append(messages, "Jenkins pod labels have changed")
+		verbose = append(verbose, fmt.Sprintf("Jenkins pod labels have changed, actual '%+v' required '%+v'",
+			currentJenkinsMasterPod.Labels, r.Configuration.Jenkins.Spec.Master.Labels))
+	}
+
 	if !compareMap(r.Configuration.Jenkins.Spec.Master.Annotations, currentJenkinsMasterPod.ObjectMeta.Annotations) {
 		messages = append(messages, "Jenkins pod annotations have changed")
 		verbose = append(verbose, fmt.Sprintf("Jenkins pod annotations have changed, actual '%+v' required '%+v'",
