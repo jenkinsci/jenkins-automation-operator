@@ -385,6 +385,9 @@ func agentDeployment(jenkins *v1alpha2.Jenkins, namespace string, agentName stri
 		Spec: appsv1.DeploymentSpec{
 			Template: corev1.PodTemplateSpec{
 				Spec: corev1.PodSpec{
+					NodeSelector:     jenkins.Spec.Master.NodeSelector,
+					Tolerations:      jenkins.Spec.Master.Tolerations,
+					ImagePullSecrets: jenkins.Spec.Master.ImagePullSecrets,
 					Containers: []corev1.Container{
 						{
 							Name:  "jnlp",
