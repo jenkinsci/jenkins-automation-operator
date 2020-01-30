@@ -840,6 +840,21 @@ Deprecated: will be removed in the future, please use Annotations(annotations)</
 </tr>
 <tr>
 <td>
+<code>labels</code></br>
+<em>
+map[string]string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Map of string keys and values that can be used to organize and categorize
+(scope and select) objects. May match selectors of replication controllers
+and services.
+More info: <a href="http://kubernetes.io/docs/user-guide/labels">http://kubernetes.io/docs/user-guide/labels</a></p>
+</td>
+</tr>
+<tr>
+<td>
 <code>nodeSelector</code></br>
 <em>
 map[string]string
@@ -2154,5 +2169,5 @@ SecretKeySelector
 <hr/>
 <p><em>
 Generated with <code>gen-crd-api-reference-docs</code>
-on git commit <code>b2d3902</code>.
+on git commit <code>4b89360</code>.
 </em></p>
