@@ -84,8 +84,9 @@ kubectl get secret jenkins-operator-credentials-&amp;lt;cr_name&amp;gt; -o &lt;s
 &lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;minikube service jenkins-operator-http-&amp;lt;cr_name&amp;gt; --url&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 &lt;p&gt;Connect to the Jenkins instance (actual Kubernetes cluster):&lt;/p&gt;
 &lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;kubectl port-forward jenkins-&amp;lt;cr_name&amp;gt; &lt;span style=&#34;color:#0000cf;font-weight:bold&#34;&gt;8080&lt;/span&gt;:8080&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-&lt;p&gt;Then open browser with address &lt;code&gt;http://localhost:8080&lt;/code&gt;.
-&lt;img src=&#34;https://jenkinsci.github.io/kubernetes-operator/img/jenkins.png&#34; alt=&#34;jenkins&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;Then open browser with address &lt;code&gt;http://localhost:8080&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://jenkinsci.github.io/kubernetes-operator/kubernetes-operator/img/jenkins.png&#34; alt=&#34;jenkins&#34; /&gt;&lt;/p&gt;
 
       </description>
     </item>
@@ -554,6 +555,42 @@ spec:
 &lt;p&gt;You can change their versions.&lt;/p&gt;
 
 &lt;p&gt;The &lt;strong&gt;Jenkins Operator&lt;/strong&gt; will then automatically install plugins after the Jenkins master pod restarts.&lt;/p&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Docs: Migration from v0.2.x</title>
+      <link>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/migration/</link>
+      <pubDate>Fri, 03 Jan 2020 00:00:00 +0000</pubDate>
+      
+      <guid>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/migration/</guid>
+      <description>
+        
+        
+        
+
+&lt;h3 id=&#34;changes&#34;&gt;Changes&lt;/h3&gt;
+
+&lt;ul&gt;
+&lt;li&gt;new Jenkins Custom Resource Definition version &lt;code&gt;jenkins.io/v1alpha2&lt;/code&gt;:
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;spec.master.masterAnnotations&lt;/code&gt; was deprecated, use &lt;code&gt;spec.master.annotations&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;added &lt;code&gt;spec.notifications&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;added &lt;code&gt;spec.master.tolerations&lt;/code&gt; (in v0.3.1)&lt;/li&gt;
+&lt;li&gt;added &lt;code&gt;spec.master.disableCSRFProtection&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&#34;migration&#34;&gt;Migration&lt;/h3&gt;
+
+&lt;ul&gt;
+&lt;li&gt;adjust the operator image version, e.g. &lt;code&gt;image: virtuslab/jenkins-operator:v0.3.1&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;migrate your Jenkins Custom Resources to &lt;code&gt;apiVersion: jenkins.io/v1alpha2&lt;/code&gt;, adjust content if necessary&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;The v0.3.x should work fine with &lt;code&gt;jenkins.io/v1alpha1&lt;/code&gt;, but we recommend using &lt;code&gt;jenkins.io/v1alpha2&lt;/code&gt;.&lt;/p&gt;
 
       </description>
     </item>
@@ -1830,6 +1867,21 @@ set by external tools to store and retrieve arbitrary metadata. They are not
 queryable and should be preserved when modifying objects.
 More info: &lt;a href=&#34;http://kubernetes.io/docs/user-guide/annotations&#34;&gt;http://kubernetes.io/docs/user-guide/annotations&lt;/a&gt;
 Deprecated: will be removed in the future, please use Annotations(annotations)&lt;/p&gt;
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;
+&lt;code&gt;labels&lt;/code&gt;&lt;/br&gt;
+&lt;em&gt;
+map[string]string
+&lt;/em&gt;
+&lt;/td&gt;
+&lt;td&gt;
+&lt;em&gt;(Optional)&lt;/em&gt;
+&lt;p&gt;Map of string keys and values that can be used to organize and categorize
+(scope and select) objects. May match selectors of replication controllers
+and services.
+More info: &lt;a href=&#34;http://kubernetes.io/docs/user-guide/labels&#34;&gt;http://kubernetes.io/docs/user-guide/labels&lt;/a&gt;&lt;/p&gt;
 &lt;/td&gt;
 &lt;/tr&gt;
 &lt;tr&gt;
@@ -3148,7 +3200,7 @@ SecretKeySelector
 &lt;hr/&gt;
 &lt;p&gt;&lt;em&gt;
 Generated with &lt;code&gt;gen-crd-api-reference-docs&lt;/code&gt;
-on git commit &lt;code&gt;b2d3902&lt;/code&gt;.
+on git commit &lt;code&gt;4b89360&lt;/code&gt;.
 &lt;/em&gt;&lt;/p&gt;
 
       </description>

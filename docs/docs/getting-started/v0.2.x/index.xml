@@ -1,6 +1,6 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Jenkins Operator – Latest (v0.2.x)</title>
+    <title>Jenkins Operator – v0.2.x</title>
     <link>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/v0.2.x/</link>
     <description>Recent Hugo news from gohugo.io</description>
     <generator>Hugo -- gohugo.io</generator>
