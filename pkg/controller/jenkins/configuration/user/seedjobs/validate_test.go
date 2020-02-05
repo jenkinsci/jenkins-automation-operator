@@ -645,9 +645,9 @@ func TestValidateSeedJobs(t *testing.T) {
 
 		assert.NoError(t, err)
 
-		assert.Equal(t, result, []string{"seedJob `example` githubPushTrigger is set. This function requires `github` plugin installed in .Spec.Master.Plugins because seed jobs Push Trigger function needs it"})
+		assert.Equal(t, result, []string{"seedJob `example` githubPushTrigger cannot be enabled: `github` plugin not installed"})
 	})
-	t.Run("Invalid with set githubPushTrigger and not installed github plugin", func(t *testing.T) {
+	t.Run("Valid with set githubPushTrigger and installed github plugin", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
 			Spec: v1alpha2.JenkinsSpec{
 				SeedJobs: []v1alpha2.SeedJob{
@@ -664,6 +664,74 @@ func TestValidateSeedJobs(t *testing.T) {
 				Master: v1alpha2.JenkinsMaster{
 					Plugins: []v1alpha2.Plugin{
 						{Name: "github", Version: "latest"},
+					},
+				},
+			},
+		}
+
+		fakeClient := fake.NewFakeClient()
+
+		config := configuration.Configuration{
+			Client:        fakeClient,
+			ClientSet:     kubernetes.Clientset{},
+			Notifications: nil,
+		}
+
+		seedJobs := New(nil, config, logf.ZapLogger(false))
+		result, err := seedJobs.ValidateSeedJobs(jenkins)
+
+		assert.NoError(t, err)
+		assert.Nil(t, result)
+	})
+	t.Run("Invalid with set bitbucketPushTrigger and not installed bitbucket plugin", func(t *testing.T) {
+		jenkins := v1alpha2.Jenkins{
+			Spec: v1alpha2.JenkinsSpec{
+				SeedJobs: []v1alpha2.SeedJob{
+					{
+						ID:                    "example",
+						CredentialID:          "jenkins-operator-e2e",
+						JenkinsCredentialType: v1alpha2.NoJenkinsCredentialCredentialType,
+						Targets:               "cicd/jobs/*.jenkins",
+						RepositoryBranch:      "master",
+						RepositoryURL:         "https://github.com/jenkinsci/kubernetes-operator.git",
+						BitbucketPushTrigger:  true,
+					},
+				},
+			},
+		}
+
+		fakeClient := fake.NewFakeClient()
+
+		config := configuration.Configuration{
+			Client:        fakeClient,
+			ClientSet:     kubernetes.Clientset{},
+			Notifications: nil,
+		}
+
+		seedJobs := New(nil, config, logf.ZapLogger(false))
+		result, err := seedJobs.ValidateSeedJobs(jenkins)
+
+		assert.NoError(t, err)
+
+		assert.Equal(t, result, []string{"seedJob `example` bitbucketPushTrigger cannot be enabled: `bitbucket` plugin not installed"})
+	})
+	t.Run("Valid with set bitbucketPushTrigger and installed Bitbucket plugin", func(t *testing.T) {
+		jenkins := v1alpha2.Jenkins{
+			Spec: v1alpha2.JenkinsSpec{
+				SeedJobs: []v1alpha2.SeedJob{
+					{
+						ID:                    "example",
+						CredentialID:          "jenkins-operator-e2e",
+						JenkinsCredentialType: v1alpha2.NoJenkinsCredentialCredentialType,
+						Targets:               "cicd/jobs/*.jenkins",
+						RepositoryBranch:      "master",
+						RepositoryURL:         "https://github.com/jenkinsci/kubernetes-operator.git",
+						BitbucketPushTrigger:  true,
+					},
+				},
+				Master: v1alpha2.JenkinsMaster{
+					Plugins: []v1alpha2.Plugin{
+						{Name: "bitbucket", Version: "latest"},
 					},
 				},
 			},
