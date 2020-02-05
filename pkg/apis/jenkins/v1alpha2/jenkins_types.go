@@ -552,6 +552,10 @@ type SeedJob struct {
 	// +optional
 	JenkinsCredentialType JenkinsCredentialType `json:"credentialType,omitempty"`
 
+	// BitbucketPushTrigger is used for Bitbucket web hooks
+	// +optional
+	BitbucketPushTrigger bool `json:"bitbucketPushTrigger"`
+
 	// GitHubPushTrigger is used for GitHub web hooks
 	// +optional
 	GitHubPushTrigger bool `json:"githubPushTrigger"`

@@ -103,6 +103,14 @@ func (s *SeedJobs) ValidateSeedJobs(jenkins v1alpha2.Jenkins) ([]string, error) 
 				}
 			}
 		}
+
+		if seedJob.BitbucketPushTrigger {
+			if msg := s.validateBitbucketPushTrigger(jenkins); len(msg) > 0 {
+				for _, m := range msg {
+					messages = append(messages, fmt.Sprintf("seedJob `%s` %s", seedJob.ID, m))
+				}
+			}
+		}
 	}
 
 	return messages, nil
@@ -119,24 +127,39 @@ func (s *SeedJobs) validateSchedule(job v1alpha2.SeedJob, str string, key string
 
 func (s *SeedJobs) validateGitHubPushTrigger(jenkins v1alpha2.Jenkins) []string {
 	var messages []string
+	if err := checkPluginExists(jenkins, "github"); err != nil {
+		return append(messages, fmt.Sprintf("githubPushTrigger cannot be enabled: %s", err))
+	}
+	return messages
+}
+
+func (s *SeedJobs) validateBitbucketPushTrigger(jenkins v1alpha2.Jenkins) []string {
+	var messages []string
+	if err := checkPluginExists(jenkins, "bitbucket"); err != nil {
+		return append(messages, fmt.Sprintf("bitbucketPushTrigger cannot be enabled: %s", err))
+	}
+	return messages
+}
+
+func checkPluginExists(jenkins v1alpha2.Jenkins, name string) error {
 	exists := false
 	for _, plugin := range jenkins.Spec.Master.BasePlugins {
-		if plugin.Name == "github" {
+		if plugin.Name == name {
 			exists = true
 		}
 	}
 
 	userExists := false
 	for _, plugin := range jenkins.Spec.Master.Plugins {
-		if plugin.Name == "github" {
+		if plugin.Name == name {
 			userExists = true
 		}
 	}
 
 	if !exists && !userExists {
-		messages = append(messages, "githubPushTrigger is set. This function requires `github` plugin installed in .Spec.Master.Plugins because seed jobs Push Trigger function needs it")
+		return fmt.Errorf("`%s` plugin not installed", name)
 	}
-	return messages
+	return nil
 }
 
 func (s *SeedJobs) validateIfIDIsUnique(seedJobs []v1alpha2.SeedJob) []string {

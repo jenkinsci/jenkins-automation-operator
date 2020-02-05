@@ -70,6 +70,9 @@ import org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition;
 {{ if .GitHubPushTrigger }}
 import com.cloudbees.jenkins.GitHubPushTrigger;
 {{ end }}
+{{ if .BitbucketPushTrigger }}
+import com.cloudbees.jenkins.plugins.BitBucketTrigger;
+{{ end }}
 import hudson.model.FreeStyleProject;
 import hudson.model.labels.LabelAtom;
 import hudson.plugins.git.BranchSpec;
@@ -126,6 +129,10 @@ jobRef.addTrigger(new SCMTrigger("{{ .PollSCM }}"))
 
 {{ if .GitHubPushTrigger }}
 jobRef.addTrigger(new GitHubPushTrigger())
+{{ end }}
+
+{{ if .BitbucketPushTrigger }}
+jobRef.addTrigger(new BitBucketTrigger())
 {{ end }}
 
 {{ if .BuildPeriodically }}
@@ -470,6 +477,7 @@ func seedJobCreatingGroovyScript(seedJob v1alpha2.SeedJob) (string, error) {
 		Targets               string
 		RepositoryBranch      string
 		RepositoryURL         string
+		BitbucketPushTrigger  bool
 		GitHubPushTrigger     bool
 		BuildPeriodically     string
 		PollSCM               string
@@ -485,6 +493,7 @@ func seedJobCreatingGroovyScript(seedJob v1alpha2.SeedJob) (string, error) {
 		Targets:               seedJob.Targets,
 		RepositoryBranch:      seedJob.RepositoryBranch,
 		RepositoryURL:         seedJob.RepositoryURL,
+		BitbucketPushTrigger:  seedJob.BitbucketPushTrigger,
 		GitHubPushTrigger:     seedJob.GitHubPushTrigger,
 		BuildPeriodically:     seedJob.BuildPeriodically,
 		PollSCM:               seedJob.PollSCM,
