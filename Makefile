@@ -496,7 +496,11 @@ endif
 .PHONY: helm-package
 helm-package:
 	@echo "+ $@"
+	mkdir -p /tmp/jenkins-operator-charts
+	mv chart/jenkins-operator/*.tgz /tmp/jenkins-operator-charts
 	cd chart && helm package jenkins-operator
+	mv /tmp/jenkins-operator-charts/*.tgz chart/jenkins-operator/
+	rm -rf /tmp/jenkins-operator-charts/
 
 .PHONY: helm-deploy
 helm-deploy: helm-package
