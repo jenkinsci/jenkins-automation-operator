@@ -180,7 +180,7 @@ spec:
     targets: "cicd/jobs/*.jenkins"
     description: "Jenkins Operator repository"
     repositoryBranch: master
-    repositoryUrl: git@github.com:jenkinsci/kubernetes-operator.git
+    repositoryUrl: ssh://git@github.com:jenkinsci/kubernetes-operator.git
 ```
 
 and create a Kubernetes Secret (name of secret should be the same from `credentialID` field):
