@@ -14,7 +14,7 @@ via groovy scripts to prevent any security gaps.
 
 Currently **Jenkins Operator** generates a username and random password and stores them in a Kubernetes Secret.
 However any other authorization mechanisms are possible and can be done via groovy scripts or configuration as code plugin.
-For more information take a look at [getting-started#jenkins-customization](v0.1.1/getting-started.md#jenkins-customisation).
+For more information take a look at [getting-started#jenkins-customization](/website/content/en/docs/Security/_index.md).
 
 Any change to Security Realm or Authorization requires that user called `jenkins-operator` must have admin rights 
 because **Jenkins Operator** calls Jenkins API.
@@ -31,7 +31,7 @@ The list below describes all the default security setting configured by the **Je
 - disable CLI - CLI access of `/cli` URL is disabled
 - configure kubernetes-plugin - secure configuration for Kubernetes plugin
 
-If you would like to dig a little bit into the code, take a look [here](../pkg/controller/jenkins/configuration/base/resources/base_configuration_configmap.go).
+If you would like to dig a little bit into the code, take a look [here](/pkg/controller/jenkins/configuration/base/resources/base_configuration_configmap.go).
 
 ## Jenkins API
 
@@ -42,8 +42,8 @@ and stores it in a Kubernetes Secret.
 
 Kubernetes API permissions are limited by the following roles:
 
-- [jenkins-operator role](../deploy/role.yaml)  
-- [Jenkins Master role](../pkg/controller/jenkins/configuration/base/resources/rbac.go)
+- [jenkins-operator role](/deploy/role.yaml)  
+- [Jenkins Master role](/pkg/controller/jenkins/configuration/base/resources/rbac.go)
 
 Since **Jenkins Operator** must be able to grant permission for its' deployed Jenkins masters 
 to spawn pods (the `Jenkins Master role` above), 
@@ -55,7 +55,7 @@ Any namespace to which the `jenkins-operator` is deployed must be considered to 
 possible permissions to any subject which can create a Pod in that namespace.
 
 To mitigate this issue **Jenkins Operator** should be deployed in one namespace and the Jenkins CR should be created in separate namespace. 
-To achieve it change watch namespace in https://github.com/jenkinsci/kubernetes-operator/blob/master/deploy/operator.yaml#L25
+To achieve it change watch namespace in [https://github.com/jenkinsci/kubernetes-operator/blob/master/deploy/operator.yaml#L25](https://github.com/jenkinsci/kubernetes-operator/blob/master/deploy/operator.yaml#L25)
 
 ## Setup Jenkins Operator and Jenkins in separated namespaces
 
