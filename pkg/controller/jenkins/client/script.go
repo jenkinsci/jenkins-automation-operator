@@ -1,8 +1,10 @@
 package client
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -31,16 +33,18 @@ func (jenkins *jenkins) ExecuteScript(script string) (string, error) {
 func (jenkins *jenkins) executeScript(script string, verifier string) (string, error) {
 	output := ""
 	fullScript := fmt.Sprintf("%s\nprint println('%s')", script, verifier)
-	parameters := map[string]string{"script": fullScript}
 
-	ar := gojenkins.NewAPIRequest("POST", "/scriptText", nil)
+	data := url.Values{}
+	data.Set("script", fullScript)
+
+	ar := gojenkins.NewAPIRequest("POST", "/scriptText", bytes.NewBufferString(data.Encode()))
 	if err := jenkins.Requester.SetCrumb(ar); err != nil {
 		return output, err
 	}
 	ar.SetHeader("Content-Type", "application/x-www-form-urlencoded")
 	ar.Suffix = ""
 
-	r, err := jenkins.Requester.Do(ar, &output, parameters)
+	r, err := jenkins.Requester.Do(ar, &output, nil)
 	if err != nil {
 		return "", errors.Wrapf(err, "couldn't execute groovy script, logs '%s'", output)
 	}
