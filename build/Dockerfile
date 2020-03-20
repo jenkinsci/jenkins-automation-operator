@@ -11,5 +11,6 @@ RUN cd /kubernetes-operator && make build
 
 # run stage
 FROM alpine:3.10
+RUN apk --no-cache add git
 COPY --from=build-stage /kubernetes-operator/build/_output/bin/jenkins-operator /usr/local/bin/jenkins-operator
 CMD [ "/usr/local/bin/jenkins-operator" ]
