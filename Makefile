@@ -1,5 +1,5 @@
 # Set POSIX sh for maximum interoperability
-SHELL := /bin/sh
+	SHELL := /bin/sh
 PATH  := $(GOPATH)/bin:$(PATH)
 
 OSFLAG 				:=
@@ -66,6 +66,7 @@ PACKAGES_FOR_UNIT_TESTS = $(shell go list -f '{{.ImportPath}}/' ./... | grep -v 
 E2E_TEST_SELECTOR ?= .*
 
 JENKINS_API_HOSTNAME := $(shell $(JENKINS_API_HOSTNAME_COMMAND))
+KUBECONFIG ?= $HOME/.kube/config
 OPERATOR_ARGS ?= --jenkins-api-hostname=$(JENKINS_API_HOSTNAME) --jenkins-api-port=$(JENKINS_API_PORT) --jenkins-api-use-nodeport=$(JENKINS_API_USE_NODEPORT) $(OPERATOR_EXTRA_ARGS)
 
 .DEFAULT_GOAL := help
@@ -160,15 +161,19 @@ test: ## Runs the go tests
 
 .PHONY: e2e
 CURRENT_DIRECTORY := $(shell pwd)
-e2e: container-runtime-build ## Runs e2e tests, you can use EXTRA_ARGS
+
+e2e: # container-runtime-build ## Runs e2e tests, you can use EXTRA_ARGS
 	@echo "+ $@"
 	@echo "Docker image: $(DOCKER_REGISTRY):$(GITCOMMIT)"
 ifeq ($(KUBERNETES_PROVIDER),minikube)
 	kubectl config use-context $(KUBECTL_CONTEXT)
 endif
-ifeq ($(KUBERNETES_PROVIDER),crc)
-	oc project $(CRC_OC_PROJECT)
-endif
+
+# if provider is crc or openshift
+# ifeq ($(KUBERNETES_PROVIDER), $(filter $(KUBERNETES_PROVIDER), crc openshift))
+#	echo AAVVV
+#	oc new-project $(CRC_OC_PROJECT) > /dev/null 2>&1 || oc project $(CRC_OC_PROJECT) > /dev/null 2>&1
+#endif
 	cp deploy/service_account.yaml deploy/namespace-init.yaml
 	cat deploy/role.yaml >> deploy/namespace-init.yaml
 	cat deploy/role_binding.yaml >> deploy/namespace-init.yaml
@@ -184,6 +189,7 @@ ifeq ($(KUBERNETES_PROVIDER),minikube)
 	sed -i 's|\(imagePullPolicy\): IfNotPresent|\1: Never|g' deploy/namespace-init.yaml
 endif
 endif
+
 
 ifeq ($(OSFLAG), OSX)
 ifeq ($(IMAGE_PULL_MODE), remote)
@@ -240,6 +246,7 @@ install: ## Installs the executable
 	go install -tags "$(BUILDTAGS)" ${GO_LDFLAGS} $(BUILD_PATH)
 
 .PHONY: run
+run: $( shell echo AAAAAAAAAAAAAA $KUBECONFIG)
 run: export WATCH_NAMESPACE = $(NAMESPACE)
 run: export OPERATOR_NAME = $(NAME)
 run: build ## Run the executable, you can use EXTRA_ARGS
@@ -247,9 +254,11 @@ run: build ## Run the executable, you can use EXTRA_ARGS
 ifeq ($(KUBERNETES_PROVIDER),minikube)
 	kubectl config use-context $(KUBECTL_CONTEXT)
 endif
-ifeq ($(KUBERNETES_PROVIDER),crc)
-	oc project $(CRC_OC_PROJECT)
+ifeq ($(KUBERNETES_PROVIDER), $(filter $(KUBERNETES_PROVIDER), crc openshift))
+	echo "Using KUBECONFIG in: $(KUBECONFIG)"
+	oc new-project $(CRC_OC_PROJECT) > /dev/null 2>&1 || oc project $(CRC_OC_PROJECT) > /dev/null 2>&1
 endif
+	@echo "Applying creation of crds from deploy/crds/jenkins_$(API_VERSION)_jenkins_crd.yaml"
 	kubectl apply -f deploy/crds/jenkins_$(API_VERSION)_jenkins_crd.yaml
 	@echo "Watching '$(WATCH_NAMESPACE)' namespace"
 	build/_output/bin/jenkins-operator $(OPERATOR_ARGS)
