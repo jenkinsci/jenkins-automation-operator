@@ -9,7 +9,7 @@ ADD . /kubernetes-operator
 RUN cd /kubernetes-operator && make build config=config.in-cluster.env
 
 # run stage
-FROM alpine:3.10
+FROM golang:1.13.1-alpine3.10 
 RUN apk --no-cache add git bash curl make
 COPY --from=build-stage /kubernetes-operator/build/_output/bin/jenkins-operator /usr/local/bin/jenkins-operator
 CMD [ "/usr/local/bin/jenkins-operator" ]
