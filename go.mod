@@ -12,6 +12,7 @@ require (
 	github.com/go-logr/logr v0.1.0
 	github.com/go-logr/zapr v0.1.1
 	github.com/go-openapi/spec v0.19.4
+	github.com/gogo/protobuf v1.3.1
 	github.com/golang/mock v1.3.1
 	github.com/mailgun/mailgun-go/v3 v3.6.0
 	github.com/operator-framework/operator-sdk v0.15.1

@@ -127,6 +127,12 @@ func createJenkinsCR(t *testing.T, name, namespace string, seedJob *[]v1alpha2.S
 							TimeoutSeconds:      int32(4),
 							FailureThreshold:    int32(10),
 						},
+						VolumeMounts: []corev1.VolumeMount{
+							{
+								Name:      "plugins-cache",
+								MountPath: "/usr/share/jenkins/ref/plugins",
+							},
+						},
 					},
 					{
 						Name:  "envoyproxy",
@@ -138,7 +144,15 @@ func createJenkinsCR(t *testing.T, name, namespace string, seedJob *[]v1alpha2.S
 					{Name: "simple-theme-plugin", Version: "0.5.1"},
 					{Name: "github", Version: "1.29.4"},
 				},
-				NodeSelector: map[string]string{"kubernetes.io/hostname": "minikube"},
+				NodeSelector: map[string]string{"kubernetes.io/os": "linux"},
+				Volumes: []corev1.Volume{
+					{
+						Name: "plugins-cache",
+						VolumeSource: corev1.VolumeSource{
+							EmptyDir: &corev1.EmptyDirVolumeSource{},
+						},
+					},
+				},
 			},
 			SeedJobs: seedJobs,
 			Service: v1alpha2.Service{

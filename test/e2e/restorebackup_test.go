@@ -140,6 +140,10 @@ func createJenkinsWithBackupAndRestoreConfigured(t *testing.T, name, namespace s
 								Name:      "jenkins-home",
 								MountPath: "/jenkins-home",
 							},
+							{
+								Name:      "plugins-cache",
+								MountPath: "/usr/share/jenkins/ref/plugins",
+							},
 						},
 					},
 				},
@@ -150,6 +154,12 @@ func createJenkinsWithBackupAndRestoreConfigured(t *testing.T, name, namespace s
 							PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
 								ClaimName: pvcName,
 							},
+						},
+					},
+					{
+						Name: "plugins-cache",
+						VolumeSource: corev1.VolumeSource{
+							EmptyDir: &corev1.EmptyDirVolumeSource{},
 						},
 					},
 				},

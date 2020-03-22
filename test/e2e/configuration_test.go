@@ -216,7 +216,7 @@ func verifyJenkinsMasterPodAttributes(t *testing.T, jenkins *v1alpha2.Jenkins) {
 	jenkinsPod := getJenkinsMasterPod(t, jenkins)
 	jenkins = getJenkins(t, jenkins.Namespace, jenkins.Name)
 
-	assert.Equal(t, jenkins.Spec.Master.Annotations, jenkinsPod.ObjectMeta.Annotations)
+	assertMapContainsElementsFromAnotherMap(t, jenkins.Spec.Master.Annotations, jenkinsPod.ObjectMeta.Annotations)
 	assert.Equal(t, jenkins.Spec.Master.NodeSelector, jenkinsPod.Spec.NodeSelector)
 
 	assert.Equal(t, resources.JenkinsMasterContainerName, jenkinsPod.Spec.Containers[0].Name)
@@ -224,8 +224,6 @@ func verifyJenkinsMasterPodAttributes(t *testing.T, jenkins *v1alpha2.Jenkins) {
 
 	assert.Equal(t, jenkins.Spec.Master.SecurityContext, jenkinsPod.Spec.SecurityContext)
 	assert.Equal(t, jenkins.Spec.Master.Containers[0].Command, jenkinsPod.Spec.Containers[0].Command)
-
-	assert.Equal(t, jenkins.Spec.Master.ImagePullSecrets, jenkinsPod.Spec.ImagePullSecrets)
 
 	assert.Equal(t, resources.GetJenkinsMasterPodLabels(*jenkins), jenkinsPod.Labels)
 
@@ -346,4 +344,15 @@ if (!"%s".equals(Jenkins.instance.systemMessage)) {
 }`, systemMessage)
 	logs, err = jenkinsClient.ExecuteScript(checkConfigurationAsCode)
 	assert.NoError(t, err, logs)
+}
+
+func assertMapContainsElementsFromAnotherMap(t *testing.T, expected map[string]string, actual map[string]string) {
+	for key, expectedValue := range expected {
+		actualValue, keyExists := actual[key]
+		if !keyExists {
+			assert.Failf(t, "key '%s' doesn't exist in map '%+v'", key, actual)
+			continue
+		}
+		assert.Equal(t, expectedValue, actualValue, expected, actual)
+	}
 }

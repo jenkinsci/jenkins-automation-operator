@@ -9,15 +9,16 @@ import (
 	common "k8s.io/kube-openapi/pkg/common"
 )
 
+// GetOpenAPIDefinitions return OpenAPI definitions
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"./pkg/apis/jenkins/v1alpha2.Jenkins":       schema_pkg_apis_jenkins_v1alpha2_Jenkins(ref),
-		"./pkg/apis/jenkins/v1alpha2.JenkinsSpec":   schema_pkg_apis_jenkins_v1alpha2_JenkinsSpec(ref),
-		"./pkg/apis/jenkins/v1alpha2.JenkinsStatus": schema_pkg_apis_jenkins_v1alpha2_JenkinsStatus(ref),
+		"./pkg/apis/jenkins/v1alpha2.Jenkins":       schemaPkgApisJenkinsV1alpha2Jenkins(ref),
+		"./pkg/apis/jenkins/v1alpha2.JenkinsSpec":   schemaPkgApisJenkinsV1alpha2Jenkinsspec(ref),
+		"./pkg/apis/jenkins/v1alpha2.JenkinsStatus": schemaPkgApisJenkinsV1alpha2Jenkinsstatus(ref),
 	}
 }
 
-func schema_pkg_apis_jenkins_v1alpha2_Jenkins(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schemaPkgApisJenkinsV1alpha2Jenkins(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -63,7 +64,7 @@ func schema_pkg_apis_jenkins_v1alpha2_Jenkins(ref common.ReferenceCallback) comm
 	}
 }
 
-func schema_pkg_apis_jenkins_v1alpha2_JenkinsSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schemaPkgApisJenkinsV1alpha2Jenkinsspec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -172,7 +173,7 @@ func schema_pkg_apis_jenkins_v1alpha2_JenkinsSpec(ref common.ReferenceCallback) 
 	}
 }
 
-func schema_pkg_apis_jenkins_v1alpha2_JenkinsStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schemaPkgApisJenkinsV1alpha2Jenkinsstatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
