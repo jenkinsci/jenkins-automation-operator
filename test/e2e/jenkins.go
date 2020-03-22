@@ -168,6 +168,7 @@ func createJenkinsCR(t *testing.T, name, namespace string, seedJob *[]v1alpha2.S
 			Name:     resources.GetResourceName(jenkins),
 		},
 	}
+	updateJenkinsCR(t, jenkins)
 
 	t.Logf("Jenkins CR %+v", *jenkins)
 	if err := framework.Global.Client.Create(context.TODO(), jenkins, nil); err != nil {
