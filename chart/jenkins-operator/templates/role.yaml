@@ -30,15 +30,21 @@ rules:
     resources:
       - serviceaccounts
     verbs:
+      - get
       - create
+      - list
+      - watch
   - apiGroups:
       - rbac.authorization.k8s.io
     resources:
       - roles
       - rolebindings
     verbs:
+      - get
       - create
       - update
+      - list
+      - watch
   - apiGroups:
       - ""
     resources:

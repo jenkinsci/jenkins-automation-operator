@@ -2,6 +2,7 @@ package resources
 
 import (
 	"fmt"
+
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
 
@@ -187,8 +188,8 @@ func NewBaseConfigurationConfigMap(meta metav1.ObjectMeta, jenkins *v1alpha2.Jen
 		disableInsecureFeaturesGroovyScriptName:   disableInsecureFeatures,
 		configureKubernetesPluginGroovyScriptName: fmt.Sprintf(configureKubernetesPluginFmt,
 			jenkins.ObjectMeta.Namespace,
-			fmt.Sprintf("http://%s.%s:%d", GetJenkinsHTTPServiceName(jenkins), jenkins.ObjectMeta.Namespace, jenkins.Spec.Service.Port),
-			fmt.Sprintf("%s.%s:%d", GetJenkinsSlavesServiceName(jenkins), jenkins.ObjectMeta.Namespace, jenkins.Spec.SlaveService.Port),
+			fmt.Sprintf("http://%s:%d", GetJenkinsHTTPServiceFQDN(jenkins), jenkins.Spec.Service.Port),
+			fmt.Sprintf("%s:%d", GetJenkinsSlavesServiceFQDN(jenkins), jenkins.Spec.SlaveService.Port),
 		),
 		configureViewsGroovyScriptName:              configureViews,
 		disableJobDslScriptApprovalGroovyScriptName: disableJobDSLScriptApproval,

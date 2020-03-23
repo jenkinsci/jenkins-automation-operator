@@ -7,6 +7,9 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
 
 	corev1 "k8s.io/api/core/v1"
+
+	"net"
+	"strings"
 )
 
 // UpdateService returns new service with override fields from config
@@ -37,4 +40,36 @@ func GetJenkinsHTTPServiceName(jenkins *v1alpha2.Jenkins) string {
 // GetJenkinsSlavesServiceName returns Kubernetes service name used for expose Jenkins slave endpoint
 func GetJenkinsSlavesServiceName(jenkins *v1alpha2.Jenkins) string {
 	return fmt.Sprintf("%s-slave-%s", constants.OperatorName, jenkins.ObjectMeta.Name)
+}
+
+// GetJenkinsHTTPServiceFQDN returns Kubernetes service FQDN used for expose Jenkins HTTP endpoint
+func GetJenkinsHTTPServiceFQDN(jenkins *v1alpha2.Jenkins) string {
+	clusterDomain := getClusterDomain()
+
+	return fmt.Sprintf("%s-http-%s.%s", constants.OperatorName, jenkins.ObjectMeta.Name, clusterDomain)
+}
+
+// GetJenkinsSlavesServiceFQDN returns Kubernetes service FQDN used for expose Jenkins slave endpoint
+func GetJenkinsSlavesServiceFQDN(jenkins *v1alpha2.Jenkins) string {
+	clusterDomain := getClusterDomain()
+
+	return fmt.Sprintf("%s-slave-%s.%s", constants.OperatorName, jenkins.ObjectMeta.Name, clusterDomain)
+}
+
+// GetClusterDomain returns Kubernetes cluster domain, default to "cluster.local"
+func getClusterDomain() string {
+	apiSvc := "kubernetes.default.svc"
+
+	clusterDomain := "cluster.local"
+
+	cname, err := net.LookupCNAME(apiSvc)
+	if err != nil {
+		return clusterDomain
+	}
+
+	clusterDomain = strings.TrimPrefix(cname, "kubernetes")
+	clusterDomain = strings.TrimPrefix(clusterDomain, ".")
+	clusterDomain = strings.TrimSuffix(clusterDomain, ".")
+
+	return clusterDomain
 }
