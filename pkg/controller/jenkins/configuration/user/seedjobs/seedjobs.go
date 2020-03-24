@@ -402,9 +402,8 @@ func agentDeployment(jenkins *v1alpha2.Jenkins, namespace string, agentName stri
 							Env: []corev1.EnvVar{
 								{
 									Name: "JENKINS_TUNNEL",
-									Value: fmt.Sprintf("%s.%s:%d",
-										resources.GetJenkinsSlavesServiceName(jenkins),
-										jenkins.ObjectMeta.Namespace,
+									Value: fmt.Sprintf("%s:%d",
+										resources.GetJenkinsSlavesServiceFQDN(jenkins),
 										jenkins.Spec.SlaveService.Port),
 								},
 								{
@@ -417,9 +416,8 @@ func agentDeployment(jenkins *v1alpha2.Jenkins, namespace string, agentName stri
 								},
 								{
 									Name: "JENKINS_URL",
-									Value: fmt.Sprintf("http://%s.%s:%d",
-										resources.GetJenkinsHTTPServiceName(jenkins),
-										jenkins.ObjectMeta.Namespace,
+									Value: fmt.Sprintf("http://%s:%d",
+										resources.GetJenkinsHTTPServiceFQDN(jenkins),
 										jenkins.Spec.Service.Port,
 									),
 								},
