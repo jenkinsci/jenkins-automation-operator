@@ -403,7 +403,7 @@ func agentDeployment(jenkins *v1alpha2.Jenkins, namespace string, agentName stri
 								{
 									Name: "JENKINS_TUNNEL",
 									Value: fmt.Sprintf("%s:%d",
-										resources.GetJenkinsServiceFQDN(jenkins, "slave"),
+										resources.GetJenkinsSlavesServiceFQDN(jenkins),
 										jenkins.Spec.SlaveService.Port),
 								},
 								{
@@ -417,7 +417,7 @@ func agentDeployment(jenkins *v1alpha2.Jenkins, namespace string, agentName stri
 								{
 									Name: "JENKINS_URL",
 									Value: fmt.Sprintf("http://%s:%d",
-										resources.GetJenkinsServiceFQDN(jenkins, "http"),
+										resources.GetJenkinsHTTPServiceFQDN(jenkins),
 										jenkins.Spec.Service.Port,
 									),
 								},
