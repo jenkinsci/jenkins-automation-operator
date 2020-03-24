@@ -32,28 +32,16 @@ func UpdateService(actual corev1.Service, config v1alpha2.Service) corev1.Servic
 	return actual
 }
 
-// GetJenkinsHTTPServiceName returns Kubernetes service name used for expose Jenkins HTTP endpoint
-func GetJenkinsHTTPServiceName(jenkins *v1alpha2.Jenkins) string {
-	return fmt.Sprintf("%s-http-%s", constants.OperatorName, jenkins.ObjectMeta.Name)
+// GetJenkinsServiceName returns Kubernetes service name used for expose Jenkins HTTP and Slaves endpoint
+func GetJenkinsServiceName(jenkins *v1alpha2.Jenkins, serviceType string) string {
+	return fmt.Sprintf("%s-%s-%s", constants.OperatorName, serviceType, jenkins.ObjectMeta.Name)
 }
 
-// GetJenkinsSlavesServiceName returns Kubernetes service name used for expose Jenkins slave endpoint
-func GetJenkinsSlavesServiceName(jenkins *v1alpha2.Jenkins) string {
-	return fmt.Sprintf("%s-slave-%s", constants.OperatorName, jenkins.ObjectMeta.Name)
-}
-
-// GetJenkinsHTTPServiceFQDN returns Kubernetes service FQDN used for expose Jenkins HTTP endpoint
-func GetJenkinsHTTPServiceFQDN(jenkins *v1alpha2.Jenkins) string {
+// GetJenkinsServiceFQDN returns Kubernetes service FQDN used for expose Jenkins HTTP and Slaves endpoint
+func GetJenkinsServiceFQDN(jenkins *v1alpha2.Jenkins, serviceType string) string {
 	clusterDomain := getClusterDomain()
 
-	return fmt.Sprintf("%s-http-%s.%s", constants.OperatorName, jenkins.ObjectMeta.Name, clusterDomain)
-}
-
-// GetJenkinsSlavesServiceFQDN returns Kubernetes service FQDN used for expose Jenkins slave endpoint
-func GetJenkinsSlavesServiceFQDN(jenkins *v1alpha2.Jenkins) string {
-	clusterDomain := getClusterDomain()
-
-	return fmt.Sprintf("%s-slave-%s.%s", constants.OperatorName, jenkins.ObjectMeta.Name, clusterDomain)
+	return fmt.Sprintf("%s-%s-%s.%s", constants.OperatorName, serviceType, jenkins.ObjectMeta.Name, clusterDomain)
 }
 
 // GetClusterDomain returns Kubernetes cluster domain, default to "cluster.local"

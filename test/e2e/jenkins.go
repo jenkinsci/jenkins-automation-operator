@@ -57,7 +57,7 @@ func createJenkinsAPIClient(jenkins *v1alpha2.Jenkins, hostname string, port int
 
 	err := framework.Global.Client.Get(context.TODO(), types.NamespacedName{
 		Namespace: jenkins.Namespace,
-		Name:      resources.GetJenkinsHTTPServiceName(jenkins),
+		Name:      resources.GetJenkinsServiceName(jenkins, "http"),
 	}, &service)
 
 	if err != nil {

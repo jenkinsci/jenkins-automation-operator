@@ -183,11 +183,11 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureResourcesRequiredForJenkinsPod
 	}
 	r.logger.V(log.VDebug).Info("Extra role bindings are present")
 
-	if err := r.createService(metaObject, resources.GetJenkinsHTTPServiceName(r.Configuration.Jenkins), r.Configuration.Jenkins.Spec.Service); err != nil {
+	if err := r.createService(metaObject, resources.GetJenkinsServiceName(r.Configuration.Jenkins, "http"), r.Configuration.Jenkins.Spec.Service); err != nil {
 		return err
 	}
 	r.logger.V(log.VDebug).Info("Jenkins HTTP Service is present")
-	if err := r.createService(metaObject, resources.GetJenkinsSlavesServiceName(r.Configuration.Jenkins), r.Configuration.Jenkins.Spec.SlaveService); err != nil {
+	if err := r.createService(metaObject, resources.GetJenkinsServiceName(r.Configuration.Jenkins, "slave"), r.Configuration.Jenkins.Spec.SlaveService); err != nil {
 		return err
 	}
 	r.logger.V(log.VDebug).Info("Jenkins slave Service is present")
@@ -951,7 +951,7 @@ func (r *ReconcileJenkinsBaseConfiguration) getJenkinsAPIUrl() (string, error) {
 
 	err := r.Client.Get(context.TODO(), types.NamespacedName{
 		Namespace: r.Configuration.Jenkins.ObjectMeta.Namespace,
-		Name:      resources.GetJenkinsHTTPServiceName(r.Configuration.Jenkins),
+		Name:      resources.GetJenkinsServiceName(r.Configuration.Jenkins, "http"),
 	}, &service)
 
 	if err != nil {
