@@ -41,7 +41,7 @@ func GetJenkinsServiceName(jenkins *v1alpha2.Jenkins, serviceType string) string
 func GetJenkinsServiceFQDN(jenkins *v1alpha2.Jenkins, serviceType string) string {
 	clusterDomain := getClusterDomain()
 
-	return fmt.Sprintf("%s-%s-%s.%s", constants.OperatorName, serviceType, jenkins.ObjectMeta.Name, clusterDomain)
+	return fmt.Sprintf("%s-%s-%s.%s.svc.%s", constants.OperatorName, serviceType, jenkins.ObjectMeta.Name, jenkins.ObjectMeta.Namespace, clusterDomain)
 }
 
 // GetClusterDomain returns Kubernetes cluster domain, default to "cluster.local"
@@ -55,7 +55,7 @@ func getClusterDomain() string {
 		return clusterDomain
 	}
 
-	clusterDomain = strings.TrimPrefix(cname, "kubernetes")
+	clusterDomain = strings.TrimPrefix(cname, "kubernetes.default.svc")
 	clusterDomain = strings.TrimPrefix(clusterDomain, ".")
 	clusterDomain = strings.TrimSuffix(clusterDomain, ".")
 
