@@ -3,6 +3,7 @@ package client
 import (
 	"fmt"
 	"net/http"
+	"net/http/cookiejar"
 	"regexp"
 	"strings"
 
@@ -150,7 +151,13 @@ func newClient(url, userName, passwordOrToken string) (Jenkins, error) {
 	jenkinsClient.Server = url
 
 	var basicAuth *gojenkins.BasicAuth
-	httpClient := http.DefaultClient
+	jar, err := cookiejar.New(nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "couldn't create a cookie jar")
+	}
+
+	httpClient := &http.Client{Jar: jar}
+
 	if len(userName) > 0 && len(passwordOrToken) > 0 {
 		basicAuth = &gojenkins.BasicAuth{Username: userName, Password: passwordOrToken}
 	} else {
