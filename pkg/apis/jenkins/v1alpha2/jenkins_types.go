@@ -11,7 +11,7 @@ import (
 type JenkinsSpec struct {
 	// Master represents Jenkins master pod properties and Jenkins plugins.
 	// Every single change here requires a pod restart.
-	Master JenkinsMaster `json:"master,omitempty"`
+	Master JenkinsMaster `json:"master"`
 
 	// SeedJobs defines list of Jenkins Seed Job configurations
 	// More info: https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-seed-jobs-and-pipelines
@@ -20,6 +20,7 @@ type JenkinsSpec struct {
 
 	// Notifications defines list of a services which are used to inform about Jenkins status
 	// Can be used to integrate chat services like Slack, Microsoft Teams or Mailgun
+	// +optional
 	Notifications []Notification `json:"notifications,omitempty"`
 
 	// Service is Kubernetes service of Jenkins master HTTP pod
@@ -294,6 +295,7 @@ type JenkinsMaster struct {
 	// List of containers belonging to the pod.
 	// Containers cannot currently be added or removed.
 	// There must be at least one container in a Pod.
+	// +optional
 	// Defaults to:
 	// - image: jenkins/jenkins:lts
 	//   imagePullPolicy: Always
@@ -344,6 +346,7 @@ type JenkinsMaster struct {
 	Tolerations []corev1.Toleration `json:"tolerations,omitempty"`
 
 	// BasePlugins contains plugins required by operator
+	// +optional
 	// Defaults to :
 	// - name: kubernetes
 	// version: 1.15.7
@@ -386,6 +389,7 @@ type Service struct {
 	// modify. Only applies to types ClusterIP, NodePort, and LoadBalancer.
 	// Ignored if type is ExternalName.
 	// More info: https://kubernetes.io/docs/concepts/services-networking/service/
+	// +optional
 	Labels map[string]string `json:"labels,omitempty"`
 
 	// Type determines how the Service is exposed. Defaults to ClusterIP. Valid
