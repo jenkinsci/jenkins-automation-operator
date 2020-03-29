@@ -320,7 +320,7 @@ func (r *ReconcileJenkinsBaseConfiguration) validatePlugins(requiredBasePlugins 
 	allPlugins := map[plugins.Plugin][]plugins.Plugin{}
 
 	for _, jenkinsPlugin := range basePlugins {
-		plugin, err := plugins.NewPlugin(jenkinsPlugin.Name, jenkinsPlugin.Version)
+		plugin, err := plugins.NewPlugin(jenkinsPlugin.Name, jenkinsPlugin.Version, jenkinsPlugin.DownloadURL)
 		if err != nil {
 			messages = append(messages, err.Error())
 		}
@@ -331,7 +331,7 @@ func (r *ReconcileJenkinsBaseConfiguration) validatePlugins(requiredBasePlugins 
 	}
 
 	for _, jenkinsPlugin := range userPlugins {
-		plugin, err := plugins.NewPlugin(jenkinsPlugin.Name, jenkinsPlugin.Version)
+		plugin, err := plugins.NewPlugin(jenkinsPlugin.Name, jenkinsPlugin.Version, jenkinsPlugin.DownloadURL)
 		if err != nil {
 			messages = append(messages, err.Error())
 		}

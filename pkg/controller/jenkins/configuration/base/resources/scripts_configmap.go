@@ -268,7 +268,7 @@ chmod +x {{ .JenkinsHomePath }}/scripts/*.sh
 echo "Installing plugins required by Operator - begin"
 cat > {{ .JenkinsHomePath }}/base-plugins << EOF
 {{ range $index, $plugin := .BasePlugins }}
-{{ $plugin.Name }}:{{ $plugin.Version }}
+{{ $plugin.Name }}:{{ $plugin.Version }}{{if $plugin.DownloadURL}}:{{ $plugin.DownloadURL }}{{end}}
 {{ end }}
 EOF
 
@@ -282,7 +282,7 @@ echo "Installing plugins required by Operator - end"
 echo "Installing plugins required by user - begin"
 cat > {{ .JenkinsHomePath }}/user-plugins << EOF
 {{ range $index, $plugin := .UserPlugins }}
-{{ $plugin.Name }}:{{ $plugin.Version }}
+{{ $plugin.Name }}:{{ $plugin.Version }}{{if $plugin.DownloadURL}}:{{ $plugin.DownloadURL }}{{end}}
 {{ end }}
 EOF
 if [[ -z "${OPENSHIFT_JENKINS_IMAGE_VERSION}" ]]; then
