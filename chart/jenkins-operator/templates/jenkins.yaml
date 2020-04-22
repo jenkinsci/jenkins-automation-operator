@@ -66,7 +66,7 @@ spec:
     {{- end }}
     disableCSRFProtection: {{ .Values.jenkins.disableCSRFProtection }}
     containers:
-      - name:  {{ .Values.jenkins.name }}-master
+      - name:  jenkins-master
         image: {{ .Values.jenkins.image }}
         imagePullPolicy: {{ .Values.jenkins.imagePullPolicy }}
         {{- with .Values.jenkins.imagePullSecrets }}
