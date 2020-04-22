@@ -48,13 +48,13 @@ spec:
     recoveryOnce: {{ .Values.jenkins.backup.recoveryOnce }}
     {{- end }}
   {{- end }}
-  {{- with .Values.jenkins.notifications }}
   {{- with .Values.jenkins.service }}
   service: {{- toYaml . | nindent 4 }}
   {{- end }}
   {{- with .Values.jenkins.slaveService }}
   slaveService: {{- toYaml . | nindent 4 }}
   {{- end }}
+  {{- with .Values.jenkins.notifications }}
   notifications: {{ toYaml . | nindent 4 }}
   {{- end }}
   master:
