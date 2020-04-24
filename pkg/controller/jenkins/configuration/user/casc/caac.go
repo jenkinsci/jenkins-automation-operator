@@ -13,6 +13,8 @@ import (
 	k8s "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+const groovyUtf8MaxStringLength = 65535
+
 // ConfigurationAsCode defines API which configures Jenkins with help Configuration as a code plugin
 type ConfigurationAsCode struct {
 	groovyClient *groovy.Groovy
@@ -53,7 +55,6 @@ io.jenkins.plugins.casc.ConfigurationAsCode.get().configureWith(source)
 `
 
 func prepareScript(script string) string {
-	groovyUtf8MaxStringLength := 65535
 	var slicedScript []string
 	if len(script) > groovyUtf8MaxStringLength {
 		slicedScript = splitTooLongScript(script)
@@ -65,7 +66,6 @@ func prepareScript(script string) string {
 }
 
 func splitTooLongScript(groovyScript string) []string {
-	groovyUtf8MaxStringLength := 65535
 	var slicedGroovyScript []string
 
 	lastSubstrIndex := len(groovyScript) % groovyUtf8MaxStringLength
