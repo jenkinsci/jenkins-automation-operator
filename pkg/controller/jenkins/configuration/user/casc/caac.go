@@ -35,16 +35,49 @@ func (c *ConfigurationAsCode) Ensure(jenkins *v1alpha2.Jenkins) (requeue bool, e
 	return c.groovyClient.Ensure(func(name string) bool {
 		return strings.HasSuffix(name, ".yaml") || strings.HasSuffix(name, ".yml")
 	}, func(groovyScript string) string {
-		return fmt.Sprintf(applyConfigurationAsCodeGroovyScriptFmt, groovyScript)
+		return fmt.Sprintf(applyConfigurationAsCodeGroovyScriptFmt, prepareScript(groovyScript))
 	})
 }
 
 const applyConfigurationAsCodeGroovyScriptFmt = `
-def config = '''
-%s
-'''
-def stream = new ByteArrayInputStream(config.getBytes('UTF-8'))
+String[] configContent = ['''%s'''] 
+def configSb = new StringBuffer()
+for (int i=0; i<configContent.size(); i++) {
+    configSb << configContent[i]
+}
+
+def stream = new ByteArrayInputStream(configSb.toString().getBytes('UTF-8'))
 
 def source = new io.jenkins.plugins.casc.yaml.YamlSource(stream, io.jenkins.plugins.casc.yaml.YamlSource.READ_FROM_INPUTSTREAM)
 io.jenkins.plugins.casc.ConfigurationAsCode.get().configureWith(source)
 `
+
+func prepareScript(script string) string {
+	groovyUtf8MaxStringLength := 65535
+	var slicedScript []string
+	if len(script) > groovyUtf8MaxStringLength {
+		slicedScript = splitTooLongScript(script)
+	} else {
+		slicedScript = append(slicedScript, script)
+	}
+
+	return strings.Join(slicedScript, "''','''")
+}
+
+func splitTooLongScript(groovyScript string) []string {
+	groovyUtf8MaxStringLength := 65535
+	var slicedGroovyScript []string
+
+	lastSubstrIndex := len(groovyScript) % groovyUtf8MaxStringLength
+	lastSubstr := groovyScript[len(groovyScript)-lastSubstrIndex:]
+
+	substrNumber := len(groovyScript) / groovyUtf8MaxStringLength
+	for i := 0; i < substrNumber; i++ {
+		scriptSubstr := groovyScript[i*groovyUtf8MaxStringLength : (i*groovyUtf8MaxStringLength)+groovyUtf8MaxStringLength]
+		slicedGroovyScript = append(slicedGroovyScript, scriptSubstr)
+	}
+
+	slicedGroovyScript = append(slicedGroovyScript, lastSubstr)
+
+	return slicedGroovyScript
+}
