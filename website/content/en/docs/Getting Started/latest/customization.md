@@ -70,7 +70,7 @@ spec:
 
 You can change their versions.
 
-The **Jenkins Operator** will then automatically install plugins after the Jenkins master pod restarts.
+The **Jenkins Operator** will then automatically install plugins after the Jenkins master pod restart.
 
 #### Apply plugin's config
 

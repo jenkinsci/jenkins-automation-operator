@@ -89,6 +89,14 @@ kubectl apply -f deploy/crds/jenkins_v1alpha2_jenkins_cr.yaml
 2020-04-27T10:00:06.140+0200	INFO	controller-jenkins	jenkins/jenkins_controller.go:338	User configuration phase is complete, took 3m26s	{"cr": "example"}
 ```
 
+Two log lines says that Jenkins Operator works correctly:
+ 
+* `Base configuration phase is complete` - ensures manifests, Jenkins pod, Jenkins configuration and Jenkins API token  
+* `User configuration phase is complete` - ensures Jenkins restore, backup and seed jobs along with user configuration 
+
+> Details about base and user phase can be found [here](https://jenkinsci.github.io/kubernetes-operator/docs/how-it-works/architecture-and-design/).
+
+
 ```bash
 kubectl get jenkins -o yaml
 
