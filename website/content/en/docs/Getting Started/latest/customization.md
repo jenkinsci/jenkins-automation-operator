@@ -7,11 +7,77 @@ description: >
   How to customize Jenkins
 ---
 
-Jenkins can be customized using groovy scripts or the [configuration as code plugin](https://github.com/jenkinsci/configuration-as-code-plugin). 
+## How to customize Jenkins
+Jenkins can be customized with plugins.
+Plugin's configuration is applied as groovy scripts or the [configuration as code plugin](https://github.com/jenkinsci/configuration-as-code-plugin).
+Any plugin working for Jenkins can be installed by the Jenkins Operator.
+ 
+Pre-installed plugins: 
+* configuration-as-code v1.38
+* git v4.2.2
+* job-dsl v1.77
+* kubernetes-credentials-provider v0.13
+* kubernetes v1.25.2
+* workflow-aggregator v2.6
+* workflow-job v2.38
+
+Rest of the plugins can be found in [plugins repository](https://plugins.jenkins.io/). 
+
+
+#### Install plugins
+
+Edit Custom Resource under `spec.master.plugins`:
+
+```
+apiVersion: jenkins.io/v1alpha2
+kind: Jenkins
+metadata:
+  name: example
+spec:
+  master:
+   plugins:
+   - name: simple-theme-plugin
+     version: 0.5.1
+```
+
+Under `spec.master.basePlugins` you can find plugins for a valid **Jenkins Operator**:
+
+```yaml
+apiVersion: jenkins.io/v1alpha2
+kind: Jenkins
+metadata:
+  name: example
+spec:
+  master:
+    basePlugins:
+    - name: kubernetes
+      version: 1.18.3
+    - name: workflow-job
+      version: "2.34"
+    - name: workflow-aggregator
+      version: "2.6"
+    - name: git
+      version: 3.12.0
+    - name: job-dsl
+      version: "1.76"
+    - name: configuration-as-code
+      version: "1.29"
+    - name: configuration-as-code-support
+      version: "1.19"
+    - name: kubernetes-credentials-provider
+      version: 0.12.1
+```
+
+You can change their versions.
+
+The **Jenkins Operator** will then automatically install plugins after the Jenkins master pod restart.
+
+#### Apply plugin's config
+
 By using a [ConfigMap](https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/) you can create your own **Jenkins** customized configuration.
 Then you must reference the **`ConfigMap`** in the **Jenkins** pod customization file in `spec.groovyScripts` or `spec.configurationAsCode`
 
-For example create a **`ConfigMap`** with name `jenkins-operator-user-configuration`. Then, modify the **Jenkins** manifest to look like this:
+Create a **`ConfigMap`** with specific name (eg. `jenkins-operator-user-configuration`). Then, modify the **Jenkins** manifest:
 
 ```yaml
 apiVersion: jenkins.io/v1alpha2
@@ -65,7 +131,7 @@ data:
 If you want to correct your configuration you can edit it while the **Jenkins Operator** is running. 
 Jenkins will reconcile and apply the new configuration.
 
-### Using secrets from a Groovy script
+## How to use secrets from a Groovy scripts
 
 If you configured `spec.groovyScripts.secret.name`, then this secret is available to use from map Groovy scripts.
 The secrets are loaded to `secrets` map.
@@ -136,51 +202,3 @@ data:
 
 
 After this, you should see the `Hello world` system message from the **Jenkins** homepage.
-
-## Install Plugins
-
-Edit Custom Resource under `spec.master.plugins`:
-
-```
-apiVersion: jenkins.io/v1alpha2
-kind: Jenkins
-metadata:
-  name: example
-spec:
-  master:
-   plugins:
-   - name: simple-theme-plugin
-     version: 0.5.1
-```
-
-Under `spec.master.basePlugins` you can find plugins for a valid **Jenkins Operator**:
-
-```yaml
-apiVersion: jenkins.io/v1alpha2
-kind: Jenkins
-metadata:
-  name: example
-spec:
-  master:
-    basePlugins:
-    - name: kubernetes
-      version: 1.18.3
-    - name: workflow-job
-      version: "2.34"
-    - name: workflow-aggregator
-      version: "2.6"
-    - name: git
-      version: 3.12.0
-    - name: job-dsl
-      version: "1.76"
-    - name: configuration-as-code
-      version: "1.29"
-    - name: configuration-as-code-support
-      version: "1.19"
-    - name: kubernetes-credentials-provider
-      version: 0.12.1
-```
-
-You can change their versions.
-
-The **Jenkins Operator** will then automatically install plugins after the Jenkins master pod restarts.
