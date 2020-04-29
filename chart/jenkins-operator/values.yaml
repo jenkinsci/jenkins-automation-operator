@@ -185,12 +185,12 @@ jenkins:
   # configuration is section where we can configure Jenkins instance
   # See https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/customization/ for details
   configuration:
-    configurationAsCode:
-    - configMapName: jenkins-casc
-      content: {}
-    groovyScripts:
-    - configMapName: jenkins-gs
-      content: {}
+    configurationAsCode: {}
+#    - configMapName: jenkins-casc
+#      content: {}
+    groovyScripts: {}
+#    - configMapName: jenkins-gs
+#      content: {}
 
     # secretRefName of existing secret (previously created)
     secretRefName: ""
