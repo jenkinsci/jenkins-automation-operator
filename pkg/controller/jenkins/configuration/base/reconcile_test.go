@@ -767,7 +767,12 @@ func TestEnsureExtraRBAC(t *testing.T) {
 				Roles: []rbacv1.RoleRef{},
 			},
 		}
-		reconciler := New(configuration.Configuration{Client: fakeClient, Jenkins: jenkins, Scheme: scheme.Scheme}, nil, client.JenkinsAPIConnectionSettings{})
+		config := configuration.Configuration{
+			Client:  fakeClient,
+			Jenkins: jenkins,
+			Scheme:  scheme.Scheme,
+		}
+		reconciler := New(config, log.Log, client.JenkinsAPIConnectionSettings{})
 		metaObject := resources.NewResourceObjectMeta(jenkins)
 
 		// when
@@ -803,7 +808,12 @@ func TestEnsureExtraRBAC(t *testing.T) {
 				},
 			},
 		}
-		reconciler := New(configuration.Configuration{Client: fakeClient, Jenkins: jenkins, Scheme: scheme.Scheme}, nil, client.JenkinsAPIConnectionSettings{})
+		config := configuration.Configuration{
+			Client:  fakeClient,
+			Jenkins: jenkins,
+			Scheme:  scheme.Scheme,
+		}
+		reconciler := New(config, log.Log, client.JenkinsAPIConnectionSettings{})
 		metaObject := resources.NewResourceObjectMeta(jenkins)
 
 		// when
@@ -845,7 +855,12 @@ func TestEnsureExtraRBAC(t *testing.T) {
 				},
 			},
 		}
-		reconciler := New(configuration.Configuration{Client: fakeClient, Jenkins: jenkins, Scheme: scheme.Scheme}, nil, client.JenkinsAPIConnectionSettings{})
+		config := configuration.Configuration{
+			Client:  fakeClient,
+			Jenkins: jenkins,
+			Scheme:  scheme.Scheme,
+		}
+		reconciler := New(config, log.Log, client.JenkinsAPIConnectionSettings{})
 		metaObject := resources.NewResourceObjectMeta(jenkins)
 
 		// when
@@ -888,7 +903,12 @@ func TestEnsureExtraRBAC(t *testing.T) {
 				},
 			},
 		}
-		reconciler := New(configuration.Configuration{Client: fakeClient, Jenkins: jenkins, Scheme: scheme.Scheme}, log.Log, client.JenkinsAPIConnectionSettings{})
+		config := configuration.Configuration{
+			Client:  fakeClient,
+			Jenkins: jenkins,
+			Scheme:  scheme.Scheme,
+		}
+		reconciler := New(config, log.Log, client.JenkinsAPIConnectionSettings{})
 		metaObject := resources.NewResourceObjectMeta(jenkins)
 
 		// when
