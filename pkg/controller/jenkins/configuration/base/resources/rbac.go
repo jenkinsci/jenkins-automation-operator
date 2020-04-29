@@ -6,17 +6,19 @@ import (
 )
 
 const (
-	createVerb        = "create"
-	deleteVerb        = "delete"
-	getVerb           = "get"
-	listVerb          = "list"
-	watchVerb         = "watch"
-	patchVerb         = "patch"
-	updateVerb        = "update"
-	EmptyApiGroups    = ""
-	OpenshiftApiGroup = "image.openshift.io"
-	BuildApiGroup     = "build.openshift.io"
-
+	createVerb = "create"
+	deleteVerb = "delete"
+	getVerb    = "get"
+	listVerb   = "list"
+	watchVerb  = "watch"
+	patchVerb  = "patch"
+	updateVerb = "update"
+	//EmptyAPIGroup short hand for the empty API group while defining policies
+	EmptyAPIGroup = ""
+	//OpenshiftAPIGroup the openshift api group name
+	OpenshiftAPIGroup = "image.openshift.io"
+	//BuildAPIGroup  the openshift api group name for builds
+	BuildAPIGroup = "build.openshift.io"
 )
 
 // NewRole returns rbac role for jenkins master
@@ -54,22 +56,23 @@ func NewRoleBinding(name, namespace, serviceAccountName string, roleRef v1.RoleR
 	}
 }
 
+// NewDefaultPolicyRules sets the default policy rules
 func NewDefaultPolicyRules() []v1.PolicyRule {
 	var rules []v1.PolicyRule
 	ReadOnly := []string{getVerb, listVerb, watchVerb}
-	Default  := []string{createVerb, deleteVerb, getVerb, listVerb, patchVerb, updateVerb, watchVerb}
-	Create   := []string{createVerb}
+	Default := []string{createVerb, deleteVerb, getVerb, listVerb, patchVerb, updateVerb, watchVerb}
+	Create := []string{createVerb}
 
-	rules = append(rules,  NewPolicyRule(EmptyApiGroups, "pods/portforward", Create))
-	rules = append(rules,  NewPolicyRule(EmptyApiGroups, "pods", Default))
-	rules = append(rules,  NewPolicyRule(EmptyApiGroups, "pods/exec", Default))
-	rules = append(rules,  NewPolicyRule(EmptyApiGroups, "configmaps", ReadOnly))
-	rules = append(rules,  NewPolicyRule(EmptyApiGroups, "pods/log", ReadOnly))
-	rules = append(rules,  NewPolicyRule(EmptyApiGroups, "secrets", ReadOnly))
+	rules = append(rules, NewPolicyRule(EmptyAPIGroup, "pods/portforward", Create))
+	rules = append(rules, NewPolicyRule(EmptyAPIGroup, "pods", Default))
+	rules = append(rules, NewPolicyRule(EmptyAPIGroup, "pods/exec", Default))
+	rules = append(rules, NewPolicyRule(EmptyAPIGroup, "configmaps", ReadOnly))
+	rules = append(rules, NewPolicyRule(EmptyAPIGroup, "pods/log", ReadOnly))
+	rules = append(rules, NewPolicyRule(EmptyAPIGroup, "secrets", ReadOnly))
 
-	rules = append(rules,  NewOpenShiftPolicyRule(OpenshiftApiGroup, "imagestreams", ReadOnly))
-	rules = append(rules,  NewOpenShiftPolicyRule(BuildApiGroup, "buildconfigs", ReadOnly))
-	rules = append(rules,  NewOpenShiftPolicyRule(BuildApiGroup, "builds", ReadOnly))
+	rules = append(rules, NewOpenShiftPolicyRule(OpenshiftAPIGroup, "imagestreams", ReadOnly))
+	rules = append(rules, NewOpenShiftPolicyRule(BuildAPIGroup, "buildconfigs", ReadOnly))
+	rules = append(rules, NewOpenShiftPolicyRule(BuildAPIGroup, "builds", ReadOnly))
 
 	return rules
 }
@@ -84,8 +87,7 @@ func NewPolicyRule(apiGroup string, resource string, verbs []string) v1.PolicyRu
 	return rule
 }
 
-// NewPolicyRule returns a policyRule allowing verbs on resources
+// NewOpenShiftPolicyRule returns a policyRule allowing verbs on resources
 func NewOpenShiftPolicyRule(apiGroup string, resource string, verbs []string) v1.PolicyRule {
-	return NewPolicyRule(apiGroup,resource,verbs)
+	return NewPolicyRule(apiGroup, resource, verbs)
 }
-
