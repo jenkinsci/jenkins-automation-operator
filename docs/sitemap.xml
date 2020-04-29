@@ -183,6 +183,11 @@
   </url>
   
   <url>
+    <loc>https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/openshift/</loc>
+    <lastmod>2020-04-29T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
     <loc>https://jenkinsci.github.io/kubernetes-operator/docs/</loc>
     <lastmod>2019-09-03T00:00:00+00:00</lastmod>
   </url>
@@ -259,7 +264,7 @@
   
   <url>
     <loc>https://jenkinsci.github.io/kubernetes-operator/</loc>
-    <lastmod>2020-04-13T00:00:00+00:00</lastmod>
+    <lastmod>2020-04-29T00:00:00+00:00</lastmod>
   </url>
   
   <url>
