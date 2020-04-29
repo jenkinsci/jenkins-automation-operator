@@ -1,21 +1,27 @@
-{{ if .Values.jenkins.configuration.configurationAsCode.content }}
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: jenkins-{{ .Values.jenkins.name }}-casc
-  namespace: {{ .Values.jenkins.namespace }}
-{{- with .Values.jenkins.configuration.configurationAsCode.content }}
-data: {{ toYaml . | nindent 2 }}
-{{- end }}
-{{ end }}
-{{ if .Values.jenkins.configuration.groovyScripts.content }}
+{{ range .Values.jenkins.configuration.configurationAsCode }}
+  {{ if .content }}
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: jenkins-{{ .Values.jenkins.name }}-gs
+  name: {{ .configMapName }}
   namespace: {{ .Values.jenkins.namespace }}
-{{- with .Values.jenkins.configuration.groovyScripts.content }}
+{{- with .content }}
 data: {{ toYaml . | nindent 2 }}
 {{- end }}
+  {{ end }}
+{{ end }}
+
+{{ range .Values.jenkins.configuration.groovyScripts }}
+  {{ if .content }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .configMapName }}
+  namespace: {{ .Values.jenkins.namespace }}
+{{- with .content }}
+data: {{ toYaml . | nindent 2 }}
+{{- end }}
+  {{ end }}
 {{ end }}
