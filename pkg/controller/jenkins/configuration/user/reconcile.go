@@ -78,9 +78,17 @@ func (r *ReconcileUserConfiguration) ensureSeedJobs() (reconcile.Result, error) 
 }
 
 func (r *ReconcileUserConfiguration) ensureUserConfiguration(jenkinsClient jenkinsclient.Jenkins) (reconcile.Result, error) {
-	groovyClient := groovy.New(jenkinsClient, r.Client, r.logger, r.Configuration.Jenkins, "user-groovy", r.Configuration.Jenkins.Spec.GroovyScripts.Customization)
+	configurationAsCodeClient := casc.New(jenkinsClient, r.Client, r.logger, r.Configuration.Jenkins)
+	requeue, err := configurationAsCodeClient.Ensure(r.Configuration.Jenkins)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+	if requeue {
+		return reconcile.Result{Requeue: true}, nil
+	}
 
-	requeue, err := groovyClient.WaitForSecretSynchronization(resources.GroovyScriptsSecretVolumePath)
+	groovyClient := groovy.New(jenkinsClient, r.Client, r.logger, r.Configuration.Jenkins, "user-groovy", r.Configuration.Jenkins.Spec.GroovyScripts.Customization)
+	requeue, err = groovyClient.WaitForSecretSynchronization(resources.GroovyScriptsSecretVolumePath)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
@@ -90,15 +98,6 @@ func (r *ReconcileUserConfiguration) ensureUserConfiguration(jenkinsClient jenki
 	requeue, err = groovyClient.Ensure(func(name string) bool {
 		return strings.HasSuffix(name, ".groovy")
 	}, groovy.AddSecretsLoaderToGroovyScript(resources.GroovyScriptsSecretVolumePath))
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-	if requeue {
-		return reconcile.Result{Requeue: true}, nil
-	}
-
-	configurationAsCodeClient := casc.New(jenkinsClient, r.Client, r.logger, r.Configuration.Jenkins)
-	requeue, err = configurationAsCodeClient.Ensure(r.Configuration.Jenkins)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
