@@ -5,28 +5,28 @@ metadata:
   name: {{ .Values.jenkins.name }}
   namespace: {{ .Values.jenkins.namespace }}
 spec:
-  {{- if .Values.jenkins.configuration.configurationAsCode.content }}
   configurationAsCode:
     configurations:
-    - name: jenkins-{{ .Values.jenkins.name }}-casc
+      {{- range .Values.jenkins.configuration.configurationAsCode }}
+    - name: {{ .configMapName }}
+      {{- end }}
     secret:
       {{- if .Values.jenkins.configuration.secretRefName }}
       name: {{ .Values.jenkins.configuration.secretRefName }}
       {{ else if .Values.jenkins.configuration.secretData }}
       name: jenkins-{{ .Values.jenkins.name }}
       {{- end }}
-  {{- end }}
-  {{- if .Values.jenkins.configuration.groovyScripts.content }}
   groovyScripts:
     configurations:
-    - name: jenkins-{{ .Values.jenkins.name }}-gs
+      {{- range .Values.jenkins.configuration.groovyScripts }}
+    - name: {{ .configMapName }}
+      {{- end }}
     secret:
       {{- if .Values.jenkins.configuration.secretRefName }}
       name: {{ .Values.jenkins.configuration.secretRefName }}
       {{ else if .Values.jenkins.configuration.secretData }}
       name: jenkins-{{ .Values.jenkins.name }}
       {{- end }}
-  {{- end }}
   {{- if .Values.jenkins.backup.enabled }}
   backup:
     containerName: {{ .Values.jenkins.backup.containerName }}
@@ -64,6 +64,7 @@ spec:
     {{- with .Values.jenkins.plugins }}
     plugins: {{ toYaml . | nindent 4 }}
     {{- end }}
+    priorityClassName: {{ .Values.jenkins.priorityClassName }}
     disableCSRFProtection: {{ .Values.jenkins.disableCSRFProtection }}
     containers:
       - name:  jenkins-master

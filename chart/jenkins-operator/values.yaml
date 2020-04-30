@@ -28,6 +28,10 @@ jenkins:
   # imagePullPolicy defines policy for pulling images
   imagePullPolicy: Always
 
+  # priorityClassName indicates the importance of a Pod relative to other Pods
+  # See: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/
+  priorityClassName: ""
+
   # disableCSRFProtection can enable or disable operator built-in CSRF protection
   # Set it to true if you are using OpenShift Jenkins Plugin
   # See https://github.com/jenkinsci/kubernetes-operator/pull/193 for more info
@@ -185,10 +189,12 @@ jenkins:
   # configuration is section where we can configure Jenkins instance
   # See https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/customization/ for details
   configuration:
-    configurationAsCode:
-      content: {}
-    groovyScripts:
-      content: {}
+    configurationAsCode: {}
+#    - configMapName: jenkins-casc
+#      content: {}
+    groovyScripts: {}
+#    - configMapName: jenkins-gs
+#      content: {}
 
     # secretRefName of existing secret (previously created)
     secretRefName: ""
