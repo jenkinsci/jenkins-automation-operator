@@ -158,7 +158,7 @@ func (bar *BackupAndRestore) Restore(jenkinsClient jenkinsclient.Jenkins) error 
 }
 
 // Backup performs Jenkins backup operation
-func (bar *BackupAndRestore) Backup() error {
+func (bar *BackupAndRestore) Backup(setBackupDoneBeforePodDeletion bool) error {
 	jenkins := bar.Configuration.Jenkins
 	if len(jenkins.Spec.Backup.ContainerName) == 0 || jenkins.Spec.Backup.Action.Exec == nil {
 		bar.logger.V(log.VDebug).Info("Skipping restore backup, backup restore not configured")
@@ -176,11 +176,13 @@ func (bar *BackupAndRestore) Backup() error {
 	_, _, err := bar.Exec(podName, jenkins.Spec.Backup.ContainerName, command)
 
 	if err == nil {
+		bar.logger.V(log.VDebug).Info(fmt.Sprintf("Backup completed '%d', updating status", backupNumber))
 		if jenkins.Status.RestoredBackup == 0 {
 			jenkins.Status.RestoredBackup = backupNumber
 		}
 		jenkins.Status.LastBackup = backupNumber
 		jenkins.Status.PendingBackup = backupNumber
+		jenkins.Status.BackupDoneBeforePodDeletion = setBackupDoneBeforePodDeletion
 		return bar.Client.Update(context.TODO(), jenkins)
 	}
 

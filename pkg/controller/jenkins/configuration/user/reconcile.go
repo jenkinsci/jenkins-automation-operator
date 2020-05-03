@@ -55,7 +55,7 @@ func (r *ReconcileUserConfiguration) Reconcile() (reconcile.Result, error) {
 		return reconcile.Result{}, err
 	}
 
-	if err := backupAndRestore.Backup(); err != nil {
+	if err := backupAndRestore.Backup(false); err != nil {
 		return reconcile.Result{}, err
 	}
 	if err := backupAndRestore.EnsureBackupTrigger(); err != nil {

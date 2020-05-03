@@ -190,17 +190,13 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsMasterPod(meta metav1.O
 		backupAndRestore := backuprestore.New(r.Configuration, r.logger)
 		if backupAndRestore.IsBackupTriggerEnabled() {
 			backupAndRestore.StopBackupTrigger()
+			return reconcile.Result{Requeue: true}, nil
 		}
-		if r.Configuration.Jenkins.Spec.Backup.MakeBackupBeforePodDeletion {
-			if r.Configuration.Jenkins.Status.LastBackup == r.Configuration.Jenkins.Status.PendingBackup && !r.Configuration.Jenkins.Status.BackupDoneBeforePodDeletion {
+		if r.Configuration.Jenkins.Spec.Backup.MakeBackupBeforePodDeletion && !r.Configuration.Jenkins.Status.BackupDoneBeforePodDeletion {
+			if r.Configuration.Jenkins.Status.LastBackup == r.Configuration.Jenkins.Status.PendingBackup {
 				r.Configuration.Jenkins.Status.PendingBackup = r.Configuration.Jenkins.Status.PendingBackup + 1
-				r.Configuration.Jenkins.Status.BackupDoneBeforePodDeletion = true
-				err = r.Client.Update(context.TODO(), r.Configuration.Jenkins)
-				if err != nil {
-					return reconcile.Result{}, err
-				}
 			}
-			if err = backupAndRestore.Backup(); err != nil {
+			if err = backupAndRestore.Backup(true); err != nil {
 				return reconcile.Result{}, err
 			}
 		}
