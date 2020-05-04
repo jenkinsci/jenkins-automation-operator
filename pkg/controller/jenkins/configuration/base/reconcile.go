@@ -177,12 +177,18 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureResourcesRequiredForJenkinsPod
 	}
 	r.logger.V(log.VDebug).Info("Extra role bindings are present")
 
-	if err := r.createService(metaObject, resources.GetJenkinsHTTPServiceName(r.Configuration.Jenkins), r.Configuration.Jenkins.Spec.Service); err != nil {
+	httpServiceName := resources.GetJenkinsHTTPServiceName(r.Configuration.Jenkins)
+	if err := r.createService(metaObject, httpServiceName, r.Configuration.Jenkins.Spec.Service); err != nil {
 		return err
 	}
 	r.logger.V(log.VDebug).Info("Jenkins HTTP Service is present")
 	if err := r.createService(metaObject, resources.GetJenkinsSlavesServiceName(r.Configuration.Jenkins), r.Configuration.Jenkins.Spec.SlaveService); err != nil {
 		return err
+	}
+	if resources.IsRouteAPIAvailable(r.ClientSet) {
+		if err := r.createRoute(metaObject, httpServiceName, r.Configuration.Jenkins); err != nil {
+			return err
+		}
 	}
 	r.logger.V(log.VDebug).Info("Jenkins slave Service is present")
 

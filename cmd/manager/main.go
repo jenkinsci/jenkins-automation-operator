@@ -45,8 +45,6 @@ var (
 	operatorMetricsPort int32 = 8686
 )
 
-//var log = logf.Log.WithName("cmd")
-
 func printInfo() {
 	log.Log.Info(fmt.Sprintf("Version: %s", version.Version))
 	log.Log.Info(fmt.Sprintf("Git commit: %s", version.GitCommit))
