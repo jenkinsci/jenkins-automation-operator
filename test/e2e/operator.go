@@ -125,8 +125,8 @@ func printKubernetesPods(t *testing.T, namespace string) {
 	}
 }
 
-func showLogsIfTestHasFailed(t *testing.T, ctx *framework.TestCtx) {
-	namespace, err := ctx.GetNamespace()
+func showLogsIfTestHasFailed(t *testing.T, ctx *framework.Context) {
+	namespace, err := ctx.GetOperatorNamespace()
 	if err != nil {
 		t.Fatalf("Failed to get '%s' namespace", err)
 	}
@@ -140,8 +140,8 @@ func showLogsIfTestHasFailed(t *testing.T, ctx *framework.TestCtx) {
 	}
 }
 
-func showLogsAndCleanup(t *testing.T, ctx *framework.TestCtx) {
-	namespace, err := ctx.GetNamespace()
+func showLogsAndCleanup(t *testing.T, ctx *framework.Context) {
+	namespace, err := ctx.GetOperatorNamespace()
 	if err != nil {
 		t.Fatalf("Failed to get '%s' namespace", err)
 	}
