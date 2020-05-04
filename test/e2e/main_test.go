@@ -28,8 +28,8 @@ func TestMain(m *testing.M) {
 	framework.MainEntry(m)
 }
 
-func setupTest(t *testing.T) (string, *framework.TestCtx) {
-	ctx := framework.NewTestCtx(t)
+func setupTest(t *testing.T) (string, *framework.Context) {
+	ctx := framework.NewContext(t)
 	err := ctx.InitializeClusterResources(nil)
 	if err != nil {
 		t.Fatalf("could not initialize cluster resources: %v", err)
@@ -53,7 +53,7 @@ func setupTest(t *testing.T) (string, *framework.TestCtx) {
 		t.Fatalf("could not add scheme to framework scheme: %v", err)
 	}
 
-	namespace, err := ctx.GetNamespace()
+	namespace, err := ctx.GetOperatorNamespace()
 	if err != nil {
 		t.Fatalf("could not get namespace: %v", err)
 	}

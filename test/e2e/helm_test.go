@@ -26,7 +26,7 @@ func TestLintHelmChart(t *testing.T) {
 func TestDeployHelmChart(t *testing.T) {
 	// Given
 	t.Parallel()
-	ctx := framework.NewTestCtx(t)
+	ctx := framework.NewContext(t)
 	defer ctx.Cleanup()
 
 	namespace, err := ctx.GetNamespace()
