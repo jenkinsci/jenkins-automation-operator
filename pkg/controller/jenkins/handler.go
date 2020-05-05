@@ -72,7 +72,6 @@ func (e *enqueueRequestForJenkins) getOwnerReconcileRequests(object metav1.Objec
 			Name:      object.GetLabels()[constants.LabelJenkinsCRKey],
 		}}
 	}
-
 	return nil
 }
 

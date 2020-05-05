@@ -12,6 +12,8 @@ import (
 	"net"
 	"strings"
 )
+//ServiceKind the kind name for Service
+const ServiceKind = "Service"
 
 // UpdateService returns new service with override fields from config
 func UpdateService(actual corev1.Service, config v1alpha2.Service) corev1.Service {
