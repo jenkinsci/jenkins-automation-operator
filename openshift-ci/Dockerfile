@@ -1,8 +1,48 @@
+FROM registry.access.redhat.com/ubi8/ubi:latest AS builder
+
+ARG GO_PACKAGE_PATH=github.com/jenkinsci/jenkins-operator
+
+# Basics
+ENV GIT_COMMITTER_NAME OpenShift Developer Sevices
+ENV GIT_COMMITTER_EMAIL openshift-dev-services+jenkins@redhat.com
+ENV PATH=:$GOPATH/bin:/tmp/goroot/go/bin:$PATH
+ENV LANG=en_US.utf8
+
+# Go
+ENV GOPATH /tmp/go
+ENV GO_VERSION=1.14.1
+ENV GO_DOWNLOAD_SITE=https://dl.google.com/go/
+ENV GO_DIST=go$GO_VERSION.linux-amd64.tar.gz
+
+# Operator SDK
+ENV OPERATOR_SDK_VERSION=v0.17.0
+ENV OPERATOR_SDK_DOWNLOAD_SITE=https://github.com/operator-framework/operator-sdk/releases/download/
+ENV OPERATOR_SDK_DIST=operator-sdk-OPERATOR_SDK_VERSION-x86_64-linux-gnu
+
+# kubectl
+ENV KUBECTL_VERSION=v1.14.3
+ENV KUBECTL_DOWNLOAD_SITE=https://storage.googleapis.com/kubernetes-release/release/
+
+WORKDIR /tmp
+RUN mkdir -p $GOPATH/bin &&  mkdir -p /tmp/goroot
+RUN echo $GO_DOWNLOAD_SITE/$GO_DIST
+RUN curl -Lo $GO_DIST $GO_DOWNLOAD_SITE/$GO_DIST
+RUN tar -C /tmp/goroot -xzf $GO_DIST
+RUN curl -Lo kubectl $KUBECTL_DOWNLOAD_SITE/$KUBECTL_VERSION/bin/linux/amd64/kubectl
+RUN chmod +x kubectl && mv kubectl $GOPATH/bin/
+RUN curl -Lo operator-sdk $OPERATOR_SDK_DOWNLOAD_SITE/$OPERATOR_SDK_VERSION/$OPERATOR_SDK_DIST
+RUN chmod +x operator-sdk && mv operator-sdk $GOPATH/bin/
+RUN mkdir -p ${GOPATH}/src/${GO_PACKAGE_PATH}/
+RUN yum -y install --nodocs git make
+
+WORKDIR ${GOPATH}/src/${GO_PACKAGE_PATH}
+COPY . .
+ARG VERBOSE=2
+RUN CGO_ENABLED=0 go build -o ${GOPATH}/src/${GO_PACKAGE_PATH}/build/_output/bin/jenkins-operator ./cmd/manager
+
 FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
-
-ENV OPERATOR_NAME=jenkins-operator \
-    OPERATOR=/usr/local/bin/$OPERATOR_NAME
-
-COPY build/_output/bin/${OPERATOR_NAME} ${OPERATOR}
+ENV OPERATOR_NAME=jenkins-operator
+ENV OPERATOR=/usr/local/bin/$OPERATOR_NAME
+COPY --from=builder /tmp/go/src/github.com/jenkinsci/jenkins-operator/build/_output/bin/${OPERATOR_NAME} ${OPERATOR}
 ENTRYPOINT ["/usr/local/bin/jenkins-operator"]
 
