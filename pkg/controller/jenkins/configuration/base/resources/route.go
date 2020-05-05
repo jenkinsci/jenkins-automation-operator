@@ -2,7 +2,6 @@ package resources
 
 import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
-
 	routev1 "github.com/openshift/api/route/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -29,8 +28,8 @@ func UpdateRoute(actual routev1.Route,jenkins *v1alpha2.Jenkins) routev1.Route {
 	return actual
 }
 
-//IsRouteAPIDiscoverable tells if the Route API is installed and discoverable
-func IsRouteAPIAvailable(clientSet kubernetes.Clientset) (bool) {
+//IsRouteAPIAvailable tells if the Route API is installed and discoverable
+func IsRouteAPIAvailable(clientSet *kubernetes.Clientset) (bool) {
 	if (routeAPIChecked){
 		return isRouteAPIAvailable
 	}
@@ -40,8 +39,12 @@ func IsRouteAPIAvailable(clientSet kubernetes.Clientset) (bool) {
 	}
 	if err := discovery.ServerSupportsVersion(clientSet, gv); err != nil {
 		// error, API not available
-		return false
+		routeAPIChecked = true
+		isRouteAPIAvailable = false
+	} else {
+		// API Exists
+		routeAPIChecked = true
+		isRouteAPIAvailable = true
 	}
-	// API Exists
-	return true
+	return isRouteAPIAvailable
 }

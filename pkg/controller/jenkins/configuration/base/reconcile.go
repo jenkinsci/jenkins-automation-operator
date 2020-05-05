@@ -182,15 +182,19 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureResourcesRequiredForJenkinsPod
 		return err
 	}
 	r.logger.V(log.VDebug).Info("Jenkins HTTP Service is present")
+
 	if err := r.createService(metaObject, resources.GetJenkinsSlavesServiceName(r.Configuration.Jenkins), r.Configuration.Jenkins.Spec.SlaveService); err != nil {
 		return err
 	}
-	if resources.IsRouteAPIAvailable(r.ClientSet) {
+	r.logger.V(log.VDebug).Info("Jenkins slave Service is present")
+
+	if resources.IsRouteAPIAvailable(&r.ClientSet) {
+		r.logger.V(log.VDebug).Info("Route API is available. Now creating route.")
 		if err := r.createRoute(metaObject, httpServiceName, r.Configuration.Jenkins); err != nil {
 			return err
 		}
+		r.logger.V(log.VDebug).Info("Jenkins Route is present")
 	}
-	r.logger.V(log.VDebug).Info("Jenkins slave Service is present")
 
 	return nil
 }
