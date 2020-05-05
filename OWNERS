@@ -1,0 +1,11 @@
+component: "Jenkins"
+
+reviewers:
+- akram
+- waveywaves
+- otaviof
+
+approvers:
+- akram
+- waveywaves
+
