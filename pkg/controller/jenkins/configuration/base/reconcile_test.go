@@ -4,13 +4,13 @@ import (
 	"context"
 	"testing"
 
+	"github.com/bndr/gojenkins"
+	"github.com/golang/mock/gomock"
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
-	"github.com/bndr/gojenkins"
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -20,7 +20,6 @@ import (
 	k8sclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
-
 
 func TestCompareContainerVolumeMounts(t *testing.T) {
 	t.Run("happy with service account", func(t *testing.T) {

@@ -23,25 +23,25 @@ const (
 	defaultColor = "#c8c8c8"
 )
 
-// Slack is a Slack notification service
+// Slack is a Slack notification service.
 type Slack struct {
 	httpClient http.Client
 	k8sClient  k8sclient.Client
 	config     v1alpha2.Notification
 }
 
-// New returns instance of Slack
+// New returns instance of Slack.
 func New(k8sClient k8sclient.Client, config v1alpha2.Notification, httpClient http.Client) *Slack {
 	return &Slack{k8sClient: k8sClient, config: config, httpClient: httpClient}
 }
 
-// Message is representation of json message
+// Message is representation of json message.
 type Message struct {
 	Text        string       `json:"text"`
 	Attachments []Attachment `json:"attachments"`
 }
 
-// Attachment is representation of json attachment
+// Attachment is representation of json attachment.
 type Attachment struct {
 	Fallback string            `json:"fallback"`
 	Color    event.StatusColor `json:"color"`
@@ -117,7 +117,7 @@ func (s Slack) generateMessage(e event.Event) Message {
 	return sm
 }
 
-// Send is function for sending directly to API
+// Send is function for sending directly to API.
 func (s Slack) Send(e event.Event) error {
 	secret := &corev1.Secret{}
 	selector := s.config.Slack.WebHookURLSecretKeySelector

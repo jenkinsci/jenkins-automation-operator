@@ -10,7 +10,7 @@ const (
 	workflowJobPlugin                   = "workflow-job:2.38"
 )
 
-// basePluginsList contains plugins to install by operator
+// basePluginsList contains plugins to install by operator.
 var basePluginsList = []Plugin{
 	Must(New(kubernetesPlugin)),
 	Must(New(workflowJobPlugin)),
@@ -21,7 +21,7 @@ var basePluginsList = []Plugin{
 	Must(New(kubernetesCredentialsProviderPlugin)),
 }
 
-// BasePlugins returns list of plugins to install by operator
+// BasePlugins returns list of plugins to install by operator.
 func BasePlugins() []Plugin {
 	return basePluginsList
 }

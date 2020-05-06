@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Plugin represents jenkins plugin
+// Plugin represents jenkins plugin.
 type Plugin struct {
 	Name                     string `json:"name"`
 	Version                  string `json:"version"`
@@ -29,7 +29,7 @@ var (
 	DownloadURLPattern = regexp.MustCompile(`https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)`)
 )
 
-// New creates plugin from string, for example "name-of-plugin:0.0.1"
+// New creates plugin from string, for example "name-of-plugin:0.0.1".
 func New(nameWithVersion string) (*Plugin, error) {
 	val := strings.SplitN(nameWithVersion, ":", 2)
 	if val == nil || len(val) != 2 {
@@ -48,7 +48,7 @@ func New(nameWithVersion string) (*Plugin, error) {
 	}, nil
 }
 
-// NewPlugin creates plugin from name and version, for example "name-of-plugin:0.0.1"
+// NewPlugin creates plugin from name and version, for example "name-of-plugin:0.0.1".
 func NewPlugin(name, version, downloadURL string) (*Plugin, error) {
 	if err := validatePlugin(name, version, downloadURL); err != nil {
 		return nil, err
@@ -76,7 +76,7 @@ func validatePlugin(name, version, downloadURL string) error {
 	return nil
 }
 
-// Must returns plugin from pointer and throws panic when error is set
+// Must returns plugin from pointer and throws panic when error is set.
 func Must(plugin *Plugin, err error) Plugin {
 	if err != nil {
 		panic(err)
@@ -85,7 +85,7 @@ func Must(plugin *Plugin, err error) Plugin {
 	return *plugin
 }
 
-// VerifyDependencies checks if all plugins have compatible versions
+// VerifyDependencies checks if all plugins have compatible versions.
 func VerifyDependencies(values ...map[Plugin][]Plugin) []string {
 	var messages []string
 	// key - plugin name, value array of versions

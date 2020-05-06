@@ -200,7 +200,7 @@ func triggerBackup(ticker *time.Ticker, k8sClient k8s.Client, logger logr.Logger
 			logger.V(log.VWarn).Info(fmt.Sprintf("backup trigger, error when fetching CR: %s", err))
 		}
 		if jenkins.Status.LastBackup == jenkins.Status.PendingBackup {
-			jenkins.Status.PendingBackup = jenkins.Status.PendingBackup + 1
+			jenkins.Status.PendingBackup++
 			err = k8sClient.Update(context.TODO(), jenkins)
 			if err != nil {
 				logger.V(log.VWarn).Info(fmt.Sprintf("backup trigger, error when updating CR: %s", err))

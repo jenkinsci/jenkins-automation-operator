@@ -51,7 +51,7 @@ func Add(mgr manager.Manager, jenkinsAPIConnectionSettings jenkinsclient.Jenkins
 	return add(mgr, reconciler)
 }
 
-// newReconciler returns a new reconcile.Reconciler
+// newReconciler returns a new reconcile.Reconciler.
 func newReconciler(mgr manager.Manager, jenkinsAPIConnectionSettings jenkinsclient.JenkinsAPIConnectionSettings, clientSet kubernetes.Clientset, config rest.Config, notificationEvents *chan event.Event) reconcile.Reconciler {
 	return &ReconcileJenkins{
 		client:                       mgr.GetClient(),
@@ -63,7 +63,7 @@ func newReconciler(mgr manager.Manager, jenkinsAPIConnectionSettings jenkinsclie
 	}
 }
 
-// add adds a new Controller to mgr with r as the reconcile.Reconciler
+// add adds a new Controller to mgr with r as the reconcile.Reconciler.
 func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// Create a new controller
 	c, err := controller.New("jenkins-controller", mgr, controller.Options{Reconciler: r})
@@ -111,7 +111,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 
 var _ reconcile.Reconciler = &ReconcileJenkins{}
 
-// ReconcileJenkins reconciles a Jenkins object
+// ReconcileJenkins reconciles a Jenkins object.
 type ReconcileJenkins struct {
 	client                       client.Client
 	scheme                       *runtime.Scheme
@@ -121,7 +121,7 @@ type ReconcileJenkins struct {
 	notificationEvents           *chan event.Event
 }
 
-// Reconcile it's a main reconciliation loop which maintain desired state based on Jenkins.Spec
+// Reconcile it's a main reconciliation loop which maintain desired state based on Jenkins.Spec.
 func (r *ReconcileJenkins) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	reconcileFailLimit := uint64(10)
 	logger := r.buildLogger(request.Name)
@@ -167,10 +167,8 @@ func (r *ReconcileJenkins) Reconcile(request reconcile.Request) (reconcile.Resul
 
 		if log.Debug {
 			logger.V(log.VWarn).Info(fmt.Sprintf("Reconcile loop failed: %+v", err))
-		} else {
-			if err.Error() != fmt.Sprintf("Operation cannot be fulfilled on jenkins.jenkins.io \"%s\": the object has been modified; please apply your changes to the latest version and try again", request.Name) {
-				logger.V(log.VWarn).Info(fmt.Sprintf("Reconcile loop failed: %s", err))
-			}
+		} else if err.Error() != fmt.Sprintf("Operation cannot be fulfilled on jenkins.jenkins.io \"%s\": the object has been modified; please apply your changes to the latest version and try again", request.Name) {
+			logger.V(log.VWarn).Info(fmt.Sprintf("Reconcile loop failed: %s", err))
 		}
 
 		if groovyErr, ok := err.(*jenkinsclient.GroovyScriptExecutionFailed); ok {
@@ -227,12 +225,12 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request, logger logr.Logg
 	}
 
 	config := configuration.Configuration{
-		Client:        				  r.client,
-		ClientSet:     				  r.clientSet,
-		Notifications: 				  r.notificationEvents,
-		Jenkins:       				  jenkins,
-		Scheme:        				  r.scheme,
-		Config:        				  &r.config,
+		Client:                       r.client,
+		ClientSet:                    r.clientSet,
+		Notifications:                r.notificationEvents,
+		Jenkins:                      jenkins,
+		Scheme:                       r.scheme,
+		Config:                       &r.config,
 		JenkinsAPIConnectionSettings: r.jenkinsAPIConnectionSettings,
 	}
 

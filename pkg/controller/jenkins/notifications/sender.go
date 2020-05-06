@@ -19,12 +19,12 @@ import (
 	k8sclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// Provider is the communication service handler
+// Provider is the communication service handler.
 type Provider interface {
 	Send(event event.Event) error
 }
 
-// Listen listens for incoming events and send it as notifications
+// Listen listens for incoming events and send it as notifications.
 func Listen(events chan event.Event, k8sEvent k8sevent.Recorder, k8sClient k8sclient.Client) {
 	httpClient := http.Client{}
 	for e := range events {
@@ -44,16 +44,16 @@ func Listen(events chan event.Event, k8sEvent k8sevent.Recorder, k8sClient k8scl
 		for _, notificationConfig := range e.Jenkins.Spec.Notifications {
 			var err error
 			var provider Provider
-
-			if notificationConfig.Slack != nil {
+			switch {
+			case notificationConfig.Slack != nil:
 				provider = slack.New(k8sClient, notificationConfig, httpClient)
-			} else if notificationConfig.Teams != nil {
+			case notificationConfig.Teams != nil:
 				provider = msteams.New(k8sClient, notificationConfig, httpClient)
-			} else if notificationConfig.Mailgun != nil {
+			case notificationConfig.Mailgun != nil:
 				provider = mailgun.New(k8sClient, notificationConfig)
-			} else if notificationConfig.SMTP != nil {
+			case notificationConfig.SMTP != nil:
 				provider = smtp.New(k8sClient, notificationConfig)
-			} else {
+			default:
 				logger.V(log.VWarn).Info(fmt.Sprintf("Unknown notification service `%+v`", notificationConfig))
 				continue
 			}

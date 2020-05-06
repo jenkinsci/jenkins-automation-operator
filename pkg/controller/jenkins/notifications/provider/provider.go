@@ -30,11 +30,12 @@ const (
 
 // NotificationTitle converts NotificationLevel enum to string
 func NotificationTitle(event event.Event) string {
-	if event.Level == v1alpha2.NotificationLevelInfo {
+	switch event.Level {
+	case v1alpha2.NotificationLevelInfo:
 		return InfoTitleText
-	} else if event.Level == v1alpha2.NotificationLevelWarning {
+	case v1alpha2.NotificationLevelWarning:
 		return WarnTitleText
-	} else {
+	default:
 		return ""
 	}
 }

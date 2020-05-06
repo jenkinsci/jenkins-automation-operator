@@ -8,13 +8,13 @@ import (
 // Phase defines the context where notification has been generated: base or user.
 type Phase string
 
-// StatusColor is useful for better UX
+// StatusColor is useful for better UX.
 type StatusColor string
 
-// LoggingLevel is type for selecting different logging levels
+// LoggingLevel is type for selecting different logging levels.
 type LoggingLevel string
 
-// Event contains event details which will be sent as a notification
+// Event contains event details which will be sent as a notification.
 type Event struct {
 	Jenkins v1alpha2.Jenkins
 	Phase   Phase

@@ -76,7 +76,7 @@ func loadSeedJobsConfig(t *testing.T) seedJobsConfig {
 	assert.NoError(t, err)
 
 	var result seedJobsConfig
-	err = json.Unmarshal([]byte(byteValue), &result)
+	err = json.Unmarshal(byteValue, &result)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, result.SeedJobs)
 	return result
@@ -95,7 +95,7 @@ func createKubernetesCredentialsProviderSecret(t *testing.T, namespace string, c
 				"jenkins.io/credentials-description": "credentials from Kubernetes " + config.ID,
 			},
 			Labels: map[string]string{
-				seedjobs.JenkinsCredentialTypeLabelName: string(config.CredentialID),
+				seedjobs.JenkinsCredentialTypeLabelName: config.CredentialID,
 			},
 		},
 		StringData: map[string]string{

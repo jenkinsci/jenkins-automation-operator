@@ -22,13 +22,15 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const e2e = "e2e"
+
 func TestConfiguration(t *testing.T) {
 	t.Parallel()
 	namespace, ctx := setupTest(t)
 
 	defer showLogsAndCleanup(t, ctx)
 
-	jenkinsCRName := "e2e"
+	jenkinsCRName := e2e
 	numberOfExecutors := 6
 	numberOfExecutorsEnvName := "NUMBER_OF_EXECUTORS"
 	systemMessage := "Configuration as Code integration works!!!"
@@ -207,7 +209,7 @@ unclassified:
 func createDefaultLimitsForContainersInNamespace(t *testing.T, namespace string) {
 	limitRange := &corev1.LimitRange{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "e2e",
+			Name:      e2e,
 			Namespace: namespace,
 		},
 		Spec: corev1.LimitRangeSpec{

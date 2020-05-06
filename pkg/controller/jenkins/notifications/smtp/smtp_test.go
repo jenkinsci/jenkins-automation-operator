@@ -37,6 +37,8 @@ const (
 	fromHeader    = "From"
 	toHeader      = "To"
 	subjectHeader = "Subject"
+
+	nilConst = "nil"
 )
 
 var (
@@ -106,11 +108,12 @@ func (s *testSession) Data(r io.Reader) error {
 	}
 
 	for i := range headers {
-		if headers[i][1] == fromHeader && headers[i][2] != testFrom {
+		switch {
+		case headers[i][1] == fromHeader && headers[i][2] != testFrom:
 			return fmt.Errorf("`From` header is not equal: '%s', expected '%s'", headers[i][2], testFrom)
-		} else if headers[i][1] == toHeader && headers[i][2] != testTo {
+		case headers[i][1] == toHeader && headers[i][2] != testTo:
 			return fmt.Errorf("`To` header is not equal: '%s', expected '%s'", headers[i][2], testTo)
-		} else if headers[i][1] == subjectHeader && headers[i][2] != testSubject {
+		case headers[i][1] == subjectHeader && headers[i][2] != testSubject:
 			return fmt.Errorf("`Subject` header is not equal: '%s', expected '%s'", headers[i][2], testSubject)
 		}
 	}
@@ -242,13 +245,13 @@ func TestGenerateMessage(t *testing.T) {
 	})
 
 	t.Run("with nils", func(t *testing.T) {
-		crName := "nil"
+		crName := nilConst
 		phase := event.PhaseBase
 		level := v1alpha2.NotificationLevelInfo
-		res := reason.NewUndefined(reason.KubernetesSource, []string{"nil"}, []string{"nil"}...)
+		res := reason.NewUndefined(reason.KubernetesSource, []string{nilConst}, []string{nilConst}...)
 
-		from := "nil"
-		to := "nil"
+		from := nilConst
+		to := nilConst
 
 		e := event.Event{
 			Jenkins: v1alpha2.Jenkins{

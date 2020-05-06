@@ -20,9 +20,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
+const configurationType = "test-conf-type"
+
 func TestGroovy_EnsureSingle(t *testing.T) {
 	log.SetupLogger(true)
-	configurationType := "test-conf-type"
 	emptyCustomization := v1alpha2.Customization{}
 	hash := "hash"
 	groovyScript := "groovy-script"
@@ -246,7 +247,6 @@ func TestGroovy_EnsureSingle(t *testing.T) {
 		assert.Equal(t, thirdGroovyScriptHash, jenkins.Status.AppliedGroovyScripts[2].Hash)
 		assert.Equal(t, source, jenkins.Status.AppliedGroovyScripts[2].Source)
 		assert.Equal(t, thirdGroovyScriptName, jenkins.Status.AppliedGroovyScripts[2].Name)
-
 	})
 	t.Run("execute two groovy scripts with same names in two config maps", func(t *testing.T) {
 		jenkins := &v1alpha2.Jenkins{
@@ -349,7 +349,6 @@ func TestGroovy_EnsureSingle(t *testing.T) {
 
 func TestGroovy_Ensure(t *testing.T) {
 	log.SetupLogger(true)
-	configurationType := "test-conf-type"
 	groovyScript := "groovy-script"
 	groovyScriptName := "groovy-script-name.groovy"
 	ctx := context.TODO()
@@ -615,7 +614,6 @@ func TestGroovy_Ensure(t *testing.T) {
 func TestGroovy_isGroovyScriptAlreadyApplied(t *testing.T) {
 	log.SetupLogger(true)
 	emptyCustomization := v1alpha2.Customization{}
-	configurationType := "test-conf-type"
 
 	t.Run("found", func(t *testing.T) {
 		jenkins := &v1alpha2.Jenkins{

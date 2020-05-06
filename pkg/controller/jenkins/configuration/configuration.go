@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
+	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/notifications/event"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/notifications/reason"
-	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	stackerr "github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -166,7 +166,7 @@ func (c *Configuration) GetJenkinsMasterContainer() *v1alpha2.Container {
 
 // GetJenkinsClient gets jenkins client from a configuration
 func (c *Configuration) GetJenkinsClient() (jenkinsclient.Jenkins, error) {
-	switch c.Jenkins.Spec.JenkinsAPISettings.AuthorizationStrategy  {
+	switch c.Jenkins.Spec.JenkinsAPISettings.AuthorizationStrategy {
 	case v1alpha2.ServiceAccountAuthorizationStrategy:
 		return c.GetJenkinsClientFromServiceAccount()
 	case v1alpha2.CreateUserAuthorizationStrategy:
@@ -189,7 +189,7 @@ func (c *Configuration) getJenkinsAPIUrl() (string, error) {
 	}
 	jenkinsURL := c.JenkinsAPIConnectionSettings.BuildJenkinsAPIUrl(service.Name, service.Namespace, service.Spec.Ports[0].Port, service.Spec.Ports[0].NodePort)
 	if prefix, ok := GetJenkinsOpts(*c.Jenkins)["prefix"]; ok {
-		jenkinsURL = jenkinsURL + prefix
+		jenkinsURL += prefix
 	}
 	return jenkinsURL, nil
 }

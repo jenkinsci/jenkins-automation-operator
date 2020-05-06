@@ -47,13 +47,13 @@ const (
 </html>`
 )
 
-// SMTP is Simple Mail Transport Protocol used for sending emails
+// SMTP is Simple Mail Transport Protocol used for sending emails.
 type SMTP struct {
 	k8sClient k8sclient.Client
 	config    v1alpha2.Notification
 }
 
-// New returns instance of SMTP
+// New returns instance of SMTP.
 func New(k8sClient k8sclient.Client, config v1alpha2.Notification) *SMTP {
 	return &SMTP{k8sClient: k8sClient, config: config}
 }
@@ -83,7 +83,7 @@ func (s SMTP) generateMessage(e event.Event) *gomail.Message {
 	return message
 }
 
-// Send is function for sending notification by SMTP server
+// Send is function for sending notification by SMTP server.
 func (s SMTP) Send(e event.Event) error {
 	usernameSecret := &corev1.Secret{}
 	passwordSecret := &corev1.Secret{}

@@ -136,13 +136,13 @@ fmt: ## Verifies all files have been `gofmt`ed
 	@go fmt $(PACKAGES)
 
 .PHONY: lint
-HAS_GOLINT := $(shell which golint)
+HAS_GOLINT := $(shell which golangci-lint)
 lint: ## Verifies `golint` passes
 	@echo "+ $@"
 ifndef HAS_GOLINT
-	go get -u golang.org/x/lint/golint
+	go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.26.0
 endif
-	@golint $(PACKAGES)
+	@golangci-lint run
 
 .PHONY: goimports
 HAS_GOIMPORTS := $(shell which goimports)
