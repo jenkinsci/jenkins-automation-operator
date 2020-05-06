@@ -3,12 +3,14 @@ package configuration
 import (
 	"bytes"
 	"context"
+	"strings"
+	"time"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/notifications/event"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/notifications/reason"
-
+	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	stackerr "github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -25,17 +27,18 @@ import (
 
 // Configuration holds required for Jenkins configuration
 type Configuration struct {
-	Client        client.Client
-	ClientSet     kubernetes.Clientset
-	Notifications *chan event.Event
-	Jenkins       *v1alpha2.Jenkins
-	Scheme        *runtime.Scheme
-	Config        *rest.Config
+	Client                       client.Client
+	ClientSet                    kubernetes.Clientset
+	Notifications                *chan event.Event
+	Jenkins                      *v1alpha2.Jenkins
+	Scheme                       *runtime.Scheme
+	Config                       *rest.Config
+	JenkinsAPIConnectionSettings jenkinsclient.JenkinsAPIConnectionSettings
 }
 
 // RestartJenkinsMasterPod terminate Jenkins master pod and notifies about it
 func (c *Configuration) RestartJenkinsMasterPod(reason reason.Reason) error {
-	currentJenkinsMasterPod, err := c.getJenkinsMasterPod()
+	currentJenkinsMasterPod, err := c.GetJenkinsMasterPod()
 	if err != nil {
 		return err
 	}
@@ -54,7 +57,8 @@ func (c *Configuration) RestartJenkinsMasterPod(reason reason.Reason) error {
 	return stackerr.WithStack(c.Client.Delete(context.TODO(), currentJenkinsMasterPod))
 }
 
-func (c *Configuration) getJenkinsMasterPod() (*corev1.Pod, error) {
+// GetJenkinsMasterPod gets the jenkins master pod
+func (c *Configuration) GetJenkinsMasterPod() (*corev1.Pod, error) {
 	jenkinsMasterPodName := resources.GetJenkinsMasterPodName(*c.Jenkins)
 	currentJenkinsMasterPod := &corev1.Pod{}
 	err := c.Client.Get(context.TODO(), types.NamespacedName{Name: jenkinsMasterPodName, Namespace: c.Jenkins.Namespace}, currentJenkinsMasterPod)
@@ -156,6 +160,133 @@ func (c *Configuration) GetJenkinsMasterContainer() *v1alpha2.Container {
 	if len(c.Jenkins.Spec.Master.Containers) > 0 {
 		// the first container is the Jenkins master, it is forced jenkins_controller.go
 		return &c.Jenkins.Spec.Master.Containers[0]
+	}
+	return nil
+}
+
+// GetJenkinsClient gets jenkins client from a configuration
+func (c *Configuration) GetJenkinsClient() (jenkinsclient.Jenkins, error) {
+	switch c.Jenkins.Spec.JenkinsAPISettings.AuthorizationStrategy  {
+	case v1alpha2.ServiceAccountAuthorizationStrategy:
+		return c.GetJenkinsClientFromServiceAccount()
+	case v1alpha2.CreateUserAuthorizationStrategy:
+		return c.GetJenkinsClientFromSecret()
+	default:
+		return nil, stackerr.Errorf("unrecognized '%s' spec.jenkinsAPISettings.authorizationStrategy", c.Jenkins.Spec.JenkinsAPISettings.AuthorizationStrategy)
+	}
+}
+
+func (c *Configuration) getJenkinsAPIUrl() (string, error) {
+	var service corev1.Service
+
+	err := c.Client.Get(context.TODO(), types.NamespacedName{
+		Namespace: c.Jenkins.ObjectMeta.Namespace,
+		Name:      resources.GetJenkinsHTTPServiceName(c.Jenkins),
+	}, &service)
+
+	if err != nil {
+		return "", err
+	}
+	jenkinsURL := c.JenkinsAPIConnectionSettings.BuildJenkinsAPIUrl(service.Name, service.Namespace, service.Spec.Ports[0].Port, service.Spec.Ports[0].NodePort)
+	if prefix, ok := GetJenkinsOpts(*c.Jenkins)["prefix"]; ok {
+		jenkinsURL = jenkinsURL + prefix
+	}
+	return jenkinsURL, nil
+}
+
+// GetJenkinsClientFromServiceAccount gets jenkins client from a serviceAccount
+func (c *Configuration) GetJenkinsClientFromServiceAccount() (jenkinsclient.Jenkins, error) {
+	jenkinsAPIUrl, err := c.getJenkinsAPIUrl()
+	if err != nil {
+		return nil, err
+	}
+
+	podName := resources.GetJenkinsMasterPodName(*c.Jenkins)
+	token, _, err := c.Exec(podName, resources.JenkinsMasterContainerName, []string{"cat", "/var/run/secrets/kubernetes.io/serviceaccount/token"})
+	if err != nil {
+		return nil, err
+	}
+
+	return jenkinsclient.NewBearerTokenAuthorization(jenkinsAPIUrl, token.String())
+}
+
+// GetJenkinsClientFromSecret gets jenkins client from a secret
+func (c *Configuration) GetJenkinsClientFromSecret() (jenkinsclient.Jenkins, error) {
+	jenkinsURL, err := c.getJenkinsAPIUrl()
+	if err != nil {
+		return nil, err
+	}
+	credentialsSecret := &corev1.Secret{}
+	err = c.Client.Get(context.TODO(), types.NamespacedName{Name: resources.GetOperatorCredentialsSecretName(c.Jenkins), Namespace: c.Jenkins.ObjectMeta.Namespace}, credentialsSecret)
+	if err != nil {
+		return nil, stackerr.WithStack(err)
+	}
+	currentJenkinsMasterPod, err := c.GetJenkinsMasterPod()
+	if err != nil {
+		return nil, err
+	}
+	var tokenCreationTime *time.Time
+	tokenCreationTimeBytes := credentialsSecret.Data[resources.OperatorCredentialsSecretTokenCreationKey]
+	if tokenCreationTimeBytes != nil {
+		tokenCreationTime = &time.Time{}
+		err = tokenCreationTime.UnmarshalText(tokenCreationTimeBytes)
+		if err != nil {
+			tokenCreationTime = nil
+		}
+	}
+	if credentialsSecret.Data[resources.OperatorCredentialsSecretTokenKey] == nil ||
+		tokenCreationTimeBytes == nil || tokenCreationTime == nil ||
+		currentJenkinsMasterPod.ObjectMeta.CreationTimestamp.Time.UTC().After(tokenCreationTime.UTC()) {
+		userName := string(credentialsSecret.Data[resources.OperatorCredentialsSecretUserNameKey])
+		jenkinsClient, err := jenkinsclient.NewUserAndPasswordAuthorization(
+			jenkinsURL,
+			userName,
+			string(credentialsSecret.Data[resources.OperatorCredentialsSecretPasswordKey]))
+		if err != nil {
+			return nil, err
+		}
+
+		token, err := jenkinsClient.GenerateToken(userName, "token")
+		if err != nil {
+			return nil, err
+		}
+
+		credentialsSecret.Data[resources.OperatorCredentialsSecretTokenKey] = []byte(token.GetToken())
+		now, _ := time.Now().UTC().MarshalText()
+		credentialsSecret.Data[resources.OperatorCredentialsSecretTokenCreationKey] = now
+		err = c.UpdateResource(credentialsSecret)
+		if err != nil {
+			return nil, stackerr.WithStack(err)
+		}
+	}
+	return jenkinsclient.NewUserAndPasswordAuthorization(
+		jenkinsURL,
+		string(credentialsSecret.Data[resources.OperatorCredentialsSecretUserNameKey]),
+		string(credentialsSecret.Data[resources.OperatorCredentialsSecretTokenKey]))
+}
+
+// GetJenkinsOpts gets JENKINS_OPTS env parameter, parses it's values and returns it as a map`
+func GetJenkinsOpts(jenkins v1alpha2.Jenkins) map[string]string {
+	envs := jenkins.Spec.Master.Containers[0].Env
+	jenkinsOpts := make(map[string]string)
+
+	for key, value := range envs {
+		if value.Name == "JENKINS_OPTS" {
+			jenkinsOptsEnv := envs[key]
+			jenkinsOptsWithDashes := jenkinsOptsEnv.Value
+			if len(jenkinsOptsWithDashes) == 0 {
+				return nil
+			}
+
+			jenkinsOptsWithEqOperators := strings.Split(jenkinsOptsWithDashes, " ")
+
+			for _, vx := range jenkinsOptsWithEqOperators {
+				opt := strings.Split(vx, "=")
+				jenkinsOpts[strings.ReplaceAll(opt[0], "--", "")] = opt[1]
+			}
+
+			return jenkinsOpts
+		}
 	}
 	return nil
 }

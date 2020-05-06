@@ -147,7 +147,7 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsMasterPod(meta metav1.O
 	}
 
 	// Check if this Pod already exists
-	currentJenkinsMasterPod, err := r.getJenkinsMasterPod()
+	currentJenkinsMasterPod, err := r.Configuration.GetJenkinsMasterPod()
 	if err != nil && apierrors.IsNotFound(err) {
 		jenkinsMasterPod := resources.NewJenkinsMasterPod(meta, r.Configuration.Jenkins)
 		*r.Notifications <- event.Event{

@@ -381,7 +381,7 @@ func agentDeployment(jenkins *v1alpha2.Jenkins, namespace string, agentName stri
 	if err != nil {
 		return nil, err
 	}
-	jenkinsHttpServiceFQDN, err := resources.GetJenkinsHTTPServiceFQDN(jenkins)
+	jenkinsHTTPServiceFQDN, err := resources.GetJenkinsHTTPServiceFQDN(jenkins)
 	if err != nil {
 		return nil, err
 	}
@@ -428,7 +428,7 @@ func agentDeployment(jenkins *v1alpha2.Jenkins, namespace string, agentName stri
 								{
 									Name: "JENKINS_URL",
 									Value: fmt.Sprintf("http://%s:%d",
-										jenkinsHttpServiceFQDN,
+										jenkinsHTTPServiceFQDN,
 										jenkins.Spec.Service.Port,
 									),
 								},

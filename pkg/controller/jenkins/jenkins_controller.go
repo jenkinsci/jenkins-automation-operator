@@ -227,12 +227,13 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request, logger logr.Logg
 	}
 
 	config := configuration.Configuration{
-		Client:        r.client,
-		ClientSet:     r.clientSet,
-		Notifications: r.notificationEvents,
-		Jenkins:       jenkins,
-		Scheme:        r.scheme,
-		Config:        &r.config,
+		Client:        				  r.client,
+		ClientSet:     				  r.clientSet,
+		Notifications: 				  r.notificationEvents,
+		Jenkins:       				  jenkins,
+		Scheme:        				  r.scheme,
+		Config:        				  &r.config,
+		JenkinsAPIConnectionSettings: r.jenkinsAPIConnectionSettings,
 	}
 
 	// Reconcile base configuration

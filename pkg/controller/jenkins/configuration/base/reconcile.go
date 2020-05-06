@@ -83,7 +83,7 @@ func (r *ReconcileJenkinsBaseConfiguration) Reconcile() (reconcile.Result, jenki
 	}
 	r.logger.V(log.VDebug).Info("Jenkins master pod is ready")
 
-	jenkinsClient, err := r.ensureJenkinsClient()
+	jenkinsClient, err := r.Configuration.GetJenkinsClient()
 	if err != nil {
 		return reconcile.Result{}, nil, err
 	}
@@ -108,32 +108,6 @@ func (r *ReconcileJenkinsBaseConfiguration) Reconcile() (reconcile.Result, jenki
 	result, err = r.ensureBaseConfiguration(jenkinsClient)
 
 	return result, jenkinsClient, err
-}
-
-// GetJenkinsOpts gets JENKINS_OPTS env parameter, parses it's values and returns it as a map`
-func GetJenkinsOpts(jenkins v1alpha2.Jenkins) map[string]string {
-	envs := jenkins.Spec.Master.Containers[0].Env
-	jenkinsOpts := make(map[string]string)
-
-	for key, value := range envs {
-		if value.Name == "JENKINS_OPTS" {
-			jenkinsOptsEnv := envs[key]
-			jenkinsOptsWithDashes := jenkinsOptsEnv.Value
-			if len(jenkinsOptsWithDashes) == 0 {
-				return nil
-			}
-
-			jenkinsOptsWithEqOperators := strings.Split(jenkinsOptsWithDashes, " ")
-
-			for _, vx := range jenkinsOptsWithEqOperators {
-				opt := strings.Split(vx, "=")
-				jenkinsOpts[strings.ReplaceAll(opt[0], "--", "")] = opt[1]
-			}
-
-			return jenkinsOpts
-		}
-	}
-	return nil
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) ensureResourcesRequiredForJenkinsPod(metaObject metav1.ObjectMeta) error {
@@ -214,16 +188,6 @@ func (r *ReconcileJenkinsBaseConfiguration) createOperatorCredentialsSecret(meta
 		return nil
 	}
 	return stackerr.WithStack(r.UpdateResource(resources.NewOperatorCredentialsSecret(meta, r.Configuration.Jenkins)))
-}
-
-func (r *ReconcileJenkinsBaseConfiguration) getJenkinsMasterPod() (*corev1.Pod, error) {
-	jenkinsMasterPodName := resources.GetJenkinsMasterPodName(*r.Configuration.Jenkins)
-	currentJenkinsMasterPod := &corev1.Pod{}
-	err := r.Client.Get(context.TODO(), types.NamespacedName{Name: jenkinsMasterPodName, Namespace: r.Configuration.Jenkins.Namespace}, currentJenkinsMasterPod)
-	if err != nil {
-		return nil, err // don't wrap error
-	}
-	return currentJenkinsMasterPod, nil
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) calculateUserAndPasswordHash() (string, error) {
@@ -309,7 +273,7 @@ func (r *ReconcileJenkinsBaseConfiguration) compareVolumes(actualPod corev1.Pod)
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) detectJenkinsMasterPodStartingIssues() (stopReconcileLoop bool, err error) {
-	jenkinsMasterPod, err := r.getJenkinsMasterPod()
+	jenkinsMasterPod, err := r.Configuration.GetJenkinsMasterPod()
 	if err != nil {
 		return false, err
 	}
@@ -360,7 +324,7 @@ func (r *ReconcileJenkinsBaseConfiguration) filterEvents(source corev1.EventList
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) waitForJenkins() (reconcile.Result, error) {
-	jenkinsMasterPod, err := r.getJenkinsMasterPod()
+	jenkinsMasterPod, err := r.Configuration.GetJenkinsMasterPod()
 	if err != nil {
 		return reconcile.Result{}, err
 	}
@@ -400,106 +364,6 @@ func (r *ReconcileJenkinsBaseConfiguration) waitForJenkins() (reconcile.Result, 
 	return reconcile.Result{}, nil
 }
 
-func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsClient() (jenkinsclient.Jenkins, error) {
-	switch r.Configuration.Jenkins.Spec.JenkinsAPISettings.AuthorizationStrategy {
-	case v1alpha2.ServiceAccountAuthorizationStrategy:
-		return r.ensureJenkinsClientFromServiceAccount()
-	case v1alpha2.CreateUserAuthorizationStrategy:
-		return r.ensureJenkinsClientFromSecret()
-	default:
-		return nil, stackerr.Errorf("unrecognized '%s' spec.jenkinsAPISettings.authorizationStrategy", r.Configuration.Jenkins.Spec.JenkinsAPISettings.AuthorizationStrategy)
-	}
-}
-
-func (r *ReconcileJenkinsBaseConfiguration) getJenkinsAPIUrl() (string, error) {
-	var service corev1.Service
-
-	err := r.Client.Get(context.TODO(), types.NamespacedName{
-		Namespace: r.Configuration.Jenkins.ObjectMeta.Namespace,
-		Name:      resources.GetJenkinsHTTPServiceName(r.Configuration.Jenkins),
-	}, &service)
-
-	if err != nil {
-		return "", err
-	}
-	jenkinsURL := r.jenkinsAPIConnectionSettings.BuildJenkinsAPIUrl(service.Name, service.Namespace, service.Spec.Ports[0].Port, service.Spec.Ports[0].NodePort)
-	if prefix, ok := GetJenkinsOpts(*r.Configuration.Jenkins)["prefix"]; ok {
-		jenkinsURL = jenkinsURL + prefix
-	}
-	return jenkinsURL, nil
-}
-
-func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsClientFromServiceAccount() (jenkinsclient.Jenkins, error) {
-	jenkinsAPIUrl, err := r.getJenkinsAPIUrl()
-	if err != nil {
-		return nil, err
-	}
-
-	podName := resources.GetJenkinsMasterPodName(*r.Configuration.Jenkins)
-	token, _, err := r.Configuration.Exec(podName, resources.JenkinsMasterContainerName, []string{"cat", "/var/run/secrets/kubernetes.io/serviceaccount/token"})
-	if err != nil {
-		return nil, err
-	}
-
-	return jenkinsclient.NewBearerTokenAuthorization(jenkinsAPIUrl, token.String())
-}
-
-func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsClientFromSecret() (jenkinsclient.Jenkins, error) {
-	jenkinsURL, err := r.getJenkinsAPIUrl()
-	if err != nil {
-		return nil, err
-	}
-	r.logger.V(log.VDebug).Info(fmt.Sprintf("Jenkins API URL '%s'", jenkinsURL))
-	credentialsSecret := &corev1.Secret{}
-	err = r.Client.Get(context.TODO(), types.NamespacedName{Name: resources.GetOperatorCredentialsSecretName(r.Configuration.Jenkins), Namespace: r.Configuration.Jenkins.ObjectMeta.Namespace}, credentialsSecret)
-	if err != nil {
-		return nil, stackerr.WithStack(err)
-	}
-	currentJenkinsMasterPod, err := r.getJenkinsMasterPod()
-	if err != nil {
-		return nil, err
-	}
-	var tokenCreationTime *time.Time
-	tokenCreationTimeBytes := credentialsSecret.Data[resources.OperatorCredentialsSecretTokenCreationKey]
-	if tokenCreationTimeBytes != nil {
-		tokenCreationTime = &time.Time{}
-		err = tokenCreationTime.UnmarshalText(tokenCreationTimeBytes)
-		if err != nil {
-			tokenCreationTime = nil
-		}
-	}
-	if credentialsSecret.Data[resources.OperatorCredentialsSecretTokenKey] == nil ||
-		tokenCreationTimeBytes == nil || tokenCreationTime == nil ||
-		currentJenkinsMasterPod.ObjectMeta.CreationTimestamp.Time.UTC().After(tokenCreationTime.UTC()) {
-		r.logger.Info("Generating Jenkins API token for operator")
-		userName := string(credentialsSecret.Data[resources.OperatorCredentialsSecretUserNameKey])
-		jenkinsClient, err := jenkinsclient.NewUserAndPasswordAuthorization(
-			jenkinsURL,
-			userName,
-			string(credentialsSecret.Data[resources.OperatorCredentialsSecretPasswordKey]))
-		if err != nil {
-			return nil, err
-		}
-
-		token, err := jenkinsClient.GenerateToken(userName, "token")
-		if err != nil {
-			return nil, err
-		}
-
-		credentialsSecret.Data[resources.OperatorCredentialsSecretTokenKey] = []byte(token.GetToken())
-		now, _ := time.Now().UTC().MarshalText()
-		credentialsSecret.Data[resources.OperatorCredentialsSecretTokenCreationKey] = now
-		err = r.UpdateResource(credentialsSecret)
-		if err != nil {
-			return nil, stackerr.WithStack(err)
-		}
-	}
-	return jenkinsclient.NewUserAndPasswordAuthorization(
-		jenkinsURL,
-		string(credentialsSecret.Data[resources.OperatorCredentialsSecretUserNameKey]),
-		string(credentialsSecret.Data[resources.OperatorCredentialsSecretTokenKey]))
-}
-
 func (r *ReconcileJenkinsBaseConfiguration) ensureBaseConfiguration(jenkinsClient jenkinsclient.Jenkins) (reconcile.Result, error) {
 	customization := v1alpha2.GroovyScripts{
 		Customization: v1alpha2.Customization{
@@ -517,14 +381,14 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureBaseConfiguration(jenkinsClien
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) waitUntilCreateJenkinsMasterPod() (currentJenkinsMasterPod *corev1.Pod, err error) {
-	currentJenkinsMasterPod, err = r.getJenkinsMasterPod()
+	currentJenkinsMasterPod, err = r.Configuration.GetJenkinsMasterPod()
 	for {
 		if err != nil && !apierrors.IsNotFound(err) {
 			return nil, stackerr.WithStack(err)
 		} else if err == nil {
 			break
 		}
-		currentJenkinsMasterPod, err = r.getJenkinsMasterPod()
+		currentJenkinsMasterPod, err = r.Configuration.GetJenkinsMasterPod()
 		time.Sleep(time.Millisecond * 10)
 	}
 	return
