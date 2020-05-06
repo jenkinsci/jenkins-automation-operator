@@ -10,7 +10,7 @@ import (
 func (r *ReconcileJenkinsBaseConfiguration) compareContainers(expected corev1.Container, actual corev1.Container) (messages []string, verbose []string) {
 	if !reflect.DeepEqual(expected.Args, actual.Args) {
 		messages = append(messages, "Arguments have changed")
-		verbose = append(messages, fmt.Sprintf("Arguments have changed to '%+v' in container '%s'", expected.Args, expected.Name))
+		verbose = append(verbose, fmt.Sprintf("Arguments have changed to '%+v' in container '%s'", expected.Args, expected.Name))
 	}
 	if !reflect.DeepEqual(expected.Command, actual.Command) {
 		messages = append(messages, "Command has changed")

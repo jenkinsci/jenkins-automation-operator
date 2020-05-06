@@ -3,6 +3,7 @@ package base
 import (
 	"context"
 	"fmt"
+
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
@@ -15,7 +16,7 @@ import (
 )
 
 // createRoute takes the ServiceName and Creates the Route based on it
-func  (r *ReconcileJenkinsBaseConfiguration) createRoute(meta metav1.ObjectMeta, serviceName string, config *v1alpha2.Jenkins) error{
+func (r *ReconcileJenkinsBaseConfiguration) createRoute(meta metav1.ObjectMeta, serviceName string, config *v1alpha2.Jenkins) error {
 	route := routev1.Route{}
 	name := fmt.Sprintf("%s-%s", config.ObjectMeta.Name, config.ObjectMeta.Namespace)
 	err := r.Client.Get(context.TODO(), types.NamespacedName{Name: name, Namespace: meta.Namespace}, &route)

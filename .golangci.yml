@@ -1,0 +1,29 @@
+run:
+  deadline: 10m
+linters-settings:
+  errcheck:
+    check-blank: false
+    ignore: fmt:.*,io/ioutil:^Read.*,Write
+
+linters:
+  enable-all: true
+  disable:
+    - funlen
+    - gocognit
+    - godox
+    - gomnd
+    - gochecknoglobals
+    - gochecknoinits
+    - lll
+    - prealloc
+    - wsl
+    - gocyclo
+    - scopelint
+    - dupl
+    - gosec
+    - maligned
+    - testpackage
+    - goerr113
+    - nakedret
+    - nestif
+    - godot

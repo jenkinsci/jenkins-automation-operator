@@ -21,6 +21,8 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
+const defaultNamespace = "default"
+
 func TestValidatePlugins(t *testing.T) {
 	log.SetupLogger(true)
 	baseReconcileLoop := New(configuration.Configuration{}, log.Log, client.JenkinsAPIConnectionSettings{})
@@ -557,7 +559,6 @@ func TestValidateContainerVolumeMounts(t *testing.T) {
 }
 
 func TestValidateConfigMapVolume(t *testing.T) {
-	namespace := "default"
 	t.Run("optional", func(t *testing.T) {
 		optional := true
 		volume := corev1.Volume{
@@ -580,8 +581,8 @@ func TestValidateConfigMapVolume(t *testing.T) {
 	})
 	t.Run("happy, required", func(t *testing.T) {
 		optional := false
-		configMap := corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: "configmap-name"}}
-		jenkins := &v1alpha2.Jenkins{ObjectMeta: metav1.ObjectMeta{Namespace: namespace}}
+		configMap := corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Namespace: defaultNamespace, Name: "configmap-name"}}
+		jenkins := &v1alpha2.Jenkins{ObjectMeta: metav1.ObjectMeta{Namespace: defaultNamespace}}
 		volume := corev1.Volume{
 			Name: "volume-name",
 			VolumeSource: corev1.VolumeSource{
@@ -608,8 +609,8 @@ func TestValidateConfigMapVolume(t *testing.T) {
 	})
 	t.Run("missing configmap", func(t *testing.T) {
 		optional := false
-		configMap := corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: "configmap-name"}}
-		jenkins := &v1alpha2.Jenkins{ObjectMeta: metav1.ObjectMeta{Namespace: namespace}}
+		configMap := corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Namespace: defaultNamespace, Name: "configmap-name"}}
+		jenkins := &v1alpha2.Jenkins{ObjectMeta: metav1.ObjectMeta{Namespace: defaultNamespace}}
 		volume := corev1.Volume{
 			Name: "volume-name",
 			VolumeSource: corev1.VolumeSource{
@@ -636,7 +637,6 @@ func TestValidateConfigMapVolume(t *testing.T) {
 }
 
 func TestValidateSecretVolume(t *testing.T) {
-	namespace := "default"
 	t.Run("optional", func(t *testing.T) {
 		optional := true
 		volume := corev1.Volume{
@@ -659,8 +659,8 @@ func TestValidateSecretVolume(t *testing.T) {
 	})
 	t.Run("happy, required", func(t *testing.T) {
 		optional := false
-		secret := corev1.Secret{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: "secret-name"}}
-		jenkins := &v1alpha2.Jenkins{ObjectMeta: metav1.ObjectMeta{Namespace: namespace}}
+		secret := corev1.Secret{ObjectMeta: metav1.ObjectMeta{Namespace: defaultNamespace, Name: "secret-name"}}
+		jenkins := &v1alpha2.Jenkins{ObjectMeta: metav1.ObjectMeta{Namespace: defaultNamespace}}
 		volume := corev1.Volume{
 			Name: "volume-name",
 			VolumeSource: corev1.VolumeSource{
@@ -685,8 +685,8 @@ func TestValidateSecretVolume(t *testing.T) {
 	})
 	t.Run("missing secret", func(t *testing.T) {
 		optional := false
-		secret := corev1.Secret{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: "secret-name"}}
-		jenkins := &v1alpha2.Jenkins{ObjectMeta: metav1.ObjectMeta{Namespace: namespace}}
+		secret := corev1.Secret{ObjectMeta: metav1.ObjectMeta{Namespace: defaultNamespace, Name: "secret-name"}}
+		jenkins := &v1alpha2.Jenkins{ObjectMeta: metav1.ObjectMeta{Namespace: defaultNamespace}}
 		volume := corev1.Volume{
 			Name: "volume-name",
 			VolumeSource: corev1.VolumeSource{
@@ -710,12 +710,11 @@ func TestValidateSecretVolume(t *testing.T) {
 }
 
 func TestValidateCustomization(t *testing.T) {
-	namespace := "default"
 	secretName := "secretName"
 	configMapName := "configmap-name"
 	jenkins := &v1alpha2.Jenkins{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: namespace,
+			Namespace: defaultNamespace,
 		},
 	}
 	t.Run("empty", func(t *testing.T) {
@@ -739,7 +738,7 @@ func TestValidateCustomization(t *testing.T) {
 		secret := &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      secretName,
-				Namespace: namespace,
+				Namespace: defaultNamespace,
 			},
 		}
 		fakeClient := fake.NewFakeClient()
@@ -764,13 +763,13 @@ func TestValidateCustomization(t *testing.T) {
 		configMap := &corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      configMapName,
-				Namespace: namespace,
+				Namespace: defaultNamespace,
 			},
 		}
 		secret := &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      secretName,
-				Namespace: namespace,
+				Namespace: defaultNamespace,
 			},
 		}
 		fakeClient := fake.NewFakeClient()
@@ -797,7 +796,7 @@ func TestValidateCustomization(t *testing.T) {
 		configMap := &corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      configMapName,
-				Namespace: namespace,
+				Namespace: defaultNamespace,
 			},
 		}
 		fakeClient := fake.NewFakeClient()
@@ -822,7 +821,7 @@ func TestValidateCustomization(t *testing.T) {
 		secret := &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      secretName,
-				Namespace: namespace,
+				Namespace: defaultNamespace,
 			},
 		}
 		fakeClient := fake.NewFakeClient()

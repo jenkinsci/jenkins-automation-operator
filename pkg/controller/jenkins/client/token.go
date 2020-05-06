@@ -35,10 +35,10 @@ func (jenkins *jenkins) GenerateToken(userName, tokenName string) (*UserToken, e
 	endpoint := token.base
 	data := map[string]string{"newTokenName": tokenName}
 	r, err := jenkins.Requester.Post(endpoint, nil, token.raw, data)
-
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't generate API token")
 	}
+	defer r.Body.Close()
 
 	if r.StatusCode == http.StatusOK {
 		if token.raw.Status == "ok" {

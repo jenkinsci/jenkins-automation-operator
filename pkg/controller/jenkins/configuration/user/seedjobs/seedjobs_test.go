@@ -2,8 +2,9 @@ package seedjobs
 
 import (
 	"context"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"testing"
+
+	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
@@ -23,6 +24,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	logf "sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
+
+const agentSecret = "test-secret"
 
 func jenkinsCustomResource() *v1alpha2.Jenkins {
 	return &v1alpha2.Jenkins{
@@ -81,7 +84,6 @@ func TestEnsureSeedJobs(t *testing.T) {
 		err = fakeClient.Create(ctx, jenkins)
 		assert.NoError(t, err)
 
-		agentSecret := "test-secret"
 		testNode := &gojenkins.Node{
 			Raw: &gojenkins.NodeResponse{
 				DisplayName: AgentName,
@@ -123,7 +125,6 @@ func TestEnsureSeedJobs(t *testing.T) {
 		ctx := context.TODO()
 		defer ctrl.Finish()
 
-		agentSecret := "test-secret"
 		jenkins := jenkinsCustomResource()
 		jenkins.Spec.SeedJobs = []v1alpha2.SeedJob{}
 
@@ -174,7 +175,6 @@ func TestCreateAgent(t *testing.T) {
 		ctx := context.TODO()
 		defer ctrl.Finish()
 
-		agentSecret := "test-secret"
 		jenkins := jenkinsCustomResource()
 
 		jenkinsClient := jenkinsclient.NewMockJenkins(ctrl)

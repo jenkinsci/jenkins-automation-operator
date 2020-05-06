@@ -194,7 +194,7 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsMasterPod(meta metav1.O
 		}
 		if r.Configuration.Jenkins.Spec.Backup.MakeBackupBeforePodDeletion && !r.Configuration.Jenkins.Status.BackupDoneBeforePodDeletion {
 			if r.Configuration.Jenkins.Status.LastBackup == r.Configuration.Jenkins.Status.PendingBackup {
-				r.Configuration.Jenkins.Status.PendingBackup = r.Configuration.Jenkins.Status.PendingBackup + 1
+				r.Configuration.Jenkins.Status.PendingBackup++
 			}
 			if err = backupAndRestore.Backup(true); err != nil {
 				return reconcile.Result{}, err

@@ -2,6 +2,7 @@ package resources
 
 import (
 	"fmt"
+
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
@@ -12,6 +13,7 @@ import (
 	"net"
 	"strings"
 )
+
 //ServiceKind the kind name for Service
 const ServiceKind = "Service"
 

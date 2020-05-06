@@ -11,6 +11,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const script = "some groovy code"
+
 func Test_ExecuteScript(t *testing.T) {
 	verifier := "verifier-text"
 	t.Run("logs have verifier text", func(t *testing.T) {
@@ -34,7 +36,6 @@ func Test_ExecuteScript(t *testing.T) {
 			BasicAuth: &gojenkins.BasicAuth{Username: "unused", Password: "unused"},
 		}
 
-		script := "some groovy code"
 		logs, err := jenkinsClient.executeScript(script, verifier)
 		assert.NoError(t, err, logs)
 	})
@@ -60,7 +61,6 @@ func Test_ExecuteScript(t *testing.T) {
 			BasicAuth: &gojenkins.BasicAuth{Username: "unused", Password: "unused"},
 		}
 
-		script := "some groovy code"
 		logs, err := jenkinsClient.executeScript(script, verifier)
 		assert.EqualError(t, err, "script execution failed", logs)
 		assert.Equal(t, response, logs)
@@ -82,7 +82,6 @@ func Test_ExecuteScript(t *testing.T) {
 			BasicAuth: &gojenkins.BasicAuth{Username: "unused", Password: "unused"},
 		}
 
-		script := "some groovy code"
 		logs, err := jenkinsClient.executeScript(script, verifier)
 		assert.EqualError(t, err, "invalid status code '500', logs ''", logs)
 	})

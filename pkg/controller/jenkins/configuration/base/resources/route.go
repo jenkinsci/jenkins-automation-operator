@@ -11,26 +11,27 @@ import (
 
 //RouteKind the kind name for route
 const RouteKind = "Route"
-var  isRouteAPIAvailable = false
-var  routeAPIChecked = false
+
+var isRouteAPIAvailable = false
+var routeAPIChecked = false
 
 // UpdateRoute returns new route matching the service
-func UpdateRoute(actual routev1.Route,jenkins *v1alpha2.Jenkins) routev1.Route {
+func UpdateRoute(actual routev1.Route, jenkins *v1alpha2.Jenkins) routev1.Route {
 	actualTargetService := actual.Spec.To
 	serviceName := GetJenkinsHTTPServiceName(jenkins)
-	if( actualTargetService.Name != serviceName ) {
+	if actualTargetService.Name != serviceName {
 		actual.Spec.To.Name = serviceName
 	}
 	port := jenkins.Spec.Service.Port
-	if( actual.Spec.Port.TargetPort.IntVal != port){
+	if actual.Spec.Port.TargetPort.IntVal != port {
 		actual.Spec.Port.TargetPort = intstr.FromInt(int(port))
 	}
 	return actual
 }
 
 //IsRouteAPIAvailable tells if the Route API is installed and discoverable
-func IsRouteAPIAvailable(clientSet *kubernetes.Clientset) (bool) {
-	if (routeAPIChecked){
+func IsRouteAPIAvailable(clientSet *kubernetes.Clientset) bool {
+	if routeAPIChecked {
 		return isRouteAPIAvailable
 	}
 	gv := schema.GroupVersion{

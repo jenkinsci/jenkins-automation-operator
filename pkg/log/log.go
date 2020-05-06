@@ -9,10 +9,10 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-// Log represents global logger
+// Log represents global logger.
 var Log = logf.Log.WithName("controller-jenkins")
 
-// Debug indicates that debug level is set
+// Debug indicates that debug level is set.
 var Debug bool
 
 const (
@@ -43,7 +43,7 @@ func fatalIfErr(err error, f func(format string, v ...interface{})) {
 	}
 }
 
-// SetupLogger setups global logger
+// SetupLogger setups global logger.
 func SetupLogger(debug bool) {
 	Debug = debug
 	logf.SetLogger(zapLogger(debug))

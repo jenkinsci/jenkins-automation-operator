@@ -5,9 +5,10 @@
 package client
 
 import (
+	"reflect"
+
 	"github.com/bndr/gojenkins"
 	"github.com/golang/mock/gomock"
-	"reflect"
 )
 
 // MockJenkins is a mock of Jenkins interface

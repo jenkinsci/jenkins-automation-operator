@@ -13,10 +13,10 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/notifications"
 	e "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/notifications/event"
-	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/event"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
 	"github.com/jenkinsci/kubernetes-operator/version"
@@ -119,7 +119,7 @@ func main() {
 		fatal(errors.Wrap(err, "failed to create Kubernetes client set"), *debug)
 	}
 
-	if( resources.IsRouteAPIAvailable(clientSet) ) {
+	if resources.IsRouteAPIAvailable(clientSet) {
 		log.Log.Info("Route API found: Route creation will be performed")
 	}
 	c := make(chan e.Event)

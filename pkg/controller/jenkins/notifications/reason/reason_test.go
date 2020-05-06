@@ -59,7 +59,6 @@ func TestUndefined_HasMessages(t *testing.T) {
 		podRestart := NewUndefined(KubernetesSource, []string{}, []string{}...)
 		assert.False(t, podRestart.HasMessages())
 	})
-
 }
 
 func TestPodRestartPrepend(t *testing.T) {

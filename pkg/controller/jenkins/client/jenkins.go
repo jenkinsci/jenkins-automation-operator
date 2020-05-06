@@ -16,7 +16,7 @@ var (
 	regex         = regexp.MustCompile("(<application-desc main-class=\"hudson.remoting.jnlp.Main\"><argument>)(?P<secret>[a-z0-9]*)")
 )
 
-// Jenkins defines Jenkins API
+// Jenkins defines Jenkins API.
 type Jenkins interface {
 	GenerateToken(userName, tokenName string) (*UserToken, error)
 	Info() (*gojenkins.ExecutorResponse, error)
@@ -62,7 +62,7 @@ type jenkins struct {
 	gojenkins.Jenkins
 }
 
-// JenkinsAPIConnectionSettings is struct that handle information about Jenkins API connection
+// JenkinsAPIConnectionSettings is struct that handle information about Jenkins API connection.
 type JenkinsAPIConnectionSettings struct {
 	Hostname    string
 	Port        int
@@ -86,7 +86,7 @@ func (t *setBearerToken) RoundTrip(r *http.Request) (*http.Response, error) {
 	return t.transport().RoundTrip(r)
 }
 
-// CreateOrUpdateJob creates or updates a job from config
+// CreateOrUpdateJob creates or updates a job from config.
 func (jenkins *jenkins) CreateOrUpdateJob(config, jobName string) (job *gojenkins.Job, created bool, err error) {
 	// create or update
 	job, err = jenkins.GetJob(jobName)
@@ -102,7 +102,7 @@ func (jenkins *jenkins) CreateOrUpdateJob(config, jobName string) (job *gojenkin
 	return job, false, errors.WithStack(err)
 }
 
-// BuildJenkinsAPIUrl returns Jenkins API URL
+// BuildJenkinsAPIUrl returns Jenkins API URL.
 func (j JenkinsAPIConnectionSettings) BuildJenkinsAPIUrl(serviceName string, serviceNamespace string, servicePort int32, serviceNodePort int32) string {
 	if j.Hostname == "" && j.Port == 0 {
 		return fmt.Sprintf("http://%s.%s:%d", serviceName, serviceNamespace, servicePort)
@@ -115,7 +115,7 @@ func (j JenkinsAPIConnectionSettings) BuildJenkinsAPIUrl(serviceName string, ser
 	return fmt.Sprintf("http://%s:%d", j.Hostname, j.Port)
 }
 
-// Validate validates jenkins API connection settings
+// Validate validates jenkins API connection settings.
 func (j JenkinsAPIConnectionSettings) Validate() error {
 	if j.Port > 0 && j.UseNodePort {
 		return errors.New("can't use service port and nodePort both. Please use port or nodePort")
@@ -132,12 +132,12 @@ func (j JenkinsAPIConnectionSettings) Validate() error {
 	return nil
 }
 
-// NewUserAndPasswordAuthorization creates Jenkins API client with user and password authorization
+// NewUserAndPasswordAuthorization creates Jenkins API client with user and password authorization.
 func NewUserAndPasswordAuthorization(url, userName, passwordOrToken string) (Jenkins, error) {
 	return newClient(url, userName, passwordOrToken)
 }
 
-// NewBearerTokenAuthorization creates Jenkins API client with bearer token authorization
+// NewBearerTokenAuthorization creates Jenkins API client with bearer token authorization.
 func NewBearerTokenAuthorization(url, token string) (Jenkins, error) {
 	return newClient(url, "", token)
 }
@@ -194,10 +194,11 @@ func isNotFoundError(err error) bool {
 
 func (jenkins *jenkins) GetNodeSecret(name string) (string, error) {
 	var content string
-	_, err := jenkins.Requester.GetXML(fmt.Sprintf("/computer/%s/slave-agent.jnlp", name), &content, nil)
+	r, err := jenkins.Requester.GetXML(fmt.Sprintf("/computer/%s/slave-agent.jnlp", name), &content, nil)
 	if err != nil {
 		return "", errors.WithStack(err)
 	}
+	defer r.Body.Close()
 
 	match := regex.FindStringSubmatch(content)
 	if match == nil {

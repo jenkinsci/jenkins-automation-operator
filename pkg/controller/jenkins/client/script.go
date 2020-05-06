@@ -48,6 +48,7 @@ func (jenkins *jenkins) executeScript(script string, verifier string) (string, e
 	if err != nil {
 		return "", errors.Wrapf(err, "couldn't execute groovy script, logs '%s'", output)
 	}
+	defer r.Body.Close()
 
 	if r.StatusCode != http.StatusOK {
 		return output, errors.Errorf("invalid status code '%d', logs '%s'", r.StatusCode, output)
