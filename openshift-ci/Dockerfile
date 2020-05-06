@@ -33,6 +33,10 @@ RUN chmod +x kubectl && mv kubectl $GOPATH/bin/
 RUN curl -Lo operator-sdk $OPERATOR_SDK_DOWNLOAD_SITE/$OPERATOR_SDK_VERSION/$OPERATOR_SDK_DIST
 RUN chmod +x operator-sdk && mv operator-sdk $GOPATH/bin/
 RUN mkdir -p ${GOPATH}/src/${GO_PACKAGE_PATH}/
+RUN yum -y install --nodocs git
+
+WORKDIR ${GOPATH}/src/${GO_PACKAGE_PATH}
+
 RUN yum -y install --nodocs git make
 RUN yum -y install --nodocs git make
 RUN go get -u golang.org/x/lint/golint && go install $_

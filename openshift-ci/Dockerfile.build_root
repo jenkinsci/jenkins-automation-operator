@@ -42,5 +42,3 @@ RUN go get -u github.com/mrtazz/checkmake/cmd/checkmake && go install $_
 WORKDIR ${GOPATH}/src/${GO_PACKAGE_PATH}
 ENTRYPOINT [ "/bin/bash" ]
 
-
-
