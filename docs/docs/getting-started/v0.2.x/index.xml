@@ -152,7 +152,7 @@ def workdir = &amp;quot;${workspace}/src/github.com/jenkinsci/kubernetes-operato
 
 podTemplate(label: label,
         containers: [
-                containerTemplate(name: &#39;jnlp&#39;, image: &#39;jenkins/jnlp-slave:alpine&#39;),
+                containerTemplate(name: &#39;jnlp&#39;, image: &#39;jenkins/inbound-agent:alpine&#39;),
                 containerTemplate(name: &#39;go&#39;, image: &#39;golang:1-alpine&#39;, command: &#39;cat&#39;, ttyEnabled: true),
         ],
         envVars: [

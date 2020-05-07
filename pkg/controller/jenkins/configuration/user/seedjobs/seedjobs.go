@@ -409,7 +409,7 @@ func agentDeployment(jenkins *v1alpha2.Jenkins, namespace string, agentName stri
 					Containers: []corev1.Container{
 						{
 							Name:  "jnlp",
-							Image: "jenkins/jnlp-slave:alpine",
+							Image: "jenkins/inbound-agent:alpine",
 							Env: []corev1.EnvVar{
 								{
 									Name: "JENKINS_TUNNEL",
