@@ -28,6 +28,9 @@ jenkins:
   # It's recommended to use LTS (tag: "lts") version
   image: jenkins/jenkins:lts
 
+  # env contains jenkins container environment variables
+  env: []
+
   # imagePullPolicy defines policy for pulling images
   imagePullPolicy: Always
 
