@@ -77,6 +77,7 @@ Before any big pull request please consult the maintainers to ensure a common di
 ## Presentations
 
 - [Jenkins World 2019 Lisbon](assets/Jenkins_World_Lisbon_2019%20-Jenkins_Kubernetes_Operator.pdf)
+- [Jenkins Online Meetup 2020](assets/Jenkins_Online_Meetup-Jenkins_Kubernetes_Operator.pdf)
 
 ## About the authors
 
