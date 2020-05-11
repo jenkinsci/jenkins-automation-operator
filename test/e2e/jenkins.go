@@ -163,7 +163,7 @@ func createJenkinsAPIClientFromServiceAccount(t *testing.T, jenkins *v1alpha2.Je
 		return nil, err
 	}
 	config := configuration.Configuration{Jenkins: jenkins, ClientSet: *clientSet, Config: framework.Global.KubeConfig}
-	r := base.New(config, nil, jenkinsclient.JenkinsAPIConnectionSettings{})
+	r := base.New(config, jenkinsclient.JenkinsAPIConnectionSettings{})
 
 	token, _, err := r.Configuration.Exec(podName, resources.JenkinsMasterContainerName, []string{"cat", "/var/run/secrets/kubernetes.io/serviceaccount/token"})
 	if err != nil {
