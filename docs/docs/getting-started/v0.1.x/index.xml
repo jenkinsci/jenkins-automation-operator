@@ -1416,8 +1416,6 @@ version: 3.10.0
 version: &amp;ldquo;1.74&amp;rdquo;
 - name: configuration-as-code
 version: &amp;ldquo;1.19&amp;rdquo;
-- name: configuration-as-code-support
-version: &amp;ldquo;1.19&amp;rdquo;
 - name: kubernetes-credentials-provider
 version: 0.12.1&lt;/p&gt;
 &lt;/td&gt;

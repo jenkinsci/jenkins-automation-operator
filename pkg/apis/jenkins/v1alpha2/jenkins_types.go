@@ -362,8 +362,6 @@ type JenkinsMaster struct {
 	// version: "1.74"
 	// - name: configuration-as-code
 	// version: "1.19"
-	// - name: configuration-as-code-support
-	// version: "1.19"
 	// - name: kubernetes-credentials-provider
 	// version: 0.12.1
 	BasePlugins []Plugin `json:"basePlugins,omitempty"`

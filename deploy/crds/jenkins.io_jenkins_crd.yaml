@@ -154,8 +154,7 @@ spec:
                     Defaults to : - name: kubernetes version: 1.15.7 - name: workflow-job
                     version: "2.32" - name: workflow-aggregator version: "2.6" - name:
                     git version: 3.10.0 - name: job-dsl version: "1.74" - name: configuration-as-code
-                    version: "1.19" - name: configuration-as-code-support version:
-                    "1.19" - name: kubernetes-credentials-provider version: 0.12.1'
+                    version: "1.19" - name: kubernetes-credentials-provider version: 0.12.1'
                   items:
                     description: Plugin defines Jenkins plugin
                     properties:
