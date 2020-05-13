@@ -66,7 +66,7 @@ Selected content:
 We have a dedicated channel called `#jenkins-operator` on [virtuslab-oss.slack.com](https://virtuslab-oss.slack.com) 
 Fill out ([Invite form](https://forms.gle/X3X8qA1XMirdBuEH7)) and come say hi ! 
 
-On every Thursday we have a community call at 16:30 CET on [Gooole Meet](https://meet.google.com/rsf-nhte-gnq). Feel free to join, ask questions and have fun :)
+Every Thursday we have a community call at 16:30 CET on [Google Meet](https://meet.google.com/rsf-nhte-gnq). Feel free to join, ask questions and have fun :)
 
 ## Contribution
 
