@@ -148,7 +148,7 @@ func (r *ReconcileJenkins) Reconcile(request reconcile.Request) (reconcile.Resul
 		reconcileErrors[request.Name] = lastErrors
 		if lastErrors.counter >= reconcileFailLimit {
 			if log.Debug {
-				logger.V(log.VDebug).Info(fmt.Sprintf("Reconcile loop failed %d times with the same error, giving up: %+v", reconcileFailLimit, err))
+				logger.V(log.VWarn).Info(fmt.Sprintf("Reconcile loop failed %d times with the same error, giving up: %+v", reconcileFailLimit, err))
 			} else {
 				logger.V(log.VWarn).Info(fmt.Sprintf("Reconcile loop failed %d times with the same error, giving up: %s", reconcileFailLimit, err))
 			}
@@ -166,7 +166,7 @@ func (r *ReconcileJenkins) Reconcile(request reconcile.Request) (reconcile.Resul
 		}
 
 		if log.Debug {
-			logger.V(log.VDebug).Info(fmt.Sprintf("Reconcile loop failed: %+v", err))
+			logger.V(log.VWarn).Info(fmt.Sprintf("Reconcile loop failed: %+v", err))
 		} else if err.Error() != fmt.Sprintf("Operation cannot be fulfilled on jenkins.jenkins.io \"%s\": the object has been modified; please apply your changes to the latest version and try again", request.Name) {
 			logger.V(log.VWarn).Info(fmt.Sprintf("Reconcile loop failed: %s", err))
 		}
