@@ -11,7 +11,9 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/notifications/event"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/notifications/reason"
+
 	stackerr "github.com/pkg/errors"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -25,7 +27,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-// Configuration holds required for Jenkins configuration
+// Configuration holds required for Jenkins configuration.
 type Configuration struct {
 	Client                       client.Client
 	ClientSet                    kubernetes.Clientset
@@ -36,7 +38,7 @@ type Configuration struct {
 	JenkinsAPIConnectionSettings jenkinsclient.JenkinsAPIConnectionSettings
 }
 
-// RestartJenkinsMasterPod terminate Jenkins master pod and notifies about it
+// RestartJenkinsMasterPod terminate Jenkins master pod and notifies about it.
 func (c *Configuration) RestartJenkinsMasterPod(reason reason.Reason) error {
 	currentJenkinsMasterPod, err := c.GetJenkinsMasterPod()
 	if err != nil {
@@ -57,9 +59,9 @@ func (c *Configuration) RestartJenkinsMasterPod(reason reason.Reason) error {
 	return stackerr.WithStack(c.Client.Delete(context.TODO(), currentJenkinsMasterPod))
 }
 
-// GetJenkinsMasterPod gets the jenkins master pod
+// GetJenkinsMasterPod gets the jenkins master pod.
 func (c *Configuration) GetJenkinsMasterPod() (*corev1.Pod, error) {
-	jenkinsMasterPodName := resources.GetJenkinsMasterPodName(*c.Jenkins)
+	jenkinsMasterPodName := resources.GetJenkinsMasterPodName(c.Jenkins)
 	currentJenkinsMasterPod := &corev1.Pod{}
 	err := c.Client.Get(context.TODO(), types.NamespacedName{Name: jenkinsMasterPodName, Namespace: c.Jenkins.Namespace}, currentJenkinsMasterPod)
 	if err != nil {
@@ -68,7 +70,18 @@ func (c *Configuration) GetJenkinsMasterPod() (*corev1.Pod, error) {
 	return currentJenkinsMasterPod, nil
 }
 
-// IsJenkinsTerminating returns true if the Jenkins pod is terminating
+// GetJenkinsMasterPod gets the jenkins master pod.
+func (c *Configuration) GetJenkinsDeployment() (*appsv1.Deployment, error) {
+	jenkinsDeploymentName := resources.GetJenkinsDeploymentName(c.Jenkins)
+	currentJenkinsDeployment := &appsv1.Deployment{}
+	err := c.Client.Get(context.TODO(), types.NamespacedName{Name: jenkinsDeploymentName, Namespace: c.Jenkins.Namespace}, currentJenkinsDeployment)
+	if err != nil {
+		return nil, stackerr.WithStack(err)
+	}
+	return currentJenkinsDeployment, nil
+}
+
+// IsJenkinsTerminating returns true if the Jenkins pod is terminating.
 func (c *Configuration) IsJenkinsTerminating(pod corev1.Pod) bool {
 	return pod.ObjectMeta.DeletionTimestamp != nil
 }
@@ -80,7 +93,7 @@ func (c *Configuration) CreateResource(obj metav1.Object) error {
 		return stackerr.Errorf("is not a %T a runtime.Object", obj)
 	}
 
-	// Set Jenkins instance as the owner and controller
+	// Set Jenkins instance as the owner and controller.
 	if err := controllerutil.SetControllerReference(c.Jenkins, obj, c.Scheme); err != nil {
 		return stackerr.WithStack(err)
 	}
@@ -88,7 +101,7 @@ func (c *Configuration) CreateResource(obj metav1.Object) error {
 	return c.Client.Create(context.TODO(), runtimeObj) // don't wrap error
 }
 
-// UpdateResource is updating kubernetes resource and references it to Jenkins CR
+// UpdateResource is updating kubernetes resource and references it to Jenkins CR.
 func (c *Configuration) UpdateResource(obj metav1.Object) error {
 	runtimeObj, ok := obj.(runtime.Object)
 	if !ok {
@@ -101,7 +114,7 @@ func (c *Configuration) UpdateResource(obj metav1.Object) error {
 	return c.Client.Update(context.TODO(), runtimeObj) // don't wrap error
 }
 
-// CreateOrUpdateResource is creating or updating kubernetes resource and references it to Jenkins CR
+// CreateOrUpdateResource is creating or updating kubernetes resource and references it to Jenkins CR.
 func (c *Configuration) CreateOrUpdateResource(obj metav1.Object) error {
 	runtimeObj, ok := obj.(runtime.Object)
 	if !ok {
@@ -121,7 +134,7 @@ func (c *Configuration) CreateOrUpdateResource(obj metav1.Object) error {
 	return nil
 }
 
-// Exec executes command in the given pod and it's container
+// Exec executes command in the given pod and it's container.
 func (c *Configuration) Exec(podName, containerName string, command []string) (stdout, stderr bytes.Buffer, err error) {
 	req := c.ClientSet.CoreV1().RESTClient().Post().
 		Resource("pods").
@@ -155,7 +168,7 @@ func (c *Configuration) Exec(podName, containerName string, command []string) (s
 	return
 }
 
-// GetJenkinsMasterContainer returns the Jenkins master container from the CR
+// GetJenkinsMasterContainer returns the Jenkins master container from the CR.
 func (c *Configuration) GetJenkinsMasterContainer() *v1alpha2.Container {
 	if len(c.Jenkins.Spec.Master.Containers) > 0 {
 		// the first container is the Jenkins master, it is forced jenkins_controller.go
@@ -164,7 +177,7 @@ func (c *Configuration) GetJenkinsMasterContainer() *v1alpha2.Container {
 	return nil
 }
 
-// GetJenkinsClient gets jenkins client from a configuration
+// GetJenkinsClient gets jenkins client from a configuration.
 func (c *Configuration) GetJenkinsClient() (jenkinsclient.Jenkins, error) {
 	switch c.Jenkins.Spec.JenkinsAPISettings.AuthorizationStrategy {
 	case v1alpha2.ServiceAccountAuthorizationStrategy:
@@ -194,14 +207,14 @@ func (c *Configuration) getJenkinsAPIUrl() (string, error) {
 	return jenkinsURL, nil
 }
 
-// GetJenkinsClientFromServiceAccount gets jenkins client from a serviceAccount
+// GetJenkinsClientFromServiceAccount gets jenkins client from a serviceAccount.
 func (c *Configuration) GetJenkinsClientFromServiceAccount() (jenkinsclient.Jenkins, error) {
 	jenkinsAPIUrl, err := c.getJenkinsAPIUrl()
 	if err != nil {
 		return nil, err
 	}
 
-	podName := resources.GetJenkinsMasterPodName(*c.Jenkins)
+	podName := resources.GetJenkinsMasterPodName(c.Jenkins)
 	token, _, err := c.Exec(podName, resources.JenkinsMasterContainerName, []string{"cat", "/var/run/secrets/kubernetes.io/serviceaccount/token"})
 	if err != nil {
 		return nil, err
@@ -210,7 +223,7 @@ func (c *Configuration) GetJenkinsClientFromServiceAccount() (jenkinsclient.Jenk
 	return jenkinsclient.NewBearerTokenAuthorization(jenkinsAPIUrl, token.String())
 }
 
-// GetJenkinsClientFromSecret gets jenkins client from a secret
+// GetJenkinsClientFromSecret gets jenkins client from a secret.
 func (c *Configuration) GetJenkinsClientFromSecret() (jenkinsclient.Jenkins, error) {
 	jenkinsURL, err := c.getJenkinsAPIUrl()
 	if err != nil {

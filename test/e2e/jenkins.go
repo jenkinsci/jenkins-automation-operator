@@ -156,7 +156,7 @@ func createJenkinsCR(t *testing.T, name, namespace string, seedJob *[]v1alpha2.S
 
 func createJenkinsAPIClientFromServiceAccount(t *testing.T, jenkins *v1alpha2.Jenkins, jenkinsAPIURL string) (jenkinsclient.Jenkins, error) {
 	t.Log("Creating Jenkins API client from service account")
-	podName := resources.GetJenkinsMasterPodName(*jenkins)
+	podName := resources.GetJenkinsMasterPodName(jenkins)
 
 	clientSet, err := kubernetes.NewForConfig(framework.Global.KubeConfig)
 	if err != nil {
@@ -197,7 +197,7 @@ func verifyJenkinsAPIConnection(t *testing.T, jenkins *v1alpha2.Jenkins, namespa
 	}, &service)
 	require.NoError(t, err)
 
-	podName := resources.GetJenkinsMasterPodName(*jenkins)
+	podName := resources.GetJenkinsMasterPodName(jenkins)
 	port, cleanUpFunc, waitFunc, portForwardFunc, err := setupPortForwardToPod(t, namespace, podName, int(constants.DefaultHTTPPortInt32))
 	if err != nil {
 		t.Fatal(err)
