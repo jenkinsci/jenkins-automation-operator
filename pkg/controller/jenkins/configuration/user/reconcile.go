@@ -3,6 +3,7 @@ package user
 import (
 	"strings"
 
+	"github.com/go-logr/logr"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/backuprestore"
@@ -10,8 +11,7 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/user/casc"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/user/seedjobs"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/groovy"
-
-	"github.com/go-logr/logr"
+	"github.com/jenkinsci/kubernetes-operator/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -23,11 +23,11 @@ type ReconcileUserConfiguration struct {
 }
 
 // New create structure which takes care of user configuration
-func New(configuration configuration.Configuration, jenkinsClient jenkinsclient.Jenkins, logger logr.Logger) *ReconcileUserConfiguration {
+func New(configuration configuration.Configuration, jenkinsClient jenkinsclient.Jenkins) *ReconcileUserConfiguration {
 	return &ReconcileUserConfiguration{
 		Configuration: configuration,
 		jenkinsClient: jenkinsClient,
-		logger:        logger,
+		logger:        log.Log.WithValues("cr", configuration.Jenkins.Name),
 	}
 }
 

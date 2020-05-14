@@ -39,10 +39,10 @@ type ReconcileJenkinsBaseConfiguration struct {
 }
 
 // New create structure which takes care of base configuration
-func New(config configuration.Configuration, logger logr.Logger, jenkinsAPIConnectionSettings jenkinsclient.JenkinsAPIConnectionSettings) *ReconcileJenkinsBaseConfiguration {
+func New(config configuration.Configuration, jenkinsAPIConnectionSettings jenkinsclient.JenkinsAPIConnectionSettings) *ReconcileJenkinsBaseConfiguration {
 	return &ReconcileJenkinsBaseConfiguration{
 		Configuration:                config,
-		logger:                       logger,
+		logger:                       log.Log.WithValues("cr", config.Jenkins.Name),
 		jenkinsAPIConnectionSettings: jenkinsAPIConnectionSettings,
 	}
 }

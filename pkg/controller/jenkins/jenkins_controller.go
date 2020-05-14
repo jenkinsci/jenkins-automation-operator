@@ -18,8 +18,6 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/notifications/reason"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/plugins"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
-
-	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -43,6 +41,8 @@ type reconcileError struct {
 }
 
 var reconcileErrors = map[string]reconcileError{}
+
+var logx = log.Log
 
 // Add creates a new Jenkins Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
@@ -124,10 +124,10 @@ type ReconcileJenkins struct {
 // Reconcile it's a main reconciliation loop which maintain desired state based on Jenkins.Spec.
 func (r *ReconcileJenkins) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	reconcileFailLimit := uint64(10)
-	logger := r.buildLogger(request.Name)
+	logger := logx.WithValues("cr", request.Name)
 	logger.V(log.VDebug).Info("Reconciling Jenkins")
 
-	result, jenkins, err := r.reconcile(request, logger)
+	result, jenkins, err := r.reconcile(request)
 	if err != nil && apierrors.IsConflict(err) {
 		return reconcile.Result{Requeue: true}, nil
 	} else if err != nil {
@@ -192,7 +192,8 @@ func (r *ReconcileJenkins) Reconcile(request reconcile.Request) (reconcile.Resul
 	return result, nil
 }
 
-func (r *ReconcileJenkins) reconcile(request reconcile.Request, logger logr.Logger) (reconcile.Result, *v1alpha2.Jenkins, error) {
+func (r *ReconcileJenkins) reconcile(request reconcile.Request) (reconcile.Result, *v1alpha2.Jenkins, error) {
+	logger := logx.WithValues("cr", request.Name)
 	// Fetch the Jenkins instance
 	jenkins := &v1alpha2.Jenkins{}
 	var err error
@@ -208,7 +209,7 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request, logger logr.Logg
 		return reconcile.Result{}, nil, errors.WithStack(err)
 	}
 	var requeue bool
-	requeue, err = r.setDefaults(jenkins, logger)
+	requeue, err = r.setDefaults(jenkins)
 	if err != nil {
 		return reconcile.Result{}, jenkins, err
 	}
@@ -216,7 +217,7 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request, logger logr.Logg
 		return reconcile.Result{Requeue: true}, jenkins, nil
 	}
 
-	requeue, err = r.handleDeprecatedData(jenkins, logger)
+	requeue, err = r.handleDeprecatedData(jenkins)
 	if err != nil {
 		return reconcile.Result{}, jenkins, err
 	}
@@ -235,7 +236,7 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request, logger logr.Logg
 	}
 
 	// Reconcile base configuration
-	baseConfiguration := base.New(config, logger, r.jenkinsAPIConnectionSettings)
+	baseConfiguration := base.New(config, r.jenkinsAPIConnectionSettings)
 
 	var baseMessages []string
 	baseMessages, err = baseConfiguration.Validate(jenkins)
@@ -289,7 +290,7 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request, logger logr.Logg
 		logger.Info(message)
 	}
 	// Reconcile user configuration
-	userConfiguration := user.New(config, jenkinsClient, logger)
+	userConfiguration := user.New(config, jenkinsClient)
 
 	var messages []string
 	messages, err = userConfiguration.Validate(jenkins)
@@ -341,12 +342,9 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request, logger logr.Logg
 	return reconcile.Result{}, jenkins, nil
 }
 
-func (r *ReconcileJenkins) buildLogger(jenkinsName string) logr.Logger {
-	return log.Log.WithValues("cr", jenkinsName)
-}
-
-func (r *ReconcileJenkins) setDefaults(jenkins *v1alpha2.Jenkins, logger logr.Logger) (requeue bool, err error) {
+func (r *ReconcileJenkins) setDefaults(jenkins *v1alpha2.Jenkins) (requeue bool, err error) {
 	changed := false
+	logger := logx.WithValues("cr", jenkins.Name)
 
 	var jenkinsContainer v1alpha2.Container
 	if len(jenkins.Spec.Master.Containers) == 0 {
@@ -455,7 +453,7 @@ func (r *ReconcileJenkins) setDefaults(jenkins *v1alpha2.Jenkins, logger logr.Lo
 	}
 	if len(jenkins.Spec.Master.Containers) > 1 {
 		for i, container := range jenkins.Spec.Master.Containers[1:] {
-			if setDefaultsForContainer(jenkins, i+1, logger.WithValues("container", container.Name)) {
+			if r.setDefaultsForContainer(jenkins, container.Name, i+1) {
 				changed = true
 			}
 		}
@@ -502,8 +500,9 @@ func isJavaOpsVariableNotSet(container v1alpha2.Container) bool {
 	return true
 }
 
-func setDefaultsForContainer(jenkins *v1alpha2.Jenkins, containerIndex int, logger logr.Logger) bool {
+func (r *ReconcileJenkins) setDefaultsForContainer(jenkins *v1alpha2.Jenkins, containerName string, containerIndex int) bool {
 	changed := false
+	logger := logx.WithValues("cr", jenkins.Name, "container", containerName)
 
 	if len(jenkins.Spec.Master.Containers[containerIndex].ImagePullPolicy) == 0 {
 		logger.Info(fmt.Sprintf("Setting default container image pull policy: %s", corev1.PullAlways))
@@ -539,8 +538,9 @@ func basePlugins() (result []v1alpha2.Plugin) {
 	return
 }
 
-func (r *ReconcileJenkins) handleDeprecatedData(jenkins *v1alpha2.Jenkins, logger logr.Logger) (requeue bool, err error) {
+func (r *ReconcileJenkins) handleDeprecatedData(jenkins *v1alpha2.Jenkins) (requeue bool, err error) {
 	changed := false
+	logger := logx.WithValues("cr", jenkins.Name)
 
 	if len(jenkins.Spec.Master.AnnotationsDeprecated) > 0 {
 		changed = true

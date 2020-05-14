@@ -105,7 +105,7 @@ func TestCompareVolumes(t *testing.T) {
 				Volumes:            resources.GetJenkinsMasterPodBaseVolumes(jenkins),
 			},
 		}
-		reconciler := New(configuration.Configuration{Jenkins: jenkins}, nil, client.JenkinsAPIConnectionSettings{})
+		reconciler := New(configuration.Configuration{Jenkins: jenkins}, client.JenkinsAPIConnectionSettings{})
 
 		got := reconciler.compareVolumes(pod)
 
@@ -129,7 +129,7 @@ func TestCompareVolumes(t *testing.T) {
 				Volumes:            resources.GetJenkinsMasterPodBaseVolumes(jenkins),
 			},
 		}
-		reconciler := New(configuration.Configuration{Jenkins: jenkins}, nil, client.JenkinsAPIConnectionSettings{})
+		reconciler := New(configuration.Configuration{Jenkins: jenkins}, client.JenkinsAPIConnectionSettings{})
 
 		got := reconciler.compareVolumes(pod)
 
@@ -153,7 +153,7 @@ func TestCompareVolumes(t *testing.T) {
 				Volumes:            append(resources.GetJenkinsMasterPodBaseVolumes(jenkins), corev1.Volume{Name: "added"}),
 			},
 		}
-		reconciler := New(configuration.Configuration{Jenkins: jenkins}, nil, client.JenkinsAPIConnectionSettings{})
+		reconciler := New(configuration.Configuration{Jenkins: jenkins}, client.JenkinsAPIConnectionSettings{})
 
 		got := reconciler.compareVolumes(pod)
 
@@ -636,7 +636,7 @@ func TestEnsureExtraRBAC(t *testing.T) {
 			Jenkins: jenkins,
 			Scheme:  scheme.Scheme,
 		}
-		reconciler := New(config, log.Log, client.JenkinsAPIConnectionSettings{})
+		reconciler := New(config, client.JenkinsAPIConnectionSettings{})
 		metaObject := resources.NewResourceObjectMeta(jenkins)
 
 		// when
@@ -677,7 +677,7 @@ func TestEnsureExtraRBAC(t *testing.T) {
 			Jenkins: jenkins,
 			Scheme:  scheme.Scheme,
 		}
-		reconciler := New(config, log.Log, client.JenkinsAPIConnectionSettings{})
+		reconciler := New(config, client.JenkinsAPIConnectionSettings{})
 		metaObject := resources.NewResourceObjectMeta(jenkins)
 
 		// when
@@ -724,7 +724,7 @@ func TestEnsureExtraRBAC(t *testing.T) {
 			Jenkins: jenkins,
 			Scheme:  scheme.Scheme,
 		}
-		reconciler := New(config, log.Log, client.JenkinsAPIConnectionSettings{})
+		reconciler := New(config, client.JenkinsAPIConnectionSettings{})
 		metaObject := resources.NewResourceObjectMeta(jenkins)
 
 		// when
@@ -772,7 +772,7 @@ func TestEnsureExtraRBAC(t *testing.T) {
 			Jenkins: jenkins,
 			Scheme:  scheme.Scheme,
 		}
-		reconciler := New(config, log.Log, client.JenkinsAPIConnectionSettings{})
+		reconciler := New(config, client.JenkinsAPIConnectionSettings{})
 		metaObject := resources.NewResourceObjectMeta(jenkins)
 
 		// when
