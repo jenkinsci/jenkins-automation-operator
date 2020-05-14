@@ -1,7 +1,7 @@
 ARG GO_VERSION
 
 # build stage
-FROM golang:$GO_VERSION-alpine3.10 AS build-stage
+FROM golang:$GO_VERSION-alpine3.11 AS build-stage
 ARG OPERATOR_SDK_VERSION
 ENV GO111MODULE=on
 RUN apk --no-cache add git curl make \
