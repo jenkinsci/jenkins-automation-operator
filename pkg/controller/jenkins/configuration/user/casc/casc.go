@@ -9,26 +9,29 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/groovy"
 
-	"github.com/go-logr/logr"
 	k8s "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const groovyUtf8MaxStringLength = 65535
 
-// ConfigurationAsCode defines API which configures Jenkins with help Configuration as a code plugin
-type ConfigurationAsCode struct {
+// ConfigurationAsCode defines client for configurationAsCode
+type ConfigurationAsCode interface {
+	Ensure(jenkins *v1alpha2.Jenkins) (requeue bool, err error)
+}
+
+type configurationAsCode struct {
 	groovyClient *groovy.Groovy
 }
 
 // New creates new instance of ConfigurationAsCode
-func New(jenkinsClient jenkinsclient.Jenkins, k8sClient k8s.Client, logger logr.Logger, jenkins *v1alpha2.Jenkins) *ConfigurationAsCode {
-	return &ConfigurationAsCode{
-		groovyClient: groovy.New(jenkinsClient, k8sClient, logger, jenkins, "user-casc", jenkins.Spec.ConfigurationAsCode.Customization),
+func New(jenkinsClient jenkinsclient.Jenkins, k8sClient k8s.Client, jenkins *v1alpha2.Jenkins) ConfigurationAsCode {
+	return &configurationAsCode{
+		groovyClient: groovy.New(jenkinsClient, k8sClient, jenkins, "user-casc", jenkins.Spec.ConfigurationAsCode.Customization),
 	}
 }
 
 // Ensure configures Jenkins with help Configuration as a code plugin
-func (c *ConfigurationAsCode) Ensure(jenkins *v1alpha2.Jenkins) (requeue bool, err error) {
+func (c *configurationAsCode) Ensure(jenkins *v1alpha2.Jenkins) (requeue bool, err error) {
 	requeue, err = c.groovyClient.WaitForSecretSynchronization(resources.ConfigurationAsCodeSecretVolumePath)
 	if err != nil || requeue {
 		return requeue, err

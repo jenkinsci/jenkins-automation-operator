@@ -30,14 +30,14 @@ type Groovy struct {
 }
 
 // New creates new instance of Groovy
-func New(jenkinsClient jenkinsclient.Jenkins, k8sClient k8s.Client, logger logr.Logger, jenkins *v1alpha2.Jenkins, configurationType string, customization v1alpha2.Customization) *Groovy {
+func New(jenkinsClient jenkinsclient.Jenkins, k8sClient k8s.Client, jenkins *v1alpha2.Jenkins, configurationType string, customization v1alpha2.Customization) *Groovy {
 	return &Groovy{
 		jenkinsClient:     jenkinsClient,
 		k8sClient:         k8sClient,
-		logger:            logger,
 		jenkins:           jenkins,
 		configurationType: configurationType,
 		customization:     customization,
+		logger:            log.Log.WithValues("cr", jenkins.Name),
 	}
 }
 

@@ -16,7 +16,7 @@ import (
 )
 
 // ValidateSeedJobs verify seed jobs configuration
-func (s *SeedJobs) ValidateSeedJobs(jenkins v1alpha2.Jenkins) ([]string, error) {
+func (s *seedJobs) ValidateSeedJobs(jenkins v1alpha2.Jenkins) ([]string, error) {
 	var messages []string
 
 	if msg := s.validateIfIDIsUnique(jenkins.Spec.SeedJobs); len(msg) > 0 {
@@ -118,7 +118,7 @@ func (s *SeedJobs) ValidateSeedJobs(jenkins v1alpha2.Jenkins) ([]string, error) 
 	return messages, nil
 }
 
-func (s *SeedJobs) validateSchedule(job v1alpha2.SeedJob, str string, key string) []string {
+func (s *seedJobs) validateSchedule(job v1alpha2.SeedJob, str string, key string) []string {
 	var messages []string
 	_, err := cron.Parse(str)
 	if err != nil {
@@ -127,7 +127,7 @@ func (s *SeedJobs) validateSchedule(job v1alpha2.SeedJob, str string, key string
 	return messages
 }
 
-func (s *SeedJobs) validateGitHubPushTrigger(jenkins v1alpha2.Jenkins) []string {
+func (s *seedJobs) validateGitHubPushTrigger(jenkins v1alpha2.Jenkins) []string {
 	var messages []string
 	if err := checkPluginExists(jenkins, "github"); err != nil {
 		return append(messages, fmt.Sprintf("githubPushTrigger cannot be enabled: %s", err))
@@ -135,7 +135,7 @@ func (s *SeedJobs) validateGitHubPushTrigger(jenkins v1alpha2.Jenkins) []string 
 	return messages
 }
 
-func (s *SeedJobs) validateBitbucketPushTrigger(jenkins v1alpha2.Jenkins) []string {
+func (s *seedJobs) validateBitbucketPushTrigger(jenkins v1alpha2.Jenkins) []string {
 	var messages []string
 	if err := checkPluginExists(jenkins, "bitbucket"); err != nil {
 		return append(messages, fmt.Sprintf("bitbucketPushTrigger cannot be enabled: %s", err))
@@ -164,7 +164,7 @@ func checkPluginExists(jenkins v1alpha2.Jenkins, name string) error {
 	return nil
 }
 
-func (s *SeedJobs) validateIfIDIsUnique(seedJobs []v1alpha2.SeedJob) []string {
+func (s *seedJobs) validateIfIDIsUnique(seedJobs []v1alpha2.SeedJob) []string {
 	var messages []string
 	ids := map[string]bool{}
 	for _, seedJob := range seedJobs {

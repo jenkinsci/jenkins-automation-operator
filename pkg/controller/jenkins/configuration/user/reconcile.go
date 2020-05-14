@@ -3,6 +3,8 @@ package user
 import (
 	"strings"
 
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
+
 	"github.com/go-logr/logr"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration"
@@ -15,27 +17,31 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-// ReconcileUserConfiguration defines values required for Jenkins user configuration
-type ReconcileUserConfiguration struct {
+// ReconcileUserConfiguration defines API client for reconcile User Configuration
+type ReconcileUserConfiguration interface {
+	ReconcileCasc() (reconcile.Result, error)
+	ReconcileOthers() (reconcile.Result, error)
+	Validate(jenkins *v1alpha2.Jenkins) ([]string, error)
+}
+
+type reconcileUserConfiguration struct {
 	configuration.Configuration
 	jenkinsClient jenkinsclient.Jenkins
 	logger        logr.Logger
 }
 
-// New create structure which takes care of user configuration
-func New(configuration configuration.Configuration, jenkinsClient jenkinsclient.Jenkins) *ReconcileUserConfiguration {
-	return &ReconcileUserConfiguration{
+// New create structure which takes care of user configuration.
+func New(configuration configuration.Configuration, jenkinsClient jenkinsclient.Jenkins) ReconcileUserConfiguration {
+	return &reconcileUserConfiguration{
 		Configuration: configuration,
 		jenkinsClient: jenkinsClient,
 		logger:        log.Log.WithValues("cr", configuration.Jenkins.Name),
 	}
 }
 
-// Reconcile it's a main reconciliation loop for user supplied configuration
-func (r *ReconcileUserConfiguration) Reconcile() (reconcile.Result, error) {
-	backupAndRestore := backuprestore.New(r.Configuration, r.logger)
-
-	result, err := r.ensureUserConfiguration(r.jenkinsClient)
+// ReconcileCasc is a reconcile loop for casc.
+func (r *reconcileUserConfiguration) ReconcileCasc() (reconcile.Result, error) {
+	result, err := r.ensureCasc(r.jenkinsClient)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
@@ -43,7 +49,14 @@ func (r *ReconcileUserConfiguration) Reconcile() (reconcile.Result, error) {
 		return result, nil
 	}
 
-	result, err = r.ensureSeedJobs()
+	return reconcile.Result{}, nil
+}
+
+// Reconcile it's a main reconciliation loop for user supplied configuration
+func (r *reconcileUserConfiguration) ReconcileOthers() (reconcile.Result, error) {
+	backupAndRestore := backuprestore.New(r.Configuration, r.logger)
+
+	result, err := r.ensureSeedJobs()
 	if err != nil {
 		return reconcile.Result{}, err
 	}
@@ -65,8 +78,8 @@ func (r *ReconcileUserConfiguration) Reconcile() (reconcile.Result, error) {
 	return reconcile.Result{}, nil
 }
 
-func (r *ReconcileUserConfiguration) ensureSeedJobs() (reconcile.Result, error) {
-	seedJobs := seedjobs.New(r.jenkinsClient, r.Configuration, r.logger)
+func (r *reconcileUserConfiguration) ensureSeedJobs() (reconcile.Result, error) {
+	seedJobs := seedjobs.New(r.jenkinsClient, r.Configuration)
 	done, err := seedJobs.EnsureSeedJobs(r.Configuration.Jenkins)
 	if err != nil {
 		return reconcile.Result{}, err
@@ -77,8 +90,8 @@ func (r *ReconcileUserConfiguration) ensureSeedJobs() (reconcile.Result, error) 
 	return reconcile.Result{}, nil
 }
 
-func (r *ReconcileUserConfiguration) ensureUserConfiguration(jenkinsClient jenkinsclient.Jenkins) (reconcile.Result, error) {
-	configurationAsCodeClient := casc.New(jenkinsClient, r.Client, r.logger, r.Configuration.Jenkins)
+func (r *reconcileUserConfiguration) ensureCasc(jenkinsClient jenkinsclient.Jenkins) (reconcile.Result, error) {
+	configurationAsCodeClient := casc.New(jenkinsClient, r.Client, r.Configuration.Jenkins)
 	requeue, err := configurationAsCodeClient.Ensure(r.Configuration.Jenkins)
 	if err != nil {
 		return reconcile.Result{}, err
@@ -87,7 +100,7 @@ func (r *ReconcileUserConfiguration) ensureUserConfiguration(jenkinsClient jenki
 		return reconcile.Result{Requeue: true}, nil
 	}
 
-	groovyClient := groovy.New(jenkinsClient, r.Client, r.logger, r.Configuration.Jenkins, "user-groovy", r.Configuration.Jenkins.Spec.GroovyScripts.Customization)
+	groovyClient := groovy.New(jenkinsClient, r.Client, r.Configuration.Jenkins, "user-groovy", r.Configuration.Jenkins.Spec.GroovyScripts.Customization)
 	requeue, err = groovyClient.WaitForSecretSynchronization(resources.GroovyScriptsSecretVolumePath)
 	if err != nil {
 		return reconcile.Result{}, err

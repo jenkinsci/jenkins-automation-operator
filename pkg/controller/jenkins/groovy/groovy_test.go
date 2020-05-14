@@ -52,7 +52,7 @@ func TestGroovy_EnsureSingle(t *testing.T) {
 		jenkinsClient := jenkinsclient.NewMockJenkins(ctrl)
 		jenkinsClient.EXPECT().ExecuteScript(groovyScript).Return("logs", nil)
 
-		groovyClient := New(jenkinsClient, fakeClient, log.Log, jenkins, configurationType, emptyCustomization)
+		groovyClient := New(jenkinsClient, fakeClient, jenkins, configurationType, emptyCustomization)
 
 		// when
 		requeue, err := groovyClient.EnsureSingle(source, groovyScriptName, hash, groovyScript)
@@ -97,7 +97,7 @@ func TestGroovy_EnsureSingle(t *testing.T) {
 		defer ctrl.Finish()
 		jenkinsClient := jenkinsclient.NewMockJenkins(ctrl)
 
-		groovyClient := New(jenkinsClient, fakeClient, log.Log, jenkins, configurationType, emptyCustomization)
+		groovyClient := New(jenkinsClient, fakeClient, jenkins, configurationType, emptyCustomization)
 
 		// when
 		requeue, err := groovyClient.EnsureSingle(source, groovyScriptName, hash, groovyScript)
@@ -137,7 +137,7 @@ func TestGroovy_EnsureSingle(t *testing.T) {
 		jenkinsClient.EXPECT().ExecuteScript(groovyScript).Return("logs", nil)
 		jenkinsClient.EXPECT().ExecuteScript(groovyScript).Return("logs", nil)
 
-		groovyClient := New(jenkinsClient, fakeClient, log.Log, jenkins, configurationType, emptyCustomization)
+		groovyClient := New(jenkinsClient, fakeClient, jenkins, configurationType, emptyCustomization)
 
 		// when
 		requeue, err := groovyClient.EnsureSingle(source, groovyScriptName, hash, groovyScript)
@@ -209,7 +209,7 @@ func TestGroovy_EnsureSingle(t *testing.T) {
 		jenkinsClient.EXPECT().ExecuteScript(groovyScript).Return("logs", nil)
 		jenkinsClient.EXPECT().ExecuteScript(groovyScript).Return("logs", nil)
 
-		groovyClient := New(jenkinsClient, fakeClient, log.Log, jenkins, configurationType, emptyCustomization)
+		groovyClient := New(jenkinsClient, fakeClient, jenkins, configurationType, emptyCustomization)
 
 		requeue, err := groovyClient.EnsureSingle(source, firstGroovyScriptName, firstGroovyScriptHash, groovyScript)
 
@@ -268,7 +268,7 @@ func TestGroovy_EnsureSingle(t *testing.T) {
 		jenkinsClient.EXPECT().ExecuteScript(groovyScript).Return("logs", nil)
 		jenkinsClient.EXPECT().ExecuteScript(groovyScript).Return("logs", nil)
 
-		groovyClient := New(jenkinsClient, fakeClient, log.Log, jenkins, configurationType, emptyCustomization)
+		groovyClient := New(jenkinsClient, fakeClient, jenkins, configurationType, emptyCustomization)
 
 		requeue, err := groovyClient.EnsureSingle("test-conf1", "test.groovy", hash, groovyScript)
 		require.NoError(t, err)
@@ -299,13 +299,13 @@ func TestGroovy_EnsureSingle(t *testing.T) {
 		jenkinsClient.EXPECT().ExecuteScript(groovyScript).Return("logs", nil)
 		jenkinsClient.EXPECT().ExecuteScript(groovyScript).Return("logs", nil)
 
-		groovyClient := New(jenkinsClient, fakeClient, log.Log, jenkins, configurationType, emptyCustomization)
+		groovyClient := New(jenkinsClient, fakeClient, jenkins, configurationType, emptyCustomization)
 
 		requeue, err := groovyClient.EnsureSingle(source, "test.groovy", hash, groovyScript)
 		require.NoError(t, err)
 		assert.True(t, requeue)
 
-		groovyClient = New(jenkinsClient, fakeClient, log.Log, jenkins, "another-test-configuration-type", emptyCustomization)
+		groovyClient = New(jenkinsClient, fakeClient, jenkins, "another-test-configuration-type", emptyCustomization)
 
 		requeue, err = groovyClient.EnsureSingle(source, "test.groovy", "anotherHash", groovyScript)
 		require.NoError(t, err)
@@ -332,7 +332,7 @@ func TestGroovy_EnsureSingle(t *testing.T) {
 		jenkinsClient := jenkinsclient.NewMockJenkins(ctrl)
 		jenkinsClient.EXPECT().ExecuteScript(groovyScript).Return("fail logs", &jenkinsclient.GroovyScriptExecutionFailed{})
 
-		groovyClient := New(jenkinsClient, fakeClient, log.Log, jenkins, configurationType, emptyCustomization)
+		groovyClient := New(jenkinsClient, fakeClient, jenkins, configurationType, emptyCustomization)
 
 		// when
 		requeue, err := groovyClient.EnsureSingle(source, groovyScriptName, hash, groovyScript)
@@ -403,7 +403,7 @@ func TestGroovy_Ensure(t *testing.T) {
 		jenkinsClient := jenkinsclient.NewMockJenkins(ctrl)
 		jenkinsClient.EXPECT().ExecuteScript(groovyScript).Return("logs", nil)
 
-		groovyClient := New(jenkinsClient, fakeClient, log.Log, jenkins, configurationType, customization)
+		groovyClient := New(jenkinsClient, fakeClient, jenkins, configurationType, customization)
 		onlyGroovyFilesFunc := func(name string) bool {
 			return strings.HasSuffix(name, groovyScriptExtension)
 		}
@@ -463,7 +463,7 @@ func TestGroovy_Ensure(t *testing.T) {
 		jenkinsClient := jenkinsclient.NewMockJenkins(ctrl)
 		jenkinsClient.EXPECT().ExecuteScript(groovyScript+groovyScriptSuffix).Return("logs", nil)
 
-		groovyClient := New(jenkinsClient, fakeClient, log.Log, jenkins, configurationType, customization)
+		groovyClient := New(jenkinsClient, fakeClient, jenkins, configurationType, customization)
 		updateGroovyFunc := func(groovyScript string) string {
 			return groovyScript + groovyScriptSuffix
 		}
@@ -522,7 +522,7 @@ func TestGroovy_Ensure(t *testing.T) {
 		jenkinsClient := jenkinsclient.NewMockJenkins(ctrl)
 		jenkinsClient.EXPECT().ExecuteScript(groovyScript).Return("logs", nil)
 
-		groovyClient := New(jenkinsClient, fakeClient, log.Log, jenkins, configurationType, customization)
+		groovyClient := New(jenkinsClient, fakeClient, jenkins, configurationType, customization)
 
 		// when
 		requeue, err := groovyClient.Ensure(allGroovyScriptsFunc, noUpdateGroovyScript)
@@ -590,7 +590,7 @@ func TestGroovy_Ensure(t *testing.T) {
 		jenkinsClient := jenkinsclient.NewMockJenkins(ctrl)
 		jenkinsClient.EXPECT().ExecuteScript(groovyScript).Return("logs", nil)
 
-		groovyClient := New(jenkinsClient, fakeClient, log.Log, jenkins, configurationType, customization)
+		groovyClient := New(jenkinsClient, fakeClient, jenkins, configurationType, customization)
 
 		// when
 		requeue, err := groovyClient.Ensure(allGroovyScriptsFunc, noUpdateGroovyScript)
@@ -628,7 +628,7 @@ func TestGroovy_isGroovyScriptAlreadyApplied(t *testing.T) {
 				},
 			},
 		}
-		groovyClient := New(nil, nil, log.Log, jenkins, configurationType, emptyCustomization)
+		groovyClient := New(nil, nil, jenkins, configurationType, emptyCustomization)
 
 		got := groovyClient.isGroovyScriptAlreadyApplied("source", "name", "hash")
 
@@ -647,7 +647,7 @@ func TestGroovy_isGroovyScriptAlreadyApplied(t *testing.T) {
 				},
 			},
 		}
-		groovyClient := New(nil, nil, log.Log, jenkins, configurationType, emptyCustomization)
+		groovyClient := New(nil, nil, jenkins, configurationType, emptyCustomization)
 
 		got := groovyClient.isGroovyScriptAlreadyApplied("source", "not-exist", "hash")
 
@@ -655,7 +655,7 @@ func TestGroovy_isGroovyScriptAlreadyApplied(t *testing.T) {
 	})
 	t.Run("empty Jenkins status", func(t *testing.T) {
 		jenkins := &v1alpha2.Jenkins{}
-		groovyClient := New(nil, nil, log.Log, jenkins, configurationType, emptyCustomization)
+		groovyClient := New(nil, nil, jenkins, configurationType, emptyCustomization)
 
 		got := groovyClient.isGroovyScriptAlreadyApplied("source", "name", "hash")
 

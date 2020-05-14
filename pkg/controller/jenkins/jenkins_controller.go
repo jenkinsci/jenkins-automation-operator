@@ -289,7 +289,8 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request) (reconcile.Resul
 		}
 		logger.Info(message)
 	}
-	// Reconcile user configuration
+
+	// Reconcile casc, seedjobs and backups
 	userConfiguration := user.New(config, jenkinsClient)
 
 	var messages []string
@@ -313,7 +314,17 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request) (reconcile.Resul
 		return reconcile.Result{}, jenkins, nil // don't requeue
 	}
 
-	result, err = userConfiguration.Reconcile()
+	// Reconcile casc
+	result, err = userConfiguration.ReconcileCasc()
+	if err != nil {
+		return reconcile.Result{}, jenkins, err
+	}
+	if result.Requeue {
+		return result, jenkins, nil
+	}
+
+	// Reconcile seedjobs, backups
+	result, err = userConfiguration.ReconcileOthers()
 	if err != nil {
 		return reconcile.Result{}, jenkins, err
 	}

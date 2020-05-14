@@ -12,8 +12,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-
-	logf "sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
 var fakePrivateKey = `-----BEGIN RSA PRIVATE KEY-----
@@ -81,9 +79,10 @@ func TestValidateSeedJobs(t *testing.T) {
 			Client:        fakeClient,
 			ClientSet:     kubernetes.Clientset{},
 			Notifications: nil,
+			Jenkins:       &v1alpha2.Jenkins{},
 		}
 
-		seedJobs := New(nil, config, logf.Logger(false))
+		seedJobs := New(nil, config)
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
@@ -109,9 +108,10 @@ func TestValidateSeedJobs(t *testing.T) {
 			Client:        fakeClient,
 			ClientSet:     kubernetes.Clientset{},
 			Notifications: nil,
+			Jenkins:       &v1alpha2.Jenkins{},
 		}
 
-		seedJobs := New(nil, config, logf.Logger(false))
+		seedJobs := New(nil, config)
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
@@ -149,9 +149,10 @@ func TestValidateSeedJobs(t *testing.T) {
 			Client:        fakeClient,
 			ClientSet:     kubernetes.Clientset{},
 			Notifications: nil,
+			Jenkins:       &v1alpha2.Jenkins{},
 		}
 
-		seedJobs := New(nil, config, logf.Logger(false))
+		seedJobs := New(nil, config)
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
@@ -188,9 +189,10 @@ func TestValidateSeedJobs(t *testing.T) {
 			Client:        fakeClient,
 			ClientSet:     kubernetes.Clientset{},
 			Notifications: nil,
+			Jenkins:       &v1alpha2.Jenkins{},
 		}
 
-		seedJobs := New(nil, config, logf.Logger(false))
+		seedJobs := New(nil, config)
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
@@ -228,9 +230,10 @@ func TestValidateSeedJobs(t *testing.T) {
 			Client:        fakeClient,
 			ClientSet:     kubernetes.Clientset{},
 			Notifications: nil,
+			Jenkins:       &v1alpha2.Jenkins{},
 		}
 
-		seedJobs := New(nil, config, logf.Logger(false))
+		seedJobs := New(nil, config)
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
@@ -259,9 +262,10 @@ func TestValidateSeedJobs(t *testing.T) {
 			Client:        fakeClient,
 			ClientSet:     kubernetes.Clientset{},
 			Notifications: nil,
+			Jenkins:       &v1alpha2.Jenkins{},
 		}
 
-		seedJobs := New(nil, config, logf.Logger(false))
+		seedJobs := New(nil, config)
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
@@ -288,9 +292,10 @@ func TestValidateSeedJobs(t *testing.T) {
 			Client:        fakeClient,
 			ClientSet:     kubernetes.Clientset{},
 			Notifications: nil,
+			Jenkins:       &v1alpha2.Jenkins{},
 		}
 
-		seedJobs := New(nil, config, logf.Logger(false))
+		seedJobs := New(nil, config)
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
@@ -317,9 +322,10 @@ func TestValidateSeedJobs(t *testing.T) {
 			Client:        fakeClient,
 			ClientSet:     kubernetes.Clientset{},
 			Notifications: nil,
+			Jenkins:       &v1alpha2.Jenkins{},
 		}
 
-		seedJobs := New(nil, config, logf.Logger(false))
+		seedJobs := New(nil, config)
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
@@ -346,9 +352,10 @@ func TestValidateSeedJobs(t *testing.T) {
 			Client:        fakeClient,
 			ClientSet:     kubernetes.Clientset{},
 			Notifications: nil,
+			Jenkins:       &v1alpha2.Jenkins{},
 		}
 
-		seedJobs := New(nil, config, logf.Logger(false))
+		seedJobs := New(nil, config)
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
@@ -386,9 +393,10 @@ func TestValidateSeedJobs(t *testing.T) {
 			Client:        fakeClient,
 			ClientSet:     kubernetes.Clientset{},
 			Notifications: nil,
+			Jenkins:       &v1alpha2.Jenkins{},
 		}
 
-		seedJobs := New(nil, config, logf.Logger(false))
+		seedJobs := New(nil, config)
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
@@ -425,9 +433,10 @@ func TestValidateSeedJobs(t *testing.T) {
 			Client:        fakeClient,
 			ClientSet:     kubernetes.Clientset{},
 			Notifications: nil,
+			Jenkins:       &v1alpha2.Jenkins{},
 		}
 
-		seedJobs := New(nil, config, logf.Logger(false))
+		seedJobs := New(nil, config)
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
@@ -465,9 +474,10 @@ func TestValidateSeedJobs(t *testing.T) {
 			Client:        fakeClient,
 			ClientSet:     kubernetes.Clientset{},
 			Notifications: nil,
+			Jenkins:       &v1alpha2.Jenkins{},
 		}
 
-		seedJobs := New(nil, config, logf.Logger(false))
+		seedJobs := New(nil, config)
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
@@ -504,9 +514,10 @@ func TestValidateSeedJobs(t *testing.T) {
 			Client:        fakeClient,
 			ClientSet:     kubernetes.Clientset{},
 			Notifications: nil,
+			Jenkins:       &v1alpha2.Jenkins{},
 		}
 
-		seedJobs := New(nil, config, logf.Logger(false))
+		seedJobs := New(nil, config)
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
@@ -543,9 +554,10 @@ func TestValidateSeedJobs(t *testing.T) {
 			Client:        fakeClient,
 			ClientSet:     kubernetes.Clientset{},
 			Notifications: nil,
+			Jenkins:       &v1alpha2.Jenkins{},
 		}
 
-		seedJobs := New(nil, config, logf.Logger(false))
+		seedJobs := New(nil, config)
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
@@ -575,9 +587,10 @@ func TestValidateSeedJobs(t *testing.T) {
 			Client:        fakeClient,
 			ClientSet:     kubernetes.Clientset{},
 			Notifications: nil,
+			Jenkins:       &v1alpha2.Jenkins{},
 		}
 
-		seedJobs := New(nil, config, logf.Logger(false))
+		seedJobs := New(nil, config)
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
@@ -608,9 +621,10 @@ func TestValidateSeedJobs(t *testing.T) {
 			Client:        fakeClient,
 			ClientSet:     kubernetes.Clientset{},
 			Notifications: nil,
+			Jenkins:       &v1alpha2.Jenkins{},
 		}
 
-		seedJobs := New(nil, config, logf.Logger(false))
+		seedJobs := New(nil, config)
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
@@ -639,9 +653,10 @@ func TestValidateSeedJobs(t *testing.T) {
 			Client:        fakeClient,
 			ClientSet:     kubernetes.Clientset{},
 			Notifications: nil,
+			Jenkins:       &v1alpha2.Jenkins{},
 		}
 
-		seedJobs := New(nil, config, logf.Logger(false))
+		seedJobs := New(nil, config)
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
@@ -676,9 +691,10 @@ func TestValidateSeedJobs(t *testing.T) {
 			Client:        fakeClient,
 			ClientSet:     kubernetes.Clientset{},
 			Notifications: nil,
+			Jenkins:       &v1alpha2.Jenkins{},
 		}
 
-		seedJobs := New(nil, config, logf.Logger(false))
+		seedJobs := New(nil, config)
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
@@ -707,9 +723,10 @@ func TestValidateSeedJobs(t *testing.T) {
 			Client:        fakeClient,
 			ClientSet:     kubernetes.Clientset{},
 			Notifications: nil,
+			Jenkins:       &v1alpha2.Jenkins{},
 		}
 
-		seedJobs := New(nil, config, logf.Logger(false))
+		seedJobs := New(nil, config)
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
@@ -744,9 +761,10 @@ func TestValidateSeedJobs(t *testing.T) {
 			Client:        fakeClient,
 			ClientSet:     kubernetes.Clientset{},
 			Notifications: nil,
+			Jenkins:       &v1alpha2.Jenkins{},
 		}
 
-		seedJobs := New(nil, config, logf.Logger(false))
+		seedJobs := New(nil, config)
 		result, err := seedJobs.ValidateSeedJobs(jenkins)
 
 		assert.NoError(t, err)
@@ -764,9 +782,10 @@ func TestValidateIfIDIsUnique(t *testing.T) {
 			Client:        nil,
 			ClientSet:     kubernetes.Clientset{},
 			Notifications: nil,
+			Jenkins:       &v1alpha2.Jenkins{},
 		}
 
-		ctrl := New(nil, config, logf.Logger(false))
+		ctrl := New(nil, config)
 		got := ctrl.validateIfIDIsUnique(seedJobs)
 		assert.Nil(t, got)
 	})
@@ -779,9 +798,10 @@ func TestValidateIfIDIsUnique(t *testing.T) {
 			Client:        nil,
 			ClientSet:     kubernetes.Clientset{},
 			Notifications: nil,
+			Jenkins:       &v1alpha2.Jenkins{},
 		}
 
-		ctrl := New(nil, config, logf.Logger(false))
+		ctrl := New(nil, config)
 		got := ctrl.validateIfIDIsUnique(seedJobs)
 
 		assert.Equal(t, got, []string{"'first' seed job ID is not unique"})
