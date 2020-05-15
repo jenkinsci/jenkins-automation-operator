@@ -394,7 +394,7 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureBaseConfiguration(jenkinsClien
 			Configurations: []v1alpha2.ConfigMapRef{{Name: resources.GetBaseConfigurationConfigMapName(r.Configuration.Jenkins)}},
 		},
 	}
-	groovyClient := groovy.New(jenkinsClient, r.Client, r.logger, r.Configuration.Jenkins, "base-groovy", customization.Customization)
+	groovyClient := groovy.New(jenkinsClient, r.Client, r.Configuration.Jenkins, "base-groovy", customization.Customization)
 	requeue, err := groovyClient.Ensure(func(name string) bool {
 		return strings.HasSuffix(name, ".groovy")
 	}, func(groovyScript string) string {

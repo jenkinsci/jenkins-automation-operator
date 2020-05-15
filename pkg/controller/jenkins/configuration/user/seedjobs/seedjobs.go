@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"text/template"
 
+	"github.com/go-logr/logr"
 	"github.com/jenkinsci/kubernetes-operator/internal/render"
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
@@ -16,8 +17,7 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/groovy"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/notifications/reason"
-
-	"github.com/go-logr/logr"
+	"github.com/jenkinsci/kubernetes-operator/pkg/log"
 	stackerr "github.com/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -142,24 +142,40 @@ jobRef.setAssignedLabel(new LabelAtom("{{ .AgentName }}"))
 jenkins.getQueue().schedule(jobRef)
 `))
 
-// SeedJobs defines API for configuring and ensuring Jenkins Seed Jobs and Deploy Keys
-type SeedJobs struct {
+// SeedJobs defines client interface to SeedJobs
+type SeedJobs interface {
+	EnsureSeedJobs(jenkins *v1alpha2.Jenkins) (done bool, err error)
+	waitForSeedJobAgent(agentName string) (requeue bool, err error)
+	createJobs(jenkins *v1alpha2.Jenkins) (requeue bool, err error)
+	ensureLabelsForSecrets(jenkins v1alpha2.Jenkins) error
+	credentialValue(namespace string, seedJob v1alpha2.SeedJob) (string, error)
+	getAllSeedJobIDs(jenkins v1alpha2.Jenkins) []string
+	isRecreatePodNeeded(jenkins v1alpha2.Jenkins) bool
+	createAgent(jenkinsClient jenkinsclient.Jenkins, k8sClient client.Client, jenkinsManifest *v1alpha2.Jenkins, namespace string, agentName string) error
+	ValidateSeedJobs(jenkins v1alpha2.Jenkins) ([]string, error)
+	validateSchedule(job v1alpha2.SeedJob, str string, key string) []string
+	validateGitHubPushTrigger(jenkins v1alpha2.Jenkins) []string
+	validateBitbucketPushTrigger(jenkins v1alpha2.Jenkins) []string
+	validateIfIDIsUnique(seedJobs []v1alpha2.SeedJob) []string
+}
+
+type seedJobs struct {
 	configuration.Configuration
 	jenkinsClient jenkinsclient.Jenkins
 	logger        logr.Logger
 }
 
 // New creates SeedJobs object
-func New(jenkinsClient jenkinsclient.Jenkins, config configuration.Configuration, logger logr.Logger) *SeedJobs {
-	return &SeedJobs{
+func New(jenkinsClient jenkinsclient.Jenkins, config configuration.Configuration) SeedJobs {
+	return &seedJobs{
 		Configuration: config,
 		jenkinsClient: jenkinsClient,
-		logger:        logger,
+		logger:        log.Log.WithValues("cr", config.Jenkins.Name),
 	}
 }
 
 // EnsureSeedJobs configures seed job and runs it for every entry from Jenkins.Spec.SeedJobs
-func (s *SeedJobs) EnsureSeedJobs(jenkins *v1alpha2.Jenkins) (done bool, err error) {
+func (s *seedJobs) EnsureSeedJobs(jenkins *v1alpha2.Jenkins) (done bool, err error) {
 	if s.isRecreatePodNeeded(*jenkins) {
 		message := "Some seed job has been deleted, recreating pod"
 		s.logger.Info(message)
@@ -218,7 +234,7 @@ func (s *SeedJobs) EnsureSeedJobs(jenkins *v1alpha2.Jenkins) (done bool, err err
 	return true, nil
 }
 
-func (s SeedJobs) waitForSeedJobAgent(agentName string) (requeue bool, err error) {
+func (s *seedJobs) waitForSeedJobAgent(agentName string) (requeue bool, err error) {
 	agent := appsv1.Deployment{}
 	err = s.Client.Get(context.TODO(), types.NamespacedName{Name: agentDeploymentName(*s.Jenkins, agentName), Namespace: s.Jenkins.Namespace}, &agent)
 	if apierrors.IsNotFound(err) {
@@ -237,8 +253,8 @@ func (s SeedJobs) waitForSeedJobAgent(agentName string) (requeue bool, err error
 }
 
 // createJob is responsible for creating jenkins job which configures jenkins seed jobs and deploy keys
-func (s *SeedJobs) createJobs(jenkins *v1alpha2.Jenkins) (requeue bool, err error) {
-	groovyClient := groovy.New(s.jenkinsClient, s.Client, s.logger, jenkins, "seed-jobs", jenkins.Spec.GroovyScripts.Customization)
+func (s *seedJobs) createJobs(jenkins *v1alpha2.Jenkins) (requeue bool, err error) {
+	groovyClient := groovy.New(s.jenkinsClient, s.Client, jenkins, "seed-jobs", jenkins.Spec.GroovyScripts.Customization)
 	for _, seedJob := range jenkins.Spec.SeedJobs {
 		credentialValue, err := s.credentialValue(jenkins.Namespace, seedJob)
 		if err != nil {
@@ -269,7 +285,7 @@ func (s *SeedJobs) createJobs(jenkins *v1alpha2.Jenkins) (requeue bool, err erro
 // ensureLabelsForSecrets adds labels to Kubernetes secrets where are Jenkins credentials used for seed jobs,
 // thanks to them kubernetes-credentials-provider-plugin will create Jenkins credentials in Jenkins and
 // Operator will able to watch any changes made to them
-func (s *SeedJobs) ensureLabelsForSecrets(jenkins v1alpha2.Jenkins) error {
+func (s *seedJobs) ensureLabelsForSecrets(jenkins v1alpha2.Jenkins) error {
 	for _, seedJob := range jenkins.Spec.SeedJobs {
 		if seedJob.JenkinsCredentialType == v1alpha2.BasicSSHCredentialType || seedJob.JenkinsCredentialType == v1alpha2.UsernamePasswordCredentialType {
 			requiredLabels := resources.BuildLabelsForWatchedResources(jenkins)
@@ -294,7 +310,7 @@ func (s *SeedJobs) ensureLabelsForSecrets(jenkins v1alpha2.Jenkins) error {
 	return nil
 }
 
-func (s *SeedJobs) credentialValue(namespace string, seedJob v1alpha2.SeedJob) (string, error) {
+func (s *seedJobs) credentialValue(namespace string, seedJob v1alpha2.SeedJob) (string, error) {
 	if seedJob.JenkinsCredentialType == v1alpha2.BasicSSHCredentialType || seedJob.JenkinsCredentialType == v1alpha2.UsernamePasswordCredentialType {
 		secret := &corev1.Secret{}
 		namespaceName := types.NamespacedName{Namespace: namespace, Name: seedJob.CredentialID}
@@ -311,7 +327,7 @@ func (s *SeedJobs) credentialValue(namespace string, seedJob v1alpha2.SeedJob) (
 	return "", nil
 }
 
-func (s *SeedJobs) getAllSeedJobIDs(jenkins v1alpha2.Jenkins) []string {
+func (s *seedJobs) getAllSeedJobIDs(jenkins v1alpha2.Jenkins) []string {
 	var ids []string
 	for _, seedJob := range jenkins.Spec.SeedJobs {
 		ids = append(ids, seedJob.ID)
@@ -319,7 +335,7 @@ func (s *SeedJobs) getAllSeedJobIDs(jenkins v1alpha2.Jenkins) []string {
 	return ids
 }
 
-func (s *SeedJobs) isRecreatePodNeeded(jenkins v1alpha2.Jenkins) bool {
+func (s *seedJobs) isRecreatePodNeeded(jenkins v1alpha2.Jenkins) bool {
 	for _, createdSeedJob := range jenkins.Status.CreatedSeedJobs {
 		found := false
 		for _, seedJob := range jenkins.Spec.SeedJobs {
@@ -336,7 +352,7 @@ func (s *SeedJobs) isRecreatePodNeeded(jenkins v1alpha2.Jenkins) bool {
 }
 
 // createAgent deploys Jenkins agent to Kubernetes cluster
-func (s SeedJobs) createAgent(jenkinsClient jenkinsclient.Jenkins, k8sClient client.Client, jenkinsManifest *v1alpha2.Jenkins, namespace string, agentName string) error {
+func (s *seedJobs) createAgent(jenkinsClient jenkinsclient.Jenkins, k8sClient client.Client, jenkinsManifest *v1alpha2.Jenkins, namespace string, agentName string) error {
 	_, err := jenkinsClient.GetNode(agentName)
 
 	// Create node if not exists

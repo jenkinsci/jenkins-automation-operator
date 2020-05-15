@@ -22,7 +22,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-	logf "sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
 const agentSecret = "test-secret"
@@ -70,7 +69,6 @@ func jenkinsCustomResource() *v1alpha2.Jenkins {
 func TestEnsureSeedJobs(t *testing.T) {
 	t.Run("happy", func(t *testing.T) {
 		// given
-		logger := logf.Logger(false)
 		ctrl := gomock.NewController(t)
 		ctx := context.TODO()
 		defer ctrl.Finish()
@@ -105,7 +103,7 @@ func TestEnsureSeedJobs(t *testing.T) {
 		jenkinsClient.EXPECT().GetNodeSecret(AgentName).Return(agentSecret, nil).AnyTimes()
 		jenkinsClient.EXPECT().ExecuteScript(seedJobCreatingScript).AnyTimes()
 
-		seedJobClient := New(jenkinsClient, config, logger)
+		seedJobClient := New(jenkinsClient, config)
 
 		// when
 		_, err = seedJobClient.EnsureSeedJobs(jenkins)
@@ -120,7 +118,6 @@ func TestEnsureSeedJobs(t *testing.T) {
 
 	t.Run("delete agent deployment when no seed jobs", func(t *testing.T) {
 		// given
-		logger := logf.Logger(false)
 		ctrl := gomock.NewController(t)
 		ctx := context.TODO()
 		defer ctrl.Finish()
@@ -144,7 +141,7 @@ func TestEnsureSeedJobs(t *testing.T) {
 		jenkinsClient.EXPECT().CreateNode(AgentName, 1, "The jenkins-operator generated agent", "/home/jenkins", AgentName).AnyTimes()
 		jenkinsClient.EXPECT().GetNodeSecret(AgentName).Return(agentSecret, nil).AnyTimes()
 
-		seedJobsClient := New(jenkinsClient, config, logger)
+		seedJobsClient := New(jenkinsClient, config)
 
 		err = fakeClient.Create(ctx, &appsv1.Deployment{
 			ObjectMeta: metav1.ObjectMeta{
@@ -170,7 +167,6 @@ func TestEnsureSeedJobs(t *testing.T) {
 func TestCreateAgent(t *testing.T) {
 	t.Run("don't fail when deployment is already created", func(t *testing.T) {
 		// given
-		logger := logf.Logger(false)
 		ctrl := gomock.NewController(t)
 		ctx := context.TODO()
 		defer ctrl.Finish()
@@ -190,9 +186,10 @@ func TestCreateAgent(t *testing.T) {
 			Client:        fakeClient,
 			ClientSet:     kubernetes.Clientset{},
 			Notifications: nil,
+			Jenkins:       &v1alpha2.Jenkins{},
 		}
 
-		seedJobsClient := New(jenkinsClient, config, logger)
+		seedJobsClient := New(jenkinsClient, config)
 
 		err = fakeClient.Create(ctx, &appsv1.Deployment{
 			ObjectMeta: metav1.ObjectMeta{
@@ -215,8 +212,9 @@ func TestSeedJobs_isRecreatePodNeeded(t *testing.T) {
 		Client:        nil,
 		ClientSet:     kubernetes.Clientset{},
 		Notifications: nil,
+		Jenkins:       &v1alpha2.Jenkins{},
 	}
-	seedJobsClient := New(nil, config, nil)
+	seedJobsClient := New(nil, config)
 	t.Run("empty", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{}
 
