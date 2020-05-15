@@ -573,7 +573,7 @@ func TestValidateConfigMapVolume(t *testing.T) {
 
 		baseReconcileLoop := New(configuration.Configuration{
 			Jenkins: &v1alpha2.Jenkins{ObjectMeta: metav1.ObjectMeta{Name: "example"}},
-			Client: fakeClient,
+			Client:  fakeClient,
 		}, client.JenkinsAPIConnectionSettings{})
 
 		got, err := baseReconcileLoop.validateConfigMapVolume(volume)
@@ -652,7 +652,7 @@ func TestValidateSecretVolume(t *testing.T) {
 		fakeClient := fake.NewFakeClient()
 		baseReconcileLoop := New(configuration.Configuration{
 			Jenkins: &v1alpha2.Jenkins{ObjectMeta: metav1.ObjectMeta{Name: "example"}},
-			Client: fakeClient,
+			Client:  fakeClient,
 		}, client.JenkinsAPIConnectionSettings{})
 
 		got, err := baseReconcileLoop.validateSecretVolume(volume)

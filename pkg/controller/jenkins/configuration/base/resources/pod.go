@@ -291,7 +291,7 @@ func newContainers(jenkins *v1alpha2.Jenkins) (containers []corev1.Container) {
 }
 
 // GetJenkinsMasterPodName returns Jenkins pod name for given CR
-func GetJenkinsMasterPodName(jenkins v1alpha2.Jenkins) string {
+func GetJenkinsMasterPodName(jenkins *v1alpha2.Jenkins) string {
 	return fmt.Sprintf("jenkins-%s", jenkins.Name)
 }
 
@@ -313,7 +313,7 @@ func GetJenkinsMasterPodLabels(jenkins v1alpha2.Jenkins) map[string]string {
 func NewJenkinsMasterPod(objectMeta metav1.ObjectMeta, jenkins *v1alpha2.Jenkins) *corev1.Pod {
 	serviceAccountName := objectMeta.Name
 	objectMeta.Annotations = jenkins.Spec.Master.Annotations
-	objectMeta.Name = GetJenkinsMasterPodName(*jenkins)
+	objectMeta.Name = GetJenkinsMasterPodName(jenkins)
 	objectMeta.Labels = GetJenkinsMasterPodLabels(*jenkins)
 
 	return &corev1.Pod{

@@ -31,7 +31,7 @@ const (
 	fetchAllPlugins = 1
 )
 
-// ReconcileJenkinsBaseConfiguration defines values required for Jenkins base configuration
+// ReconcileJenkinsBaseConfiguration defines values required for Jenkins base configuration.
 type ReconcileJenkinsBaseConfiguration struct {
 	configuration.Configuration
 	logger                       logr.Logger
@@ -47,15 +47,29 @@ func New(config configuration.Configuration, jenkinsAPIConnectionSettings jenkin
 	}
 }
 
-// Reconcile takes care of base configuration
+// Reconcile takes care of base configuration.
 func (r *ReconcileJenkinsBaseConfiguration) Reconcile() (reconcile.Result, jenkinsclient.Jenkins, error) {
 	metaObject := resources.NewResourceObjectMeta(r.Configuration.Jenkins)
 
+	// Create Necessary Resources
 	err := r.ensureResourcesRequiredForJenkinsPod(metaObject)
 	if err != nil {
 		return reconcile.Result{}, nil, err
 	}
 	r.logger.V(log.VDebug).Info("Kubernetes resources are present")
+
+	if useDeploymentForJenkinsMaster(r.Configuration.Jenkins) {
+		result, err := r.ensureJenkinsDeployment(metaObject)
+		if err != nil {
+			return reconcile.Result{}, nil, err
+		}
+		if result.Requeue {
+			return result, nil, nil
+		}
+		r.logger.V(log.VDebug).Info("Jenkins Deployment is present")
+
+		return result, nil, err
+	}
 
 	result, err := r.ensureJenkinsMasterPod(metaObject)
 	if err != nil {
@@ -108,6 +122,15 @@ func (r *ReconcileJenkinsBaseConfiguration) Reconcile() (reconcile.Result, jenki
 	result, err = r.ensureBaseConfiguration(jenkinsClient)
 
 	return result, jenkinsClient, err
+}
+
+func useDeploymentForJenkinsMaster(jenkins *v1alpha2.Jenkins) bool {
+	if val, ok := jenkins.Annotations["jenkins.io/use-deployment"]; ok {
+		if val == "true" {
+			return true
+		}
+	}
+	return false
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) ensureResourcesRequiredForJenkinsPod(metaObject metav1.ObjectMeta) error {
@@ -245,7 +268,7 @@ func compareEnv(expected, actual []corev1.EnvVar) bool {
 	return reflect.DeepEqual(expected, actualEnv)
 }
 
-// CompareContainerVolumeMounts returns true if two containers volume mounts are the same
+// CompareContainerVolumeMounts returns true if two containers volume mounts are the same.
 func CompareContainerVolumeMounts(expected corev1.Container, actual corev1.Container) bool {
 	var withoutServiceAccount []corev1.VolumeMount
 	for _, volumeMount := range actual.VolumeMounts {

@@ -137,7 +137,7 @@ func (bar *BackupAndRestore) Restore(jenkinsClient jenkinsclient.Jenkins) error 
 		backupNumber = jenkins.Status.LastBackup
 	}
 	bar.logger.Info(fmt.Sprintf("Restoring backup '%d'", backupNumber))
-	podName := resources.GetJenkinsMasterPodName(*jenkins)
+	podName := resources.GetJenkinsMasterPodName(jenkins)
 	command := jenkins.Spec.Restore.Action.Exec.Command
 	command = append(command, fmt.Sprintf("%d", backupNumber))
 	_, _, err := bar.Exec(podName, jenkins.Spec.Restore.ContainerName, command)
@@ -170,7 +170,7 @@ func (bar *BackupAndRestore) Backup(setBackupDoneBeforePodDeletion bool) error {
 	}
 	backupNumber := jenkins.Status.PendingBackup
 	bar.logger.Info(fmt.Sprintf("Performing backup '%d'", backupNumber))
-	podName := resources.GetJenkinsMasterPodName(*jenkins)
+	podName := resources.GetJenkinsMasterPodName(jenkins)
 	command := jenkins.Spec.Backup.Action.Exec.Command
 	command = append(command, fmt.Sprintf("%d", backupNumber))
 	_, _, err := bar.Exec(podName, jenkins.Spec.Backup.ContainerName, command)
