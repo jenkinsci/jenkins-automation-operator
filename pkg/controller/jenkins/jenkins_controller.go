@@ -287,16 +287,7 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request) (reconcile.Resul
 		}
 		return reconcile.Result{}, jenkins, nil // don't requeue
 	}
-
-	// Reconcile casc
-	result, err = userConfiguration.ReconcileCasc()
-	if err != nil {
-		return reconcile.Result{}, jenkins, err
-	}
-	if result.Requeue {
-		return result, jenkins, nil
-	}
-
+	
 	// Reconcile seedjobs, backups
 	result, err = userConfiguration.ReconcileOthers()
 	if err != nil {
