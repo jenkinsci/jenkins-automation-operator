@@ -1,7 +1,9 @@
 apiVersion: jenkins.io/v1alpha3
 kind: Casc
 metadata:
+  annotations:
+    jenkins.io/jenkins-reference: 'example'
   name: example-casc
 spec:
-  # Add fields here
-  size: 3
+  configurations:
+  - example
