@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/casc"
 	"os"
 	"runtime"
 
@@ -142,6 +143,11 @@ func main() {
 	}
 	// setup JenkinsImage controller
 	if err = jenkinsimage.Add(mgr); err != nil {
+		fatal(errors.Wrap(err, "failed to setup controllers"), *debug)
+	}
+
+	// setup Casc controller
+	if err := casc.Add(mgr, jenkinsAPIConnectionSettings, *clientSet, *cfg, &c); err != nil {
 		fatal(errors.Wrap(err, "failed to setup controllers"), *debug)
 	}
 

@@ -36,7 +36,7 @@ type CascStatus struct {
 	// Failed: At least one resource has experienced a failure.
 	// Unknown: For some reason the state of the Casc phase could not be obtained.
 	Phase string `json:"phase"`
-	
+
 	LastTransitionTime metav1.Time          `json:"lastTransitionTime"`
 	Reason             string               `json:"reason,omitempty" protobuf:"bytes,5,opt,name=reason"`
 	Message            string               `json:"message,omitempty" protobuf:"bytes,6,opt,name=message"`
