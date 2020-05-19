@@ -1,8 +1,11 @@
 package casc
 
 import (
+	"cluster-logging-operator/pkg/constants"
+	"cluster-logging-operator/pkg/utils"
 	"context"
 	"fmt"
+	"github.com/jenkinsci/kubernetes-operator/pkg/log"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
@@ -27,7 +30,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-var log = logf.Log.WithName("controller_casc")
+
+const (
+	jenkinsAnnotation = "jenkins.io/jenkins-reference"
+)
+
+var logx = log.Log
 
 func Add(mgr manager.Manager, jenkinsAPIConnectionSettings jenkinsclient.JenkinsAPIConnectionSettings, clientSet kubernetes.Clientset, config rest.Config, notificationEvents *chan event.Event) error {
 	reconciler := newReconciler(mgr, jenkinsAPIConnectionSettings, clientSet, config, notificationEvents)
@@ -87,8 +95,8 @@ type ReconcileCasc struct {
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileCasc) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
-	reqLogger.Info("Reconciling Casc")
+	logger := logx.WithValues("cr", request.Name)
+	logger.V(log.VDebug).Info("Reconciling Casc")
 
 	// Fetch the Casc instance
 	casc := &jenkinsv1alpha3.Casc{}
@@ -102,8 +110,10 @@ func (r *ReconcileCasc) Reconcile(request reconcile.Request) (reconcile.Result, 
 	}
 
 	// fetch the jenkins CR
+	value, _ := GetAnnotation(jenkinsAnnotation, casc.ObjectMeta)
+	logger.V(log.VDebug).Info("Annotation %q value: %q", jenkinsAnnotation, value)
 	jenkins := &v1alpha2.Jenkins{}
-	err = r.client.Get(context.TODO(), types.NamespacedName{Name: casc.Spec.JenkinsRef.Name, Namespace: casc.Namespace}, jenkins)
+	err = r.client.Get(context.TODO(), types.NamespacedName{Name: value, Namespace: casc.Namespace}, jenkins)
 	if err != nil {
 		// Error reading the object - requeue the request.
 		return reconcile.Result{}, err
@@ -124,7 +134,7 @@ func (r *ReconcileCasc) Reconcile(request reconcile.Request) (reconcile.Result, 
 		// Error reading the object - requeue the request.
 		return reconcile.Result{}, err
 	}
-	reqLogger.Info("Jenkins API client set")
+	logger.V(log.VDebug).Info("Jenkins API client set")
 
 	// Reconcile user configuration
 	userConfiguration := user.New(config, jenkinsClient)
@@ -142,9 +152,9 @@ func (r *ReconcileCasc) Reconcile(request reconcile.Request) (reconcile.Result, 
 			Reason:  reason.NewUserConfigurationFailed(reason.HumanSource, []string{message}, append([]string{message}, messages...)...),
 		}
 
-		reqLogger.Info(message)
+		logger.V(log.VDebug).Info(message)
 		for _, msg := range messages {
-			reqLogger.Info(msg)
+			logger.V(log.VDebug).Info(msg)
 		}
 		return reconcile.Result{}, nil // don't requeue
 	}
@@ -172,8 +182,18 @@ func (r *ReconcileCasc) Reconcile(request reconcile.Request) (reconcile.Result, 
 			Level:   v1alpha2.NotificationLevelInfo,
 			Reason:  reason.NewUserConfigurationComplete(reason.OperatorSource, []string{message}),
 		}
-		reqLogger.Info(message)
+		logger.V(log.VDebug).Info(message)
 	}
 
 	return reconcile.Result{}, nil
+}
+
+// GetAnnotation returns the value of an annoation for a given key and true if the key was found
+func GetAnnotation(key string, meta metav1.ObjectMeta) (string, bool) {
+	for k, value := range meta.Annotations {
+		if k == key {
+			return value, true
+		}
+	}
+	return "", false
 }

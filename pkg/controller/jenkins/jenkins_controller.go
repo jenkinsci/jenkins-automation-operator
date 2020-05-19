@@ -287,7 +287,7 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request) (reconcile.Resul
 		}
 		return reconcile.Result{}, jenkins, nil // don't requeue
 	}
-	
+
 	// Reconcile seedjobs, backups
 	result, err = userConfiguration.ReconcileOthers()
 	if err != nil {
