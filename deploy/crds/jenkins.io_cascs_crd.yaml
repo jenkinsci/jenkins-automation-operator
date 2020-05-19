@@ -30,9 +30,44 @@ spec:
           type: object
         spec:
           description: CascSpec defines the desired state of Casc
+          properties:
+            configurations:
+              items:
+                description: ConfigMapRef is reference to Kubernetes ConfigMap.
+                type: string
+              type: array
+            secret:
+              description: 'INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
+                Important: Run "operator-sdk generate k8s" to regenerate code after
+                modifying this file Add custom validation using kubebuilder tags:
+                https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html'
+              type: string
+          required:
+          - configurations
+          - secret
           type: object
         status:
           description: CascStatus defines the observed state of Casc
+          properties:
+            lastTransitionTime:
+              format: date-time
+              type: string
+            message:
+              type: string
+            phase:
+              description: 'Phase is a simple, high-level summary of where the Casc
+                is in its lifecycle. There are five possible phase values: Pending:
+                The Casc has been accepted by the Kubernetes system, but one or more
+                of the required resources have not been created. Available: All of
+                the resources for the Casc are ready. Failed: At least one resource
+                has experienced a failure. Unknown: For some reason the state of the
+                Casc phase could not be obtained.'
+              type: string
+            reason:
+              type: string
+          required:
+          - lastTransitionTime
+          - phase
           type: object
       type: object
   version: v1alpha3

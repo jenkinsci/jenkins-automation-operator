@@ -1,8 +1,6 @@
 package casc
 
 import (
-	"cluster-logging-operator/pkg/constants"
-	"cluster-logging-operator/pkg/utils"
 	"context"
 	"fmt"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
@@ -11,6 +9,7 @@ import (
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/user"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/notifications/event"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/notifications/reason"
 	"k8s.io/apimachinery/pkg/types"
@@ -24,10 +23,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 
@@ -89,8 +88,6 @@ type ReconcileCasc struct {
 
 // Reconcile reads that state of the cluster for a Casc object and makes changes based on the state read
 // and what is in the Casc.Spec
-// TODO(user): Modify this Reconcile function to implement your Controller logic.  This example creates
-// a Pod as an example
 // Note:
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
@@ -108,6 +105,11 @@ func (r *ReconcileCasc) Reconcile(request reconcile.Request) (reconcile.Result, 
 		// Error reading the object - requeue the request.
 		return reconcile.Result{}, err
 	}
+	
+	if casc.Status.Phase == constants.JenkinsStatusCompleted {
+		return reconcile.Result{}, nil // Nothing to see here, move along...
+	}
+
 
 	// fetch the jenkins CR
 	value, _ := GetAnnotation(jenkinsAnnotation, casc.ObjectMeta)
@@ -119,6 +121,16 @@ func (r *ReconcileCasc) Reconcile(request reconcile.Request) (reconcile.Result, 
 		return reconcile.Result{}, err
 	}
 
+	// check if jenkins Cr is completed
+	if jenkins.Status.Phase != constants.JenkinsStatusCompleted {
+		return reconcile.Result{Requeue:true}, nil
+	}
+	// setControllerReference
+	if err := controllerutil.SetControllerReference(jenkins, casc, r.scheme); err != nil {
+		return reconcile.Result{}, err
+	}
+
+	// Execute the casc
 	config := configuration.Configuration{
 		Client:                       r.client,
 		ClientSet:                    r.clientSet,
@@ -163,27 +175,26 @@ func (r *ReconcileCasc) Reconcile(request reconcile.Request) (reconcile.Result, 
 	if err != nil {
 		return reconcile.Result{}, err
 	}
+
 	if result.Requeue {
 		return result, nil
 	}
 
-	if jenkins.Status.UserConfigurationCompletedTime == nil {
-		now := metav1.Now()
-		jenkins.Status.UserConfigurationCompletedTime = &now
-		err = r.client.Update(context.TODO(), jenkins)
-		if err != nil {
-			return reconcile.Result{}, err
-		}
-		message := fmt.Sprintf("User configuration phase is complete, took %s",
-			jenkins.Status.UserConfigurationCompletedTime.Sub(jenkins.Status.ProvisionStartTime.Time))
-		*r.notificationEvents <- event.Event{
-			Jenkins: *jenkins,
-			Phase:   event.PhaseUser,
-			Level:   v1alpha2.NotificationLevelInfo,
-			Reason:  reason.NewUserConfigurationComplete(reason.OperatorSource, []string{message}),
-		}
-		logger.V(log.VDebug).Info(message)
+	//Update the status
+	casc.Status.LastTransitionTime = metav1.Now()
+	casc.Status.Phase = constants.JenkinsStatusCompleted
+	err = r.client.Update(context.TODO(), jenkins)
+	if err != nil {
+		return reconcile.Result{}, err
 	}
+	message := fmt.Sprintf("Configuration as code phase for jenkins %s is complete", jenkins.Name)
+	*r.notificationEvents <- event.Event{
+		Jenkins: *jenkins,
+		Phase:   event.PhaseUser,
+		Level:   v1alpha2.NotificationLevelInfo,
+		Reason:  reason.NewUserConfigurationComplete(reason.OperatorSource, []string{message}),
+	}
+	logger.V(log.VDebug).Info(message)
 
 	return reconcile.Result{}, nil
 }
