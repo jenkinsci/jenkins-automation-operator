@@ -457,6 +457,14 @@ type JenkinsStatus struct {
 	// +optional
 	OperatorVersion string `json:"operatorVersion,omitempty"`
 
+	// Phase is a simple, high-level summary of where the Jenkins is in its lifecycle.
+	// There are five possible phase values:
+	// Pending: The Jenkins has been accepted by the Kubernetes system, but one or more of the required resources have not been created.
+	// Available: All of the resources for the Jenkins are ready.
+	// Failed: At least one resource has experienced a failure.
+	// Unknown: For some reason the state of the Jenkins phase could not be obtained.
+	Phase string `json:"phase"`
+	
 	// ProvisionStartTime is a time when Jenkins master pod has been created
 	// +optional
 	ProvisionStartTime *metav1.Time `json:"provisionStartTime,omitempty"`

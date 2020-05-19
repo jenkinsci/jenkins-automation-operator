@@ -247,6 +247,7 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request) (reconcile.Resul
 
 	if jenkins.Status.BaseConfigurationCompletedTime == nil {
 		now := metav1.Now()
+		jenkins.Status.Phase = constants.JenkinsStatusCompleted
 		jenkins.Status.BaseConfigurationCompletedTime = &now
 		err = r.client.Update(context.TODO(), jenkins)
 		if err != nil {
