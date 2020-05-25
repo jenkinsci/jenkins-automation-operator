@@ -11,14 +11,14 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis"
-	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins"
 	"github.com/jenkinsci/kubernetes-operator/pkg/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/constants"
-	"github.com/jenkinsci/kubernetes-operator/pkg/notifications"
-	e "github.com/jenkinsci/kubernetes-operator/pkg/notifications/event"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins"
 	"github.com/jenkinsci/kubernetes-operator/pkg/event"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
+	"github.com/jenkinsci/kubernetes-operator/pkg/notifications"
+	e "github.com/jenkinsci/kubernetes-operator/pkg/notifications/event"
 	"github.com/jenkinsci/kubernetes-operator/version"
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"

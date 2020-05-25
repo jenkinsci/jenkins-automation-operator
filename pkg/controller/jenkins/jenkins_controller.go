@@ -9,25 +9,20 @@ import (
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/client"
-	"github.com/jenkinsci/kubernetes-operator/pkg/configuration"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/user"
 	"github.com/jenkinsci/kubernetes-operator/pkg/constants"
+	"github.com/jenkinsci/kubernetes-operator/pkg/log"
 	"github.com/jenkinsci/kubernetes-operator/pkg/notifications/event"
 	"github.com/jenkinsci/kubernetes-operator/pkg/notifications/reason"
 	"github.com/jenkinsci/kubernetes-operator/pkg/plugins"
-	"github.com/jenkinsci/kubernetes-operator/pkg/log"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -40,32 +35,29 @@ type reconcileError struct {
 	counter uint64
 }
 
+const (
+	APIVersion             = "core/v1"
+	PodKind                = "Pod"
+	SecretKind             = "Secret"
+	ConfigMapKind          = "ConfigMap"
+	containerProbeURI      = "login"
+	containerProbePortName = "http"
+)
+
 var reconcileErrors = map[string]reconcileError{}
-
 var logx = log.Log
+var _ reconcile.Reconciler = &ReconcileJenkins{}
 
-// Add creates a new Jenkins Controller and adds it to the Manager. The Manager will set fields on the Controller
+// Add creates a newReconcilierConfiguration Jenkins Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
 func Add(mgr manager.Manager, jenkinsAPIConnectionSettings jenkinsclient.JenkinsAPIConnectionSettings, clientSet kubernetes.Clientset, config rest.Config, notificationEvents *chan event.Event) error {
 	reconciler := newReconciler(mgr, jenkinsAPIConnectionSettings, clientSet, config, notificationEvents)
 	return add(mgr, reconciler)
 }
 
-// newReconciler returns a new reconcile.Reconciler.
-func newReconciler(mgr manager.Manager, jenkinsAPIConnectionSettings jenkinsclient.JenkinsAPIConnectionSettings, clientSet kubernetes.Clientset, config rest.Config, notificationEvents *chan event.Event) reconcile.Reconciler {
-	return &ReconcileJenkins{
-		client:                       mgr.GetClient(),
-		scheme:                       mgr.GetScheme(),
-		jenkinsAPIConnectionSettings: jenkinsAPIConnectionSettings,
-		clientSet:                    clientSet,
-		config:                       config,
-		notificationEvents:           notificationEvents,
-	}
-}
-
-// add adds a new Controller to mgr with r as the reconcile.Reconciler.
+// add adds a newReconcilierConfiguration Controller to mgr with r as the reconcile.Reconciler.
 func add(mgr manager.Manager, r reconcile.Reconciler) error {
-	// Create a new controller
+	// Create a newReconcilierConfiguration controller
 	c, err := controller.New("jenkins-controller", mgr, controller.Options{Reconciler: r})
 	if err != nil {
 		return errors.WithStack(err)
@@ -79,7 +71,9 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	// Watch for changes to secondary resource Pods and requeue the owner Jenkins
-	err = c.Watch(&source.Kind{Type: &corev1.Pod{TypeMeta: metav1.TypeMeta{APIVersion: "core/v1", Kind: "Pod"}}}, &handler.EnqueueRequestForOwner{
+
+	podResource := &source.Kind{Type: &corev1.Pod{TypeMeta: metav1.TypeMeta{APIVersion: APIVersion, Kind: PodKind}}}
+	err = c.Watch(podResource, &handler.EnqueueRequestForOwner{
 		IsController: true,
 		OwnerType:    &v1alpha2.Jenkins{},
 	})
@@ -87,7 +81,8 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return errors.WithStack(err)
 	}
 
-	err = c.Watch(&source.Kind{Type: &corev1.Secret{TypeMeta: metav1.TypeMeta{APIVersion: "core/v1", Kind: "Secret"}}}, &handler.EnqueueRequestForOwner{
+	secretResource := &source.Kind{Type: &corev1.Secret{TypeMeta: metav1.TypeMeta{APIVersion: APIVersion, Kind: SecretKind}}}
+	err = c.Watch(secretResource, &handler.EnqueueRequestForOwner{
 		IsController: true,
 		OwnerType:    &v1alpha2.Jenkins{},
 	})
@@ -96,29 +91,17 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	jenkinsHandler := &enqueueRequestForJenkins{}
-	err = c.Watch(&source.Kind{Type: &corev1.Secret{TypeMeta: metav1.TypeMeta{APIVersion: "core/v1", Kind: "Secret"}}}, jenkinsHandler)
+	err = c.Watch(secretResource, jenkinsHandler)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	err = c.Watch(&source.Kind{Type: &corev1.ConfigMap{TypeMeta: metav1.TypeMeta{APIVersion: "core/v1", Kind: "ConfigMap"}}}, jenkinsHandler)
+	configMapResource := &source.Kind{Type: &corev1.ConfigMap{TypeMeta: metav1.TypeMeta{APIVersion: APIVersion, Kind: ConfigMapKind}}}
+	err = c.Watch(configMapResource, jenkinsHandler)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-
 	return nil
-}
-
-var _ reconcile.Reconciler = &ReconcileJenkins{}
-
-// ReconcileJenkins reconciles a Jenkins object.
-type ReconcileJenkins struct {
-	client                       client.Client
-	scheme                       *runtime.Scheme
-	jenkinsAPIConnectionSettings jenkinsclient.JenkinsAPIConnectionSettings
-	clientSet                    kubernetes.Clientset
-	config                       rest.Config
-	notificationEvents           *chan event.Event
 }
 
 // Reconcile it's a main reconciliation loop which maintain desired state based on Jenkins.Spec.
@@ -225,16 +208,7 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request) (reconcile.Resul
 		return reconcile.Result{Requeue: true}, jenkins, nil
 	}
 
-	config := configuration.Configuration{
-		Client:                       r.client,
-		ClientSet:                    r.clientSet,
-		Notifications:                r.notificationEvents,
-		Jenkins:                      jenkins,
-		Scheme:                       r.scheme,
-		Config:                       &r.config,
-		JenkinsAPIConnectionSettings: r.jenkinsAPIConnectionSettings,
-	}
-
+	config := r.newReconcilierConfiguration(jenkins)
 	// Reconcile base configuration
 	baseConfiguration := base.New(config, r.jenkinsAPIConnectionSettings)
 
@@ -349,7 +323,6 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request) (reconcile.Resul
 		}
 		logger.Info(message)
 	}
-
 	return reconcile.Result{}, jenkins, nil
 }
 
@@ -379,35 +352,16 @@ func (r *ReconcileJenkins) setDefaults(jenkins *v1alpha2.Jenkins) (requeue bool,
 		changed = true
 		jenkinsContainer.ImagePullPolicy = corev1.PullAlways
 	}
+
 	if jenkinsContainer.ReadinessProbe == nil {
 		logger.Info("Setting default Jenkins readinessProbe")
 		changed = true
-		jenkinsContainer.ReadinessProbe = &corev1.Probe{
-			Handler: corev1.Handler{
-				HTTPGet: &corev1.HTTPGetAction{
-					Path:   "/login",
-					Port:   intstr.FromString("http"),
-					Scheme: corev1.URISchemeHTTP,
-				},
-			},
-			InitialDelaySeconds: int32(30),
-		}
+		jenkinsContainer.ReadinessProbe = resources.NewSimpleProbe(containerProbeURI, containerProbePortName, corev1.URISchemeHTTP, 30)
 	}
 	if jenkinsContainer.LivenessProbe == nil {
 		logger.Info("Setting default Jenkins livenessProbe")
 		changed = true
-		jenkinsContainer.LivenessProbe = &corev1.Probe{
-			Handler: corev1.Handler{
-				HTTPGet: &corev1.HTTPGetAction{
-					Path:   "/login",
-					Port:   intstr.FromString("http"),
-					Scheme: corev1.URISchemeHTTP,
-				},
-			},
-			InitialDelaySeconds: int32(80),
-			TimeoutSeconds:      int32(5),
-			FailureThreshold:    int32(12),
-		}
+		jenkinsContainer.LivenessProbe = resources.NewProbe(containerProbeURI, containerProbePortName, corev1.URISchemeHTTP, 80, 5, 12)
 	}
 	if len(jenkinsContainer.Command) == 0 {
 		logger.Info("Setting default Jenkins container command")
@@ -430,21 +384,11 @@ func (r *ReconcileJenkins) setDefaults(jenkins *v1alpha2.Jenkins) (requeue bool,
 	if isResourceRequirementsNotSet(jenkinsContainer.Resources) {
 		logger.Info("Setting default Jenkins master container resource requirements")
 		changed = true
-		jenkinsContainer.Resources = corev1.ResourceRequirements{
-			Requests: corev1.ResourceList{
-				corev1.ResourceCPU:    resource.MustParse("1"),
-				corev1.ResourceMemory: resource.MustParse("500Mi"),
-			},
-			Limits: corev1.ResourceList{
-				corev1.ResourceCPU:    resource.MustParse("1500m"),
-				corev1.ResourceMemory: resource.MustParse("3Gi"),
-			},
-		}
+		jenkinsContainer.Resources = resources.NewResourceRequirements("1", "500Mi", "1500m", "3Gi")
 	}
 	if reflect.DeepEqual(jenkins.Spec.Service, v1alpha2.Service{}) {
 		logger.Info("Setting default Jenkins master service")
 		changed = true
-
 		var serviceType = corev1.ServiceTypeClusterIP
 		if r.jenkinsAPIConnectionSettings.UseNodePort {
 			serviceType = corev1.ServiceTypeNodePort
@@ -523,18 +467,8 @@ func (r *ReconcileJenkins) setDefaultsForContainer(jenkins *v1alpha2.Jenkins, co
 	if isResourceRequirementsNotSet(jenkins.Spec.Master.Containers[containerIndex].Resources) {
 		logger.Info("Setting default container resource requirements")
 		changed = true
-		jenkins.Spec.Master.Containers[containerIndex].Resources = corev1.ResourceRequirements{
-			Requests: corev1.ResourceList{
-				corev1.ResourceCPU:    resource.MustParse("50m"),
-				corev1.ResourceMemory: resource.MustParse("50Mi"),
-			},
-			Limits: corev1.ResourceList{
-				corev1.ResourceCPU:    resource.MustParse("100m"),
-				corev1.ResourceMemory: resource.MustParse("100Mi"),
-			},
-		}
+		jenkins.Spec.Master.Containers[containerIndex].Resources = resources.NewResourceRequirements("50m", "50Mi", "100m", "100Mi")
 	}
-
 	return changed
 }
 
@@ -552,14 +486,12 @@ func basePlugins() (result []v1alpha2.Plugin) {
 func (r *ReconcileJenkins) handleDeprecatedData(jenkins *v1alpha2.Jenkins) (requeue bool, err error) {
 	changed := false
 	logger := logx.WithValues("cr", jenkins.Name)
-
 	if len(jenkins.Spec.Master.AnnotationsDeprecated) > 0 {
 		changed = true
 		jenkins.Spec.Master.Annotations = jenkins.Spec.Master.AnnotationsDeprecated
 		jenkins.Spec.Master.AnnotationsDeprecated = map[string]string{}
 		logger.V(log.VWarn).Info("spec.master.masterAnnotations is deprecated, the annotations have been moved to spec.master.annotations")
 	}
-
 	if changed {
 		return changed, errors.WithStack(r.client.Update(context.TODO(), jenkins))
 	}
