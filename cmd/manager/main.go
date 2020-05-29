@@ -7,6 +7,8 @@ import (
 	"os"
 	"runtime"
 
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkinsimage"
+
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
@@ -133,6 +135,10 @@ func main() {
 
 	// setup Jenkins controller
 	if err := jenkins.Add(mgr, jenkinsAPIConnectionSettings, *clientSet, *cfg, &c); err != nil {
+		fatal(errors.Wrap(err, "failed to setup controllers"), *debug)
+	}
+	// setup JenkinsImage controller
+	if err = jenkinsimage.Add(mgr); err != nil {
 		fatal(errors.Wrap(err, "failed to setup controllers"), *debug)
 	}
 
