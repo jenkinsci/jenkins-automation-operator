@@ -78,7 +78,7 @@ E2E_TEST_SELECTOR ?= .*
 JENKINS_API_HOSTNAME := $(shell $(JENKINS_API_HOSTNAME_COMMAND) 2> /dev/null || echo "" )
 KUBECONFIG ?= $HOME/.kube/config
 OPERATOR_ARGS ?= --jenkins-api-hostname=$(JENKINS_API_HOSTNAME) --jenkins-api-port=$(JENKINS_API_PORT) --jenkins-api-use-nodeport=$(JENKINS_API_USE_NODEPORT) $(OPERATOR_EXTRA_ARGS)
-
+OPERATOR_EXTRA_ARGS ?= --debug 1
 .DEFAULT_GOAL := help
 
 .PHONY: all
@@ -276,6 +276,7 @@ endif
 	@echo "Applying creation of crds from deploy/crds/jenkins_$(API_VERSION)_jenkins_crd.yaml"
 	kubectl apply -f deploy/crds/jenkins_$(API_VERSION)_jenkins_crd.yaml
 	kubectl apply -f deploy/crds/jenkins_$(API_VERSION)_jenkinsimage_crd.yaml
+	kubectl apply -f deploy/crds/jenkins_$(API_VERSION_V1ALPHA3)_casc_crd.yaml
 	@echo "Watching '$(WATCH_NAMESPACE)' namespace"
 	build/_output/bin/jenkins-operator $(OPERATOR_ARGS)
 
@@ -397,6 +398,7 @@ minikube-run: minikube-start ## Run the operator locally and use minikube as Kub
 	@echo "+ $@"
 	kubectl config use-context minikube
 	kubectl apply -f deploy/crds/jenkins_$(API_VERSION)_jenkins_crd.yaml
+	kubectl apply -f deploy/crds/jenkins_$(API_VERSION_V1ALPHA3)_casc_crd.yaml
 	@echo "Watching '$(WATCH_NAMESPACE)' namespace"
 	build/_output/bin/jenkins-operator $(OPERATOR_ARGS)
 
@@ -407,6 +409,7 @@ crc-run: crc-start ## Run the operator locally and use CodeReady Containers as K
 	@echo "+ $@"
 	oc project $(CRC_OC_PROJECT)
 	kubectl apply -f deploy/crds/jenkins_$(API_VERSION)_jenkins_crd.yaml
+	kubectl apply -f deploy/crds/jenkins_$(API_VERSION_V1ALPHA3)_casc_crd.yaml
 	@echo "Watching '$(WATCH_NAMESPACE)' namespace"
 	build/_output/bin/jenkins-operator $(OPERATOR_ARGS)
 

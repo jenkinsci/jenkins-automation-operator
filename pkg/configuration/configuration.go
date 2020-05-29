@@ -7,12 +7,14 @@ import (
 	"time"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha3"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/notifications/event"
 	"github.com/jenkinsci/kubernetes-operator/pkg/notifications/reason"
 
 	stackerr "github.com/pkg/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -33,6 +35,7 @@ type Configuration struct {
 	ClientSet                    kubernetes.Clientset
 	Notifications                *chan event.Event
 	Jenkins                      *v1alpha2.Jenkins
+	Casc                         *v1alpha3.Casc
 	Scheme                       *runtime.Scheme
 	Config                       *rest.Config
 	JenkinsAPIConnectionSettings jenkinsclient.JenkinsAPIConnectionSettings
@@ -61,7 +64,7 @@ func (c *Configuration) RestartJenkinsMasterPod(reason reason.Reason) error {
 
 // GetJenkinsMasterPod gets the jenkins master pod.
 func (c *Configuration) GetJenkinsMasterPod() (*corev1.Pod, error) {
-	jenkinsMasterPodName := resources.GetJenkinsMasterPodName(c.Jenkins)
+	jenkinsMasterPodName := resources.GetJenkinsMasterPodName(c.Jenkins.Name)
 	currentJenkinsMasterPod := &corev1.Pod{}
 	err := c.Client.Get(context.TODO(), types.NamespacedName{Name: jenkinsMasterPodName, Namespace: c.Jenkins.Namespace}, currentJenkinsMasterPod)
 	if err != nil {
@@ -70,9 +73,24 @@ func (c *Configuration) GetJenkinsMasterPod() (*corev1.Pod, error) {
 	return currentJenkinsMasterPod, nil
 }
 
-// GetJenkinsMasterPod gets the jenkins master pod.
+// WaitUntilCreateJenkinsMasterPod waits for jenkins master pod to be ready
+func (c *Configuration) WaitUntilCreateJenkinsMasterPod() (currentJenkinsMasterPod *corev1.Pod, err error) {
+	currentJenkinsMasterPod, err = c.GetJenkinsMasterPod()
+	for {
+		if err != nil && !apierrors.IsNotFound(err) {
+			return nil, stackerr.WithStack(err)
+		} else if err == nil {
+			break
+		}
+		currentJenkinsMasterPod, err = c.GetJenkinsMasterPod()
+		time.Sleep(time.Millisecond * 10)
+	}
+	return
+}
+
+// GetJenkinsDeployment gets the jenkins master deployment.
 func (c *Configuration) GetJenkinsDeployment() (*appsv1.Deployment, error) {
-	jenkinsDeploymentName := resources.GetJenkinsDeploymentName(c.Jenkins)
+	jenkinsDeploymentName := resources.GetJenkinsDeploymentName(c.Jenkins.Name)
 	currentJenkinsDeployment := &appsv1.Deployment{}
 	err := c.Client.Get(context.TODO(), types.NamespacedName{Name: jenkinsDeploymentName, Namespace: c.Jenkins.Namespace}, currentJenkinsDeployment)
 	if err != nil {
@@ -214,7 +232,7 @@ func (c *Configuration) GetJenkinsClientFromServiceAccount() (jenkinsclient.Jenk
 		return nil, err
 	}
 
-	podName := resources.GetJenkinsMasterPodName(c.Jenkins)
+	podName := resources.GetJenkinsMasterPodName(c.Jenkins.Name)
 	token, _, err := c.Exec(podName, resources.JenkinsMasterContainerName, []string{"cat", "/var/run/secrets/kubernetes.io/serviceaccount/token"})
 	if err != nil {
 		return nil, err

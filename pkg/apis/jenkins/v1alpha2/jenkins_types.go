@@ -56,14 +56,6 @@ type JenkinsSpec struct {
 	// +optional
 	Restore Restore `json:"restore,omitempty"`
 
-	// GroovyScripts defines configuration of Jenkins customization via groovy scripts
-	// +optional
-	GroovyScripts GroovyScripts `json:"groovyScripts,omitempty"`
-
-	// ConfigurationAsCode defines configuration of Jenkins customization via Configuration as Code Jenkins plugin
-	// +optional
-	ConfigurationAsCode ConfigurationAsCode `json:"configurationAsCode,omitempty"`
-
 	// Roles defines list of extra RBAC roles for the Jenkins Master pod service account
 	// +optional
 	Roles []rbacv1.RoleRef `json:"roles,omitempty"`
@@ -660,28 +652,10 @@ type AppliedGroovyScript struct {
 	Hash string `json:"hash"`
 }
 
-// SecretRef is reference to Kubernetes secret.
-type SecretRef struct {
-	Name string `json:"name"`
+func (jenkins *Jenkins) GetNamespace() string {
+	return jenkins.ObjectMeta.Namespace
 }
 
-// ConfigMapRef is reference to Kubernetes ConfigMap.
-type ConfigMapRef struct {
-	Name string `json:"name"`
-}
-
-// Customization defines configuration of Jenkins customization.
-type Customization struct {
-	Secret         SecretRef      `json:"secret"`
-	Configurations []ConfigMapRef `json:"configurations"`
-}
-
-// GroovyScripts defines configuration of Jenkins customization via groovy scripts.
-type GroovyScripts struct {
-	Customization `json:",inline"`
-}
-
-// ConfigurationAsCode defines configuration of Jenkins customization via Configuration as Code Jenkins plugin.
-type ConfigurationAsCode struct {
-	Customization `json:",inline"`
+func (jenkins *Jenkins) GetCRName() string {
+	return jenkins.ObjectMeta.Name
 }

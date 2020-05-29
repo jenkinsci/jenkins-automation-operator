@@ -4,45 +4,100 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha3"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/groovy"
+	"github.com/jenkinsci/kubernetes-operator/pkg/log"
+	"github.com/go-logr/logr"
 
 	k8s "sigs.k8s.io/controller-runtime/pkg/client"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 )
 
 const groovyUtf8MaxStringLength = 65535
 
 // ConfigurationAsCode defines client for configurationAsCode
 type ConfigurationAsCode interface {
-	Ensure(jenkins *v1alpha2.Jenkins) (requeue bool, err error)
+	EnsureCasc(jenkinsName string) (requeue bool, err error)
+	EnsureGroovy(jenkinsName string) (requeue bool, err error) 
 }
 
 type configurationAsCode struct {
-	groovyClient *groovy.Groovy
+	Casc 		 *v1alpha3.Casc
+	GroovyClient *groovy.Groovy
+	K8sClient 	 k8s.Client
+	ClientSet    kubernetes.Clientset
+	RestConfig   *rest.Config
+	Logger       logr.Logger
 }
 
 // New creates new instance of ConfigurationAsCode
-func New(jenkinsClient jenkinsclient.Jenkins, k8sClient k8s.Client, jenkins *v1alpha2.Jenkins) ConfigurationAsCode {
+func New(jenkinsClient jenkinsclient.Jenkins, k8sClient k8s.Client, clientSet kubernetes.Clientset, restConfig *rest.Config, configurationType string, casc *v1alpha3.Casc, customization v1alpha3.Customization) ConfigurationAsCode {
 	return &configurationAsCode{
-		groovyClient: groovy.New(jenkinsClient, k8sClient, jenkins, "user-casc", jenkins.Spec.ConfigurationAsCode.Customization),
+		GroovyClient: groovy.New(jenkinsClient, k8sClient, casc, configurationType, customization),
+		Casc:		  casc,
+		K8sClient:    k8sClient,
+		ClientSet:    clientSet,
+		RestConfig:   restConfig,
+		Logger:       log.Log.WithValues("cr", casc.Name),
 	}
 }
 
-// Ensure configures Jenkins with help Configuration as a code plugin
-func (c *configurationAsCode) Ensure(jenkins *v1alpha2.Jenkins) (requeue bool, err error) {
-	requeue, err = c.groovyClient.WaitForSecretSynchronization(resources.ConfigurationAsCodeSecretVolumePath)
+// EnsureCasc configures Jenkins with help Configuration as a code plugin
+func (c *configurationAsCode) EnsureCasc(jenkinsName string) (requeue bool, err error) {
+	//Add Labels to secret
+	if err := resources.AddLabelToWatchedSecrets(jenkinsName,  c.Casc.Spec.ConfigurationAsCode.Secret.Name, c.Casc.ObjectMeta.Namespace, c.K8sClient); err != nil {
+		return true, err
+	}
+	c.Logger.V(log.VDebug).Info("labels added to configuration as conde secret")
+
+	//Add Labels to configmaps
+	if err := resources.AddLabelToWatchedCMs(jenkinsName, c.Casc.ObjectMeta.Namespace, c.K8sClient, c.Casc.Spec.ConfigurationAsCode.Configurations); err != nil {
+		return true, err
+	}
+	c.Logger.V(log.VDebug).Info("labels added to configuration as code configmap")
+
+	// Reconcile
+	requeue, err = resources.CopySecret(c.K8sClient, c.ClientSet, c.RestConfig, resources.GetJenkinsMasterPodName(jenkinsName), c.Casc.Spec.ConfigurationAsCode.Secret.Name, c.Casc.ObjectMeta.Namespace)
 	if err != nil || requeue {
 		return requeue, err
 	}
 
-	return c.groovyClient.Ensure(func(name string) bool {
+	return c.GroovyClient.Ensure(func(name string) bool {
 		return strings.HasSuffix(name, ".yaml") || strings.HasSuffix(name, ".yml")
 	}, func(groovyScript string) string {
 		return fmt.Sprintf(applyConfigurationAsCodeGroovyScriptFmt, prepareScript(groovyScript))
 	})
 }
+
+// EnsureCasc configures Jenkins with help Configuration as a code plugin
+func (c *configurationAsCode) EnsureGroovy(jenkinsName string) (requeue bool, err error) {
+	//Add Labels to secret
+	if err := resources.AddLabelToWatchedSecrets(jenkinsName,  c.Casc.Spec.GroovyScripts.Secret.Name, c.Casc.ObjectMeta.Namespace, c.K8sClient); err != nil {
+		return true, err
+	}
+	c.Logger.V(log.VDebug).Info("labels added to configuration as conde secret")
+
+	//Add Labels to configmaps
+	if err := resources.AddLabelToWatchedCMs(jenkinsName, c.Casc.ObjectMeta.Namespace, c.K8sClient, c.Casc.Spec.GroovyScripts.Configurations); err != nil {
+		return true, err
+	}
+	c.Logger.V(log.VDebug).Info("labels added to configuration as code configmap")
+
+	// Reconcile
+	requeue, err = resources.CopySecret(c.K8sClient, c.ClientSet, c.RestConfig, resources.GetJenkinsMasterPodName(jenkinsName), c.Casc.Spec.ConfigurationAsCode.Secret.Name, c.Casc.ObjectMeta.Namespace)
+	if err != nil || requeue {
+		return requeue, err
+	}
+
+	return c.GroovyClient.Ensure(func(name string) bool {
+		return strings.HasSuffix(name, ".groovy")
+	}, groovy.AddSecretsLoaderToGroovyScript(resources.GroovyScriptsSecretVolumePath))
+
+}
+
 
 const applyConfigurationAsCodeGroovyScriptFmt = `
 String[] configContent = ['''%s''']
@@ -85,3 +140,4 @@ func splitTooLongScript(groovyScript string) []string {
 
 	return slicedGroovyScript
 }
+

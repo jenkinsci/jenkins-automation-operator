@@ -12,16 +12,44 @@ type CascSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
+	
+	// GroovyScripts defines configuration of Jenkins customization via groovy scripts
+	// +optional
+	GroovyScripts Customization `json:"groovyScripts,omitempty"`
+
+	// ConfigurationAsCode defines configuration of Jenkins customization via Configuration as Code Jenkins plugin
+	// +optional
+	ConfigurationAsCode Customization `json:"configurationAsCode,omitempty"`
+
+}
+
+// SecretRef is reference to Kubernetes secret
+type SecretRef struct {
+	Name string `json:"name"`
+}
+
+// ConfigMapRef is reference to Kubernetes ConfigMap
+type ConfigMapRef struct {
+	Name string `json:"name"`
+}
+
+// Customization defines configuration of Jenkins customization
+type Customization struct {
 	Secret         SecretRef      `json:"secret"`
 	Configurations []ConfigMapRef `json:"configurations"`
 }
 
-// SecretRef is reference to Kubernetes secret.
-type SecretRef string
-
-// ConfigMapRef is reference to Kubernetes ConfigMap.
-type ConfigMapRef string
-
+// AppliedGroovyScript is the applied groovy script in Jenkins by the operator.
+type AppliedGroovyScript struct {
+	// ConfigurationType is the name of the configuration type(base-groovy, user-groovy, user-casc)
+	ConfigurationType string `json:"configurationType"`
+	// Source is the name of source where is located groovy script
+	Source string `json:"source"`
+	// Name is the name of the groovy script
+	Name string `json:"name"`
+	// Hash is the hash of the groovy script and secrets which it uses
+	Hash string `json:"hash"`
+}
 
 // CascStatus defines the observed state of Casc
 type CascStatus struct {
@@ -40,6 +68,10 @@ type CascStatus struct {
 	LastTransitionTime metav1.Time          `json:"lastTransitionTime"`
 	Reason             string               `json:"reason,omitempty" protobuf:"bytes,5,opt,name=reason"`
 	Message            string               `json:"message,omitempty" protobuf:"bytes,6,opt,name=message"`
+
+	// AppliedGroovyScripts is a list with all applied groovy scripts in Jenkins by the operator
+	// +optional
+	AppliedGroovyScripts []AppliedGroovyScript `json:"appliedGroovyScripts,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -66,4 +98,13 @@ type CascList struct {
 
 func init() {
 	SchemeBuilder.Register(&Casc{}, &CascList{})
+}
+
+
+func (casc *Casc) GetNamespace() string {
+	return casc.ObjectMeta.Namespace
+}
+
+func (casc *Casc) GetCRName() string {
+	return casc.ObjectMeta.Name
 }

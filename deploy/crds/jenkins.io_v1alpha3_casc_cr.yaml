@@ -5,5 +5,9 @@ metadata:
     jenkins.io/jenkins-reference: 'example'
   name: example-casc
 spec:
-  configurations:
-  - example
+  configurationAsCode:
+    configurations: 
+    - name: jenkins-operator-user-configuration
+  groovyScripts:
+    configurations:
+    - name: jenkins-operator-user-configuration

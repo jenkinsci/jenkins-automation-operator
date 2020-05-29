@@ -1,19 +1,15 @@
 package user
 
 import (
-	"strings"
-
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
-
-	"github.com/go-logr/logr"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/backuprestore"
-	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/user/casc"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/user/seedjobs"
-	"github.com/jenkinsci/kubernetes-operator/pkg/groovy"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
+	"github.com/go-logr/logr"
+	
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -91,8 +87,9 @@ func (r *reconcileUserConfiguration) ensureSeedJobs() (reconcile.Result, error) 
 }
 
 func (r *reconcileUserConfiguration) ensureCasc(jenkinsClient jenkinsclient.Jenkins) (reconcile.Result, error) {
-	configurationAsCodeClient := casc.New(jenkinsClient, r.Client, r.Configuration.Jenkins)
-	requeue, err := configurationAsCodeClient.Ensure(r.Configuration.Jenkins)
+	//Yaml
+	configurationAsCodeClient := casc.New(jenkinsClient, r.Configuration.Client, r.Configuration.ClientSet, r.Configuration.Config, "user-casc", r.Configuration.Casc, r.Configuration.Casc.Spec.ConfigurationAsCode)
+	requeue, err := configurationAsCodeClient.EnsureCasc(r.Configuration.Jenkins.Name)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
@@ -100,17 +97,9 @@ func (r *reconcileUserConfiguration) ensureCasc(jenkinsClient jenkinsclient.Jenk
 		return reconcile.Result{Requeue: true}, nil
 	}
 
-	groovyClient := groovy.New(jenkinsClient, r.Client, r.Configuration.Jenkins, "user-groovy", r.Configuration.Jenkins.Spec.GroovyScripts.Customization)
-	requeue, err = groovyClient.WaitForSecretSynchronization(resources.GroovyScriptsSecretVolumePath)
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-	if requeue {
-		return reconcile.Result{Requeue: true}, nil
-	}
-	requeue, err = groovyClient.Ensure(func(name string) bool {
-		return strings.HasSuffix(name, ".groovy")
-	}, groovy.AddSecretsLoaderToGroovyScript(resources.GroovyScriptsSecretVolumePath))
+	// Groovy
+	configurationAsCodeClient = casc.New(jenkinsClient, r.Configuration.Client, r.Configuration.ClientSet, r.Configuration.Config, "user-groovy", r.Configuration.Casc, r.Configuration.Casc.Spec.GroovyScripts)
+	requeue, err = configurationAsCodeClient.EnsureGroovy(r.Configuration.Jenkins.Name)
 	if err != nil {
 		return reconcile.Result{}, err
 	}

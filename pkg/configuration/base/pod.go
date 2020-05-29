@@ -162,7 +162,7 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsMasterPod(meta metav1.O
 			return reconcile.Result{}, stackerr.WithStack(err)
 		}
 
-		currentJenkinsMasterPod, err := r.waitUntilCreateJenkinsMasterPod()
+		currentJenkinsMasterPod, err := r.Configuration.WaitUntilCreateJenkinsMasterPod()
 		if err == nil {
 			r.handleAdmissionControllerChanges(currentJenkinsMasterPod)
 		} else {

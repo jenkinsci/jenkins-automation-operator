@@ -15,7 +15,7 @@ import (
 func NewJenkinsDeployment(objectMeta metav1.ObjectMeta, jenkins *v1alpha2.Jenkins) *appsv1.Deployment {
 	serviceAccountName := objectMeta.Name
 	objectMeta.Annotations = jenkins.Spec.Master.Annotations
-	objectMeta.Name = GetJenkinsDeploymentName(jenkins)
+	objectMeta.Name = GetJenkinsDeploymentName(jenkins.Name)
 	selector := &metav1.LabelSelector{MatchLabels: objectMeta.Labels}
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -44,7 +44,7 @@ func NewJenkinsDeployment(objectMeta metav1.ObjectMeta, jenkins *v1alpha2.Jenkin
 	}
 }
 
-// GetJenkinsMasterPodName returns Jenkins pod name for given CR
-func GetJenkinsDeploymentName(jenkins *v1alpha2.Jenkins) string {
-	return fmt.Sprintf("jenkins-%s", jenkins.Name)
+// GetJenkinsDeploymentName returns Jenkins deployment name for given CR
+func GetJenkinsDeploymentName(name string) string {
+	return fmt.Sprintf("jenkins-%s", name)
 }

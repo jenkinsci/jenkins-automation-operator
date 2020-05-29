@@ -11,6 +11,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/jenkinsci/kubernetes-operator/internal/render"
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha3"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
@@ -254,7 +255,11 @@ func (s *seedJobs) waitForSeedJobAgent(agentName string) (requeue bool, err erro
 
 // createJob is responsible for creating jenkins job which configures jenkins seed jobs and deploy keys
 func (s *seedJobs) createJobs(jenkins *v1alpha2.Jenkins) (requeue bool, err error) {
-	groovyClient := groovy.New(s.jenkinsClient, s.Client, jenkins, "seed-jobs", jenkins.Spec.GroovyScripts.Customization)
+	customization := v1alpha3.Customization{
+		Secret:         v1alpha3.SecretRef{Name: ""},
+		Configurations: []v1alpha3.ConfigMapRef{{Name: ""}},
+	}
+	groovyClient := groovy.New(s.jenkinsClient, s.Client, jenkins, "seed-jobs", customization)
 	for _, seedJob := range jenkins.Spec.SeedJobs {
 		credentialValue, err := s.credentialValue(jenkins.Namespace, seedJob)
 		if err != nil {
@@ -288,7 +293,7 @@ func (s *seedJobs) createJobs(jenkins *v1alpha2.Jenkins) (requeue bool, err erro
 func (s *seedJobs) ensureLabelsForSecrets(jenkins v1alpha2.Jenkins) error {
 	for _, seedJob := range jenkins.Spec.SeedJobs {
 		if seedJob.JenkinsCredentialType == v1alpha2.BasicSSHCredentialType || seedJob.JenkinsCredentialType == v1alpha2.UsernamePasswordCredentialType {
-			requiredLabels := resources.BuildLabelsForWatchedResources(jenkins)
+			requiredLabels := resources.BuildLabelsForWatchedResources(jenkins.Name)
 			requiredLabels[JenkinsCredentialTypeLabelName] = string(seedJob.JenkinsCredentialType)
 
 			secret := &corev1.Secret{}

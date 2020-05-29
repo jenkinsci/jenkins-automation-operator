@@ -6,12 +6,12 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
-	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
-	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration"
-	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/user"
-	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
-	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/notifications/event"
-	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/notifications/reason"
+	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/client"
+	"github.com/jenkinsci/kubernetes-operator/pkg/configuration"
+	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/user"
+	"github.com/jenkinsci/kubernetes-operator/pkg/constants"
+	"github.com/jenkinsci/kubernetes-operator/pkg/notifications/event"
+	"github.com/jenkinsci/kubernetes-operator/pkg/notifications/reason"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -136,6 +136,7 @@ func (r *ReconcileCasc) Reconcile(request reconcile.Request) (reconcile.Result, 
 		ClientSet:                    r.clientSet,
 		Notifications:                r.notificationEvents,
 		Jenkins:                      jenkins,
+		Casc:                      	  casc,
 		Scheme:                       r.scheme,
 		Config:                       &r.config,
 		JenkinsAPIConnectionSettings: r.jenkinsAPIConnectionSettings,
@@ -183,7 +184,7 @@ func (r *ReconcileCasc) Reconcile(request reconcile.Request) (reconcile.Result, 
 	//Update the status
 	casc.Status.LastTransitionTime = metav1.Now()
 	casc.Status.Phase = constants.JenkinsStatusCompleted
-	err = r.client.Update(context.TODO(), jenkins)
+	err = r.client.Update(context.TODO(), casc)
 	if err != nil {
 		return reconcile.Result{}, err
 	}

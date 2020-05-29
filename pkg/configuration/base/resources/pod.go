@@ -1,13 +1,19 @@
 package resources
 
 import (
+	"context"
 	"fmt"
+	"time"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/constants"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/kubernetes/pkg/client/conditions"
+	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -64,13 +70,6 @@ func GetJenkinsMasterContainerBaseEnvs(jenkins *v1alpha2.Jenkins) []corev1.EnvVa
 			Name:  "COPY_REFERENCE_FILE_LOG",
 			Value: fmt.Sprintf("%s/%s", getJenkinsHomePath(jenkins), "copy_reference_file.log"),
 		},
-	}
-
-	if len(jenkins.Spec.ConfigurationAsCode.Secret.Name) > 0 {
-		envVars = append(envVars, corev1.EnvVar{
-			Name:  "SECRETS", // https://github.com/jenkinsci/configuration-as-code-plugin/blob/master/demos/kubernetes-secrets/README.md
-			Value: ConfigurationAsCodeSecretVolumePath,
-		})
 	}
 
 	return envVars
@@ -132,38 +131,8 @@ func GetJenkinsMasterPodBaseVolumes(jenkins *v1alpha2.Jenkins) []corev1.Volume {
 		},
 	}
 
-	if len(jenkins.Spec.GroovyScripts.Secret.Name) > 0 {
-		volumes = append(volumes, corev1.Volume{
-			Name: getGroovyScriptsSecretVolumeName(jenkins),
-			VolumeSource: corev1.VolumeSource{
-				Secret: &corev1.SecretVolumeSource{
-					DefaultMode: &secretVolumeSourceDefaultMode,
-					SecretName:  jenkins.Spec.GroovyScripts.Secret.Name,
-				},
-			},
-		})
-	}
-	if len(jenkins.Spec.ConfigurationAsCode.Secret.Name) > 0 {
-		volumes = append(volumes, corev1.Volume{
-			Name: getConfigurationAsCodeSecretVolumeName(jenkins),
-			VolumeSource: corev1.VolumeSource{
-				Secret: &corev1.SecretVolumeSource{
-					DefaultMode: &secretVolumeSourceDefaultMode,
-					SecretName:  jenkins.Spec.ConfigurationAsCode.Secret.Name,
-				},
-			},
-		})
-	}
 
 	return volumes
-}
-
-func getGroovyScriptsSecretVolumeName(jenkins *v1alpha2.Jenkins) string {
-	return "gs-" + jenkins.Spec.GroovyScripts.Secret.Name
-}
-
-func getConfigurationAsCodeSecretVolumeName(jenkins *v1alpha2.Jenkins) string {
-	return "casc-" + jenkins.Spec.ConfigurationAsCode.Secret.Name
 }
 
 // GetJenkinsMasterContainerBaseVolumeMounts returns Jenkins master pod volume mounts required by operator
@@ -191,20 +160,6 @@ func GetJenkinsMasterContainerBaseVolumeMounts(jenkins *v1alpha2.Jenkins) []core
 		},
 	}
 
-	if len(jenkins.Spec.GroovyScripts.Secret.Name) > 0 {
-		volumeMounts = append(volumeMounts, corev1.VolumeMount{
-			Name:      getGroovyScriptsSecretVolumeName(jenkins),
-			MountPath: GroovyScriptsSecretVolumePath,
-			ReadOnly:  true,
-		})
-	}
-	if len(jenkins.Spec.ConfigurationAsCode.Secret.Name) > 0 {
-		volumeMounts = append(volumeMounts, corev1.VolumeMount{
-			Name:      getConfigurationAsCodeSecretVolumeName(jenkins),
-			MountPath: ConfigurationAsCodeSecretVolumePath,
-			ReadOnly:  true,
-		})
-	}
 
 	return volumeMounts
 }
@@ -291,8 +246,8 @@ func newContainers(jenkins *v1alpha2.Jenkins) (containers []corev1.Container) {
 }
 
 // GetJenkinsMasterPodName returns Jenkins pod name for given CR
-func GetJenkinsMasterPodName(jenkins *v1alpha2.Jenkins) string {
-	return fmt.Sprintf("jenkins-%s", jenkins.Name)
+func GetJenkinsMasterPodName(name string) string {
+	return fmt.Sprintf("jenkins-%s", name)
 }
 
 // GetJenkinsMasterPodLabels returns Jenkins pod labels for given CR
@@ -313,7 +268,7 @@ func GetJenkinsMasterPodLabels(jenkins v1alpha2.Jenkins) map[string]string {
 func NewJenkinsMasterPod(objectMeta metav1.ObjectMeta, jenkins *v1alpha2.Jenkins) *corev1.Pod {
 	serviceAccountName := objectMeta.Name
 	objectMeta.Annotations = jenkins.Spec.Master.Annotations
-	objectMeta.Name = GetJenkinsMasterPodName(jenkins)
+	objectMeta.Name = GetJenkinsMasterPodName(jenkins.Name)
 	objectMeta.Labels = GetJenkinsMasterPodLabels(*jenkins)
 
 	return &corev1.Pod{
@@ -331,4 +286,50 @@ func NewJenkinsMasterPod(objectMeta metav1.ObjectMeta, jenkins *v1alpha2.Jenkins
 			PriorityClassName:  jenkins.Spec.Master.PriorityClassName,
 		},
 	}
+}
+
+/* isPodRunning eturn a condition function that indicates whether the given pod is currently running
+func isPodRunning(k8sClient k8s.Client, name, namespace string) (ready bool, err error) {
+	pod := &corev1.Pod{}
+	err = k8sClient.Get(context.TODO(), types.NamespacedName{Name: name, Namespace: namespace}, pod)
+	if err != nil && !apierrors.IsNotFound(err) {
+		return false, stackerr.WithStack(err)
+	} else if err != nil {
+		return false, stackerr.WithStack(err)
+	} else {
+		for {
+			if (pod.Status.Phase != corev1.PodSucceeded) {
+				time.Sleep(time.Millisecond * 10)
+			}
+		}
+	}
+	
+	return
+}
+*/
+
+// return a condition function that indicates whether the given pod is
+// currently running
+func isPodRunning(k8sClient client.Client, podName, namespace string) wait.ConditionFunc {
+	return func() (bool, error) {
+		pod := &corev1.Pod{}
+		err := k8sClient.Get(context.TODO(), types.NamespacedName{Name: podName, Namespace: namespace}, pod)
+		if err != nil {
+			return false, err
+		}
+
+		switch pod.Status.Phase {
+		case corev1.PodRunning:
+			return true, nil
+		case corev1.PodFailed, corev1.PodSucceeded:
+			return false, conditions.ErrPodCompleted
+		}
+		return false, nil
+	}
+}
+
+// Poll up to timeout seconds for pod to enter running state.
+// Returns an error if the pod never enters the running state.
+func WaitForPodRunning(k8sClient client.Client, namespace, podName string, timeout time.Duration) error {
+	return wait.PollImmediate(time.Second, timeout, isPodRunning(k8sClient, podName, namespace))
 }

@@ -31,24 +31,91 @@ spec:
         spec:
           description: CascSpec defines the desired state of Casc
           properties:
-            configurations:
-              items:
-                description: ConfigMapRef is reference to Kubernetes ConfigMap.
-                type: string
-              type: array
-            secret:
-              description: 'INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-                Important: Run "operator-sdk generate k8s" to regenerate code after
-                modifying this file Add custom validation using kubebuilder tags:
-                https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html'
-              type: string
-          required:
-          - configurations
-          - secret
+            configurationAsCode:
+              description: ConfigurationAsCode defines configuration of Jenkins customization
+                via Configuration as Code Jenkins plugin
+              properties:
+                configurations:
+                  items:
+                    description: ConfigMapRef is reference to Kubernetes ConfigMap
+                    properties:
+                      name:
+                        type: string
+                    required:
+                    - name
+                    type: object
+                  type: array
+                secret:
+                  description: SecretRef is reference to Kubernetes secret
+                  properties:
+                    name:
+                      type: string
+                  required:
+                  - name
+                  type: object
+              required:
+              - configurations
+              - secret
+              type: object
+            groovyScripts:
+              description: GroovyScripts defines configuration of Jenkins customization
+                via groovy scripts
+              properties:
+                configurations:
+                  items:
+                    description: ConfigMapRef is reference to Kubernetes ConfigMap
+                    properties:
+                      name:
+                        type: string
+                    required:
+                    - name
+                    type: object
+                  type: array
+                secret:
+                  description: SecretRef is reference to Kubernetes secret
+                  properties:
+                    name:
+                      type: string
+                  required:
+                  - name
+                  type: object
+              required:
+              - configurations
+              - secret
+              type: object
           type: object
         status:
           description: CascStatus defines the observed state of Casc
           properties:
+            appliedGroovyScripts:
+              description: AppliedGroovyScripts is a list with all applied groovy
+                scripts in Jenkins by the operator
+              items:
+                description: AppliedGroovyScript is the applied groovy script in Jenkins
+                  by the operator.
+                properties:
+                  configurationType:
+                    description: ConfigurationType is the name of the configuration
+                      type(base-groovy, user-groovy, user-casc)
+                    type: string
+                  hash:
+                    description: Hash is the hash of the groovy script and secrets
+                      which it uses
+                    type: string
+                  name:
+                    description: Name is the name of the groovy script
+                    type: string
+                  source:
+                    description: Source is the name of source where is located groovy
+                      script
+                    type: string
+                required:
+                - configurationType
+                - hash
+                - name
+                - source
+                type: object
+              type: array
             lastTransitionTime:
               format: date-time
               type: string

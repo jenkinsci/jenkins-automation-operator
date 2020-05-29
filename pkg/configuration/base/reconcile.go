@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha3"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
@@ -153,16 +154,6 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureResourcesRequiredForJenkinsPod
 		return err
 	}
 	r.logger.V(log.VDebug).Info("Base configuration config map is present")
-
-	if err := r.addLabelForWatchesResources(r.Configuration.Jenkins.Spec.GroovyScripts.Customization); err != nil {
-		return err
-	}
-	r.logger.V(log.VDebug).Info("GroovyScripts Secret and ConfigMap added watched labels")
-
-	if err := r.addLabelForWatchesResources(r.Configuration.Jenkins.Spec.ConfigurationAsCode.Customization); err != nil {
-		return err
-	}
-	r.logger.V(log.VDebug).Info("ConfigurationAsCode Secret and ConfigMap added watched labels")
 
 	if err := r.createRBAC(metaObject); err != nil {
 		return err
@@ -388,33 +379,17 @@ func (r *ReconcileJenkinsBaseConfiguration) waitForJenkins() (reconcile.Result, 
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) ensureBaseConfiguration(jenkinsClient jenkinsclient.Jenkins) (reconcile.Result, error) {
-	customization := v1alpha2.GroovyScripts{
-		Customization: v1alpha2.Customization{
-			Secret:         v1alpha2.SecretRef{Name: ""},
-			Configurations: []v1alpha2.ConfigMapRef{{Name: resources.GetBaseConfigurationConfigMapName(r.Configuration.Jenkins)}},
-		},
+	customization := v1alpha3.Customization{
+			Secret:         v1alpha3.SecretRef{Name: ""},
+			Configurations: []v1alpha3.ConfigMapRef{{Name: resources.GetBaseConfigurationConfigMapName(r.Configuration.Jenkins)}},
 	}
-	groovyClient := groovy.New(jenkinsClient, r.Client, r.Configuration.Jenkins, "base-groovy", customization.Customization)
+	groovyClient := groovy.New(jenkinsClient, r.Client, r.Configuration.Jenkins, "base-groovy", customization)
 	requeue, err := groovyClient.Ensure(func(name string) bool {
 		return strings.HasSuffix(name, ".groovy")
 	}, func(groovyScript string) string {
 		return groovyScript
 	})
 	return reconcile.Result{Requeue: requeue}, err
-}
-
-func (r *ReconcileJenkinsBaseConfiguration) waitUntilCreateJenkinsMasterPod() (currentJenkinsMasterPod *corev1.Pod, err error) {
-	currentJenkinsMasterPod, err = r.Configuration.GetJenkinsMasterPod()
-	for {
-		if err != nil && !apierrors.IsNotFound(err) {
-			return nil, stackerr.WithStack(err)
-		} else if err == nil {
-			break
-		}
-		currentJenkinsMasterPod, err = r.Configuration.GetJenkinsMasterPod()
-		time.Sleep(time.Millisecond * 10)
-	}
-	return
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) handleAdmissionControllerChanges(currentJenkinsMasterPod *corev1.Pod) {
