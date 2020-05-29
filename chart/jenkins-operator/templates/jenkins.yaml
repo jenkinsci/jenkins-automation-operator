@@ -10,26 +10,30 @@ metadata:
 spec:
   configurationAsCode:
     configurations:
-      {{- range .Values.jenkins.configuration.configurationAsCode }}
+    {{- range .Values.jenkins.configuration.configurationAsCode }}
     - name: {{ .configMapName }}
-      {{- end }}
+    {{- end }}
+    {{- if .Values.jenkins.configuration.configurationAsCode }}
     secret:
       {{- if .Values.jenkins.configuration.secretRefName }}
       name: {{ .Values.jenkins.configuration.secretRefName }}
-      {{ else if .Values.jenkins.configuration.secretData }}
+      {{- else if .Values.jenkins.configuration.secretData }}
       name: jenkins-{{ .Values.jenkins.name }}
       {{- end }}
+    {{- end }}
   groovyScripts:
     configurations:
-      {{- range .Values.jenkins.configuration.groovyScripts }}
+    {{- range .Values.jenkins.configuration.groovyScripts }}
     - name: {{ .configMapName }}
-      {{- end }}
+    {{- end }}
+    {{- if .Values.jenkins.configuration.groovyScripts }}
     secret:
       {{- if .Values.jenkins.configuration.secretRefName }}
       name: {{ .Values.jenkins.configuration.secretRefName }}
-      {{ else if .Values.jenkins.configuration.secretData }}
+      {{- else if .Values.jenkins.configuration.secretData }}
       name: jenkins-{{ .Values.jenkins.name }}
       {{- end }}
+    {{- end }}
   {{- if .Values.jenkins.backup.enabled }}
   backup:
     containerName: {{ .Values.jenkins.backup.containerName }}
