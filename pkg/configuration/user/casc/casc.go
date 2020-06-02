@@ -45,7 +45,9 @@ func (c *configurationAsCode) Ensure(jenkins *v1alpha2.Jenkins) (requeue bool, e
 }
 
 const applyConfigurationAsCodeGroovyScriptFmt = `
-String[] configContent = ['''%s'''] 
+import hudson.util.VersionNumber
+
+String[] configContent = ['''%s''']
 def configSb = new StringBuffer()
 for (int i=0; i<configContent.size(); i++) {
     configSb << configContent[i]
@@ -53,7 +55,20 @@ for (int i=0; i<configContent.size(); i++) {
 
 def stream = new ByteArrayInputStream(configSb.toString().getBytes('UTF-8'))
 
-def source = new io.jenkins.plugins.casc.yaml.YamlSource(stream, io.jenkins.plugins.casc.yaml.YamlSource.READ_FROM_INPUTSTREAM)
+def plugin = jenkins.model.Jenkins.instance.getPluginManager().whichPlugin(io.jenkins.plugins.casc.ConfigurationAsCode)
+def version = plugin.getVersionNumber()
+
+def source
+
+switch (version) {
+	case { it.isNewerThanOrEqualTo(new VersionNumber("1.41")) }:
+		source = new io.jenkins.plugins.casc.yaml.YamlSource(stream)
+		break
+	default:
+		source = new io.jenkins.plugins.casc.yaml.YamlSource(stream, io.jenkins.plugins.casc.yaml.YamlSource.READ_FROM_INPUTSTREAM)
+		break
+	}
+
 io.jenkins.plugins.casc.ConfigurationAsCode.get().configureWith(source)
 `
 
