@@ -168,7 +168,7 @@ jenkins:
 
       # className is storageClassName for PVC
       # See https://kubernetes.io/docs/concepts/storage/persistent-volumes/#class-1 for more details
-      className: ""
+      className: "-"
 
     # env contains container environment variables
     # PVC backup provider handles these variables:

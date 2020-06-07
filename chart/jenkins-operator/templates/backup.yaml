@@ -8,7 +8,13 @@ metadata:
     app: jenkins-operator
     jenkins-cr: {{ .Values.jenkins.name }}
 spec:
-  storageClassName: {{ .Values.jenkins.backup.pvc.className }}
+  {{- if .Values.jenkins.backup.pvc.className }}
+  {{- if (eq "-" .Values.jenkins.backup.pvc.className) }}
+  storageClassName: ""
+  {{- else }}
+  storageClassName: "{{ .Values.jenkins.backup.pvc.className }}"
+  {{- end }}
+  {{- end }}
   accessModes:
     - ReadWriteOnce
   resources:
