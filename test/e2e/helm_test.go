@@ -50,7 +50,7 @@ func TestDeployHelmChart(t *testing.T) {
 	}
 
 	cmd := exec.Command("helm", "upgrade", "jenkins", "./chart/jenkins-operator", "--namespace", namespace, "--debug",
-		"--set-string", fmt.Sprintf("jenkins.namespace=%s", namespace, "--install"))
+		"--set-string", fmt.Sprintf("jenkins.namespace=%s", namespace), "--install")
 	output, err := cmd.CombinedOutput()
 	require.NoError(t, err, string(output))
 
@@ -58,7 +58,7 @@ func TestDeployHelmChart(t *testing.T) {
 	waitForJenkinsUserConfigurationToComplete(t, jenkins)
 
 	cmd = exec.Command("helm", "upgrade", "jenkins", "./chart/jenkins-operator", "--namespace", namespace, "--debug",
-		"--set-string", fmt.Sprintf("jenkins.namespace=%s", namespace, "--install"))
+		"--set-string", fmt.Sprintf("jenkins.namespace=%s", namespace), "--install")
 	output, err = cmd.CombinedOutput()
 	require.NoError(t, err, string(output))
 
