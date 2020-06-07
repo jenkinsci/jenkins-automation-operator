@@ -45,15 +45,16 @@ func (c *configurationAsCode) Ensure(jenkins *v1alpha2.Jenkins) (requeue bool, e
 }
 
 const applyConfigurationAsCodeGroovyScriptFmt = `
-String[] configContent = ['''%s'''] 
+String[] configContent = ['''%s''']
+
 def configSb = new StringBuffer()
 for (int i=0; i<configContent.size(); i++) {
     configSb << configContent[i]
 }
 
 def stream = new ByteArrayInputStream(configSb.toString().getBytes('UTF-8'))
+def source = io.jenkins.plugins.casc.yaml.YamlSource.of(stream)
 
-def source = new io.jenkins.plugins.casc.yaml.YamlSource(stream, io.jenkins.plugins.casc.yaml.YamlSource.READ_FROM_INPUTSTREAM)
 io.jenkins.plugins.casc.ConfigurationAsCode.get().configureWith(source)
 `
 
