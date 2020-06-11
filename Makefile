@@ -141,7 +141,6 @@ HAS_GOLINT := $(shell which golangci-lint)
 lint: ## Verifies `golint` passes
 	@echo "+ $@"
 ifndef HAS_GOLINT
-	export GOLANGCI_LINT_CACHE=/tmp/.cache
 	go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.26.0
 endif
 	@golangci-lint run
