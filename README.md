@@ -63,8 +63,10 @@ Selected content:
 
 ## Community
 
-we have a dedicated channel called `#jenkins-operator` on [virtuslab-oss.slack.com](https://virtuslab-oss.slack.com) 
+We have a dedicated channel called `#jenkins-operator` on [virtuslab-oss.slack.com](https://virtuslab-oss.slack.com) 
 Fill out ([Invite form](https://forms.gle/X3X8qA1XMirdBuEH7)) and come say hi ! 
+
+Every Thursday we have a community call at 16:30 CET on [Google Meet](https://meet.google.com/rsf-nhte-gnq). Feel free to join, ask questions and have fun :)
 
 ## Contribution
 
@@ -75,6 +77,7 @@ Before any big pull request please consult the maintainers to ensure a common di
 ## Presentations
 
 - [Jenkins World 2019 Lisbon](assets/Jenkins_World_Lisbon_2019%20-Jenkins_Kubernetes_Operator.pdf)
+- [Jenkins Online Meetup 2020](assets/Jenkins_Online_Meetup-Jenkins_Kubernetes_Operator.pdf)
 
 ## About the authors
 

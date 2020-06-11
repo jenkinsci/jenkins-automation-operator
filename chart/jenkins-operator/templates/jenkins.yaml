@@ -4,29 +4,36 @@ kind: Jenkins
 metadata:
   name: {{ .Values.jenkins.name }}
   namespace: {{ .Values.jenkins.namespace }}
+  {{- with .Values.jenkins.labels }}
+  labels: {{ toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   configurationAsCode:
     configurations:
-      {{- range .Values.jenkins.configuration.configurationAsCode }}
+    {{- range .Values.jenkins.configuration.configurationAsCode }}
     - name: {{ .configMapName }}
-      {{- end }}
+    {{- end }}
+    {{- if .Values.jenkins.configuration.configurationAsCode }}
     secret:
       {{- if .Values.jenkins.configuration.secretRefName }}
       name: {{ .Values.jenkins.configuration.secretRefName }}
-      {{ else if .Values.jenkins.configuration.secretData }}
+      {{- else if .Values.jenkins.configuration.secretData }}
       name: jenkins-{{ .Values.jenkins.name }}
       {{- end }}
+    {{- end }}
   groovyScripts:
     configurations:
-      {{- range .Values.jenkins.configuration.groovyScripts }}
+    {{- range .Values.jenkins.configuration.groovyScripts }}
     - name: {{ .configMapName }}
-      {{- end }}
+    {{- end }}
+    {{- if .Values.jenkins.configuration.groovyScripts }}
     secret:
       {{- if .Values.jenkins.configuration.secretRefName }}
       name: {{ .Values.jenkins.configuration.secretRefName }}
-      {{ else if .Values.jenkins.configuration.secretData }}
+      {{- else if .Values.jenkins.configuration.secretData }}
       name: jenkins-{{ .Values.jenkins.name }}
       {{- end }}
+    {{- end }}
   {{- if .Values.jenkins.backup.enabled }}
   backup:
     containerName: {{ .Values.jenkins.backup.containerName }}
@@ -58,6 +65,9 @@ spec:
   notifications: {{ toYaml . | nindent 4 }}
   {{- end }}
   master:
+    {{- with .Values.jenkins.labels }}
+    labels: {{ toYaml . | nindent 6 }}
+    {{- end }}
     {{- with .Values.jenkins.basePlugins }}
     basePlugins: {{ toYaml . | nindent 4 }}
     {{- end }}
@@ -95,6 +105,9 @@ spec:
           timeoutSeconds: 1
         {{- with .Values.jenkins.resources }}
         resources: {{ toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.jenkins.env }}
+        env: {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- if .Values.jenkins.backup.enabled }}
       - name: {{ .Values.jenkins.backup.containerName }}

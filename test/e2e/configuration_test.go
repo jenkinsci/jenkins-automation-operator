@@ -7,11 +7,11 @@ import (
 	"time"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
-	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
-	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base"
-	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
-	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/groovy"
-	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/plugins"
+	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/client"
+	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base"
+	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
+	"github.com/jenkinsci/kubernetes-operator/pkg/groovy"
+	"github.com/jenkinsci/kubernetes-operator/pkg/plugins"
 
 	"github.com/bndr/gojenkins"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
@@ -22,13 +22,15 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const e2e = "e2e"
+
 func TestConfiguration(t *testing.T) {
 	t.Parallel()
 	namespace, ctx := setupTest(t)
 
 	defer showLogsAndCleanup(t, ctx)
 
-	jenkinsCRName := "e2e"
+	jenkinsCRName := e2e
 	numberOfExecutors := 6
 	numberOfExecutorsEnvName := "NUMBER_OF_EXECUTORS"
 	systemMessage := "Configuration as Code integration works!!!"
@@ -207,7 +209,7 @@ unclassified:
 func createDefaultLimitsForContainersInNamespace(t *testing.T, namespace string) {
 	limitRange := &corev1.LimitRange{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "e2e",
+			Name:      e2e,
 			Namespace: namespace,
 		},
 		Spec: corev1.LimitRangeSpec{

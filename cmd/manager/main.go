@@ -7,17 +7,20 @@ import (
 	"os"
 	"runtime"
 
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkinsimage"
+
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis"
+	"github.com/jenkinsci/kubernetes-operator/pkg/client"
+	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
+	"github.com/jenkinsci/kubernetes-operator/pkg/constants"
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins"
-	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
-	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
-	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/notifications"
-	e "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/notifications/event"
 	"github.com/jenkinsci/kubernetes-operator/pkg/event"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
+	"github.com/jenkinsci/kubernetes-operator/pkg/notifications"
+	e "github.com/jenkinsci/kubernetes-operator/pkg/notifications/event"
 	"github.com/jenkinsci/kubernetes-operator/version"
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
@@ -44,8 +47,6 @@ var (
 	metricsPort         int32 = 8383
 	operatorMetricsPort int32 = 8686
 )
-
-//var log = logf.Log.WithName("cmd")
 
 func printInfo() {
 	log.Log.Info(fmt.Sprintf("Version: %s", version.Version))
@@ -120,6 +121,9 @@ func main() {
 		fatal(errors.Wrap(err, "failed to create Kubernetes client set"), *debug)
 	}
 
+	if resources.IsRouteAPIAvailable(clientSet) {
+		log.Log.Info("Route API found: Route creation will be performed")
+	}
 	c := make(chan e.Event)
 	go notifications.Listen(c, events, mgr.GetClient())
 
@@ -131,6 +135,10 @@ func main() {
 
 	// setup Jenkins controller
 	if err := jenkins.Add(mgr, jenkinsAPIConnectionSettings, *clientSet, *cfg, &c); err != nil {
+		fatal(errors.Wrap(err, "failed to setup controllers"), *debug)
+	}
+	// setup JenkinsImage controller
+	if err = jenkinsimage.Add(mgr); err != nil {
 		fatal(errors.Wrap(err, "failed to setup controllers"), *debug)
 	}
 

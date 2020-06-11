@@ -6,7 +6,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// JenkinsSpec defines the desired state of the Jenkins
+// JenkinsSpec defines the desired state of the Jenkins.
 // +k8s:openapi-gen=true
 type JenkinsSpec struct {
 	// Master represents Jenkins master pod properties and Jenkins plugins.
@@ -92,7 +92,7 @@ type ServiceAccount struct {
 	Annotations map[string]string `json:"annotations,omitempty"`
 }
 
-// NotificationLevel defines the level of a Notification
+// NotificationLevel defines the level of a Notification.
 type NotificationLevel string
 
 const (
@@ -103,7 +103,7 @@ const (
 	NotificationLevelInfo NotificationLevel = "info"
 )
 
-// Notification is a service configuration used to send notifications about Jenkins status
+// Notification is a service configuration used to send notifications about Jenkins status.
 type Notification struct {
 	LoggingLevel NotificationLevel `json:"level"`
 	Verbose      bool              `json:"verbose"`
@@ -114,13 +114,13 @@ type Notification struct {
 	SMTP         *SMTP             `json:"smtp,omitempty"`
 }
 
-// Slack is handler for Slack notification channel
+// Slack is handler for Slack notification channel.
 type Slack struct {
 	// The web hook URL to Slack App
 	WebHookURLSecretKeySelector SecretKeySelector `json:"webHookURLSecretKeySelector"`
 }
 
-// SMTP is handler for sending emails via this protocol
+// SMTP is handler for sending emails via this protocol.
 type SMTP struct {
 	UsernameSecretKeySelector SecretKeySelector `json:"usernameSecretKeySelector"`
 	PasswordSecretKeySelector SecretKeySelector `json:"passwordSecretKeySelector"`
@@ -131,13 +131,13 @@ type SMTP struct {
 	To                        string            `json:"to"`
 }
 
-// MicrosoftTeams is handler for Microsoft MicrosoftTeams notification channel
+// MicrosoftTeams is handler for Microsoft MicrosoftTeams notification channel.
 type MicrosoftTeams struct {
 	// The web hook URL to MicrosoftTeams App
 	WebHookURLSecretKeySelector SecretKeySelector `json:"webHookURLSecretKeySelector"`
 }
 
-// Mailgun is handler for Mailgun email service notification channel
+// Mailgun is handler for Mailgun email service notification channel.
 type Mailgun struct {
 	Domain                  string            `json:"domain"`
 	APIKeySecretKeySelector SecretKeySelector `json:"apiKeySecretKeySelector"`
@@ -153,7 +153,7 @@ type SecretKeySelector struct {
 	Key string `json:"key"`
 }
 
-// Container defines Kubernetes container attributes
+// Container defines Kubernetes container attributes.
 type Container struct {
 	// Name of the container specified as a DNS_LABEL.
 	// Each container in a pod must have a unique name (DNS_LABEL).
@@ -244,7 +244,7 @@ type Container struct {
 	SecurityContext *corev1.SecurityContext `json:"securityContext,omitempty"`
 }
 
-// Plugin defines Jenkins plugin
+// Plugin defines Jenkins plugin.
 type Plugin struct {
 	// Name is the name of Jenkins plugin
 	Name string `json:"name"`
@@ -255,7 +255,7 @@ type Plugin struct {
 }
 
 // JenkinsMaster defines the Jenkins master pod attributes and plugins,
-// every single change requires a Jenkins master pod restart
+// every single change requires a Jenkins master pod restart.
 type JenkinsMaster struct {
 	// Annotations is an unstructured key value map stored with a resource that may be
 	// set by external tools to store and retrieve arbitrary metadata. They are not
@@ -361,8 +361,6 @@ type JenkinsMaster struct {
 	// - name: job-dsl
 	// version: "1.74"
 	// - name: configuration-as-code
-	// version: "1.19"
-	// - name: configuration-as-code-support
 	// version: "1.19"
 	// - name: kubernetes-credentials-provider
 	// version: 0.12.1
@@ -510,14 +508,14 @@ type Jenkins struct {
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// JenkinsList contains a list of Jenkins
+// JenkinsList contains a list of Jenkins.
 type JenkinsList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []Jenkins `json:"items"`
 }
 
-// JenkinsCredentialType defines type of Jenkins credential used to seed job mechanism
+// JenkinsCredentialType defines type of Jenkins credential used to seed job mechanism.
 type JenkinsCredentialType string
 
 const (
@@ -531,7 +529,7 @@ const (
 	ExternalCredentialType JenkinsCredentialType = "external"
 )
 
-// AllowedJenkinsCredentialMap contains all allowed Jenkins credentials types
+// AllowedJenkinsCredentialMap contains all allowed Jenkins credentials types.
 var AllowedJenkinsCredentialMap = map[string]string{
 	string(NoJenkinsCredentialCredentialType): "",
 	string(BasicSSHCredentialType):            "",
@@ -540,7 +538,7 @@ var AllowedJenkinsCredentialMap = map[string]string{
 }
 
 // SeedJob defines configuration for seed job
-// More info: https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-seed-jobs-and-pipelines
+// More info: https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-seed-jobs-and-pipelines.
 type SeedJob struct {
 	// ID is the unique seed job name
 	ID string `json:"id,omitempty"`
@@ -598,13 +596,13 @@ type SeedJob struct {
 	UnstableOnDeprecation bool `json:"unstableOnDeprecation"`
 }
 
-// Handler defines a specific action that should be taken
+// Handler defines a specific action that should be taken.
 type Handler struct {
 	// Exec specifies the action to take.
 	Exec *corev1.ExecAction `json:"exec,omitempty"`
 }
 
-// Backup defines configuration of Jenkins backup
+// Backup defines configuration of Jenkins backup.
 type Backup struct {
 	// ContainerName is the container name responsible for backup operation
 	ContainerName string `json:"containerName"`
@@ -620,7 +618,7 @@ type Backup struct {
 	MakeBackupBeforePodDeletion bool `json:"makeBackupBeforePodDeletion"`
 }
 
-// Restore defines configuration of Jenkins backup restore operation
+// Restore defines configuration of Jenkins backup restore operation.
 type Restore struct {
 	// ContainerName is the container name responsible for restore backup operation
 	ContainerName string `json:"containerName"`
@@ -633,7 +631,7 @@ type Restore struct {
 	RecoveryOnce uint64 `json:"recoveryOnce,omitempty"`
 }
 
-// AppliedGroovyScript is the applied groovy script in Jenkins by the operator
+// AppliedGroovyScript is the applied groovy script in Jenkins by the operator.
 type AppliedGroovyScript struct {
 	// ConfigurationType is the name of the configuration type(base-groovy, user-groovy, user-casc)
 	ConfigurationType string `json:"configurationType"`
@@ -645,28 +643,28 @@ type AppliedGroovyScript struct {
 	Hash string `json:"hash"`
 }
 
-// SecretRef is reference to Kubernetes secret
+// SecretRef is reference to Kubernetes secret.
 type SecretRef struct {
 	Name string `json:"name"`
 }
 
-// ConfigMapRef is reference to Kubernetes ConfigMap
+// ConfigMapRef is reference to Kubernetes ConfigMap.
 type ConfigMapRef struct {
 	Name string `json:"name"`
 }
 
-// Customization defines configuration of Jenkins customization
+// Customization defines configuration of Jenkins customization.
 type Customization struct {
 	Secret         SecretRef      `json:"secret"`
 	Configurations []ConfigMapRef `json:"configurations"`
 }
 
-// GroovyScripts defines configuration of Jenkins customization via groovy scripts
+// GroovyScripts defines configuration of Jenkins customization via groovy scripts.
 type GroovyScripts struct {
 	Customization `json:",inline"`
 }
 
-// ConfigurationAsCode defines configuration of Jenkins customization via Configuration as Code Jenkins plugin
+// ConfigurationAsCode defines configuration of Jenkins customization via Configuration as Code Jenkins plugin.
 type ConfigurationAsCode struct {
 	Customization `json:",inline"`
 }
