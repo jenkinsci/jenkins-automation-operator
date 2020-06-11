@@ -5,11 +5,11 @@ import (
 	"testing"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
-	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/client"
-	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration"
-	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base"
-	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/configuration/base/resources"
-	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
+	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/client"
+	"github.com/jenkinsci/kubernetes-operator/pkg/configuration"
+	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base"
+	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
+	"github.com/jenkinsci/kubernetes-operator/pkg/constants"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/stretchr/testify/require"
@@ -156,14 +156,14 @@ func createJenkinsCR(t *testing.T, name, namespace string, seedJob *[]v1alpha2.S
 
 func createJenkinsAPIClientFromServiceAccount(t *testing.T, jenkins *v1alpha2.Jenkins, jenkinsAPIURL string) (jenkinsclient.Jenkins, error) {
 	t.Log("Creating Jenkins API client from service account")
-	podName := resources.GetJenkinsMasterPodName(*jenkins)
+	podName := resources.GetJenkinsMasterPodName(jenkins)
 
 	clientSet, err := kubernetes.NewForConfig(framework.Global.KubeConfig)
 	if err != nil {
 		return nil, err
 	}
 	config := configuration.Configuration{Jenkins: jenkins, ClientSet: *clientSet, Config: framework.Global.KubeConfig}
-	r := base.New(config, nil, jenkinsclient.JenkinsAPIConnectionSettings{})
+	r := base.New(config, jenkinsclient.JenkinsAPIConnectionSettings{})
 
 	token, _, err := r.Configuration.Exec(podName, resources.JenkinsMasterContainerName, []string{"cat", "/var/run/secrets/kubernetes.io/serviceaccount/token"})
 	if err != nil {
@@ -197,7 +197,7 @@ func verifyJenkinsAPIConnection(t *testing.T, jenkins *v1alpha2.Jenkins, namespa
 	}, &service)
 	require.NoError(t, err)
 
-	podName := resources.GetJenkinsMasterPodName(*jenkins)
+	podName := resources.GetJenkinsMasterPodName(jenkins)
 	port, cleanUpFunc, waitFunc, portForwardFunc, err := setupPortForwardToPod(t, namespace, podName, int(constants.DefaultHTTPPortInt32))
 	if err != nil {
 		t.Fatal(err)

@@ -20,10 +20,16 @@ jenkins:
   # Create new namespace for jenkins (called e.g. jenkins)
   namespace: default
 
+  # labels are injected into metadata labels field
+  labels: {}
+
   # image is the name (and tag) of the Jenkins instance
   # Default: jenkins/jenkins:lts
   # It's recommended to use LTS (tag: "lts") version
   image: jenkins/jenkins:lts
+
+  # env contains jenkins container environment variables
+  env: []
 
   # imagePullPolicy defines policy for pulling images
   imagePullPolicy: Always
@@ -65,8 +71,6 @@ jenkins:
   #   version: "1.76"
   # - name: configuration-as-code
   #   version: "1.29"
-  # - name: configuration-as-code-support
-  #   version: "1.19"
   # - name: kubernetes-credentials-provider
   #   version: 0.12.1
   basePlugins: []

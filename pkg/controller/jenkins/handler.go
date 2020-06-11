@@ -5,7 +5,7 @@ import (
 	"reflect"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
-	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkins/constants"
+	"github.com/jenkinsci/kubernetes-operator/pkg/constants"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -72,7 +72,6 @@ func (e *enqueueRequestForJenkins) getOwnerReconcileRequests(object metav1.Objec
 			Name:      object.GetLabels()[constants.LabelJenkinsCRKey],
 		}}
 	}
-
 	return nil
 }
 

@@ -32,6 +32,7 @@ rules:
     verbs:
       - get
       - create
+      - update
       - list
       - watch
   - apiGroups:

@@ -7,7 +7,7 @@ def workdir = "${workspace}/src/github.com/jenkinsci/kubernetes-operator/"
 
 podTemplate(label: label,
         containers: [
-                containerTemplate(name: 'alpine', image: 'alpine:3.10.2', ttyEnabled: true, command: 'cat'),
+                containerTemplate(name: 'alpine', image: 'alpine:3.11', ttyEnabled: true, command: 'cat'),
         ],
         ) {
     node(label) {

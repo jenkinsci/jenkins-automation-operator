@@ -65,7 +65,7 @@ PACKAGES_FOR_UNIT_TESTS = $(shell go list -f '{{.ImportPath}}/' ./... | grep -v 
 # Run all the e2e tests by default
 E2E_TEST_SELECTOR ?= .*
 
-JENKINS_API_HOSTNAME := $(shell $(JENKINS_API_HOSTNAME_COMMAND))
+JENKINS_API_HOSTNAME := $(shell $(JENKINS_API_HOSTNAME_COMMAND) 2> /dev/null || echo "" )
 KUBECONFIG ?= $HOME/.kube/config
 OPERATOR_ARGS ?= --jenkins-api-hostname=$(JENKINS_API_HOSTNAME) --jenkins-api-port=$(JENKINS_API_PORT) --jenkins-api-use-nodeport=$(JENKINS_API_USE_NODEPORT) $(OPERATOR_EXTRA_ARGS)
 
@@ -137,13 +137,13 @@ fmt: ## Verifies all files have been `gofmt`ed
 	@go fmt $(PACKAGES)
 
 .PHONY: lint
-HAS_GOLINT := $(shell which golint)
+HAS_GOLINT := $(shell which golangci-lint)
 lint: ## Verifies `golint` passes
 	@echo "+ $@"
 ifndef HAS_GOLINT
-	go get -u golang.org/x/lint/golint
+	go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.26.0
 endif
-	@golint $(PACKAGES)
+	@golangci-lint run
 
 .PHONY: goimports
 HAS_GOIMPORTS := $(shell which goimports)
@@ -203,7 +203,7 @@ ifeq ($(KUBERNETES_PROVIDER),minikube)
 endif
 endif
 
-	@RUNNING_TESTS=1 go test -parallel=1 "./test/e2e/" -tags "$(BUILDTAGS) cgo" -v -timeout 60m -run "$(E2E_TEST_SELECTOR)" \
+	RUNNING_TESTS=1 go test -parallel=1 "./test/e2e/" -tags "$(BUILDTAGS) cgo" -v -timeout 60m -run "$(E2E_TEST_SELECTOR)" \
 		-root=$(CURRENT_DIRECTORY) -kubeconfig=$(HOME)/.kube/config -globalMan deploy/crds/jenkins_$(API_VERSION)_jenkins_crd.yaml \
 		-namespacedMan deploy/namespace-init.yaml $(TEST_ARGS)
 
@@ -218,7 +218,7 @@ PLATFORM  = $(shell echo $(UNAME_S) | tr A-Z a-z)
 staticcheck: ## Verifies `staticcheck` passes
 	@echo "+ $@"
 ifndef HAS_STATICCHECK
-	wget -O staticcheck_$(PLATFORM)_amd64.tar.gz https://github.com/dominikh/go-tools/releases/download/2019.2.3/staticcheck_$(PLATFORM)_amd64.tar.gz
+	wget -O staticcheck_$(PLATFORM)_amd64.tar.gz https://github.com/dominikh/go-tools/releases/download/2020.1.3/staticcheck_$(PLATFORM)_amd64.tar.gz
 	tar zxvf staticcheck_$(PLATFORM)_amd64.tar.gz
 	mkdir -p $(GOPATH)/bin
 	mv staticcheck/staticcheck $(GOPATH)/bin
@@ -260,6 +260,7 @@ ifeq ($(KUBERNETES_PROVIDER), $(filter $(KUBERNETES_PROVIDER), crc openshift))
 endif
 	@echo "Applying creation of crds from deploy/crds/jenkins_$(API_VERSION)_jenkins_crd.yaml"
 	kubectl apply -f deploy/crds/jenkins_$(API_VERSION)_jenkins_crd.yaml
+	kubectl apply -f deploy/crds/jenkins_$(API_VERSION)_jenkinsimage_crd.yaml
 	@echo "Watching '$(WATCH_NAMESPACE)' namespace"
 	build/_output/bin/jenkins-operator $(OPERATOR_ARGS)
 

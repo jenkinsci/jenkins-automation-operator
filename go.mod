@@ -13,17 +13,18 @@ require (
 	github.com/go-logr/zapr v0.1.1
 	github.com/go-openapi/spec v0.19.4
 	github.com/golang/mock v1.3.1
+	github.com/golangci/golangci-lint v1.26.0 // indirect
 	github.com/mailgun/mailgun-go/v3 v3.6.0
 	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible
 	github.com/operator-framework/operator-sdk v0.17.0
 	github.com/pkg/errors v0.9.1
 	github.com/robfig/cron v1.2.0
 	github.com/spf13/pflag v1.0.5
-	github.com/stretchr/testify v1.4.0
+	github.com/stretchr/testify v1.5.1
 	go.uber.org/zap v1.14.1
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
 	golang.org/x/net v0.0.0-20200226121028-0de0cce0169b
-	golang.org/x/tools v0.0.0-20200504022951-6b6965ac5dd1 // indirect
+	golang.org/x/tools v0.0.0-20200505023115-26f46d2f7ef8 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 	k8s.io/api v0.17.4
@@ -33,6 +34,7 @@ require (
 	k8s.io/code-generator v0.17.4
 	k8s.io/gengo v0.0.0-20191010091904-7fa3014cb28f
 	k8s.io/kube-openapi v0.0.0-20191107075043-30be4d16710a
+	k8s.io/utils v0.0.0-20190801114015-581e00157fb1
 	sigs.k8s.io/controller-runtime v0.5.2
 	sigs.k8s.io/controller-tools v0.2.8
 )

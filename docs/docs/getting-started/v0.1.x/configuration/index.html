@@ -725,7 +725,7 @@ def workdir = &quot;${workspace}/src/github.com/jenkinsci/kubernetes-operator/&q
 
 podTemplate(label: label,
         containers: [
-                containerTemplate(name: 'jnlp', image: 'jenkins/jnlp-slave:alpine'),
+                containerTemplate(name: 'jnlp', image: 'jenkins/inbound-agent:alpine'),
                 containerTemplate(name: 'go', image: 'golang:1-alpine', command: 'cat', ttyEnabled: true),
         ],
         envVars: [
