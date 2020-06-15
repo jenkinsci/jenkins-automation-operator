@@ -1,0 +1,13 @@
+ARG OLM_OPERATOR_VERSION
+FROM quay.io/redhat-developer/openshift-jenkins-operator-build:${OLM_OPERATOR_VERSION} AS builder
+
+FROM registry.access.redhat.com/ubi8/ubi-minimal
+
+LABEL com.redhat.delivery.appregistry=true
+LABEL maintainer "openshift-dev-services+jenkins@redhat.com"
+ENV LANG=en_US.utf8
+ENV GOPATH /tmp/go
+
+COPY --from=builder $GOPATH/src/github.com/redhat-developer/jenkins-operator/build/_output/bin/jenkins-operator /usr/local/bin/jenkins-operator
+
+ENTRYPOINT [ "/usr/local/bin/jenkins-operator" ]

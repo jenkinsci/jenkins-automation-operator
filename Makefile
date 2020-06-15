@@ -1,5 +1,5 @@
 # Set POSIX sh for maximum interoperability
-	SHELL := /bin/sh
+SHELL := /bin/sh
 PATH  := $(GOPATH)/bin:$(PATH)
 
 OSFLAG 				:=
@@ -22,9 +22,14 @@ include config.base.env
 config ?= config.minikube.env
 include $(config)
 
+# Release version for redhat operator
+OLM_OPERATOR_VERSION ?= 0.4.1
+GIT_COMMIT_ID ?= $(shell git rev-parse --short HEAD)
+OLM_OPERATOR_TAG_SHORT ?= $(OLM_OPERATOR_VERSION)
+OLM_OPERATOR_TAG_LONG ?= $(OLM_OPERATOR_VERSION)-$(GIT_COMMIT_ID)
+
 # Set an output prefix, which is the local directory if not specified
 PREFIX?=$(shell pwd)
-
 VERSION := $(shell cat VERSION.txt)
 GITCOMMIT := $(shell git rev-parse --short HEAD)
 GITBRANCH := $(shell git rev-parse --abbrev-ref HEAD)
@@ -269,6 +274,7 @@ clean: ## Cleanup any build binaries or packages
 	@echo "+ $@"
 	go clean
 	rm $(NAME) || echo "Couldn't delete, not there."
+	rm build/_output/bin/jenkins-operator || echo "Couldn't delete, not there."
 	rm -r $(BUILDDIR) || echo "Couldn't delete, not there."
 
 .PHONY: spring-clean
@@ -524,3 +530,24 @@ generate-docs: ## Re-generate docs directory from the website directory
 	@echo "+ $@"
 	rm -rf docs || echo "Cannot remove docs dir, ignoring"
 	hugo -s website -d ../docs
+
+
+.PHONY: olm-image-build
+olm-image-build:
+	@echo "+ $@"
+	docker build --no-cache -t  quay.io/redhat-developer/openshift-jenkins-operator-build:$(OLM_OPERATOR_TAG_LONG) -f ./openshift-ci/Dockerfile.build_image .
+
+.PHONY: olm-image
+olm-image:
+	@echo "+ $@"
+	docker build --no-cache -t  quay.io/redhat-developer/openshift-jenkins-operator:$(OLM_OPERATOR_TAG_LONG) --build-arg OLM_OPERATOR_VERSION=$(OLM_OPERATOR_TAG_LONG) -f ./openshift-ci/Dockerfile.rhel .
+
+.PHONY: olm-publish	
+olm-publish: olm-image
+	@echo "+ $@"
+	docker push quay.io/redhat-developer/openshift-jenkins-operator:$(OLM_OPERATOR_TAG_LONG)
+
+.PHONY: olm-release	
+olm-release:
+	@echo "check the image here https://quay.io/repository/redhat-developer/openshift-jenkins-operator?tag=$(OLM_OPERATOR_TAG_LONG)&tab=tags"
+	@echo "do a PR simular to this https://github.com/operator-framework/community-operators/pull/1851"
