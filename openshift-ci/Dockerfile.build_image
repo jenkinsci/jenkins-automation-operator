@@ -34,7 +34,7 @@ RUN mkdir -p $GOPATH/bin &&  \
     curl -Lo operator-sdk $OPERATOR_SDK_DOWNLOAD_SITE/$OPERATOR_SDK_VERSION/$OPERATOR_SDK_DIST && \
     chmod +x operator-sdk && mv operator-sdk $GOPATH/bin/ && \
     mkdir -p ${GOPATH}/src/${GO_PACKAGE_PATH}/ && \
-    yum -y install --nodocs git make
+    yum -y install --nodocs git make gcc
 
 WORKDIR ${GOPATH}/src/${GO_PACKAGE_PATH}
 
