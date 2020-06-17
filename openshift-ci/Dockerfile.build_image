@@ -33,11 +33,10 @@ COPY pkg pkg
 COPY version version
 COPY test test
 COPY internal internal
-COPY vendor vendor
 COPY go.mod go.sum LICENSE Makefile tools.go config.base.env config.minikube.env config.openshift.env VERSION.txt gen-crd-api-config.json ./
 
 ARG VERBOSE=2
-RUN go mod vendor
+RUN make go-dependencies
 RUN make build
 
 ENTRYPOINT [ "/bin/bash" ]
