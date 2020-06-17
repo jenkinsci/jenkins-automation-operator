@@ -123,7 +123,7 @@ endif
 go-dependencies: ## Ensure build dependencies
 	@echo "+ $@"
 	@echo "Ensure Golang runtime dependencies"
-	go mod vendor -v
+	XDG_CACHE_HOME=$(XDG_CACHE_HOME) GOCACHE=$(GOCACHE) go mod vendor -v
 
 .PHONY: build
 build: deepcopy-gen $(NAME) ## Builds a dynamic executable or package
@@ -132,19 +132,19 @@ build: deepcopy-gen $(NAME) ## Builds a dynamic executable or package
 .PHONY: $(NAME)
 $(NAME): $(wildcard *.go) $(wildcard */*.go) VERSION.txt
 	@echo "+ $@"
-	CGO_ENABLED=0 go build -tags "$(BUILDTAGS)" ${GO_LDFLAGS} -o build/_output/bin/jenkins-operator $(BUILD_PATH)
+	CGO_ENABLED=0 XDG_CACHE_HOME=$(XDG_CACHE_HOME) GOCACHE=$(GOCACHE) go build -tags "$(BUILDTAGS)" ${GO_LDFLAGS} -o build/_output/bin/jenkins-operator $(BUILD_PATH)
 
 .PHONY: static
 static: ## Builds a static executable
 	@echo "+ $@"
-	CGO_ENABLED=0 go build \
+	CGO_ENABLED=0 XDG_CACHE_HOME=$(XDG_CACHE_HOME) GOCACHE=$(GOCACHE) go build \
 				-tags "$(BUILDTAGS) static_build" \
 				${GO_LDFLAGS_STATIC} -o $(NAME) $(BUILD_PATH)
 
 .PHONY: fmt
 fmt: ## Verifies all files have been `gofmt`ed
 	@echo "+ $@"
-	@go fmt $(PACKAGES)
+	@XDG_CACHE_HOME=$(XDG_CACHE_HOME) GOCACHE=$(GOCACHE) go fmt $(PACKAGES)
 
 .PHONY: lint
 HAS_GOLINT := $(shell which golangci-lint)
@@ -166,14 +166,14 @@ HAS_GOIMPORTS := $(shell which goimports)
 goimports: ## Verifies `goimports` passes
 	@echo "+ $@"
 ifndef HAS_GOIMPORTS
-	go get -u golang.org/x/tools/cmd/goimports
+	XDG_CACHE_HOME=$(XDG_CACHE_HOME) GOCACHE=$(GOCACHE) go get -u golang.org/x/tools/cmd/goimports
 endif
 	@goimports -l -e $(shell find . -type f -name '*.go' -not -path "./vendor/*")
 
 .PHONY: test
 test: ## Runs the go tests
 	@echo "+ $@"
-	@RUNNING_TESTS=1 go test -tags "$(BUILDTAGS) cgo" $(PACKAGES_FOR_UNIT_TESTS)
+	@RUNNING_TESTS=1 XDG_CACHE_HOME=$(XDG_CACHE_HOME) GOCACHE=$(GOCACHE) go test -tags "$(BUILDTAGS) cgo" $(PACKAGES_FOR_UNIT_TESTS)
 
 .PHONY: e2e
 CURRENT_DIRECTORY := $(shell pwd)
@@ -219,14 +219,14 @@ ifeq ($(KUBERNETES_PROVIDER),minikube)
 endif
 endif
 
-	RUNNING_TESTS=1 go test -parallel=1 "./test/e2e/" -tags "$(BUILDTAGS) cgo" -v -timeout 60m -run "$(E2E_TEST_SELECTOR)" \
+	RUNNING_TESTS=1 XDG_CACHE_HOME=$(XDG_CACHE_HOME) GOCACHE=$(GOCACHE) go test -parallel=1 "./test/e2e/" -tags "$(BUILDTAGS) cgo" -v -timeout 60m -run "$(E2E_TEST_SELECTOR)" \
 		-root=$(CURRENT_DIRECTORY) -kubeconfig=$(HOME)/.kube/config -globalMan deploy/crds/jenkins_$(API_VERSION)_jenkins_crd.yaml \
 		-namespacedMan deploy/namespace-init.yaml $(TEST_ARGS)
 
 .PHONY: vet
 vet: ## Verifies `go vet` passes
 	@echo "+ $@"
-	@go vet $(PACKAGES)
+	@XDG_CACHE_HOME=$(XDG_CACHE_HOME) GOCACHE=$(GOCACHE) go vet $(PACKAGES)
 
 .PHONY: staticcheck
 HAS_STATICCHECK := $(shell which staticcheck)
@@ -245,7 +245,7 @@ endif
 cover: ## Runs go test with coverage
 	@echo "" > coverage.txt
 	@for d in $(PACKAGES); do \
-		IMG_RUNNING_TESTS=1 go test -race -coverprofile=profile.out -covermode=atomic "$$d"; \
+		IMG_RUNNING_TESTS=1 XDG_CACHE_HOME=$(XDG_CACHE_HOME) GOCACHE=$(GOCACHE) go test -race -coverprofile=profile.out -covermode=atomic "$$d"; \
 		if [ -f profile.out ]; then \
 			cat profile.out >> coverage.txt; \
 			rm profile.out; \
@@ -259,7 +259,7 @@ verify: fmt lint test staticcheck vet ## Verify the code
 .PHONY: install
 install: ## Installs the executable
 	@echo "+ $@"
-	go install -tags "$(BUILDTAGS)" ${GO_LDFLAGS} $(BUILD_PATH)
+	XDG_CACHE_HOME=$(XDG_CACHE_HOME) GOCACHE=$(GOCACHE) go install -tags "$(BUILDTAGS)" ${GO_LDFLAGS} $(BUILD_PATH)
 
 .PHONY: run
 run: $( shell echo AAAAAAAAAAAAAA $KUBECONFIG)
@@ -283,7 +283,7 @@ endif
 .PHONY: clean
 clean: ## Cleanup any build binaries or packages
 	@echo "+ $@"
-	go clean
+	XDG_CACHE_HOME=$(XDG_CACHE_HOME) GOCACHE=$(GOCACHE) go clean
 	rm $(NAME) || echo "Couldn't delete, not there."
 	rm build/_output/bin/jenkins-operator || echo "Couldn't delete, not there."
 	rm -r $(BUILDDIR) || echo "Couldn't delete, not there."
@@ -294,7 +294,7 @@ spring-clean: ## Cleanup git ignored files (interactive)
 
 define buildpretty
 mkdir -p $(BUILDDIR)/$(1)/$(2);
-GOOS=$(1) GOARCH=$(2) CGO_ENABLED=0 go build \
+GOOS=$(1) GOARCH=$(2) CGO_ENABLED=0 XDG_CACHE_HOME=$(XDG_CACHE_HOME) GOCACHE=$(GOCACHE) go build \
 		-o $(BUILDDIR)/$(1)/$(2)/$(NAME) \
 		-a -tags "$(BUILDTAGS) static_build netgo" \
 		-installsuffix netgo ${GO_LDFLAGS_STATIC} $(BUILD_PATH);
@@ -326,7 +326,7 @@ HAS_CHECKMAKE := $(shell which checkmake)
 checkmake: ## Check this Makefile
 	@echo "+ $@"
 ifndef HAS_CHECKMAKE
-	go get -u github.com/mrtazz/checkmake
+	XDG_CACHE_HOME=$(XDG_CACHE_HOME) GOCACHE=$(GOCACHE) go get -u github.com/mrtazz/checkmake
 endif
 	@checkmake Makefile
 
@@ -501,7 +501,7 @@ ifneq ($(GITIGNOREDBUTTRACKEDCHANGES),)
 	@echo
 endif
 	@echo "Dependencies:"
-	go mod vendor -v
+	XDG_CACHE_HOME=$(XDG_CACHE_HOME) GOCACHE=$(GOCACHE) go mod vendor -v
 	@echo
 
 .PHONY: travis-prepare
