@@ -535,15 +535,10 @@ generate-docs: ## Re-generate docs directory from the website directory
 	hugo -s website -d ../docs
 
 
-.PHONY: olm-image-build
-olm-image-build:
-	@echo "+ $@"
-	docker build --no-cache -t  quay.io/redhat-developer/openshift-jenkins-operator-build:$(OLM_OPERATOR_TAG_LONG) -f ./openshift-ci/Dockerfile.build_image .
-
 .PHONY: olm-image
 olm-image:
 	@echo "+ $@"
-	docker build --no-cache -t  quay.io/redhat-developer/openshift-jenkins-operator:$(OLM_OPERATOR_TAG_LONG) --build-arg OLM_OPERATOR_VERSION=$(OLM_OPERATOR_TAG_LONG) -f ./openshift-ci/Dockerfile.rhel .
+	docker build --no-cache -t  quay.io/redhat-developer/openshift-jenkins-operator:$(OLM_OPERATOR_TAG_LONG) --build-arg OLM_OPERATOR_VERSION=$(OLM_OPERATOR_TAG_LONG) -f ./openshift-ci/Dockerfile.build_image .
 
 .PHONY: olm-publish	
 olm-publish: olm-image
