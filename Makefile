@@ -143,13 +143,15 @@ fmt: ## Verifies all files have been `gofmt`ed
 
 .PHONY: lint
 HAS_GOLINT := $(shell which golangci-lint)
-GOLANGCI_LINT_CACHE = $(PWD)/build/_output/golangci-lint-cache
+GOLANGCI_LINT_CACHE := $(shell pwd)/build/_output/golangci-lint-cache
+XDG_CACHE_HOME := $(shell pwd)/build/xdgcache
+GOCACHE := $(shell pwd)/build/gocache
 lint: ## Verifies `golint` passes
 	@echo "+ $@"
 ifndef HAS_GOLINT
 	go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.26.0
 endif
-	@GOLANGCI_LINT_CACHE=$(GOLANGCI_LINT_CACHE) golangci-lint run
+	@GOLANGCI_LINT_CACHE=$(GOLANGCI_LINT_CACHE) XDG_CACHE_HOME=$(XDG_CACHE_HOME) GOCACHE=$(GOCACHE) golangci-lint run
 
 .PHONY: goimports
 HAS_GOIMPORTS := $(shell which goimports)
