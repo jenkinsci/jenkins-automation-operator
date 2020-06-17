@@ -1,41 +1,43 @@
-FROM registry.access.redhat.com/ubi8/ubi:latest
+FROM openshift/origin-release:golang-1.14 AS builder
 
-ARG GO_PACKAGE_PATH=github.com/jenkinsci/jenkins-operator
+ARG GO_PACKAGE_PATH=github.com/redhat-developer/jenkins-operator
 
 # Basics
-ENV GIT_COMMITTER_NAME OpenShift Developer Sevices
+ENV GIT_COMMITTER_NAME OpenShift Developer Services
 ENV GIT_COMMITTER_EMAIL openshift-dev-services+jenkins@redhat.com
 ENV PATH=:$GOPATH/bin:/tmp/goroot/go/bin:$PATH
 ENV LANG=en_US.utf8
 
 # Go
 ENV GOPATH /tmp/go
-ENV GO_VERSION=1.14.1
-ENV GO_DOWNLOAD_SITE=https://dl.google.com/go/
-ENV GO_DIST=go$GO_VERSION.linux-amd64.tar.gz
+ENV GOROOT /usr/local/go
 
 # Operator SDK
 ENV OPERATOR_SDK_VERSION=v0.17.0 
 ENV OPERATOR_SDK_DOWNLOAD_SITE=https://github.com/operator-framework/operator-sdk/releases/download/ 
-ENV OPERATOR_SDK_DIST=operator-sdk-OPERATOR_SDK_VERSION-x86_64-linux-gnu
+ENV OPERATOR_SDK_DIST=operator-sdk-$OPERATOR_SDK_VERSION-x86_64-linux-gnu
 
-# kubectl
-ENV KUBECTL_VERSION=v1.14.3 
-ENV KUBECTL_DOWNLOAD_SITE=https://storage.googleapis.com/kubernetes-release/release/
 
 WORKDIR /tmp
-RUN mkdir -p $GOPATH/bin &&  mkdir -p /tmp/goroot
-RUN echo $GO_DOWNLOAD_SITE/$GO_DIST
-RUN curl -Lo $GO_DIST $GO_DOWNLOAD_SITE/$GO_DIST
-RUN tar -C /tmp/goroot -xzf $GO_DIST
-RUN curl -Lo kubectl $KUBECTL_DOWNLOAD_SITE/$KUBECTL_VERSION/bin/linux/amd64/kubectl
-RUN chmod +x kubectl && mv kubectl $GOPATH/bin/
-RUN curl -Lo operator-sdk $OPERATOR_SDK_DOWNLOAD_SITE/$OPERATOR_SDK_VERSION/$OPERATOR_SDK_DIST
-RUN chmod +x operator-sdk && mv operator-sdk $GOPATH/bin/
-RUN mkdir -p ${GOPATH}/src/${GO_PACKAGE_PATH}/
+RUN mkdir -p $GOPATH/bin ${GOPATH}/src/${GO_PACKAGE_PATH}/
+RUN curl -Lo operator-sdk $OPERATOR_SDK_DOWNLOAD_SITE/$OPERATOR_SDK_VERSION/$OPERATOR_SDK_DIST && chmod +x operator-sdk && mv operator-sdk $GOPATH/bin/
 
 WORKDIR ${GOPATH}/src/${GO_PACKAGE_PATH}
+
+# Copy only relevant things (instead of all) to speed-up the build.
+COPY assets assets
+COPY build build
+COPY cmd cmd
+COPY deploy deploy
+COPY pkg pkg
+COPY version version
+COPY test test
+COPY internal internal
+COPY vendor vendor
+COPY go.mod go.sum LICENSE Makefile tools.go config.base.env config.minikube.env config.openshift.env VERSION.txt gen-crd-api-config.json ./
+
+ARG VERBOSE=2
+RUN go mod vendor
+RUN make build
+
 ENTRYPOINT [ "/bin/bash" ]
-
-
-
