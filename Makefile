@@ -2,16 +2,21 @@
 SHELL := /bin/sh
 PATH  := $(GOPATH)/bin:$(PATH)
 
-OSFLAG 				:=
+ARCH := amd64
+GOOS := linux
+OSFLAG :=
 ifeq ($(OS),Windows_NT)
 	OSFLAG = WIN32
+	GOOS = windows
 else
 	UNAME_S := $(shell uname -s)
 	ifeq ($(UNAME_S),Linux)
 		OSFLAG = LINUX
+		GOOS = linux
 	endif
 	ifeq ($(UNAME_S),Darwin)
 		OSFLAG = OSX
+		GOOS = darwin
 	endif
 endif
 
@@ -144,12 +149,15 @@ fmt: ## Verifies all files have been `gofmt`ed
 .PHONY: lint
 HAS_GOLINT := $(shell which golangci-lint)
 GOLANGCI_LINT_CACHE := $(shell pwd)/build/_output/golangci-lint-cache
-XDG_CACHE_HOME := $(shell pwd)/build/xdgcache
-GOCACHE := $(shell pwd)/build/gocache
+XDG_CACHE_HOME := $(shell pwd)/build/_output/xdgcache
+GOCACHE := $(shell pwd)/build/_output/gocache
+GOLANGCI_LINT_VERSION := 1.27.0
 lint: ## Verifies `golint` passes
 	@echo "+ $@"
 ifndef HAS_GOLINT
-	go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.24.0
+	@mkdir -p $(GOPATH)/bin 
+	@curl -sfL "https://github.com/golangci/golangci-lint/releases/download/v$(GOLANGCI_LINT_VERSION)/golangci-lint-$(GOLANGCI_LINT_VERSION)-$(GOOS)-$(ARCH).tar.gz" \
+                  | tar -C $(GOPATH)/bin -zx --strip-components=1 "golangci-lint-$(GOLANGCI_LINT_VERSION)-$(GOOS)-$(ARCH)/golangci-lint"
 endif
 	@GOLANGCI_LINT_CACHE=$(GOLANGCI_LINT_CACHE) XDG_CACHE_HOME=$(XDG_CACHE_HOME) GOCACHE=$(GOCACHE) golangci-lint run
 
