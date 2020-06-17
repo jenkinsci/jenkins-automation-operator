@@ -39,4 +39,15 @@ ARG VERBOSE=2
 RUN make go-dependencies
 RUN make build
 
-ENTRYPOINT [ "/bin/bash" ]
+FROM registry.access.redhat.com/ubi8/ubi-minimal
+
+LABEL com.redhat.delivery.appregistry=true
+LABEL maintainer "openshift-dev-services+jenkins@redhat.com"
+ENV LANG=en_US.utf8
+ENV OPERATOR_NAME=jenkins-operator
+ENV OPERATOR=/usr/local/bin/$OPERATOR_NAME
+ENV GOPATH /tmp/go
+
+COPY --from=builder $GOPATH/src/github.com/redhat-developer/jenkins-operator/build/_output/bin/${OPERATOR_NAME} ${OPERATOR}
+
+ENTRYPOINT [ "/usr/local/bin/jenkins-operator" ]
