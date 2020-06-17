@@ -149,7 +149,7 @@ GOCACHE := $(shell pwd)/build/gocache
 lint: ## Verifies `golint` passes
 	@echo "+ $@"
 ifndef HAS_GOLINT
-	go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.26.0
+	go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.24.0
 endif
 	@GOLANGCI_LINT_CACHE=$(GOLANGCI_LINT_CACHE) XDG_CACHE_HOME=$(XDG_CACHE_HOME) GOCACHE=$(GOCACHE) golangci-lint run
 
