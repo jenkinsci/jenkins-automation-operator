@@ -69,8 +69,8 @@ GO_LDFLAGS_STATIC=-ldflags "-w $(CTIMEVAR) -extldflags -static"
 # List the GOOS and GOARCH to build
 GOOSARCHES = linux/amd64
 
-PACKAGES = $(shell go list -f '{{.ImportPath}}/' ./... | grep -v vendor)
-PACKAGES_FOR_UNIT_TESTS = $(shell go list -f '{{.ImportPath}}/' ./... | grep -v vendor | grep -v e2e)
+PACKAGES = $(shell XDG_CACHE_HOME=$(XDG_CACHE_HOME) GOCACHE=$(GOCACHE) go list -f '{{.ImportPath}}/' ./... | grep -v vendor)
+PACKAGES_FOR_UNIT_TESTS = $(shell XDG_CACHE_HOME=$(XDG_CACHE_HOME) GOCACHE=$(GOCACHE) go list -f '{{.ImportPath}}/' ./... | grep -v vendor | grep -v e2e)
 
 # Run all the e2e tests by default
 E2E_TEST_SELECTOR ?= .*
