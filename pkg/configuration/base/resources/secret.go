@@ -48,7 +48,7 @@ func GetSecretData(k8sClient client.Client, secretName, namespace string) (data 
 }
 
 func WriteDataToTempFile(data []byte) (filename string, requeue bool, err error) {
-	tmpFile, err := ioutil.TempFile(os.TempDir(), "sec-")
+	tmpFile, err := ioutil.TempFile(os.TempDir(), "operator-sec-")
     if err != nil {
 		logger.V(log.VDebug).Info("Cannot create temporary file")
 		return filename, true, err
@@ -74,23 +74,25 @@ func CopySecret(k8sClient client.Client, k8sClientSet kubernetes.Clientset, rest
 	if err != nil {
 		return requeue, err
 	}
+	if len(data) > 0 {
+		fn, requeue, err := WriteDataToTempFile(data)
+		if err != nil {
+			return requeue, err
+		}
+		
+		defer os.Remove(fn)
 
-	fn, requeue, err := WriteDataToTempFile(data)
-	if err != nil {
-		return requeue, err
-	}
-
-	defer os.Remove(fn)
-
-	//wait for jenkins pods running
-	if err = WaitForPodRunning(k8sClient, podName, namespace, time.Duration(30)*time.Second); err != nil {
-		return true, err
-	}
-	
-	co := util.NewCopyOptions(restConfig, k8sClientSet, genericclioptions.IOStreams{In: os.Stdin, Out: os.Stdout, ErrOut: os.Stderr})
-	co.Run([]string{fn, fmt.Sprintf("%s/%s:%s", namespace, podName, ConfigurationAsCodeSecretVolumePath)})
-	if err != nil {
-		return true, err
+		//wait for jenkins pods running
+		if err = WaitForPodRunning(k8sClient, podName, namespace, time.Duration(30)*time.Second); err != nil {
+			logger.Error(err, "")
+			return true, err
+		}
+		
+		co := util.NewCopyOptions(restConfig, k8sClientSet, genericclioptions.IOStreams{In: os.Stdin, Out: os.Stdout, ErrOut: os.Stderr})
+		co.Run([]string{fn, fmt.Sprintf("%s/%s:%s", namespace, podName, ConfigurationAsCodeSecretVolumePath)})
+		if err != nil {
+			return true, err
+		}
 	}
 
 	return false, nil

@@ -4,154 +4,39 @@ import (
 	"testing"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestGetJenkinsMasterPodBaseVolumes(t *testing.T) {
-	t.Run("casc and groovy script with different configMap names", func(t *testing.T) {
-		configMapName := "config-map"
+	t.Run("Jenkins master with base volumes", func(t *testing.T) {
+		namespace := "default"
+		jenkinsName := "example"
 		jenkins := &v1alpha2.Jenkins{
-			Spec: v1alpha2.JenkinsSpec{
-				ConfigurationAsCode: v1alpha2.ConfigurationAsCode{
-					Customization: v1alpha2.Customization{
-						Configurations: []v1alpha2.ConfigMapRef{
-							{
-								Name: configMapName,
-							},
-						},
-						Secret: v1alpha2.SecretRef{
-							Name: "casc-script",
-						},
-					},
-				},
-				GroovyScripts: v1alpha2.GroovyScripts{
-					Customization: v1alpha2.Customization{
-						Configurations: []v1alpha2.ConfigMapRef{
-							{
-								Name: configMapName,
-							},
-						},
-						Secret: v1alpha2.SecretRef{
-							Name: "groovy-script",
-						},
-					},
-				},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      jenkinsName,
+				Namespace: namespace,
 			},
 		}
 
-		groovyExists, cascExists := checkSecretVolumesPresence(jenkins)
+		cmVolume, initVolume,  secretVolume := checkSecretVolumesPresence(jenkins)
 
-		assert.True(t, groovyExists)
-		assert.True(t, cascExists)
-	})
-	t.Run("groovy script without secret name", func(t *testing.T) {
-		jenkins := &v1alpha2.Jenkins{
-			Spec: v1alpha2.JenkinsSpec{
-				ConfigurationAsCode: v1alpha2.ConfigurationAsCode{
-					Customization: v1alpha2.Customization{
-						Configurations: []v1alpha2.ConfigMapRef{
-							{
-								Name: "casc-scripts",
-							},
-						},
-						Secret: v1alpha2.SecretRef{
-							Name: "jenkins-secret",
-						},
-					},
-				},
-				GroovyScripts: v1alpha2.GroovyScripts{
-					Customization: v1alpha2.Customization{
-						Configurations: []v1alpha2.ConfigMapRef{
-							{
-								Name: "groovy-scripts",
-							},
-						},
-					},
-				},
-			},
-		}
-
-		groovyExists, cascExists := checkSecretVolumesPresence(jenkins)
-
-		assert.True(t, cascExists)
-		assert.False(t, groovyExists)
-	})
-	t.Run("casc without secret name", func(t *testing.T) {
-		jenkins := &v1alpha2.Jenkins{
-			Spec: v1alpha2.JenkinsSpec{
-				ConfigurationAsCode: v1alpha2.ConfigurationAsCode{
-					Customization: v1alpha2.Customization{
-						Configurations: []v1alpha2.ConfigMapRef{
-							{
-								Name: "casc-scripts",
-							},
-						},
-					},
-				},
-				GroovyScripts: v1alpha2.GroovyScripts{
-					Customization: v1alpha2.Customization{
-						Configurations: []v1alpha2.ConfigMapRef{
-							{
-								Name: "groovy-scripts",
-							},
-						},
-						Secret: v1alpha2.SecretRef{
-							Name: "jenkins-secret",
-						},
-					},
-				},
-			},
-		}
-
-		groovyExists, cascExists := checkSecretVolumesPresence(jenkins)
-
-		assert.True(t, groovyExists)
-		assert.False(t, cascExists)
-	})
-	t.Run("casc and groovy script shared secret name", func(t *testing.T) {
-		jenkins := &v1alpha2.Jenkins{
-			Spec: v1alpha2.JenkinsSpec{
-				ConfigurationAsCode: v1alpha2.ConfigurationAsCode{
-					Customization: v1alpha2.Customization{
-						Configurations: []v1alpha2.ConfigMapRef{
-							{
-								Name: "casc-scripts",
-							},
-						},
-						Secret: v1alpha2.SecretRef{
-							Name: "jenkins-secret",
-						},
-					},
-				},
-				GroovyScripts: v1alpha2.GroovyScripts{
-					Customization: v1alpha2.Customization{
-						Configurations: []v1alpha2.ConfigMapRef{
-							{
-								Name: "groovy-scripts",
-							},
-						},
-						Secret: v1alpha2.SecretRef{
-							Name: "jenkins-secret",
-						},
-					},
-				},
-			},
-		}
-
-		groovyExists, cascExists := checkSecretVolumesPresence(jenkins)
-
-		assert.True(t, groovyExists)
-		assert.True(t, cascExists)
+		assert.True(t, cmVolume)
+		assert.True(t, initVolume)
+		assert.True(t, secretVolume)
 	})
 }
 
-func checkSecretVolumesPresence(jenkins *v1alpha2.Jenkins) (groovyExists bool, cascExists bool) {
+func checkSecretVolumesPresence(jenkins *v1alpha2.Jenkins) (cmVolume, initVolume,  secretVolume bool) {
 	for _, volume := range GetJenkinsMasterPodBaseVolumes(jenkins) {
-		if volume.Name == ("gs-" + jenkins.Spec.GroovyScripts.Secret.Name) {
-			groovyExists = true
-		} else if volume.Name == ("casc-" + jenkins.Spec.ConfigurationAsCode.Secret.Name) {
-			cascExists = true
+		switch  volume.Name {
+		case "scripts":
+			cmVolume = true
+		case "init-configuration":
+			initVolume = true
+		case "operator-credentials":
+			secretVolume = true
 		}
 	}
-	return groovyExists, cascExists
+	return cmVolume, initVolume,  secretVolume
 }

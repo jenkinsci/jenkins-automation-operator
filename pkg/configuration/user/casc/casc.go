@@ -51,14 +51,14 @@ func (c *configurationAsCode) EnsureCasc(jenkinsName string) (requeue bool, err 
 	if err := resources.AddLabelToWatchedSecrets(jenkinsName,  c.Casc.Spec.ConfigurationAsCode.Secret.Name, c.Casc.ObjectMeta.Namespace, c.K8sClient); err != nil {
 		return true, err
 	}
-	c.Logger.V(log.VDebug).Info("labels added to configuration as conde secret")
+	c.Logger.V(log.VDebug).Info("labels added to configurationAsCode secret")
 
 	//Add Labels to configmaps
 	if err := resources.AddLabelToWatchedCMs(jenkinsName, c.Casc.ObjectMeta.Namespace, c.K8sClient, c.Casc.Spec.ConfigurationAsCode.Configurations); err != nil {
 		return true, err
 	}
-	c.Logger.V(log.VDebug).Info("labels added to configuration as code configmap")
-
+	c.Logger.V(log.VDebug).Info("labels added to configurationAsCode configmap")
+	fmt.Println("-------"+resources.GetJenkinsMasterPodName(jenkinsName))
 	// Reconcile
 	requeue, err = resources.CopySecret(c.K8sClient, c.ClientSet, c.RestConfig, resources.GetJenkinsMasterPodName(jenkinsName), c.Casc.Spec.ConfigurationAsCode.Secret.Name, c.Casc.ObjectMeta.Namespace)
 	if err != nil || requeue {

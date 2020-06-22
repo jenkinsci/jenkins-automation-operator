@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha3"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/client"
 
 	"github.com/golang/mock/gomock"
@@ -24,7 +25,7 @@ const configurationType = "test-conf-type"
 
 func TestGroovy_EnsureSingle(t *testing.T) {
 	log.SetupLogger(true)
-	emptyCustomization := v1alpha2.Customization{}
+	emptyCustomization := v1alpha3.Customization{}
 	hash := "hash"
 	groovyScript := "groovy-script"
 	groovyScriptName := "groovy-script-name"
@@ -115,68 +116,68 @@ func TestGroovy_EnsureSingle(t *testing.T) {
 		assert.Equal(t, groovyScriptName, jenkins.Status.AppliedGroovyScripts[0].Name)
 	})
 	t.Run("execute script with new version", func(t *testing.T) {
-		anotherHash := "hash1"
-		// given
-		jenkins := &v1alpha2.Jenkins{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      jenkinsName,
-				Namespace: namespace,
-			},
-		}
-		err := v1alpha2.SchemeBuilder.AddToScheme(scheme.Scheme)
-		require.NoError(t, err)
-		fakeClient := fake.NewFakeClient()
-		err = fakeClient.Create(ctx, jenkins)
-		require.NoError(t, err)
+        anotherHash := "hash1"
+        // given
+        jenkins := &v1alpha2.Jenkins{
+            ObjectMeta: metav1.ObjectMeta{
+                Name:      jenkinsName,
+                Namespace: namespace,
+            },
+        }
+        err := v1alpha2.SchemeBuilder.AddToScheme(scheme.Scheme)
+        require.NoError(t, err)
+        fakeClient := fake.NewFakeClient()
+        err = fakeClient.Create(ctx, jenkins)
+        require.NoError(t, err)
 
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-		jenkinsClient := jenkinsclient.NewMockJenkins(ctrl)
+        ctrl := gomock.NewController(t)
+        defer ctrl.Finish()
+        jenkinsClient := jenkinsclient.NewMockJenkins(ctrl)
 
-		jenkinsClient.EXPECT().ExecuteScript(groovyScript).Return("logs", nil)
-		jenkinsClient.EXPECT().ExecuteScript(groovyScript).Return("logs", nil)
-		jenkinsClient.EXPECT().ExecuteScript(groovyScript).Return("logs", nil)
+        jenkinsClient.EXPECT().ExecuteScript(groovyScript).Return("logs", nil)
+        jenkinsClient.EXPECT().ExecuteScript(groovyScript).Return("logs", nil)
+        jenkinsClient.EXPECT().ExecuteScript(groovyScript).Return("logs", nil)
 
-		groovyClient := New(jenkinsClient, fakeClient, jenkins, configurationType, emptyCustomization)
+        groovyClient := New(jenkinsClient, fakeClient, jenkins, configurationType, emptyCustomization)
 
-		// when
-		requeue, err := groovyClient.EnsureSingle(source, groovyScriptName, hash, groovyScript)
+        // when
+        requeue, err := groovyClient.EnsureSingle(source, groovyScriptName, hash, groovyScript)
 
-		// then
-		require.NoError(t, err)
-		assert.True(t, requeue)
-		err = fakeClient.Get(ctx, types.NamespacedName{Name: jenkins.Name, Namespace: jenkins.Namespace}, jenkins)
-		require.NoError(t, err)
-		assert.Equal(t, 1, len(jenkins.Status.AppliedGroovyScripts))
-		assert.Equal(t, configurationType, jenkins.Status.AppliedGroovyScripts[0].ConfigurationType)
-		assert.Equal(t, hash, jenkins.Status.AppliedGroovyScripts[0].Hash)
-		assert.Equal(t, source, jenkins.Status.AppliedGroovyScripts[0].Source)
-		assert.Equal(t, groovyScriptName, jenkins.Status.AppliedGroovyScripts[0].Name)
+        // then
+        require.NoError(t, err)
+        assert.True(t, requeue)
+        err = fakeClient.Get(ctx, types.NamespacedName{Name: jenkins.Name, Namespace: jenkins.Namespace}, jenkins)
+        require.NoError(t, err)
+        assert.Equal(t, 1, len(jenkins.Status.AppliedGroovyScripts))
+        assert.Equal(t, configurationType, jenkins.Status.AppliedGroovyScripts[0].ConfigurationType)
+        assert.Equal(t, hash, jenkins.Status.AppliedGroovyScripts[0].Hash)
+        assert.Equal(t, source, jenkins.Status.AppliedGroovyScripts[0].Source)
+        assert.Equal(t, groovyScriptName, jenkins.Status.AppliedGroovyScripts[0].Name)
 
-		// Update with new hash
-		requeue, err = groovyClient.EnsureSingle(source, groovyScriptName, anotherHash, groovyScript)
-		require.NoError(t, err)
-		assert.True(t, requeue)
+        // Update with new hash
+        requeue, err = groovyClient.EnsureSingle(source, groovyScriptName, anotherHash, groovyScript)
+        require.NoError(t, err)
+        assert.True(t, requeue)
 
-		err = fakeClient.Get(ctx, types.NamespacedName{Name: jenkins.Name, Namespace: jenkins.Namespace}, jenkins)
-		require.NoError(t, err)
-		assert.Equal(t, 1, len(jenkins.Status.AppliedGroovyScripts))
-		assert.Equal(t, configurationType, jenkins.Status.AppliedGroovyScripts[0].ConfigurationType)
-		assert.Equal(t, anotherHash, jenkins.Status.AppliedGroovyScripts[0].Hash)
-		assert.Equal(t, source, jenkins.Status.AppliedGroovyScripts[0].Source)
-		assert.Equal(t, groovyScriptName, jenkins.Status.AppliedGroovyScripts[0].Name)
+        err = fakeClient.Get(ctx, types.NamespacedName{Name: jenkins.Name, Namespace: jenkins.Namespace}, jenkins)
+        require.NoError(t, err)
+        assert.Equal(t, 1, len(jenkins.Status.AppliedGroovyScripts))
+        assert.Equal(t, configurationType, jenkins.Status.AppliedGroovyScripts[0].ConfigurationType)
+        assert.Equal(t, anotherHash, jenkins.Status.AppliedGroovyScripts[0].Hash)
+        assert.Equal(t, source, jenkins.Status.AppliedGroovyScripts[0].Source)
+        assert.Equal(t, groovyScriptName, jenkins.Status.AppliedGroovyScripts[0].Name)
 
-		requeue, err = groovyClient.EnsureSingle(source, groovyScriptName, hash, groovyScript)
-		require.NoError(t, err)
-		assert.True(t, requeue)
+        requeue, err = groovyClient.EnsureSingle(source, groovyScriptName, hash, groovyScript)
+        require.NoError(t, err)
+        assert.True(t, requeue)
 
-		err = fakeClient.Get(ctx, types.NamespacedName{Name: jenkins.Name, Namespace: jenkins.Namespace}, jenkins)
-		require.NoError(t, err)
-		assert.Equal(t, 1, len(jenkins.Status.AppliedGroovyScripts))
-		assert.Equal(t, configurationType, jenkins.Status.AppliedGroovyScripts[0].ConfigurationType)
-		assert.Equal(t, hash, jenkins.Status.AppliedGroovyScripts[0].Hash)
-		assert.Equal(t, source, jenkins.Status.AppliedGroovyScripts[0].Source)
-		assert.Equal(t, groovyScriptName, jenkins.Status.AppliedGroovyScripts[0].Name)
+        err = fakeClient.Get(ctx, types.NamespacedName{Name: jenkins.Name, Namespace: jenkins.Namespace}, jenkins)
+        require.NoError(t, err)
+        assert.Equal(t, 1, len(jenkins.Status.AppliedGroovyScripts))
+        assert.Equal(t, configurationType, jenkins.Status.AppliedGroovyScripts[0].ConfigurationType)
+        assert.Equal(t, hash, jenkins.Status.AppliedGroovyScripts[0].Hash)
+        assert.Equal(t, source, jenkins.Status.AppliedGroovyScripts[0].Source)
+        assert.Equal(t, groovyScriptName, jenkins.Status.AppliedGroovyScripts[0].Name)
 	})
 	t.Run("execute three groovy scripts with another hash", func(t *testing.T) {
 		// given
@@ -373,8 +374,8 @@ func TestGroovy_Ensure(t *testing.T) {
 				Namespace: namespace,
 			},
 		}
-		customization := v1alpha2.Customization{
-			Configurations: []v1alpha2.ConfigMapRef{
+		customization := v1alpha3.Customization{
+			Configurations: []v1alpha3.ConfigMapRef{
 				{
 					Name: configMapName,
 				},
@@ -434,8 +435,8 @@ func TestGroovy_Ensure(t *testing.T) {
 				Namespace: namespace,
 			},
 		}
-		customization := v1alpha2.Customization{
-			Configurations: []v1alpha2.ConfigMapRef{
+		customization := v1alpha3.Customization{
+			Configurations: []v1alpha3.ConfigMapRef{
 				{
 					Name: configMapName,
 				},
@@ -493,8 +494,8 @@ func TestGroovy_Ensure(t *testing.T) {
 				Namespace: namespace,
 			},
 		}
-		customization := v1alpha2.Customization{
-			Configurations: []v1alpha2.ConfigMapRef{
+		customization := v1alpha3.Customization{
+			Configurations: []v1alpha3.ConfigMapRef{
 				{
 					Name: configMapName,
 				},
@@ -549,9 +550,9 @@ func TestGroovy_Ensure(t *testing.T) {
 				Namespace: namespace,
 			},
 		}
-		customization := v1alpha2.Customization{
-			Secret: v1alpha2.SecretRef{Name: secretName},
-			Configurations: []v1alpha2.ConfigMapRef{
+		customization := v1alpha3.Customization{
+			Secret: v1alpha3.SecretRef{Name: secretName},
+			Configurations: []v1alpha3.ConfigMapRef{
 				{
 					Name: configMapName,
 				},
@@ -613,7 +614,7 @@ func TestGroovy_Ensure(t *testing.T) {
 
 func TestGroovy_isGroovyScriptAlreadyApplied(t *testing.T) {
 	log.SetupLogger(true)
-	emptyCustomization := v1alpha2.Customization{}
+	emptyCustomization := v1alpha3.Customization{}
 
 	t.Run("found", func(t *testing.T) {
 		jenkins := &v1alpha2.Jenkins{
@@ -630,7 +631,7 @@ func TestGroovy_isGroovyScriptAlreadyApplied(t *testing.T) {
 		}
 		groovyClient := New(nil, nil, jenkins, configurationType, emptyCustomization)
 
-		got := groovyClient.isGroovyScriptAlreadyApplied("source", "name", "hash")
+		got := groovyClient.isGroovyScriptAlreadyApplied("source", "name", "hash", configurationType)
 
 		assert.True(t, got)
 	})
@@ -649,7 +650,7 @@ func TestGroovy_isGroovyScriptAlreadyApplied(t *testing.T) {
 		}
 		groovyClient := New(nil, nil, jenkins, configurationType, emptyCustomization)
 
-		got := groovyClient.isGroovyScriptAlreadyApplied("source", "not-exist", "hash")
+		got := groovyClient.isGroovyScriptAlreadyApplied("source", "not-exist", "hash", configurationType)
 
 		assert.False(t, got)
 	})
@@ -657,7 +658,7 @@ func TestGroovy_isGroovyScriptAlreadyApplied(t *testing.T) {
 		jenkins := &v1alpha2.Jenkins{}
 		groovyClient := New(nil, nil, jenkins, configurationType, emptyCustomization)
 
-		got := groovyClient.isGroovyScriptAlreadyApplied("source", "name", "hash")
+		got := groovyClient.isGroovyScriptAlreadyApplied("source", "name", "hash", configurationType)
 
 		assert.False(t, got)
 	})

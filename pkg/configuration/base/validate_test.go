@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha3"
 	"github.com/jenkinsci/kubernetes-operator/pkg/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
@@ -721,7 +722,7 @@ func TestValidateCustomization(t *testing.T) {
 		},
 	}
 	t.Run("empty", func(t *testing.T) {
-		customization := v1alpha2.Customization{}
+		customization := v1alpha3.Customization{}
 		fakeClient := fake.NewFakeClient()
 		baseReconcileLoop := New(configuration.Configuration{
 			Jenkins: jenkins,
@@ -734,9 +735,9 @@ func TestValidateCustomization(t *testing.T) {
 		assert.Nil(t, got)
 	})
 	t.Run("secret set but configurations is empty", func(t *testing.T) {
-		customization := v1alpha2.Customization{
-			Secret:         v1alpha2.SecretRef{Name: secretName},
-			Configurations: []v1alpha2.ConfigMapRef{},
+		customization := v1alpha3.Customization{
+			Secret:         v1alpha3.SecretRef{Name: secretName},
+			Configurations: []v1alpha3.ConfigMapRef{},
 		}
 		secret := &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
@@ -759,9 +760,9 @@ func TestValidateCustomization(t *testing.T) {
 		assert.Equal(t, got, []string{"spec.groovyScripts.secret.name is set but spec.groovyScripts.configurations is empty"})
 	})
 	t.Run("secret and configmap exists", func(t *testing.T) {
-		customization := v1alpha2.Customization{
-			Secret:         v1alpha2.SecretRef{Name: secretName},
-			Configurations: []v1alpha2.ConfigMapRef{{Name: configMapName}},
+		customization := v1alpha3.Customization{
+			Secret:         v1alpha3.SecretRef{Name: secretName},
+			Configurations: []v1alpha3.ConfigMapRef{{Name: configMapName}},
 		}
 		configMap := &corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
@@ -792,9 +793,9 @@ func TestValidateCustomization(t *testing.T) {
 	})
 	t.Run("secret not exists and configmap exists", func(t *testing.T) {
 		configMapName := "configmap-name"
-		customization := v1alpha2.Customization{
-			Secret:         v1alpha2.SecretRef{Name: secretName},
-			Configurations: []v1alpha2.ConfigMapRef{{Name: configMapName}},
+		customization := v1alpha3.Customization{
+			Secret:         v1alpha3.SecretRef{Name: secretName},
+			Configurations: []v1alpha3.ConfigMapRef{{Name: configMapName}},
 		}
 		configMap := &corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
@@ -817,9 +818,9 @@ func TestValidateCustomization(t *testing.T) {
 		assert.Equal(t, got, []string{"Secret 'secretName' configured in spec.groovyScripts.secret.name not found"})
 	})
 	t.Run("secret exists and configmap not exists", func(t *testing.T) {
-		customization := v1alpha2.Customization{
-			Secret:         v1alpha2.SecretRef{Name: secretName},
-			Configurations: []v1alpha2.ConfigMapRef{{Name: configMapName}},
+		customization := v1alpha3.Customization{
+			Secret:         v1alpha3.SecretRef{Name: secretName},
+			Configurations: []v1alpha3.ConfigMapRef{{Name: configMapName}},
 		}
 		secret := &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{

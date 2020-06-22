@@ -18,10 +18,11 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	k8s "sigs.k8s.io/controller-runtime/pkg/client"
+	//stackerr "github.com/pkg/errors"
 )
 
-// GroovyStatus
-type GroovyStatus interface {
+// GroovySource
+type GroovySource interface {
 	GetNamespace() string
 	GetCRName() string
 }
@@ -31,30 +32,29 @@ type Groovy struct {
 	k8sClient         k8s.Client
 	jenkinsClient     jenkinsclient.Jenkins
 	customization     v1alpha3.Customization
-	groovyStatus 	  GroovyStatus
+	groovySource 	  GroovySource
 	configurationType string
 	logger            logr.Logger
 }
 
 // New creates new instance of Groovy
-func New(jenkinsClient jenkinsclient.Jenkins, k8sClient k8s.Client, groovyStatus GroovyStatus, configurationType string, 
+func New(jenkinsClient jenkinsclient.Jenkins, k8sClient k8s.Client, groovySource GroovySource, configurationType string, 
 			customization v1alpha3.Customization) *Groovy {
 	return &Groovy{
 		jenkinsClient:     jenkinsClient,
 		k8sClient:         k8sClient,
 		customization:     customization,
-		groovyStatus:	   groovyStatus,
+		groovySource:	   groovySource,
 		configurationType: configurationType,
-		logger:            log.Log.WithValues("cr", groovyStatus.GetCRName()),
+		logger:            log.Log.WithValues("cr", "jenkins"),
 	}
 }
 
 // EnsureSingle runs single groovy script
 func (g *Groovy) EnsureSingle(source, name, hash, groovyScript string) (requeue bool, err error) {
-	if g.isGroovyScriptAlreadyApplied(source, name, hash) {
+	if g.isGroovyScriptAlreadyApplied(source, name, hash, g.configurationType) {
 		return false, nil
 	}
-
 	logs, err := g.jenkinsClient.ExecuteScript(groovyScript)
 	if err != nil {
 		if groovyErr, ok := err.(*jenkinsclient.GroovyScriptExecutionFailed); ok {
@@ -66,11 +66,17 @@ func (g *Groovy) EnsureSingle(source, name, hash, groovyScript string) (requeue 
 		}
 		return true, err
 	}
-
 	// Add the script to appliedGroovyScripts in the right object
-	switch v := g.groovyStatus.(type) {
+	switch v := g.groovySource.(type) {
 	case *v1alpha3.Casc:
-		v.Status.AppliedGroovyScripts = append(v.Status.AppliedGroovyScripts, v1alpha3.AppliedGroovyScript{
+		var appliedGroovyScripts []v1alpha3.AppliedGroovyScript
+		for _, ags := range v.Status.AppliedGroovyScripts {
+			if ags.ConfigurationType == g.configurationType && ags.Source == source && ags.Name == name {
+				continue
+			}
+			appliedGroovyScripts = append(appliedGroovyScripts, ags)
+		}
+		v.Status.AppliedGroovyScripts = append(appliedGroovyScripts, v1alpha3.AppliedGroovyScript{
 			ConfigurationType: g.configurationType,
 			Source:            source,
 			Name:              name,
@@ -81,7 +87,14 @@ func (g *Groovy) EnsureSingle(source, name, hash, groovyScript string) (requeue 
 			return true, err
 		}
 	case *v1alpha2.Jenkins:
-		v.Status.AppliedGroovyScripts = append(v.Status.AppliedGroovyScripts, v1alpha2.AppliedGroovyScript{
+		var appliedGroovyScripts []v1alpha2.AppliedGroovyScript
+		for _, ags := range v.Status.AppliedGroovyScripts {
+			if ags.ConfigurationType == g.configurationType && ags.Source == source && ags.Name == name {
+				continue
+			}
+			appliedGroovyScripts = append(appliedGroovyScripts, ags)
+		}
+		v.Status.AppliedGroovyScripts = append(appliedGroovyScripts, v1alpha2.AppliedGroovyScript{
 			ConfigurationType: g.configurationType,
 			Source:            source,
 			Name:              name,
@@ -92,7 +105,6 @@ func (g *Groovy) EnsureSingle(source, name, hash, groovyScript string) (requeue 
 			return true, err
 		}
 	}
-	
 	return true, nil
 }
 
@@ -103,7 +115,7 @@ func (g *Groovy) WaitForSecretSynchronization(secretsPath string) (requeue bool,
 	}
 
 	secret := &corev1.Secret{}
-	err = g.k8sClient.Get(context.TODO(), types.NamespacedName{Name: g.customization.Secret.Name, g.groovyStatus.GetNamespace()}, secret)
+	err = g.k8sClient.Get(context.TODO(), types.NamespacedName{Name: g.customization.Secret.Name, g.groovySource.GetNamespace()}, secret)
 	if err != nil {
 		return true, errors.WithStack(err)
 	}
@@ -125,7 +137,7 @@ func (g *Groovy) WaitForSecretSynchronization(secretsPath string) (requeue bool,
 func (g *Groovy) Ensure(filter func(name string) bool, updateGroovyScript func(groovyScript string) string) (requeue bool, err error) {
 	secret := &corev1.Secret{}
 	if len(g.customization.Secret.Name) > 0 {
-		err := g.k8sClient.Get(context.TODO(), types.NamespacedName{Name: g.customization.Secret.Name, Namespace: g.groovyStatus.GetNamespace()}, secret)
+		err := g.k8sClient.Get(context.TODO(), types.NamespacedName{Name: g.customization.Secret.Name, Namespace: g.groovySource.GetNamespace()}, secret)
 		if err != nil {
 			return true, err
 		}
@@ -133,7 +145,7 @@ func (g *Groovy) Ensure(filter func(name string) bool, updateGroovyScript func(g
 
 	for _, configMapRef := range g.customization.Configurations {
 		configMap := &corev1.ConfigMap{}
-		err := g.k8sClient.Get(context.TODO(), types.NamespacedName{Name: configMapRef.Name, Namespace: g.groovyStatus.GetNamespace()}, configMap)
+		err := g.k8sClient.Get(context.TODO(), types.NamespacedName{Name: configMapRef.Name, Namespace: g.groovySource.GetNamespace()}, configMap)
 		if err != nil {
 			return true, errors.WithStack(err)
 		}
@@ -173,11 +185,12 @@ func (g *Groovy) calculateCustomizationHash(secret corev1.Secret, key, groovyScr
 	return g.calculateHash(toCalculate)
 }
 
-func (g *Groovy) isGroovyScriptAlreadyApplied(source, name, hash string) bool {
+func (g *Groovy) isGroovyScriptAlreadyApplied(source, name, hash, configurationType string) bool {
 	type S struct{}
-	switch v := g.groovyStatus.(type) {
+	switch v := g.groovySource.(type) {
 	case *v1alpha3.Casc:
 		script := v1alpha3.AppliedGroovyScript {
+			ConfigurationType: configurationType,
 			Source: source,
 			Name: name,
 			Hash: hash,
@@ -192,6 +205,7 @@ func (g *Groovy) isGroovyScriptAlreadyApplied(source, name, hash string) bool {
 		}
 	case *v1alpha2.Jenkins:
 		script := v1alpha2.AppliedGroovyScript {
+			ConfigurationType: configurationType,
 			Source: source,
 			Name: name,
 			Hash: hash,

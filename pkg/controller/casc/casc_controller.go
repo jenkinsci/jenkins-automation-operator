@@ -113,7 +113,7 @@ func (r *ReconcileCasc) Reconcile(request reconcile.Request) (reconcile.Result, 
 
 	// fetch the jenkins CR
 	value, _ := GetAnnotation(jenkinsAnnotation, casc.ObjectMeta)
-	logger.V(log.VDebug).Info("Annotation %q value: %q", jenkinsAnnotation, value)
+	logger.V(log.VDebug).Info(fmt.Sprintf("Jenkins annotation: %s, value: %s",jenkinsAnnotation, value))
 	jenkins := &v1alpha2.Jenkins{}
 	err = r.client.Get(context.TODO(), types.NamespacedName{Name: value, Namespace: casc.Namespace}, jenkins)
 	if err != nil {

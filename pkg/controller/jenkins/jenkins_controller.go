@@ -244,7 +244,6 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request) (reconcile.Resul
 	if jenkinsClient == nil {
 		return reconcile.Result{Requeue: false}, jenkins, nil
 	}
-
 	if jenkins.Status.BaseConfigurationCompletedTime == nil {
 		now := metav1.Now()
 		jenkins.Status.Phase = constants.JenkinsStatusCompleted
@@ -265,7 +264,7 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request) (reconcile.Resul
 		logger.Info(message)
 	}
 
-	// Reconcile casc, seedjobs and backups
+	// Reconcile seedjobs and backups
 	userConfiguration := user.New(config, jenkinsClient)
 
 	var messages []string

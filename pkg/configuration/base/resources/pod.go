@@ -330,6 +330,6 @@ func isPodRunning(k8sClient client.Client, podName, namespace string) wait.Condi
 
 // Poll up to timeout seconds for pod to enter running state.
 // Returns an error if the pod never enters the running state.
-func WaitForPodRunning(k8sClient client.Client, namespace, podName string, timeout time.Duration) error {
+func WaitForPodRunning(k8sClient client.Client, podName, namespace string, timeout time.Duration) error {
 	return wait.PollImmediate(time.Second, timeout, isPodRunning(k8sClient, podName, namespace))
 }
