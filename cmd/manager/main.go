@@ -32,6 +32,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
@@ -48,12 +49,14 @@ var (
 	operatorMetricsPort int32 = 8686
 )
 
+var logger = log.Log.WithName("cmd")
+
 func printInfo() {
-	log.Log.Info(fmt.Sprintf("Version: %s", version.Version))
-	log.Log.Info(fmt.Sprintf("Git commit: %s", version.GitCommit))
-	log.Log.Info(fmt.Sprintf("Go Version: %s", runtime.Version()))
-	log.Log.Info(fmt.Sprintf("Go OS/Arch: %s/%s", runtime.GOOS, runtime.GOARCH))
-	log.Log.Info(fmt.Sprintf("operator-sdk Version: %v", sdkVersion.Version))
+	logger.Info(fmt.Sprintf("Version: %s", version.Version))
+	logger.Info(fmt.Sprintf("Git commit: %s", version.GitCommit))
+	logger.Info(fmt.Sprintf("Go Version: %s", runtime.Version()))
+	logger.Info(fmt.Sprintf("Go OS/Arch: %s/%s", runtime.GOOS, runtime.GOARCH))
+	logger.Info(fmt.Sprintf("operator-sdk Version: %v", sdkVersion.Version))
 }
 
 func main() {
@@ -78,7 +81,7 @@ func main() {
 	if err != nil {
 		fatal(errors.Wrap(err, "failed to get watch namespace"), *debug)
 	}
-	log.Log.Info(fmt.Sprintf("Watch namespace: %v", namespace))
+	logger.Info(fmt.Sprintf("Watch namespace: %v", namespace))
 
 	// get a config to talk to the apiserver
 	cfg, err := config.GetConfig()
@@ -103,7 +106,7 @@ func main() {
 		fatal(errors.Wrap(err, "failed to create manager"), *debug)
 	}
 
-	log.Log.Info("Registering Components.")
+	logger.Info("Registering Components.")
 
 	// setup Scheme for all resources
 	if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
@@ -122,7 +125,7 @@ func main() {
 	}
 
 	if resources.IsRouteAPIAvailable(clientSet) {
-		log.Log.Info("Route API found: Route creation will be performed")
+		logger.Info("Route API found: Route creation will be performed")
 	}
 	c := make(chan e.Event)
 	go notifications.Listen(c, events, mgr.GetClient())
@@ -143,7 +146,7 @@ func main() {
 	}
 
 	if err = serveCRMetrics(cfg); err != nil {
-		log.Log.V(log.VWarn).Info("Could not generate and serve custom resource metrics", "error", err.Error())
+		logger.V(log.VWarn).Info("Could not generate and serve custom resource metrics", "error", err.Error())
 	}
 
 	// Add to the below struct any other metrics ports you want to expose.
@@ -154,7 +157,7 @@ func main() {
 	// Create Service object to expose the metrics port(s).
 	service, err := metrics.CreateMetricsService(ctx, cfg, servicePorts)
 	if err != nil {
-		log.Log.V(log.VWarn).Info("Could not create metrics Service", "error", err.Error())
+		logger.V(log.VWarn).Info("Could not create metrics Service", "error", err.Error())
 	}
 
 	// CreateServiceMonitors will automatically create the prometheus-operator ServiceMonitor resources
@@ -162,15 +165,15 @@ func main() {
 	services := []*v1.Service{service}
 	_, err = metrics.CreateServiceMonitors(cfg, namespace, services)
 	if err != nil {
-		log.Log.V(log.VWarn).Info("Could not create ServiceMonitor object", "error", err.Error())
+		logger.V(log.VWarn).Info("Could not create ServiceMonitor object", "error", err.Error())
 		// If this operator is deployed to a cluster without the prometheus-operator running, it will return
 		// ErrServiceMonitorNotPresent, which can be used to safely skip ServiceMonitor creation.
 		if err == metrics.ErrServiceMonitorNotPresent {
-			log.Log.V(log.VWarn).Info("Install prometheus-operator in your cluster to create ServiceMonitor objects", "error", err.Error())
+			logger.V(log.VWarn).Info("Install prometheus-operator in your cluster to create ServiceMonitor objects", "error", err.Error())
 		}
 	}
 
-	log.Log.Info("Starting the Cmd.")
+	logger.Info("Starting the Cmd.")
 
 	// start the Cmd
 	if err := mgr.Start(signals.SetupSignalHandler()); err != nil {
@@ -183,7 +186,13 @@ func main() {
 func serveCRMetrics(cfg *rest.Config) error {
 	// Below function returns filtered operator/CustomResource specific GVKs.
 	// For more control override the below GVK list with your own custom logic.
-	filteredGVK, err := k8sutil.GetGVKsFromAddToScheme(apis.AddToScheme)
+	gvks, err := k8sutil.GetGVKsFromAddToScheme(apis.AddToScheme)
+	if err != nil {
+		return err
+	}
+	// We perform our custom GKV filtering on top of the one performed
+	// by operator-sdk code
+	filteredGVK := filterGKVsFromAddToScheme(gvks)
 	if err != nil {
 		return err
 	}
@@ -198,11 +207,65 @@ func serveCRMetrics(cfg *rest.Config) error {
 	return kubemetrics.GenerateAndServeCRMetrics(cfg, ns, filteredGVK, metricsHost, operatorMetricsPort)
 }
 
+func filterGKVsFromAddToScheme(gvks []schema.GroupVersionKind) []schema.GroupVersionKind {
+	// We use gkvFilters to filter from the existing GKVs defined in the used
+	// runtime.Schema for the operator. The reason for that is that
+	// kube-metrics tries to list all of the defined Kinds in the schemas
+	// that are passed, including Kinds that the operator doesn't use and
+	// thus the role used the operator doesn't have them set and we don't want
+	// to set as they are not used by the operator.
+	// For the fields that the filters have we have defined the value '*' to
+	// specify any will be a match (accepted)
+	matchAnyValue := "*"
+	gvkFilters := []schema.GroupVersionKind{
+		// Kubernetes Resources
+		{Kind: "PersistentVolumeClaim", Version: matchAnyValue},
+		{Kind: "ServiceAccount", Version: matchAnyValue},
+		{Kind: "Secret", Version: matchAnyValue},
+		{Kind: "Pod", Version: matchAnyValue},
+		{Kind: "ConfigMap", Version: matchAnyValue},
+		{Kind: "Service", Version: matchAnyValue},
+		// Openshift Resources
+		{Group: "route.openshift.io", Kind: "Route", Version: matchAnyValue},
+		{Group: "image.openshift.io", Kind: "ImageStream", Version: matchAnyValue},
+		{Group: "apps.openshift.io", Kind: "DeploymentConfig", Version: matchAnyValue},
+		// Custom Resources
+		{Group: "jenkins.io", Kind: "Jenkins", Version: matchAnyValue},
+		{Group: "jenkins.io", Kind: "JenkinsImage", Version: matchAnyValue},
+	}
+
+	ownGVKs := []schema.GroupVersionKind{}
+	for _, gvk := range gvks {
+		for _, gvkFilter := range gvkFilters {
+			match := true
+			if gvkFilter.Kind == matchAnyValue && gvkFilter.Group == matchAnyValue && gvkFilter.Version == matchAnyValue {
+				logger.V(1).Info("gvkFilter should at least have one of its fields defined. Skipping...")
+				match = false
+			} else {
+				if gvkFilter.Kind != matchAnyValue && gvkFilter.Kind != gvk.Kind {
+					match = false
+				}
+				if gvkFilter.Group != matchAnyValue && gvkFilter.Group != gvk.Group {
+					match = false
+				}
+				if gvkFilter.Version != matchAnyValue && gvkFilter.Version != gvk.Version {
+					match = false
+				}
+			}
+			if match {
+				ownGVKs = append(ownGVKs, gvk)
+			}
+		}
+	}
+
+	return ownGVKs
+}
+
 func fatal(err error, debug bool) {
 	if debug {
-		log.Log.Error(nil, fmt.Sprintf("%+v", err))
+		logger.Error(nil, fmt.Sprintf("%+v", err))
 	} else {
-		log.Log.Error(nil, fmt.Sprintf("%s", err))
+		logger.Error(nil, fmt.Sprintf("%s", err))
 	}
 	os.Exit(-1)
 }
