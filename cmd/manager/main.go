@@ -225,10 +225,10 @@ func filterGKVsFromAddToScheme(gvks []schema.GroupVersionKind) []schema.GroupVer
 		{Kind: "Pod", Version: matchAnyValue},
 		{Kind: "ConfigMap", Version: matchAnyValue},
 		{Kind: "Service", Version: matchAnyValue},
+		{Group: "apps", Kind: "Deployment", Version: matchAnyValue},
 		// Openshift Resources
 		{Group: "route.openshift.io", Kind: "Route", Version: matchAnyValue},
 		{Group: "image.openshift.io", Kind: "ImageStream", Version: matchAnyValue},
-		{Group: "apps.openshift.io", Kind: "DeploymentConfig", Version: matchAnyValue},
 		// Custom Resources
 		{Group: "jenkins.io", Kind: "Jenkins", Version: matchAnyValue},
 		{Group: "jenkins.io", Kind: "JenkinsImage", Version: matchAnyValue},
