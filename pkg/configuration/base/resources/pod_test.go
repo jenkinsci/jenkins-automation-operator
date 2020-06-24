@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"github.com/stretchr/testify/assert"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestGetJenkinsMasterPodBaseVolumes(t *testing.T) {
@@ -19,7 +19,7 @@ func TestGetJenkinsMasterPodBaseVolumes(t *testing.T) {
 			},
 		}
 
-		cmVolume, initVolume,  secretVolume := checkSecretVolumesPresence(jenkins)
+		cmVolume, initVolume, secretVolume := checkSecretVolumesPresence(jenkins)
 
 		assert.True(t, cmVolume)
 		assert.True(t, initVolume)
@@ -27,9 +27,9 @@ func TestGetJenkinsMasterPodBaseVolumes(t *testing.T) {
 	})
 }
 
-func checkSecretVolumesPresence(jenkins *v1alpha2.Jenkins) (cmVolume, initVolume,  secretVolume bool) {
+func checkSecretVolumesPresence(jenkins *v1alpha2.Jenkins) (cmVolume, initVolume, secretVolume bool) {
 	for _, volume := range GetJenkinsMasterPodBaseVolumes(jenkins) {
-		switch  volume.Name {
+		switch volume.Name {
 		case "scripts":
 			cmVolume = true
 		case "init-configuration":
@@ -38,5 +38,5 @@ func checkSecretVolumesPresence(jenkins *v1alpha2.Jenkins) (cmVolume, initVolume
 			secretVolume = true
 		}
 	}
-	return cmVolume, initVolume,  secretVolume
+	return cmVolume, initVolume, secretVolume
 }

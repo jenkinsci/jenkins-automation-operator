@@ -35,7 +35,6 @@ import (
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
 )
 
-
 // CopyOptions have the data required to perform the copy operation
 type CopyOptions struct {
 	Container  string

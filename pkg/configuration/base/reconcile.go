@@ -380,8 +380,8 @@ func (r *ReconcileJenkinsBaseConfiguration) waitForJenkins() (reconcile.Result, 
 
 func (r *ReconcileJenkinsBaseConfiguration) ensureBaseConfiguration(jenkinsClient jenkinsclient.Jenkins) (reconcile.Result, error) {
 	customization := v1alpha3.Customization{
-			Secret:         v1alpha3.SecretRef{Name: ""},
-			Configurations: []v1alpha3.ConfigMapRef{{Name: resources.GetBaseConfigurationConfigMapName(r.Configuration.Jenkins)}},
+		Secret:         v1alpha3.SecretRef{Name: ""},
+		Configurations: []v1alpha3.ConfigMapRef{{Name: resources.GetBaseConfigurationConfigMapName(r.Configuration.Jenkins)}},
 	}
 	groovyClient := groovy.New(jenkinsClient, r.Client, r.Configuration.Jenkins, "base-groovy", customization)
 	requeue, err := groovyClient.Ensure(func(name string) bool {

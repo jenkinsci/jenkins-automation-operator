@@ -32,19 +32,19 @@ type Groovy struct {
 	k8sClient         k8s.Client
 	jenkinsClient     jenkinsclient.Jenkins
 	customization     v1alpha3.Customization
-	groovySource 	  GroovySource
+	groovySource      GroovySource
 	configurationType string
 	logger            logr.Logger
 }
 
 // New creates new instance of Groovy
-func New(jenkinsClient jenkinsclient.Jenkins, k8sClient k8s.Client, groovySource GroovySource, configurationType string, 
-			customization v1alpha3.Customization) *Groovy {
+func New(jenkinsClient jenkinsclient.Jenkins, k8sClient k8s.Client, groovySource GroovySource, configurationType string,
+	customization v1alpha3.Customization) *Groovy {
 	return &Groovy{
 		jenkinsClient:     jenkinsClient,
 		k8sClient:         k8sClient,
 		customization:     customization,
-		groovySource:	   groovySource,
+		groovySource:      groovySource,
 		configurationType: configurationType,
 		logger:            log.Log.WithValues("cr", "jenkins"),
 	}
@@ -127,7 +127,7 @@ func (g *Groovy) WaitForSecretSynchronization(secretsPath string) (requeue bool,
 	hash := g.calculateHash(toCalculate)
 
 	name := "synchronizing-secret.groovy"
-	
+
 	g.logger.Info(fmt.Sprintf("%s Secret '%s' running synchronization", g.configurationType, secret.Name))
 	return g.EnsureSingle(g.customization.Secret.Name, name, hash, fmt.Sprintf(synchronizeSecretsGroovyScriptFmt, secretsPath, hash))
 }
@@ -164,7 +164,7 @@ func (g *Groovy) Ensure(filter func(name string) bool, updateGroovyScript func(g
 			}
 
 			hash := g.calculateCustomizationHash(*secret, name, groovyScript)
-	
+
 			g.logger.Info(fmt.Sprintf("%s ConfigMap '%s' name '%s' running groovy script", g.configurationType, configMap.Name, name))
 			requeue, err := g.EnsureSingle(configMap.Name, name, hash, groovyScript)
 			if err != nil || requeue {
@@ -189,11 +189,11 @@ func (g *Groovy) isGroovyScriptAlreadyApplied(source, name, hash, configurationT
 	type S struct{}
 	switch v := g.groovySource.(type) {
 	case *v1alpha3.Casc:
-		script := v1alpha3.AppliedGroovyScript {
+		script := v1alpha3.AppliedGroovyScript{
 			ConfigurationType: configurationType,
-			Source: source,
-			Name: name,
-			Hash: hash,
+			Source:            source,
+			Name:              name,
+			Hash:              hash,
 		}
 		appliedGroovyScripts := v.Status.AppliedGroovyScripts
 		applied := make(map[v1alpha3.AppliedGroovyScript]struct{}, len(appliedGroovyScripts))
@@ -204,11 +204,11 @@ func (g *Groovy) isGroovyScriptAlreadyApplied(source, name, hash, configurationT
 			return true
 		}
 	case *v1alpha2.Jenkins:
-		script := v1alpha2.AppliedGroovyScript {
+		script := v1alpha2.AppliedGroovyScript{
 			ConfigurationType: configurationType,
-			Source: source,
-			Name: name,
-			Hash: hash,
+			Source:            source,
+			Name:              name,
+			Hash:              hash,
 		}
 		appliedGroovyScripts := v.Status.AppliedGroovyScripts
 		applied := make(map[v1alpha2.AppliedGroovyScript]struct{}, len(appliedGroovyScripts))

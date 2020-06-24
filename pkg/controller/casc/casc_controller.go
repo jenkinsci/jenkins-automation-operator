@@ -22,13 +22,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
-
 
 const (
 	jenkinsAnnotation = "jenkins.io/jenkins-reference"
@@ -52,7 +51,6 @@ func newReconciler(mgr manager.Manager, jenkinsAPIConnectionSettings jenkinsclie
 		notificationEvents:           notificationEvents,
 	}
 }
-
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
 func add(mgr manager.Manager, r reconcile.Reconciler) error {
@@ -105,15 +103,14 @@ func (r *ReconcileCasc) Reconcile(request reconcile.Request) (reconcile.Result, 
 		// Error reading the object - requeue the request.
 		return reconcile.Result{}, err
 	}
-	
+
 	if casc.Status.Phase == constants.JenkinsStatusCompleted {
 		return reconcile.Result{}, nil // Nothing to see here, move along...
 	}
 
-
 	// fetch the jenkins CR
 	value, _ := GetAnnotation(jenkinsAnnotation, casc.ObjectMeta)
-	logger.V(log.VDebug).Info(fmt.Sprintf("Jenkins annotation: %s, value: %s",jenkinsAnnotation, value))
+	logger.V(log.VDebug).Info(fmt.Sprintf("Jenkins annotation: %s, value: %s", jenkinsAnnotation, value))
 	jenkins := &v1alpha2.Jenkins{}
 	err = r.client.Get(context.TODO(), types.NamespacedName{Name: value, Namespace: casc.Namespace}, jenkins)
 	if err != nil {
@@ -123,7 +120,7 @@ func (r *ReconcileCasc) Reconcile(request reconcile.Request) (reconcile.Result, 
 
 	// check if jenkins Cr is completed
 	if jenkins.Status.Phase != constants.JenkinsStatusCompleted {
-		return reconcile.Result{Requeue:true}, nil
+		return reconcile.Result{Requeue: true}, nil
 	}
 	// setControllerReference
 	if err := controllerutil.SetControllerReference(jenkins, casc, r.scheme); err != nil {
@@ -136,7 +133,7 @@ func (r *ReconcileCasc) Reconcile(request reconcile.Request) (reconcile.Result, 
 		ClientSet:                    r.clientSet,
 		Notifications:                r.notificationEvents,
 		Jenkins:                      jenkins,
-		Casc:                      	  casc,
+		Casc:                         casc,
 		Scheme:                       r.scheme,
 		Config:                       &r.config,
 		JenkinsAPIConnectionSettings: r.jenkinsAPIConnectionSettings,

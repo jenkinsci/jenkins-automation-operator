@@ -12,7 +12,7 @@ type CascSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
-	
+
 	// GroovyScripts defines configuration of Jenkins customization via groovy scripts
 	// +optional
 	GroovyScripts Customization `json:"groovyScripts,omitempty"`
@@ -20,7 +20,6 @@ type CascSpec struct {
 	// ConfigurationAsCode defines configuration of Jenkins customization via Configuration as Code Jenkins plugin
 	// +optional
 	ConfigurationAsCode Customization `json:"configurationAsCode,omitempty"`
-
 }
 
 // SecretRef is reference to Kubernetes secret
@@ -65,9 +64,9 @@ type CascStatus struct {
 	// Unknown: For some reason the state of the Casc phase could not be obtained.
 	Phase string `json:"phase"`
 
-	LastTransitionTime metav1.Time          `json:"lastTransitionTime"`
-	Reason             string               `json:"reason,omitempty" protobuf:"bytes,5,opt,name=reason"`
-	Message            string               `json:"message,omitempty" protobuf:"bytes,6,opt,name=message"`
+	LastTransitionTime metav1.Time `json:"lastTransitionTime"`
+	Reason             string      `json:"reason,omitempty" protobuf:"bytes,5,opt,name=reason"`
+	Message            string      `json:"message,omitempty" protobuf:"bytes,6,opt,name=message"`
 
 	// AppliedGroovyScripts is a list with all applied groovy scripts in Jenkins by the operator
 	// +optional
@@ -99,7 +98,6 @@ type CascList struct {
 func init() {
 	SchemeBuilder.Register(&Casc{}, &CascList{})
 }
-
 
 func (casc *Casc) GetNamespace() string {
 	return casc.ObjectMeta.Namespace

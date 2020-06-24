@@ -1,6 +1,7 @@
 package user
 
 import (
+	"github.com/go-logr/logr"
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration"
@@ -8,8 +9,7 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/user/casc"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/user/seedjobs"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
-	"github.com/go-logr/logr"
-	
+
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
