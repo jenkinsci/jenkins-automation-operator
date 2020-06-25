@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha3"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
@@ -30,7 +31,8 @@ func TestConfiguration(t *testing.T) {
 
 	defer showLogsAndCleanup(t, ctx)
 
-	jenkinsCRName := e2e
+	jenkinsCRName := "e2e"
+	cascCRName := "casc-e2e"
 	numberOfExecutors := 6
 	numberOfExecutorsEnvName := "NUMBER_OF_EXECUTORS"
 	systemMessage := "Configuration as Code integration works!!!"
@@ -54,29 +56,25 @@ func TestConfiguration(t *testing.T) {
 			GitHubPushTrigger: true,
 		},
 	}
-	groovyScripts := v1alpha2.GroovyScripts{
-		Customization: v1alpha2.Customization{
-			Configurations: []v1alpha2.ConfigMapRef{
-				{
-					Name: userConfigurationConfigMapName,
-				},
+	groovyScripts := v1alpha3.Customization{
+		Configurations: []v1alpha3.ConfigMapRef{
+			{
+				Name: userConfigurationConfigMapName,
 			},
-			Secret: v1alpha2.SecretRef{
-				Name: userConfigurationSecretName,
-			},
+		},
+		Secret: v1alpha3.SecretRef{
+			Name: userConfigurationSecretName,
 		},
 	}
 
-	casc := v1alpha2.ConfigurationAsCode{
-		Customization: v1alpha2.Customization{
-			Configurations: []v1alpha2.ConfigMapRef{
-				{
-					Name: userConfigurationConfigMapName,
-				},
+	cascConfig := v1alpha3.Customization{
+		Configurations: []v1alpha3.ConfigMapRef{
+			{
+				Name: userConfigurationConfigMapName,
 			},
-			Secret: v1alpha2.SecretRef{
-				Name: userConfigurationSecretName,
-			},
+		},
+		Secret: v1alpha3.SecretRef{
+			Name: userConfigurationSecretName,
 		},
 	}
 
@@ -87,7 +85,7 @@ func TestConfiguration(t *testing.T) {
 	// base
 	createUserConfigurationSecret(t, namespace, stringData)
 	createUserConfigurationConfigMap(t, namespace, numberOfExecutorsEnvName, fmt.Sprintf("${%s}", systemMessageEnvName))
-	jenkins := createJenkinsCR(t, jenkinsCRName, namespace, &[]v1alpha2.SeedJob{mySeedJob.SeedJob}, groovyScripts, casc, priorityClassName)
+	jenkins := createJenkinsCR(t, jenkinsCRName, namespace, priorityClassName, &[]v1alpha2.SeedJob{mySeedJob.SeedJob})
 	createDefaultLimitsForContainersInNamespace(t, namespace)
 	createKubernetesCredentialsProviderSecret(t, namespace, mySeedJob)
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
@@ -97,7 +95,8 @@ func TestConfiguration(t *testing.T) {
 	verifyPlugins(t, jenkinsClient, jenkins)
 
 	// user
-	waitForJenkinsUserConfigurationToComplete(t, jenkins)
+	casc := createCascCR(t, cascCRName, namespace, groovyScripts, cascConfig)
+	waitForJenkinsUserConfigurationToComplete(t, casc)
 	verifyUserConfiguration(t, jenkinsClient, numberOfExecutors, systemMessage)
 	verifyJenkinsSeedJobs(t, jenkinsClient, []seedJobConfig{mySeedJob})
 }
@@ -123,9 +122,8 @@ func TestPlugins(t *testing.T) {
 		},
 	}
 
-	jenkins := createJenkinsCR(t, "k8s-e2e", namespace, seedJobs, v1alpha2.GroovyScripts{}, v1alpha2.ConfigurationAsCode{}, priorityClassName)
-	waitForJenkinsUserConfigurationToComplete(t, jenkins)
-
+	jenkins := createJenkinsCR(t, "k8s-e2e", namespace, priorityClassName, seedJobs)
+	
 	jenkinsClient, cleanUpFunc := verifyJenkinsAPIConnection(t, jenkins, namespace)
 	defer cleanUpFunc()
 	waitForJob(t, jenkinsClient, jobID)
@@ -156,7 +154,7 @@ func TestPriorityClass(t *testing.T) {
 	// One of the existing priority classes
 	priorityClassName := "system-cluster-critical"
 
-	jenkins := createJenkinsCR(t, jenkinsCRName, namespace, nil, v1alpha2.GroovyScripts{}, v1alpha2.ConfigurationAsCode{}, priorityClassName)
+	jenkins := createJenkinsCR(t, jenkinsCRName, namespace, priorityClassName, nil)
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
 	verifyJenkinsMasterPodAttributes(t, jenkins)
 	_, cleanUpFunc := verifyJenkinsAPIConnection(t, jenkins, namespace)

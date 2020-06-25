@@ -49,13 +49,20 @@ func TestDeployHelmChart(t *testing.T) {
 		},
 	}
 
+	casc := &v1alpha3.Casc{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "casc-example",
+			Namespace: namespace,
+		},
+	}
+	
 	cmd := exec.Command("helm", "upgrade", "jenkins", "./chart/jenkins-operator", "--namespace", namespace, "--debug",
 		"--set-string", fmt.Sprintf("jenkins.namespace=%s", namespace), "--install")
 	output, err := cmd.CombinedOutput()
 	require.NoError(t, err, string(output))
 
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
-	waitForJenkinsUserConfigurationToComplete(t, jenkins)
+	waitForJenkinsUserConfigurationToComplete(t, casc)
 
 	cmd = exec.Command("helm", "upgrade", "jenkins", "./chart/jenkins-operator", "--namespace", namespace, "--debug",
 		"--set-string", fmt.Sprintf("jenkins.namespace=%s", namespace), "--install")
@@ -64,5 +71,5 @@ func TestDeployHelmChart(t *testing.T) {
 
 	// Then
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
-	waitForJenkinsUserConfigurationToComplete(t, jenkins)
+	waitForJenkinsUserConfigurationToComplete(t, casc)
 }

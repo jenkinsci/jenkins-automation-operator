@@ -10,6 +10,8 @@ import (
 
 	"github.com/jenkinsci/kubernetes-operator/internal/try"
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha3"
+	"github.com/jenkinsci/kubernetes-operator/pkg/constants"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
 
@@ -33,6 +35,7 @@ var (
 
 // checkConditionFunc is used to check if a condition for the jenkins CR is set
 type checkConditionFunc func(*v1alpha2.Jenkins, error) bool
+type checkCascConditionFunc func(*v1alpha3.Casc, error) bool
 
 func waitForJobToFinish(t *testing.T, job *gojenkins.Job, tick, timeout time.Duration) {
 	err := try.Until(func() (end bool, err error) {
@@ -94,16 +97,16 @@ func waitForRecreateJenkinsMasterPod(t *testing.T, jenkins *v1alpha2.Jenkins) {
 	t.Log("Jenkins pod has been recreated")
 }
 
-func waitForJenkinsUserConfigurationToComplete(t *testing.T, jenkins *v1alpha2.Jenkins) {
+func waitForJenkinsUserConfigurationToComplete(t *testing.T, casc *v1alpha3.Casc) {
 	t.Log("Waiting for Jenkins user configuration to complete")
-	_, err := WaitUntilJenkinsConditionSet(retryInterval, 110, jenkins, func(jenkins *v1alpha2.Jenkins, err error) bool {
-		t.Logf("Current Jenkins status: '%+v', error '%s'", jenkins.Status, err)
-		return err == nil && jenkins.Status.UserConfigurationCompletedTime != nil
+	_, err := WaitUntilCascConditionSet(retryInterval, 110, casc, func(casc *v1alpha3.Casc, err error) bool {
+		t.Logf("Current Casc status: '%+v', error '%s'", casc.Status, err)
+		return err == nil && casc.Status.Phase == constants.JenkinsStatusCompleted
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log("Jenkins pod is running")
+	t.Log("Casc completed")
 }
 
 func waitForJenkinsSafeRestart(t *testing.T, jenkinsClient jenkinsclient.Jenkins) {
@@ -118,6 +121,20 @@ func waitForJenkinsSafeRestart(t *testing.T, jenkinsClient jenkinsclient.Jenkins
 		return true, nil
 	}, time.Second, time.Second*70)
 	require.NoError(t, err)
+}
+
+// WaitUntilJenkinsConditionSet retries until the specified condition check becomes true for the casc CR
+func WaitUntilCascConditionSet(retryInterval time.Duration, retries int, casc *v1alpha3.Casc, checkCondition checkCascConditionFunc) (*v1alpha3.Casc, error) {
+	cascStatus := &v1alpha3.Casc{}
+	err := wait.Poll(retryInterval, time.Duration(retries)*retryInterval, func() (bool, error) {
+		namespacedName := types.NamespacedName{Namespace: casc.Namespace, Name: casc.Name}
+		err := framework.Global.Client.Get(goctx.TODO(), namespacedName, cascStatus)
+		return checkCondition(cascStatus, err), nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return cascStatus, nil
 }
 
 // WaitUntilJenkinsConditionSet retries until the specified condition check becomes true for the jenkins CR

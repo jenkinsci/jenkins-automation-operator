@@ -209,6 +209,20 @@ jenkins:
 
   # configuration is section where we can configure Jenkins instance
   # See https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/customization/ for details
+casc:
+  # enabled can enable or disable the casc instance
+  # Set to false if you have configured CR already and/or you want to deploy an operator only
+  enabled: true
+
+  # apiVersion is the version of the CR manifest
+  apiVersion: jenkins.io/v1alpha3
+
+  # name of resource
+  name: casc-example
+
+  # labels are injected into metadata labels field
+  labels: {}
+
   configuration:
     configurationAsCode: {}
     #    - configMapName: jenkins-casc

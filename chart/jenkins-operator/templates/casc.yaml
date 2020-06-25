@@ -1,0 +1,36 @@
+{{ if .Values.casc.enabled }}
+apiVersion: {{ .Values.casc.apiVersion }}
+kind: Casc
+metadata:
+  name: {{ .Values.casc.name }}
+  namespace: {{ .Values.jenkins.namespace }}
+  {{- with .Values.casc.labels }}
+  labels: {{ toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  configurationAsCode:
+    configurations:
+    {{- range .Values.casc.configuration.configurationAsCode }}
+    - name: {{ .configMapName }}
+    {{- end }}
+    {{- if .Values.casc.configuration.configurationAsCode }}
+    secret:
+      {{- if .Values.casc.configuration.secretRefName }}
+      name: {{ .Values.casc.configuration.secretRefName }}
+      {{- else if .Values.casc.configuration.secretData }}
+      name: jenkins-{{ .Values.casc.name }}
+      {{- end }}
+    {{- end }}
+  groovyScripts:
+    configurations:
+    {{- range .Values.casc.configuration.groovyScripts }}
+    - name: {{ .configMapName }}
+    {{- end }}
+    {{- if .Values.casc.configuration.groovyScripts }}
+    secret:
+      {{- if .Values.casc.configuration.secretRefName }}
+      name: {{ .Values.casc.configuration.secretRefName }}
+      {{- else if .Values.casc.configuration.secretData }}
+      name: jenkins-{{ .Values.casc.name }}
+      {{- end }}
+    {{- end }}

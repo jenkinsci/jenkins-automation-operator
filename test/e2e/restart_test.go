@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha3"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/client"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
@@ -20,7 +21,7 @@ func TestJenkinsMasterPodRestart(t *testing.T) {
 
 	defer showLogsAndCleanup(t, ctx)
 
-	jenkins := createJenkinsCR(t, "e2e", namespace, nil, v1alpha2.GroovyScripts{}, v1alpha2.ConfigurationAsCode{}, "")
+	jenkins := createJenkinsCR(t, "e2e", namespace, "", nil)
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
 	restartJenkinsMasterPod(t, jenkins)
 	waitForRecreateJenkinsMasterPod(t, jenkins)
@@ -38,19 +39,19 @@ func TestSafeRestart(t *testing.T) {
 	defer ctx.Cleanup()
 
 	jenkinsCRName := "e2e"
+	cascCRName := "casc-e2e"
 	configureAuthorizationToUnSecure(t, namespace, userConfigurationConfigMapName)
-	groovyScriptsConfig := v1alpha2.GroovyScripts{
-		Customization: v1alpha2.Customization{
-			Configurations: []v1alpha2.ConfigMapRef{
-				{
-					Name: userConfigurationConfigMapName,
-				},
+	groovyScripts := v1alpha3.Customization{
+		Configurations: []v1alpha3.ConfigMapRef{
+			{
+				Name: userConfigurationConfigMapName,
 			},
 		},
 	}
-	jenkins := createJenkinsCR(t, jenkinsCRName, namespace, nil, groovyScriptsConfig, v1alpha2.ConfigurationAsCode{}, "")
+	jenkins := createJenkinsCR(t, jenkinsCRName, namespace, "", nil)
+	casc := createCascCR(t, cascCRName, namespace, groovyScripts, v1alpha3.Customization{})
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
-	waitForJenkinsUserConfigurationToComplete(t, jenkins)
+	waitForJenkinsUserConfigurationToComplete(t, casc)
 	jenkinsClient, cleanUpFunc := verifyJenkinsAPIConnection(t, jenkins, namespace)
 	defer cleanUpFunc()
 	checkIfAuthorizationStrategyUnsecuredIsSet(t, jenkinsClient)

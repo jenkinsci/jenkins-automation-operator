@@ -13,6 +13,7 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/internal/render"
 	"github.com/jenkinsci/kubernetes-operator/internal/try"
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha3"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/user/seedjobs"
 	"github.com/jenkinsci/kubernetes-operator/pkg/constants"
@@ -47,23 +48,34 @@ func TestSeedJobs(t *testing.T) {
 	defer showLogsAndCleanup(t, ctx)
 
 	jenkinsCRName := "e2e"
+	cascCRName := "e2e"
 	var seedJobs []v1alpha2.SeedJob
+
+	configureAuthorizationToUnSecure(t, namespace, userConfigurationConfigMapName)
+	groovyScripts := v1alpha3.Customization{
+		Configurations: []v1alpha3.ConfigMapRef{
+			{
+				Name: userConfigurationConfigMapName,
+			},
+		},
+	}
 
 	// base
 	for _, seedJobConfig := range seedJobsConfig.SeedJobs {
 		createKubernetesCredentialsProviderSecret(t, namespace, seedJobConfig)
 		seedJobs = append(seedJobs, seedJobConfig.SeedJob)
 	}
-	jenkins := createJenkinsCR(t, jenkinsCRName, namespace, &seedJobs, v1alpha2.GroovyScripts{}, v1alpha2.ConfigurationAsCode{}, "")
+	jenkins := createJenkinsCR(t, jenkinsCRName, namespace, "", &seedJobs)
+	casc := createCascCR(t, cascCRName, namespace, groovyScripts, v1alpha3.Customization{})
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
-
 	verifyJenkinsMasterPodAttributes(t, jenkins)
 	jenkinsClient, cleanUpFunc := verifyJenkinsAPIConnection(t, jenkins, namespace)
 	defer cleanUpFunc()
 	verifyPlugins(t, jenkinsClient, jenkins)
 
 	// user
-	waitForJenkinsUserConfigurationToComplete(t, jenkins)
+	waitForJenkinsUserConfigurationToComplete(t, casc)
+	
 	verifyJenkinsSeedJobs(t, jenkinsClient, seedJobsConfig.SeedJobs)
 }
 
