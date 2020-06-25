@@ -24,6 +24,7 @@ import (
 )
 
 const e2e = "e2e"
+const cascE2e = "casc-e2e"
 
 func TestConfiguration(t *testing.T) {
 	t.Parallel()
@@ -31,8 +32,8 @@ func TestConfiguration(t *testing.T) {
 
 	defer showLogsAndCleanup(t, ctx)
 
-	jenkinsCRName := "e2e"
-	cascCRName := "casc-e2e"
+	jenkinsCRName := e2e
+	cascCRName := cascE2e
 	numberOfExecutors := 6
 	numberOfExecutorsEnvName := "NUMBER_OF_EXECUTORS"
 	systemMessage := "Configuration as Code integration works!!!"
@@ -123,7 +124,7 @@ func TestPlugins(t *testing.T) {
 	}
 
 	jenkins := createJenkinsCR(t, "k8s-e2e", namespace, priorityClassName, seedJobs)
-	
+
 	jenkinsClient, cleanUpFunc := verifyJenkinsAPIConnection(t, jenkins, namespace)
 	defer cleanUpFunc()
 	waitForJob(t, jenkinsClient, jobID)

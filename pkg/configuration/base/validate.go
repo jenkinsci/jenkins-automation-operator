@@ -362,6 +362,7 @@ func (r *ReconcileJenkinsBaseConfiguration) verifyBasePlugins(requiredBasePlugin
 	return messages
 }
 
+//nolint:unparam
 func (r *ReconcileJenkinsBaseConfiguration) validateCustomization(customization v1alpha3.Customization, name string) ([]string, error) {
 	var messages []string
 	if len(customization.Secret.Name) == 0 && len(customization.Configurations) == 0 {

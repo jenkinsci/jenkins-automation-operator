@@ -21,7 +21,7 @@ func TestJenkinsMasterPodRestart(t *testing.T) {
 
 	defer showLogsAndCleanup(t, ctx)
 
-	jenkins := createJenkinsCR(t, "e2e", namespace, "", nil)
+	jenkins := createJenkinsCR(t, e2e, namespace, "", nil)
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
 	restartJenkinsMasterPod(t, jenkins)
 	waitForRecreateJenkinsMasterPod(t, jenkins)
@@ -38,8 +38,8 @@ func TestSafeRestart(t *testing.T) {
 	// Deletes test namespace
 	defer ctx.Cleanup()
 
-	jenkinsCRName := "e2e"
-	cascCRName := "casc-e2e"
+	jenkinsCRName := e2e
+	cascCRName := cascE2e
 	configureAuthorizationToUnSecure(t, namespace, userConfigurationConfigMapName)
 	groovyScripts := v1alpha3.Customization{
 		Configurations: []v1alpha3.ConfigMapRef{

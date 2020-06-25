@@ -95,7 +95,6 @@ func (c *configurationAsCode) EnsureGroovy(jenkinsName string) (requeue bool, er
 	return c.GroovyClient.Ensure(func(name string) bool {
 		return strings.HasSuffix(name, ".groovy")
 	}, groovy.AddSecretsLoaderToGroovyScript(resources.GroovyScriptsSecretVolumePath))
-
 }
 
 const applyConfigurationAsCodeGroovyScriptFmt = `

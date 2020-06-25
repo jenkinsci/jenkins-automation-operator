@@ -21,6 +21,7 @@ import (
 
 var logger = logx.Log
 
+//nolint:gocritic
 func GetSecretData(k8sClient client.Client, secretName, namespace string) (data []byte, requeue bool, err error) {
 	if len(secretName) == 0 {
 		return data, false, nil
@@ -44,7 +45,6 @@ func GetSecretData(k8sClient client.Client, secretName, namespace string) (data 
 	}
 
 	return data, false, nil
-
 }
 
 func WriteDataToTempFile(data []byte) (filename string, requeue bool, err error) {
@@ -89,7 +89,7 @@ func CopySecret(k8sClient client.Client, k8sClientSet kubernetes.Clientset, rest
 		}
 
 		co := util.NewCopyOptions(restConfig, k8sClientSet, genericclioptions.IOStreams{In: os.Stdin, Out: os.Stdout, ErrOut: os.Stderr})
-		co.Run([]string{fn, fmt.Sprintf("%s/%s:%s", namespace, podName, ConfigurationAsCodeSecretVolumePath)})
+		err = co.Run([]string{fn, fmt.Sprintf("%s/%s:%s", namespace, podName, ConfigurationAsCodeSecretVolumePath)})
 		if err != nil {
 			return true, err
 		}

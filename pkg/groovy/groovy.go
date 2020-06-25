@@ -21,8 +21,9 @@ import (
 	//stackerr "github.com/pkg/errors"
 )
 
-// GroovySource
-type GroovySource interface {
+//nolint: golint
+// GroovyIface
+type GroovyIface interface {
 	GetNamespace() string
 	GetCRName() string
 }
@@ -32,19 +33,19 @@ type Groovy struct {
 	k8sClient         k8s.Client
 	jenkinsClient     jenkinsclient.Jenkins
 	customization     v1alpha3.Customization
-	groovySource      GroovySource
+	groovyIface       GroovyIface
 	configurationType string
 	logger            logr.Logger
 }
 
 // New creates new instance of Groovy
-func New(jenkinsClient jenkinsclient.Jenkins, k8sClient k8s.Client, groovySource GroovySource, configurationType string,
+func New(jenkinsClient jenkinsclient.Jenkins, k8sClient k8s.Client, groovyIface GroovyIface, configurationType string,
 	customization v1alpha3.Customization) *Groovy {
 	return &Groovy{
 		jenkinsClient:     jenkinsClient,
 		k8sClient:         k8sClient,
 		customization:     customization,
-		groovySource:      groovySource,
+		groovyIface:       groovyIface,
 		configurationType: configurationType,
 		logger:            log.Log.WithValues("cr", "jenkins"),
 	}
@@ -67,7 +68,7 @@ func (g *Groovy) EnsureSingle(source, name, hash, groovyScript string) (requeue 
 		return true, err
 	}
 	// Add the script to appliedGroovyScripts in the right object
-	switch v := g.groovySource.(type) {
+	switch v := g.groovyIface.(type) {
 	case *v1alpha3.Casc:
 		var appliedGroovyScripts []v1alpha3.AppliedGroovyScript
 		for _, ags := range v.Status.AppliedGroovyScripts {
@@ -76,12 +77,13 @@ func (g *Groovy) EnsureSingle(source, name, hash, groovyScript string) (requeue 
 			}
 			appliedGroovyScripts = append(appliedGroovyScripts, ags)
 		}
-		v.Status.AppliedGroovyScripts = append(appliedGroovyScripts, v1alpha3.AppliedGroovyScript{
+		appliedGroovyScripts = append(appliedGroovyScripts, v1alpha3.AppliedGroovyScript{
 			ConfigurationType: g.configurationType,
 			Source:            source,
 			Name:              name,
 			Hash:              hash,
 		})
+		v.Status.AppliedGroovyScripts = appliedGroovyScripts
 		err = g.k8sClient.Update(context.TODO(), v)
 		if err != nil {
 			return true, err
@@ -94,12 +96,13 @@ func (g *Groovy) EnsureSingle(source, name, hash, groovyScript string) (requeue 
 			}
 			appliedGroovyScripts = append(appliedGroovyScripts, ags)
 		}
-		v.Status.AppliedGroovyScripts = append(appliedGroovyScripts, v1alpha2.AppliedGroovyScript{
+		appliedGroovyScripts = append(appliedGroovyScripts, v1alpha2.AppliedGroovyScript{
 			ConfigurationType: g.configurationType,
 			Source:            source,
 			Name:              name,
 			Hash:              hash,
 		})
+		v.Status.AppliedGroovyScripts = appliedGroovyScripts
 		err = g.k8sClient.Update(context.TODO(), v)
 		if err != nil {
 			return true, err
@@ -115,7 +118,7 @@ func (g *Groovy) WaitForSecretSynchronization(secretsPath string) (requeue bool,
 	}
 
 	secret := &corev1.Secret{}
-	err = g.k8sClient.Get(context.TODO(), types.NamespacedName{Name: g.customization.Secret.Name, g.groovySource.GetNamespace()}, secret)
+	err = g.k8sClient.Get(context.TODO(), types.NamespacedName{Name: g.customization.Secret.Name, g.groovyIface.GetNamespace()}, secret)
 	if err != nil {
 		return true, errors.WithStack(err)
 	}
@@ -137,7 +140,7 @@ func (g *Groovy) WaitForSecretSynchronization(secretsPath string) (requeue bool,
 func (g *Groovy) Ensure(filter func(name string) bool, updateGroovyScript func(groovyScript string) string) (requeue bool, err error) {
 	secret := &corev1.Secret{}
 	if len(g.customization.Secret.Name) > 0 {
-		err := g.k8sClient.Get(context.TODO(), types.NamespacedName{Name: g.customization.Secret.Name, Namespace: g.groovySource.GetNamespace()}, secret)
+		err := g.k8sClient.Get(context.TODO(), types.NamespacedName{Name: g.customization.Secret.Name, Namespace: g.groovyIface.GetNamespace()}, secret)
 		if err != nil {
 			return true, err
 		}
@@ -145,7 +148,7 @@ func (g *Groovy) Ensure(filter func(name string) bool, updateGroovyScript func(g
 
 	for _, configMapRef := range g.customization.Configurations {
 		configMap := &corev1.ConfigMap{}
-		err := g.k8sClient.Get(context.TODO(), types.NamespacedName{Name: configMapRef.Name, Namespace: g.groovySource.GetNamespace()}, configMap)
+		err := g.k8sClient.Get(context.TODO(), types.NamespacedName{Name: configMapRef.Name, Namespace: g.groovyIface.GetNamespace()}, configMap)
 		if err != nil {
 			return true, errors.WithStack(err)
 		}
@@ -187,7 +190,7 @@ func (g *Groovy) calculateCustomizationHash(secret corev1.Secret, key, groovyScr
 
 func (g *Groovy) isGroovyScriptAlreadyApplied(source, name, hash, configurationType string) bool {
 	type S struct{}
-	switch v := g.groovySource.(type) {
+	switch v := g.groovyIface.(type) {
 	case *v1alpha3.Casc:
 		script := v1alpha3.AppliedGroovyScript{
 			ConfigurationType: configurationType,
@@ -263,39 +266,3 @@ const importPrefix = "import "
 const secretsLoaderGroovyScriptFmt = `def secretsPath = '%s'
 def secrets = [:]
 "ls ${secretsPath}".execute().text.eachLine {secrets[it] = new File("${secretsPath}/${it}").text}`
-
-const synchronizeSecretsGroovyScriptFmt = `
-def secretsPath = '%s'
-def expectedHash = '%s'
-
-println "Synchronizing Kubernetes Secret to the Jenkins master pod, timeout 60 seconds."
-
-def complete = false
-for(int i = 1; i <= 30; i++) {
-    def fileList = "ls ${secretsPath}".execute()
-    def secrets = []
-    fileList .text.eachLine {secrets.add(it)}
-    println "Mounted secrets: ${secrets}"
-    def actualHash = calculateHash((String[])secrets, secretsPath)
-    println "Expected hash '${expectedHash}', actual hash '${actualHash}', will retry"
-    if(expectedHash == actualHash) {
-        complete = true
-        break
-    }
-    sleep 2000
-}
-if(!complete) {
-    throw new Exception("Timeout while synchronizing files")
-}
-
-def calculateHash(String[] secrets, String secretsPath) {
-    def hash = java.security.MessageDigest.getInstance("SHA-256")
-    for(secret in secrets) {
-        hash.update(secret.getBytes())
-        def fileLocation = java.nio.file.Paths.get("${secretsPath}/${secret}")
-        def fileData = java.nio.file.Files.readAllBytes(fileLocation)
-        hash.update(fileData)
-    }
-    return Base64.getEncoder().encodeToString(hash.digest())
-}
-`

@@ -17,7 +17,6 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -77,7 +76,7 @@ func (c *Configuration) GetJenkinsMasterPod() (*corev1.Pod, error) {
 func (c *Configuration) WaitUntilCreateJenkinsMasterPod() (currentJenkinsMasterPod *corev1.Pod, err error) {
 	currentJenkinsMasterPod, err = c.GetJenkinsMasterPod()
 	for {
-		if err != nil && !apierrors.IsNotFound(err) {
+		if err != nil && !errors.IsNotFound(err) {
 			return nil, stackerr.WithStack(err)
 		} else if err == nil {
 			break

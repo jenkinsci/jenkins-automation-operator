@@ -4,9 +4,10 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/jenkinsci/kubernetes-operator/pkg/controller/casc"
 	"os"
 	"runtime"
+
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/casc"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkinsimage"
 

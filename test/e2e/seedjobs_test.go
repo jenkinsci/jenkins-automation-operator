@@ -47,8 +47,8 @@ func TestSeedJobs(t *testing.T) {
 
 	defer showLogsAndCleanup(t, ctx)
 
-	jenkinsCRName := "e2e"
-	cascCRName := "e2e"
+	jenkinsCRName := e2e
+	cascCRName := cascE2e
 	var seedJobs []v1alpha2.SeedJob
 
 	configureAuthorizationToUnSecure(t, namespace, userConfigurationConfigMapName)
@@ -75,7 +75,7 @@ func TestSeedJobs(t *testing.T) {
 
 	// user
 	waitForJenkinsUserConfigurationToComplete(t, casc)
-	
+
 	verifyJenkinsSeedJobs(t, jenkinsClient, seedJobsConfig.SeedJobs)
 }
 

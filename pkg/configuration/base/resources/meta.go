@@ -34,10 +34,10 @@ func BuildResourceLabels(jenkins *v1alpha2.Jenkins) map[string]string {
 // BuildLabelsForWatchedResources returns labels for Kubernetes resources which operator want to watch
 // resources with that labels should not be deleted after Jenkins CR deletion, to prevent this situation don't set
 // any owner
-func BuildLabelsForWatchedResources(CRName string) map[string]string {
+func BuildLabelsForWatchedResources(crName string) map[string]string {
 	return map[string]string{
 		constants.LabelAppKey:       constants.LabelAppValue,
-		constants.LabelJenkinsCRKey: CRName,
+		constants.LabelJenkinsCRKey: crName,
 		constants.LabelWatchKey:     constants.LabelWatchValue,
 	}
 }

@@ -9,6 +9,7 @@ import (
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis"
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
+	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha3"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/stretchr/testify/require"
@@ -55,7 +56,7 @@ func TestDeployHelmChart(t *testing.T) {
 			Namespace: namespace,
 		},
 	}
-	
+
 	cmd := exec.Command("helm", "upgrade", "jenkins", "./chart/jenkins-operator", "--namespace", namespace, "--debug",
 		"--set-string", fmt.Sprintf("jenkins.namespace=%s", namespace), "--install")
 	output, err := cmd.CombinedOutput()

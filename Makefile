@@ -127,7 +127,7 @@ go-dependencies: ## Ensure build dependencies
 	XDG_CACHE_HOME=$(XDG_CACHE_HOME) GOCACHE=$(GOCACHE) go mod vendor -v
 
 .PHONY: build
-build: deepcopy-gen $(NAME) build-e2e ## Builds a dynamic executable or package
+build: deepcopy-gen $(NAME) ## Builds a dynamic executable or package
 	@echo "+ $@"
 
 .PHONY: $(NAME)
