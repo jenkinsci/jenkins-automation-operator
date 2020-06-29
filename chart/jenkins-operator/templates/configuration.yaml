@@ -1,5 +1,5 @@
 {{- $root := . -}}
-{{ range .Values.jenkins.configuration.configurationAsCode }}
+{{ range .Values.casc.configuration.configurationAsCode }}
   {{ if .content }}
 ---
 apiVersion: v1
@@ -13,7 +13,7 @@ data: {{ toYaml . | nindent 2 }}
   {{ end }}
 {{ end }}
 
-{{ range .Values.jenkins.configuration.groovyScripts }}
+{{ range .Values.casc.configuration.groovyScripts }}
   {{ if .content }}
 ---
 apiVersion: v1
