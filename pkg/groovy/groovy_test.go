@@ -2,7 +2,6 @@ package groovy
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"testing"
 
@@ -1266,46 +1265,5 @@ func TestGroovy_isGroovyScriptAlreadyApplied(t *testing.T) {
 		got := groovyClient.isGroovyScriptAlreadyApplied("source", "name", "hash", configurationType)
 
 		assert.False(t, got)
-	})
-}
-
-func TestAddSecretsLoaderToGroovyScript(t *testing.T) {
-	secretsPath := "/var/jenkins/groovy-scripts-secrets"
-	secretsLoader := fmt.Sprintf(secretsLoaderGroovyScriptFmt, secretsPath)
-
-	t.Run("without imports", func(t *testing.T) {
-		groovyScript := "println 'Simple groovy script"
-		updater := AddSecretsLoaderToGroovyScript(secretsPath)
-
-		got := updater(groovyScript)
-
-		assert.Equal(t, secretsLoader+groovyScript, got)
-	})
-	t.Run("with imports", func(t *testing.T) {
-		groovyScript := `import com.foo.bar
-import com.foo.bar2
-println 'Simple groovy script'`
-		imports := `import com.foo.bar
-import com.foo.bar2`
-		tail := `println 'Simple groovy script'`
-		update := AddSecretsLoaderToGroovyScript(secretsPath)
-
-		got := update(groovyScript)
-
-		assert.Equal(t, imports+"\n\n"+secretsLoader+"\n\n"+tail, got)
-	})
-	t.Run("with imports and separate section", func(t *testing.T) {
-		groovyScript := `import com.foo.bar
-import com.foo.bar2
-
-println 'Simple groovy script'`
-		imports := `import com.foo.bar
-import com.foo.bar2`
-		tail := `println 'Simple groovy script'`
-		update := AddSecretsLoaderToGroovyScript(secretsPath)
-
-		got := update(groovyScript)
-
-		assert.Equal(t, imports+"\n\n"+secretsLoader+"\n\n\n"+tail, got)
 	})
 }

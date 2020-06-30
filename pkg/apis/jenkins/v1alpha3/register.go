@@ -10,6 +10,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/scheme"
 )
 
+const (
+	// Kind defines Casc CRD kind name
+	Kind = "Casc"
+)
+
 var (
 	// SchemeGroupVersion is group version used to register these objects
 	SchemeGroupVersion = schema.GroupVersion{Group: "jenkins.io", Version: "v1alpha3"}

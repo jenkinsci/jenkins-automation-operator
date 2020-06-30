@@ -42,6 +42,15 @@ func TestDeployHelmChart(t *testing.T) {
 	err = framework.AddToFrameworkScheme(apis.AddToScheme, jenkinsServiceList)
 	require.NoError(t, err)
 
+	cascServiceList := &v1alpha3.CascList{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       v1alpha3.Kind,
+			APIVersion: v1alpha3.SchemeGroupVersion.String(),
+		},
+	}
+	err = framework.AddToFrameworkScheme(apis.AddToScheme, cascServiceList)
+	require.NoError(t, err)
+
 	jenkins := &v1alpha2.Jenkins{
 		TypeMeta: v1alpha2.JenkinsTypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{

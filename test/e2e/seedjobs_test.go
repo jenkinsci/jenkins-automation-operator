@@ -66,7 +66,7 @@ func TestSeedJobs(t *testing.T) {
 		seedJobs = append(seedJobs, seedJobConfig.SeedJob)
 	}
 	jenkins := createJenkinsCR(t, jenkinsCRName, namespace, "", &seedJobs)
-	casc := createCascCR(t, cascCRName, namespace, groovyScripts, v1alpha3.Customization{})
+	casc := createCascCR(t, jenkinsCRName, cascCRName, namespace, groovyScripts, v1alpha3.Customization{})
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
 	verifyJenkinsMasterPodAttributes(t, jenkins)
 	jenkinsClient, cleanUpFunc := verifyJenkinsAPIConnection(t, jenkins, namespace)

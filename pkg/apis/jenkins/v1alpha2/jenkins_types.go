@@ -656,6 +656,7 @@ func (jenkins *Jenkins) GetNamespace() string {
 	return jenkins.ObjectMeta.Namespace
 }
 
+//nolint: stylecheck
 func (jenkins *Jenkins) GetCRName() string {
 	return jenkins.ObjectMeta.Name
 }

@@ -52,9 +52,12 @@ func getJenkinsMasterPod(t *testing.T, jenkins *v1alpha2.Jenkins) *corev1.Pod {
 	return &podList.Items[0]
 }
 
-func createCascCR(t *testing.T, name, namespace string, groovyScripts, cascConfig v1alpha3.Customization) *v1alpha3.Casc {
+func createCascCR(t *testing.T, jenkinsCRName, name, namespace string, groovyScripts, cascConfig v1alpha3.Customization) *v1alpha3.Casc {
 	casc := &v1alpha3.Casc{
 		ObjectMeta: metav1.ObjectMeta{
+			Annotations: map[string]string{
+				"jenkins.io/jenkins-reference": jenkinsCRName,
+			},
 			Name:      name,
 			Namespace: namespace,
 		},

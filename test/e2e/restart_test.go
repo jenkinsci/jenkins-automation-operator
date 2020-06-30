@@ -49,7 +49,7 @@ func TestSafeRestart(t *testing.T) {
 		},
 	}
 	jenkins := createJenkinsCR(t, jenkinsCRName, namespace, "", nil)
-	casc := createCascCR(t, cascCRName, namespace, groovyScripts, v1alpha3.Customization{})
+	casc := createCascCR(t, jenkinsCRName, cascCRName, namespace, groovyScripts, v1alpha3.Customization{})
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
 	waitForJenkinsUserConfigurationToComplete(t, casc)
 	jenkinsClient, cleanUpFunc := verifyJenkinsAPIConnection(t, jenkins, namespace)

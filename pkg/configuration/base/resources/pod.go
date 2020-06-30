@@ -37,10 +37,10 @@ const (
 
 	// GroovyScriptsSecretVolumePath is a path where are groovy scripts used to configure Jenkins
 	// This script is provided by user
-	GroovyScriptsSecretVolumePath = jenkinsPath + "/groovy-scripts-secrets"
+	//GroovyScriptsSecretVolumePath = "/tmp" + "/groovy-scripts-secrets"
 	// ConfigurationAsCodeSecretVolumePath is a path where are CasC configs used to configure Jenkins
 	// This script is provided by user
-	ConfigurationAsCodeSecretVolumePath = jenkinsPath + "/configuration-as-code-secrets"
+	ConfigurationAsCodeSecretVolumePath = "/tmp" + "/configuration-as-code-secrets"
 
 	httpPortName  = "http"
 	slavePortName = "slavelistener"
@@ -69,6 +69,10 @@ func GetJenkinsMasterContainerBaseEnvs(jenkins *v1alpha2.Jenkins) []corev1.EnvVa
 		{
 			Name:  "COPY_REFERENCE_FILE_LOG",
 			Value: fmt.Sprintf("%s/%s", getJenkinsHomePath(jenkins), "copy_reference_file.log"),
+		},
+		{
+			Name:  "SECRETS",
+			Value: ConfigurationAsCodeSecretVolumePath,
 		},
 	}
 

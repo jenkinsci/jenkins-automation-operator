@@ -12,9 +12,13 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -39,8 +43,8 @@ func GetSecretData(k8sClient client.Client, secretName, namespace string) (data 
 		return data, true, err
 	} else {
 		logger.V(logx.VDebug).Info(fmt.Sprintf("Found secret %s in namespace %s\n", secretName, namespace))
-		for _, v := range secret.Data {
-			data = append(data, v...)
+		for k, v := range secret.Data {
+			data = append(data, []byte(k+"="+string(v[:])+"\n")...)
 		}
 	}
 
@@ -70,6 +74,11 @@ func WriteDataToTempFile(data []byte) (filename string, requeue bool, err error)
 }
 
 func CopySecret(k8sClient client.Client, k8sClientSet kubernetes.Clientset, restConfig *rest.Config, podName, secretName, namespace string) (requeue bool, err error) {
+	restConfig.GroupVersion = &schema.GroupVersion{Group: "", Version: "v1"}
+	restConfig.APIPath = "/api"
+	restConfig.ContentType = runtime.ContentTypeJSON
+	restConfig.NegotiatedSerializer = serializer.NewCodecFactory(scheme.Scheme)
+
 	data, requeue, err := GetSecretData(k8sClient, secretName, namespace)
 	if err != nil {
 		return requeue, err

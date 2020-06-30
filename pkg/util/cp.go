@@ -102,6 +102,7 @@ func (o *CopyOptions) Run(args []string) error {
 	if err != nil {
 		return err
 	}
+
 	destSpec, err := extractFileSpec(args[1])
 	if err != nil {
 		return err
@@ -149,6 +150,7 @@ func (o *CopyOptions) copyToPod(src, dest fileSpec, options *exec.ExecOptions) e
 	if len(src.File) == 0 || len(dest.File) == 0 {
 		return errFileCannotBeEmpty
 	}
+
 	reader, writer := io.Pipe()
 
 	// strip trailing slash (if any)

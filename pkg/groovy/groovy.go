@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"sort"
-	"strings"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha3"
@@ -165,7 +164,6 @@ func (g *Groovy) Ensure(filter func(name string) bool, updateGroovyScript func(g
 				g.logger.V(log.VDebug).Info(fmt.Sprintf("Skipping %s ConfigMap '%s' name '%s'", g.configurationType, configMap.Name, name))
 				continue
 			}
-
 			hash := g.calculateCustomizationHash(*secret, name, groovyScript)
 
 			g.logger.Info(fmt.Sprintf("%s ConfigMap '%s' name '%s' running groovy script", g.configurationType, configMap.Name, name))
@@ -242,27 +240,13 @@ func (g *Groovy) calculateHash(data map[string]string) string {
 }
 
 // AddSecretsLoaderToGroovyScript modify groovy scripts to load Kubernetes secrets into groovy map
-func AddSecretsLoaderToGroovyScript(secretsPath string) func(groovyScript string) string {
+func AddSecretsLoaderToGroovyScript() func(groovyScript string) string {
 	return func(groovyScript string) string {
-		if !strings.HasPrefix(groovyScript, importPrefix) {
-			return fmt.Sprintf(secretsLoaderGroovyScriptFmt, secretsPath) + groovyScript
-		}
-
-		lines := strings.Split(groovyScript, "\n")
-		importIndex := -1
-		for i, line := range lines {
-			if !strings.HasPrefix(line, importPrefix) {
-				importIndex = i
-				break
-			}
-		}
-
-		return strings.Join(lines[:importIndex], "\n") + "\n\n" + fmt.Sprintf(secretsLoaderGroovyScriptFmt, secretsPath) + "\n\n" + strings.Join(lines[importIndex:], "\n")
+		return groovyScript + loaderGroovyScriptFmt
 	}
 }
 
-const importPrefix = "import "
-
-const secretsLoaderGroovyScriptFmt = `def secretsPath = '%s'
-def secrets = [:]
-"ls ${secretsPath}".execute().text.eachLine {secrets[it] = new File("${secretsPath}/${it}").text}`
+const loaderGroovyScriptFmt = `
+import io.jenkins.plugins.casc.ConfigurationAsCode;
+ConfigurationAsCode.get().configure()
+`

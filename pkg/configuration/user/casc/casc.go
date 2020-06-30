@@ -10,7 +10,6 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/groovy"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
-
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	k8s "sigs.k8s.io/controller-runtime/pkg/client"
@@ -58,7 +57,6 @@ func (c *configurationAsCode) EnsureCasc(jenkinsName string) (requeue bool, err 
 		return true, err
 	}
 	c.Logger.V(log.VDebug).Info("labels added to configurationAsCode configmap")
-	fmt.Println("-------" + resources.GetJenkinsMasterPodName(jenkinsName))
 	// Reconcile
 	requeue, err = resources.CopySecret(c.K8sClient, c.ClientSet, c.RestConfig, resources.GetJenkinsMasterPodName(jenkinsName), c.Casc.Spec.ConfigurationAsCode.Secret.Name, c.Casc.ObjectMeta.Namespace)
 	if err != nil || requeue {
@@ -94,7 +92,7 @@ func (c *configurationAsCode) EnsureGroovy(jenkinsName string) (requeue bool, er
 
 	return c.GroovyClient.Ensure(func(name string) bool {
 		return strings.HasSuffix(name, ".groovy")
-	}, groovy.AddSecretsLoaderToGroovyScript(resources.GroovyScriptsSecretVolumePath))
+	}, groovy.AddSecretsLoaderToGroovyScript())
 }
 
 const applyConfigurationAsCodeGroovyScriptFmt = `
