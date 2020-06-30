@@ -1,5 +1,4 @@
-ARG GO_VERSION
-
+ARG GO_VERSION=1.14.2
 # build stage
 FROM golang:$GO_VERSION-alpine3.11 AS build-stage
 ARG OPERATOR_SDK_VERSION

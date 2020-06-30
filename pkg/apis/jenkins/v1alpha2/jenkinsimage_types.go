@@ -32,7 +32,7 @@ type Image struct {
 	Tag      string `json:"tag,omitempty"`
 	Registry string `json:"registry,omitempty"`
 	// Secret is an optional reference to a secret in the same namespace to use for pushing to or pulling from the registry.
-	Secret   string `json:"secret,omitempty"`
+	Secret string `json:"secret,omitempty"`
 }
 
 // JenkinsImageStatus defines the observed state of JenkinsImage
