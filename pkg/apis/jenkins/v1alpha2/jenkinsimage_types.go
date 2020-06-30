@@ -9,20 +9,30 @@ import (
 
 // JenkinsImageSpec defines the desired state of JenkinsImage
 type JenkinsImageSpec struct {
-	BaseImage Image           `json:"image"`
-	Plugins   []JenkinsPlugin `json:"plugins"` // Plugins list
+	From    Image           `json:"from"`
+	To      Image           `json:"to"`
+	Plugins []JenkinsPlugin `json:"plugins"` // Plugins list
+	// DefaultUpdateCenter is a customer update center url from which all plugins will be downloaded.
+	// if not specified, https://updates.jenkins.io/ is used
+	DefaultUpdateCenter string `json:"defaultUpdateCenter,omitempty"`
 }
 
 // Defines Jenkins Plugin structure
 type JenkinsPlugin struct {
 	Name    string `json:"name"`
 	Version string `json:"version,omitempty"`
+	// UpdateCenter is a specific update center url from which this plugin will be downloaded. If not
+	// specified, DefaultUpdateCenter is used.
+	UpdateCenter string `json:"updateCenter,omitempty"`
 }
 
 // Defines Jenkins Plugin structure
 type Image struct {
-	Name string `json:"name"`
-	Tag  string `json:"version,omitempty"`
+	Name     string `json:"name"`
+	Tag      string `json:"tag,omitempty"`
+	Registry string `json:"registry,omitempty"`
+	// Secret is an optional reference to a secret in the same namespace to use for pushing to or pulling from the registry.
+	Secret   string `json:"secret,omitempty"`
 }
 
 // JenkinsImageStatus defines the observed state of JenkinsImage

@@ -3,7 +3,7 @@ kind: JenkinsImage
 metadata:
   name: simple-jenkinsimage
 spec:
-  image:
+  from:
     name: jenkins/jenkins
     tag: lts
   plugins:
@@ -21,4 +21,8 @@ spec:
     version: "1.19"
   - name: kubernetes-credentials-provider
     version: "0.12.1"
-
+  to:
+    registry: quay.io/akram
+    name: jenkins-for-jim
+    tag: latest
+    secret: my-quay-credentials
