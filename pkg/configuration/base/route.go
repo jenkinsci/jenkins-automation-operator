@@ -18,7 +18,7 @@ import (
 // createRoute takes the ServiceName and Creates the Route based on it
 func (r *ReconcileJenkinsBaseConfiguration) createRoute(meta metav1.ObjectMeta, serviceName string, config *v1alpha2.Jenkins) error {
 	route := routev1.Route{}
-	name := fmt.Sprintf("%s-%s", config.ObjectMeta.Name, config.ObjectMeta.Namespace)
+	name := fmt.Sprintf("jenkins-%s", config.ObjectMeta.Name)
 	err := r.Client.Get(context.TODO(), types.NamespacedName{Name: name, Namespace: meta.Namespace}, &route)
 	if err != nil && apierrors.IsNotFound(err) {
 		port := &routev1.RoutePort{
