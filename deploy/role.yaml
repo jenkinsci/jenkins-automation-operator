@@ -90,6 +90,16 @@ rules:
       - list
       - watch
   - apiGroups:
+      - "route.openshift.io"
+    resources:
+      - routes
+    verbs:
+      - get
+      - list
+      - watch
+      - create 
+      - update
+  - apiGroups:
       - "image.openshift.io"
     resources:
       - imagestreams
