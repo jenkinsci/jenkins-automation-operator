@@ -190,6 +190,10 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: k8s-ssh
+  labels:
+    "jenkins.io/credentials-type": "basicSSHUserPrivateKey"
+  annotations:
+    "jenkins.io/credentials-description" : "ssh github.com:jenkinsci/kubernetes-operator"
 stringData:
   privateKey: |
     -----BEGIN RSA PRIVATE KEY-----
