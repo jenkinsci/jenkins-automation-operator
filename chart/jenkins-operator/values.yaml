@@ -73,7 +73,21 @@ jenkins:
   #   version: "1.29"
   # - name: kubernetes-credentials-provider
   #   version: 0.12.1
-  basePlugins: []
+  basePlugins:
+    - name: kubernetes
+      version: "1.25.2"
+    - name: workflow-job
+      version: "2.39"
+    - name: workflow-aggregator
+      version: "2.6"
+    - name: git
+      version: "4.2.2"
+    - name: job-dsl
+      version: "1.77"
+    - name: configuration-as-code
+      version: "1.38"
+    - name: kubernetes-credentials-provider
+      version: "0.13"
 
   # plugins are plugins required by the user
   # You can define plugins here
@@ -197,11 +211,11 @@ jenkins:
   # See https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/customization/ for details
   configuration:
     configurationAsCode: {}
-#    - configMapName: jenkins-casc
-#      content: {}
+    #    - configMapName: jenkins-casc
+    #      content: {}
     groovyScripts: {}
-#    - configMapName: jenkins-gs
-#      content: {}
+    #    - configMapName: jenkins-gs
+    #      content: {}
 
     # secretRefName of existing secret (previously created)
     secretRefName: ""
