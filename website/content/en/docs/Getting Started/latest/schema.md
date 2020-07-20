@@ -1083,7 +1083,7 @@ Defaults to :
 - name: kubernetes
 version: 1.15.7
 - name: workflow-job
-version: &ldquo;2.32&rdquo;
+version: &ldquo;2.39&rdquo;
 - name: workflow-aggregator
 version: &ldquo;2.6&rdquo;
 - name: git
