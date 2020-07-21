@@ -353,7 +353,7 @@ type JenkinsMaster struct {
 	// - name: kubernetes
 	// version: 1.15.7
 	// - name: workflow-job
-	// version: "2.32"
+	// version: "2.39"
 	// - name: workflow-aggregator
 	// version: "2.6"
 	// - name: git
