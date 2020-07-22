@@ -1,5 +1,7 @@
 language: go
 os: linux
+go_import_path: github.com/jenkinsci/kubernetes-operator
+
 
 env:
   global:

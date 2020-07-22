@@ -2,16 +2,21 @@
 SHELL := /bin/sh
 PATH  := $(GOPATH)/bin:$(PATH)
 
-OSFLAG 				:=
+ARCH := amd64
+GOOS := linux
+OSFLAG :=
 ifeq ($(OS),Windows_NT)
 	OSFLAG = WIN32
+	GOOS = windows
 else
 	UNAME_S := $(shell uname -s)
 	ifeq ($(UNAME_S),Linux)
 		OSFLAG = LINUX
+		GOOS = linux
 	endif
 	ifeq ($(UNAME_S),Darwin)
 		OSFLAG = OSX
+		GOOS = darwin
 	endif
 endif
 
@@ -22,9 +27,14 @@ include config.base.env
 config ?= config.minikube.env
 include $(config)
 
+# Release version for redhat operator
+OLM_OPERATOR_VERSION ?= 0.4.1
+GIT_COMMIT_ID ?= $(shell git rev-parse --short HEAD)
+OLM_OPERATOR_TAG_SHORT ?= $(OLM_OPERATOR_VERSION)
+OLM_OPERATOR_TAG_LONG ?= $(OLM_OPERATOR_VERSION)-$(GIT_COMMIT_ID)
+
 # Set an output prefix, which is the local directory if not specified
 PREFIX?=$(shell pwd)
-
 VERSION := $(shell cat VERSION.txt)
 GITCOMMIT := $(shell git rev-parse --short HEAD)
 GITBRANCH := $(shell git rev-parse --abbrev-ref HEAD)
@@ -59,13 +69,14 @@ GO_LDFLAGS_STATIC=-ldflags "-w $(CTIMEVAR) -extldflags -static"
 # List the GOOS and GOARCH to build
 GOOSARCHES = linux/amd64
 
-PACKAGES = $(shell go list -f '{{.ImportPath}}/' ./... | grep -v vendor)
-PACKAGES_FOR_UNIT_TESTS = $(shell go list -f '{{.ImportPath}}/' ./... | grep -v vendor | grep -v e2e)
+PACKAGES = $(shell XDG_CACHE_HOME=$(XDG_CACHE_HOME) GOCACHE=$(GOCACHE) go list -f '{{.ImportPath}}/' ./... | grep -v vendor)
+PACKAGES_FOR_UNIT_TESTS = $(shell XDG_CACHE_HOME=$(XDG_CACHE_HOME) GOCACHE=$(GOCACHE) go list -f '{{.ImportPath}}/' ./... | grep -v vendor | grep -v e2e)
 
 # Run all the e2e tests by default
 E2E_TEST_SELECTOR ?= .*
 
 JENKINS_API_HOSTNAME := $(shell $(JENKINS_API_HOSTNAME_COMMAND) 2> /dev/null || echo "" )
+KUBECONFIG ?= $HOME/.kube/config
 OPERATOR_ARGS ?= --jenkins-api-hostname=$(JENKINS_API_HOSTNAME) --jenkins-api-port=$(JENKINS_API_PORT) --jenkins-api-use-nodeport=$(JENKINS_API_USE_NODEPORT) $(OPERATOR_EXTRA_ARGS)
 
 .DEFAULT_GOAL := help
@@ -112,7 +123,7 @@ endif
 go-dependencies: ## Ensure build dependencies
 	@echo "+ $@"
 	@echo "Ensure Golang runtime dependencies"
-	go mod vendor -v
+	XDG_CACHE_HOME=$(XDG_CACHE_HOME) GOCACHE=$(GOCACHE) go mod vendor -v
 
 .PHONY: build
 build: deepcopy-gen $(NAME) ## Builds a dynamic executable or package
@@ -121,54 +132,63 @@ build: deepcopy-gen $(NAME) ## Builds a dynamic executable or package
 .PHONY: $(NAME)
 $(NAME): $(wildcard *.go) $(wildcard */*.go) VERSION.txt
 	@echo "+ $@"
-	CGO_ENABLED=0 go build -tags "$(BUILDTAGS)" ${GO_LDFLAGS} -o build/_output/bin/jenkins-operator $(BUILD_PATH)
+	CGO_ENABLED=0 XDG_CACHE_HOME=$(XDG_CACHE_HOME) GOCACHE=$(GOCACHE) go build -tags "$(BUILDTAGS)" ${GO_LDFLAGS} -o build/_output/bin/jenkins-operator $(BUILD_PATH)
 
 .PHONY: static
 static: ## Builds a static executable
 	@echo "+ $@"
-	CGO_ENABLED=0 go build \
+	CGO_ENABLED=0 XDG_CACHE_HOME=$(XDG_CACHE_HOME) GOCACHE=$(GOCACHE) go build \
 				-tags "$(BUILDTAGS) static_build" \
 				${GO_LDFLAGS_STATIC} -o $(NAME) $(BUILD_PATH)
 
 .PHONY: fmt
 fmt: ## Verifies all files have been `gofmt`ed
 	@echo "+ $@"
-	@go fmt $(PACKAGES)
+	@XDG_CACHE_HOME=$(XDG_CACHE_HOME) GOCACHE=$(GOCACHE) go fmt $(PACKAGES)
 
 .PHONY: lint
 HAS_GOLINT := $(shell which golangci-lint)
+GOLANGCI_LINT_CACHE := $(shell pwd)/build/_output/golangci-lint-cache
+XDG_CACHE_HOME := $(shell pwd)/build/_output/xdgcache
+GOCACHE := $(shell pwd)/build/_output/gocache
+GOLANGCI_LINT_VERSION := 1.27.0
 lint: ## Verifies `golint` passes
 	@echo "+ $@"
 ifndef HAS_GOLINT
-	go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.26.0
+	@mkdir -p $(GOPATH)/bin 
+	@curl -sfL "https://github.com/golangci/golangci-lint/releases/download/v$(GOLANGCI_LINT_VERSION)/golangci-lint-$(GOLANGCI_LINT_VERSION)-$(GOOS)-$(ARCH).tar.gz" \
+                  | tar -C $(GOPATH)/bin -zx --strip-components=1 "golangci-lint-$(GOLANGCI_LINT_VERSION)-$(GOOS)-$(ARCH)/golangci-lint"
 endif
-	@golangci-lint run
+	@GOLANGCI_LINT_CACHE=$(GOLANGCI_LINT_CACHE) XDG_CACHE_HOME=$(XDG_CACHE_HOME) GOCACHE=$(GOCACHE) golangci-lint run
 
 .PHONY: goimports
 HAS_GOIMPORTS := $(shell which goimports)
 goimports: ## Verifies `goimports` passes
 	@echo "+ $@"
 ifndef HAS_GOIMPORTS
-	go get -u golang.org/x/tools/cmd/goimports
+	XDG_CACHE_HOME=$(XDG_CACHE_HOME) GOCACHE=$(GOCACHE) go get -u golang.org/x/tools/cmd/goimports
 endif
 	@goimports -l -e $(shell find . -type f -name '*.go' -not -path "./vendor/*")
 
 .PHONY: test
 test: ## Runs the go tests
 	@echo "+ $@"
-	@RUNNING_TESTS=1 go test -tags "$(BUILDTAGS) cgo" $(PACKAGES_FOR_UNIT_TESTS)
+	@RUNNING_TESTS=1 XDG_CACHE_HOME=$(XDG_CACHE_HOME) GOCACHE=$(GOCACHE) go test -tags "$(BUILDTAGS) cgo" $(PACKAGES_FOR_UNIT_TESTS)
 
 .PHONY: e2e
 CURRENT_DIRECTORY := $(shell pwd)
-e2e:  container-runtime-build ## Runs e2e tests, you can use EXTRA_ARGS
+e2e: container-runtime-build ## Runs e2e tests, you can use EXTRA_ARGS
 	@echo "+ $@"
 	@echo "Docker image: $(DOCKER_REGISTRY):$(GITCOMMIT)"
 ifeq ($(KUBERNETES_PROVIDER),minikube)
 	kubectl config use-context $(KUBECTL_CONTEXT)
 endif
-ifeq ($(KUBERNETES_PROVIDER),crc)
-	oc project $(CRC_OC_PROJECT)
-endif
+
+# if provider is crc or openshift
+# ifeq ($(KUBERNETES_PROVIDER), $(filter $(KUBERNETES_PROVIDER), crc openshift))
+#	echo AAVVV
+#	oc new-project $(CRC_OC_PROJECT) > /dev/null 2>&1 || oc project $(CRC_OC_PROJECT) > /dev/null 2>&1
+#endif
 	cp deploy/service_account.yaml deploy/namespace-init.yaml
 	cat deploy/role.yaml >> deploy/namespace-init.yaml
 	cat deploy/role_binding.yaml >> deploy/namespace-init.yaml
@@ -185,6 +205,7 @@ ifeq ($(KUBERNETES_PROVIDER),minikube)
 endif
 endif
 
+
 ifeq ($(OSFLAG), OSX)
 ifeq ($(IMAGE_PULL_MODE), remote)
 	sed -i '' 's|\(image:\).*|\1 $(DOCKER_ORGANIZATION)/$(DOCKER_REGISTRY):$(GITCOMMIT)|g' deploy/namespace-init.yaml
@@ -197,14 +218,14 @@ ifeq ($(KUBERNETES_PROVIDER),minikube)
 endif
 endif
 
-	RUNNING_TESTS=1 go test -parallel=1 "./test/e2e/" -tags "$(BUILDTAGS) cgo" -v -timeout 60m -run "$(E2E_TEST_SELECTOR)" \
+	RUNNING_TESTS=1 XDG_CACHE_HOME=$(XDG_CACHE_HOME) GOCACHE=$(GOCACHE) go test -parallel=1 "./test/e2e/" -tags "$(BUILDTAGS) cgo" -v -timeout 60m -run "$(E2E_TEST_SELECTOR)" \
 		-root=$(CURRENT_DIRECTORY) -kubeconfig=$(HOME)/.kube/config -globalMan deploy/crds/jenkins_$(API_VERSION)_jenkins_crd.yaml \
 		-namespacedMan deploy/namespace-init.yaml $(TEST_ARGS)
 
 .PHONY: vet
 vet: ## Verifies `go vet` passes
 	@echo "+ $@"
-	@go vet $(PACKAGES)
+	@XDG_CACHE_HOME=$(XDG_CACHE_HOME) GOCACHE=$(GOCACHE) go vet $(PACKAGES)
 
 .PHONY: staticcheck
 HAS_STATICCHECK := $(shell which staticcheck)
@@ -223,7 +244,7 @@ endif
 cover: ## Runs go test with coverage
 	@echo "" > coverage.txt
 	@for d in $(PACKAGES); do \
-		IMG_RUNNING_TESTS=1 go test -race -coverprofile=profile.out -covermode=atomic "$$d"; \
+		IMG_RUNNING_TESTS=1 XDG_CACHE_HOME=$(XDG_CACHE_HOME) GOCACHE=$(GOCACHE) go test -race -coverprofile=profile.out -covermode=atomic "$$d"; \
 		if [ -f profile.out ]; then \
 			cat profile.out >> coverage.txt; \
 			rm profile.out; \
@@ -237,9 +258,10 @@ verify: fmt lint test staticcheck vet ## Verify the code
 .PHONY: install
 install: ## Installs the executable
 	@echo "+ $@"
-	go install -tags "$(BUILDTAGS)" ${GO_LDFLAGS} $(BUILD_PATH)
+	XDG_CACHE_HOME=$(XDG_CACHE_HOME) GOCACHE=$(GOCACHE) go install -tags "$(BUILDTAGS)" ${GO_LDFLAGS} $(BUILD_PATH)
 
 .PHONY: run
+run: $( shell echo AAAAAAAAAAAAAA $KUBECONFIG)
 run: export WATCH_NAMESPACE = $(NAMESPACE)
 run: export OPERATOR_NAME = $(NAME)
 run: build ## Run the executable, you can use EXTRA_ARGS
@@ -247,9 +269,11 @@ run: build ## Run the executable, you can use EXTRA_ARGS
 ifeq ($(KUBERNETES_PROVIDER),minikube)
 	kubectl config use-context $(KUBECTL_CONTEXT)
 endif
-ifeq ($(KUBERNETES_PROVIDER),crc)
-	oc project $(CRC_OC_PROJECT)
+ifeq ($(KUBERNETES_PROVIDER), $(filter $(KUBERNETES_PROVIDER), crc openshift))
+	echo "Using KUBECONFIG in: $(KUBECONFIG)"
+	oc new-project $(CRC_OC_PROJECT) > /dev/null 2>&1 || oc project $(CRC_OC_PROJECT) > /dev/null 2>&1
 endif
+	@echo "Applying creation of crds from deploy/crds/jenkins_$(API_VERSION)_jenkins_crd.yaml"
 	kubectl apply -f deploy/crds/jenkins_$(API_VERSION)_jenkins_crd.yaml
 	kubectl apply -f deploy/crds/jenkins_$(API_VERSION)_jenkinsimage_crd.yaml
 	@echo "Watching '$(WATCH_NAMESPACE)' namespace"
@@ -258,8 +282,9 @@ endif
 .PHONY: clean
 clean: ## Cleanup any build binaries or packages
 	@echo "+ $@"
-	go clean
+	XDG_CACHE_HOME=$(XDG_CACHE_HOME) GOCACHE=$(GOCACHE) go clean
 	rm $(NAME) || echo "Couldn't delete, not there."
+	rm build/_output/bin/jenkins-operator || echo "Couldn't delete, not there."
 	rm -r $(BUILDDIR) || echo "Couldn't delete, not there."
 
 .PHONY: spring-clean
@@ -268,7 +293,7 @@ spring-clean: ## Cleanup git ignored files (interactive)
 
 define buildpretty
 mkdir -p $(BUILDDIR)/$(1)/$(2);
-GOOS=$(1) GOARCH=$(2) CGO_ENABLED=0 go build \
+GOOS=$(1) GOARCH=$(2) CGO_ENABLED=0 XDG_CACHE_HOME=$(XDG_CACHE_HOME) GOCACHE=$(GOCACHE) go build \
 		-o $(BUILDDIR)/$(1)/$(2)/$(NAME) \
 		-a -tags "$(BUILDTAGS) static_build netgo" \
 		-installsuffix netgo ${GO_LDFLAGS_STATIC} $(BUILD_PATH);
@@ -300,7 +325,7 @@ HAS_CHECKMAKE := $(shell which checkmake)
 checkmake: ## Check this Makefile
 	@echo "+ $@"
 ifndef HAS_CHECKMAKE
-	go get -u github.com/mrtazz/checkmake
+	XDG_CACHE_HOME=$(XDG_CACHE_HOME) GOCACHE=$(GOCACHE) go get -u github.com/mrtazz/checkmake
 endif
 	@checkmake Makefile
 
@@ -475,7 +500,7 @@ ifneq ($(GITIGNOREDBUTTRACKEDCHANGES),)
 	@echo
 endif
 	@echo "Dependencies:"
-	go mod vendor -v
+	XDG_CACHE_HOME=$(XDG_CACHE_HOME) GOCACHE=$(GOCACHE) go mod vendor -v
 	@echo
 
 .PHONY: travis-prepare
@@ -515,3 +540,19 @@ generate-docs: ## Re-generate docs directory from the website directory
 	@echo "+ $@"
 	rm -rf docs || echo "Cannot remove docs dir, ignoring"
 	hugo -s website -d ../docs
+
+
+.PHONY: olm-image
+olm-image:
+	@echo "+ $@"
+	docker build --no-cache -t  quay.io/redhat-developer/openshift-jenkins-operator:$(OLM_OPERATOR_TAG_LONG) --build-arg OLM_OPERATOR_VERSION=$(OLM_OPERATOR_TAG_LONG) -f ./openshift-ci/Dockerfile.build_image .
+
+.PHONY: olm-publish	
+olm-publish: olm-image
+	@echo "+ $@"
+	docker push quay.io/redhat-developer/openshift-jenkins-operator:$(OLM_OPERATOR_TAG_LONG)
+
+.PHONY: olm-release	
+olm-release:
+	@echo "check the image here https://quay.io/repository/redhat-developer/openshift-jenkins-operator?tag=$(OLM_OPERATOR_TAG_LONG)&tab=tags"
+	@echo "do a PR simular to this https://github.com/operator-framework/community-operators/pull/1851"

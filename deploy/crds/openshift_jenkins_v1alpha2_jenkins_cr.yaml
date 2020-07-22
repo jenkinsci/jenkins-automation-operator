@@ -5,7 +5,16 @@ metadata:
     jenkins.io/openshift-mode: 'true'
   name: jenkins
 spec:
+  jenkinsAPIConnectionSettings:
+    useNodePort: true
+  jenkinsAPISettings:
+    authorizationStrategy: serviceAccount
+  roles:
+    - name: admin
+      kind: ClusterRole
+      apiGroup: "rbac.authorization.k8s.io"
   master:
+    disableCSRFProtection: true
     containers:
     - name: jenkins-master
       command:
