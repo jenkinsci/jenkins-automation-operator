@@ -177,8 +177,7 @@ test: ## Runs the go tests
 
 .PHONY: e2e
 CURRENT_DIRECTORY := $(shell pwd)
-
-e2e: # container-runtime-build ## Runs e2e tests, you can use EXTRA_ARGS
+e2e: container-runtime-build ## Runs e2e tests, you can use EXTRA_ARGS
 	@echo "+ $@"
 	@echo "Docker image: $(DOCKER_REGISTRY):$(GITCOMMIT)"
 ifeq ($(KUBERNETES_PROVIDER),minikube)

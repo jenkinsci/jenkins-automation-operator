@@ -1,0 +1,7 @@
+apiVersion: jenkins/v1alpha2
+kind: JenkinsImageBuild
+metadata:
+  name: example-jenkinsimagebuild
+spec:
+  # Add fields here
+  size: 3

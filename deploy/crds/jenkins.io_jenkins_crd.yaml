@@ -80,7 +80,7 @@ spec:
               properties:
                 configurations:
                   items:
-                    description: ConfigMapRef is reference to Kubernetes ConfigMap
+                    description: ConfigMapRef is reference to Kubernetes ConfigMap.
                     properties:
                       name:
                         type: string
@@ -89,7 +89,7 @@ spec:
                     type: object
                   type: array
                 secret:
-                  description: SecretRef is reference to Kubernetes secret
+                  description: SecretRef is reference to Kubernetes secret.
                   properties:
                     name:
                       type: string
@@ -106,7 +106,7 @@ spec:
               properties:
                 configurations:
                   items:
-                    description: ConfigMapRef is reference to Kubernetes ConfigMap
+                    description: ConfigMapRef is reference to Kubernetes ConfigMap.
                     properties:
                       name:
                         type: string
@@ -115,7 +115,7 @@ spec:
                     type: object
                   type: array
                 secret:
-                  description: SecretRef is reference to Kubernetes secret
+                  description: SecretRef is reference to Kubernetes secret.
                   properties:
                     name:
                       type: string
@@ -137,6 +137,116 @@ spec:
               required:
               - authorizationStrategy
               type: object
+            jenkinsImageRef:
+              description: JenkinsImageRef a reference to a JenkinsImage in the current
+                namespace. The JenkinsImage must have status to be "SuccessfullyBuilt"
+                ; then the image target image in JenkinsImage.To will be used as the
+                image of the Master container.
+              properties:
+                apiVersion:
+                  description: 'APIVersion defines the versioned schema of this representation
+                    of an object. Servers should convert recognized schemas to the
+                    latest internal value, and may reject unrecognized values. More
+                    info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+                  type: string
+                kind:
+                  description: 'Kind is a string value representing the REST resource
+                    this object represents. Servers may infer this from the endpoint
+                    the client submits requests to. Cannot be updated. In CamelCase.
+                    More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                  type: string
+                metadata:
+                  type: object
+                spec:
+                  description: JenkinsImageSpec defines the desired state of JenkinsImage
+                  properties:
+                    defaultUpdateCenter:
+                      description: DefaultUpdateCenter is a customer update center
+                        url from which all plugins will be downloaded. if not specified,
+                        https://updates.jenkins.io/ is used
+                      type: string
+                    from:
+                      description: Defines Jenkins Plugin structure
+                      properties:
+                        name:
+                          type: string
+                        registry:
+                          type: string
+                        secret:
+                          description: Secret is an optional reference to a secret
+                            in the same namespace to use for pushing to or pulling
+                            from the registry.
+                          type: string
+                        tag:
+                          type: string
+                      required:
+                      - name
+                      type: object
+                    plugins:
+                      items:
+                        description: Defines Jenkins Plugin structure
+                        properties:
+                          name:
+                            type: string
+                          updateCenter:
+                            description: UpdateCenter is a specific update center
+                              url from which this plugin will be downloaded. If not
+                              specified, DefaultUpdateCenter is used.
+                            type: string
+                          version:
+                            type: string
+                        required:
+                        - name
+                        type: object
+                      type: array
+                    to:
+                      description: Defines Jenkins Plugin structure
+                      properties:
+                        name:
+                          type: string
+                        registry:
+                          type: string
+                        secret:
+                          description: Secret is an optional reference to a secret
+                            in the same namespace to use for pushing to or pulling
+                            from the registry.
+                          type: string
+                        tag:
+                          type: string
+                      required:
+                      - name
+                      type: object
+                  required:
+                  - from
+                  - plugins
+                  - to
+                  type: object
+                status:
+                  description: JenkinsImageStatus defines the observed state of JenkinsImage
+                  properties:
+                    image:
+                      type: string
+                    installedPlugins:
+                      items:
+                        description: Defines Jenkins Plugin structure
+                        properties:
+                          name:
+                            type: string
+                          updateCenter:
+                            description: UpdateCenter is a specific update center
+                              url from which this plugin will be downloaded. If not
+                              specified, DefaultUpdateCenter is used.
+                            type: string
+                          version:
+                            type: string
+                        required:
+                        - name
+                        type: object
+                      type: array
+                    md5sum:
+                      type: string
+                  type: object
+              type: object
             master:
               description: Master represents Jenkins master pod properties and Jenkins
                 plugins. Every single change here requires a pod restart.
@@ -154,10 +264,15 @@ spec:
                     Defaults to : - name: kubernetes version: 1.15.7 - name: workflow-job
                     version: "2.39" - name: workflow-aggregator version: "2.6" - name:
                     git version: 3.10.0 - name: job-dsl version: "1.74" - name: configuration-as-code
-                    version: "1.19" - name: kubernetes-credentials-provider version: 0.12.1'
+                    version: "1.19" - name: kubernetes-credentials-provider version:
+                    0.12.1'
                   items:
-                    description: Plugin defines Jenkins plugin
+                    description: Plugin defines Jenkins plugin.
                     properties:
+                      downloadURL:
+                        description: DownloadURL is the custom url from where plugin
+                          has to be downloaded.
+                        type: string
                       name:
                         description: Name is the name of Jenkins plugin
                         type: string
@@ -182,7 +297,7 @@ spec:
                     1     timeoutSeconds: 1   resources:     limits:       cpu: 1500m       memory:
                     3Gi     requests:       cpu: "1"       memory: 600Mi'
                   items:
-                    description: Container defines Kubernetes container attributes
+                    description: Container defines Kubernetes container attributes.
                     properties:
                       args:
                         description: 'Arguments to the entrypoint. The docker image''s
@@ -281,9 +396,13 @@ spec:
                                         optional for env vars'
                                       type: string
                                     divisor:
+                                      anyOf:
+                                      - type: integer
+                                      - type: string
                                       description: Specifies the output format of
                                         the exposed resources, defaults to "1"
-                                      type: string
+                                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                      x-kubernetes-int-or-string: true
                                     resource:
                                       description: 'Required: resource to select'
                                       type: string
@@ -847,13 +966,21 @@ spec:
                         properties:
                           limits:
                             additionalProperties:
-                              type: string
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              x-kubernetes-int-or-string: true
                             description: 'Limits describes the maximum amount of compute
                               resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
                             type: object
                           requests:
                             additionalProperties:
-                              type: string
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              x-kubernetes-int-or-string: true
                             description: 'Requests describes the minimum amount of
                               compute resources required. If Requests is omitted for
                               a container, it defaults to Limits if that is explicitly
@@ -1095,8 +1222,12 @@ spec:
                 plugins:
                   description: Plugins contains plugins required by user
                   items:
-                    description: Plugin defines Jenkins plugin
+                    description: Plugin defines Jenkins plugin.
                     properties:
+                      downloadURL:
+                        description: DownloadURL is the custom url from where plugin
+                          has to be downloaded.
+                        type: string
                       name:
                         description: Name is the name of Jenkins plugin
                         type: string
@@ -1108,6 +1239,9 @@ spec:
                     - version
                     type: object
                   type: array
+                priorityClassName:
+                  description: PriorityClassName for Jenkins master pod
+                  type: string
                 securityContext:
                   description: 'SecurityContext that applies to all the containers
                     of the Jenkins Master. As per kubernetes specification, it can
@@ -1603,9 +1737,13 @@ spec:
                                         optional for env vars'
                                       type: string
                                     divisor:
+                                      anyOf:
+                                      - type: integer
+                                      - type: string
                                       description: Specifies the output format of
                                         the exposed resources, defaults to "1"
-                                      type: string
+                                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                      x-kubernetes-int-or-string: true
                                     resource:
                                       description: 'Required: resource to select'
                                       type: string
@@ -1628,6 +1766,9 @@ spec:
                               (default) or Memory. More info: https://kubernetes.io/docs/concepts/storage/volumes#emptydir'
                             type: string
                           sizeLimit:
+                            anyOf:
+                            - type: integer
+                            - type: string
                             description: 'Total amount of local storage required for
                               this EmptyDir volume. The size limit is also applicable
                               for memory medium. The maximum usage on memory medium
@@ -1635,7 +1776,8 @@ spec:
                               specified here and the sum of memory limits of all containers
                               in a pod. The default is nil which means that the limit
                               is undefined. More info: http://kubernetes.io/docs/user-guide/volumes#emptydir'
-                            type: string
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
                         type: object
                       fc:
                         description: FC represents a Fibre Channel resource that is
@@ -2106,10 +2248,14 @@ spec:
                                                   for volumes, optional for env vars'
                                                 type: string
                                               divisor:
+                                                anyOf:
+                                                - type: integer
+                                                - type: string
                                                 description: Specifies the output
                                                   format of the exposed resources,
                                                   defaults to "1"
-                                                type: string
+                                                pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                                x-kubernetes-int-or-string: true
                                               resource:
                                                 description: 'Required: resource to
                                                   select'
@@ -2496,14 +2642,14 @@ spec:
                 like Slack, Microsoft Teams or Mailgun
               items:
                 description: Notification is a service configuration used to send
-                  notifications about Jenkins status
+                  notifications about Jenkins status.
                 properties:
                   level:
-                    description: NotificationLevel defines the level of a Notification
+                    description: NotificationLevel defines the level of a Notification.
                     type: string
                   mailgun:
                     description: Mailgun is handler for Mailgun email service notification
-                      channel
+                      channel.
                     properties:
                       apiKeySecretKeySelector:
                         description: SecretKeySelector selects a key of a Secret.
@@ -2541,7 +2687,7 @@ spec:
                   name:
                     type: string
                   slack:
-                    description: Slack is handler for Slack notification channel
+                    description: Slack is handler for Slack notification channel.
                     properties:
                       webHookURLSecretKeySelector:
                         description: The web hook URL to Slack App
@@ -2568,7 +2714,7 @@ spec:
                     - webHookURLSecretKeySelector
                     type: object
                   smtp:
-                    description: SMTP is handler for sending emails via this protocol
+                    description: SMTP is handler for sending emails via this protocol.
                     properties:
                       from:
                         type: string
@@ -2632,7 +2778,7 @@ spec:
                     type: object
                   teams:
                     description: MicrosoftTeams is handler for Microsoft MicrosoftTeams
-                      notification channel
+                      notification channel.
                     properties:
                       webHookURLSecretKeySelector:
                         description: The web hook URL to MicrosoftTeams App
@@ -2731,7 +2877,7 @@ spec:
                 More info: https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-seed-jobs-and-pipelines'
               items:
                 description: 'SeedJob defines configuration for seed job More info:
-                  https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-seed-jobs-and-pipelines'
+                  https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-seed-jobs-and-pipelines.'
                 properties:
                   additionalClasspath:
                     description: AdditionalClasspath is setting for Job DSL API plugin
@@ -2948,7 +3094,7 @@ spec:
                 scripts in Jenkins by the operator
               items:
                 description: AppliedGroovyScript is the applied groovy script in Jenkins
-                  by the operator
+                  by the operator.
                 properties:
                   configurationType:
                     description: ConfigurationType is the name of the configuration
