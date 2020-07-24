@@ -183,7 +183,7 @@ build-e2e: $(wildcard *.go) $(wildcard */*.go)
 
 .PHONY: e2e
 CURRENT_DIRECTORY := $(shell pwd)
-e2e: container-runtime-build ## Runs e2e tests, you can use EXTRA_ARGS
+e2e: container-runtime-build container-runtime-tag ## Runs e2e tests, you can use EXTRA_ARGS
 	@echo "+ $@"
 	@echo "Docker image: $(DOCKER_REGISTRY):$(GITCOMMIT)"
 ifeq ($(KUBERNETES_PROVIDER),minikube)
@@ -205,6 +205,7 @@ ifeq ($(IMAGE_PULL_MODE), remote)
 	sed -i 's|\(imagePullPolicy\): IfNotPresent|\1: Always|g' deploy/namespace-init.yaml
 else
 	sed -i 's|\(image:\).*|\1 $(DOCKER_REGISTRY):$(GITCOMMIT)|g' deploy/namespace-init.yaml
+	sed -i 's|\(image: virtuslab/jenkins-operator:\).*|\1$(DOCKER_REGISTRY):$(GITCOMMIT)|g' chart/jenkins-operator/values.yaml
 endif
 ifeq ($(KUBERNETES_PROVIDER),minikube)
 	sed -i 's|\(imagePullPolicy\): IfNotPresent|\1: Never|g' deploy/namespace-init.yaml
@@ -354,28 +355,30 @@ container-runtime-images: ## List all local containers
 	@echo "+ $@"
 	$(CONTAINER_RUNTIME_COMMAND) images $(CONTAINER_RUNTIME_EXTRA_ARGS)
 
-.PHONY: container-runtime-push
-container-runtime-push: ## Push the container
+
+.PHONY: container-runtime-tag
+container-runtime-tag: ## Tag the container image
 	@echo "+ $@"
 	$(CONTAINER_RUNTIME_COMMAND) tag $(DOCKER_REGISTRY):$(GITCOMMIT) $(DOCKER_ORGANIZATION)/$(DOCKER_REGISTRY):$(BUILD_TAG) $(CONTAINER_RUNTIME_EXTRA_ARGS)
+
+.PHONY: container-runtime-push
+container-runtime-push: container-runtime-tag ## Push the container
+	@echo "+ $@"
 	$(CONTAINER_RUNTIME_COMMAND) push $(DOCKER_ORGANIZATION)/$(DOCKER_REGISTRY):$(BUILD_TAG) $(CONTAINER_RUNTIME_EXTRA_ARGS)
 
 .PHONY: container-runtime-snapshot-push
-container-runtime-snapshot-push:
+container-runtime-snapshot-push: container-runtime-tag
 	@echo "+ $@"
-	$(CONTAINER_RUNTIME_COMMAND) tag $(DOCKER_REGISTRY):$(GITCOMMIT) $(DOCKER_ORGANIZATION)/$(DOCKER_REGISTRY):$(GITCOMMIT) $(CONTAINER_RUNTIME_EXTRA_ARGS)
 	$(CONTAINER_RUNTIME_COMMAND) push $(DOCKER_ORGANIZATION)/$(DOCKER_REGISTRY):$(GITCOMMIT) $(CONTAINER_RUNTIME_EXTRA_ARGS)
 
 .PHONY: container-runtime-release-version
-container-runtime-release-version: ## Release image with version tag (in addition to build tag)
+container-runtime-release-version: container-runtime-tag ## Release image with version tag (in addition to build tag)
 	@echo "+ $@"
-	$(CONTAINER_RUNTIME_COMMAND) tag $(DOCKER_REGISTRY):$(GITCOMMIT) $(DOCKER_ORGANIZATION)/$(DOCKER_REGISTRY):$(VERSION_TAG) $(CONTAINER_RUNTIME_EXTRA_ARGS)
 	$(CONTAINER_RUNTIME_COMMAND) push $(DOCKER_ORGANIZATION)/$(DOCKER_REGISTRY):$(VERSION_TAG) $(CONTAINER_RUNTIME_EXTRA_ARGS)
 
 .PHONY: container-runtime-release-latest
-container-runtime-release-latest: ## Release image with latest tags (in addition to build tag)
+container-runtime-release-latest: container-runtime-tag ## Release image with latest tags (in addition to build tag)
 	@echo "+ $@"
-	$(CONTAINER_RUNTIME_COMMAND) tag $(DOCKER_REGISTRY):$(GITCOMMIT) $(DOCKER_ORGANIZATION)/$(DOCKER_REGISTRY):$(LATEST_TAG) $(CONTAINER_RUNTIME_EXTRA_ARGS)
 	$(CONTAINER_RUNTIME_COMMAND) push $(DOCKER_ORGANIZATION)/$(DOCKER_REGISTRY):$(LATEST_TAG) $(CONTAINER_RUNTIME_EXTRA_ARGS)
 
 .PHONY: container-runtime-release
