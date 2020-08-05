@@ -138,12 +138,23 @@ spec:
         spec:
           description: JenkinsImageSpec defines the desired state of JenkinsImage
           properties:
-            image:
+            defaultUpdateCenter:
+              description: DefaultUpdateCenter is a customer update center url from
+                which all plugins will be downloaded. if not specified, https://updates.jenkins.io/
+                is used
+              type: string
+            from:
               description: Defines Jenkins Plugin structure
               properties:
                 name:
                   type: string
-                version:
+                registry:
+                  type: string
+                secret:
+                  description: Secret is an optional reference to a secret in the
+                    same namespace to use for pushing to or pulling from the registry.
+                  type: string
+                tag:
                   type: string
               required:
               - name
@@ -154,15 +165,37 @@ spec:
                 properties:
                   name:
                     type: string
+                  updateCenter:
+                    description: UpdateCenter is a specific update center url from
+                      which this plugin will be downloaded. If not specified, DefaultUpdateCenter
+                      is used.
+                    type: string
                   version:
                     type: string
                 required:
                 - name
                 type: object
               type: array
+            to:
+              description: Defines Jenkins Plugin structure
+              properties:
+                name:
+                  type: string
+                registry:
+                  type: string
+                secret:
+                  description: Secret is an optional reference to a secret in the
+                    same namespace to use for pushing to or pulling from the registry.
+                  type: string
+                tag:
+                  type: string
+              required:
+              - name
+              type: object
           required:
-          - image
+          - from
           - plugins
+          - to
           type: object
         status:
           description: JenkinsImageStatus defines the observed state of JenkinsImage
@@ -174,6 +207,11 @@ spec:
                 description: Defines Jenkins Plugin structure
                 properties:
                   name:
+                    type: string
+                  updateCenter:
+                    description: UpdateCenter is a specific update center url from
+                      which this plugin will be downloaded. If not specified, DefaultUpdateCenter
+                      is used.
                     type: string
                   version:
                     type: string

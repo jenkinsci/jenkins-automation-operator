@@ -198,14 +198,17 @@ endif
 	cp deploy/service_account.yaml deploy/namespace-init.yaml
 	cat deploy/role.yaml >> deploy/namespace-init.yaml
 	cat deploy/role_binding.yaml >> deploy/namespace-init.yaml
+ifneq ($(BUILDTAGS), Helm)
 	cat deploy/operator.yaml >> deploy/namespace-init.yaml
+endif
 ifeq ($(OSFLAG), LINUX)
 ifeq ($(IMAGE_PULL_MODE), remote)
 	sed -i 's|\(image:\).*|\1 $(DOCKER_ORGANIZATION)/$(DOCKER_REGISTRY):$(GITCOMMIT)|g' deploy/namespace-init.yaml
 	sed -i 's|\(imagePullPolicy\): IfNotPresent|\1: Always|g' deploy/namespace-init.yaml
+	sed -i 's|image: virtuslab/jenkins-operator:.*|image: $(DOCKER_REGISTRY):$(GITCOMMIT)|g' chart/jenkins-operator/values.yaml	
 else
 	sed -i 's|\(image:\).*|\1 $(DOCKER_REGISTRY):$(GITCOMMIT)|g' deploy/namespace-init.yaml
-	sed -i 's|\(image: virtuslab/jenkins-operator:\).*|\1$(DOCKER_REGISTRY):$(GITCOMMIT)|g' chart/jenkins-operator/values.yaml
+	sed -i 's|image: virtuslab/jenkins-operator:.*|image: $(DOCKER_REGISTRY):$(GITCOMMIT)|g' chart/jenkins-operator/values.yaml	
 endif
 ifeq ($(KUBERNETES_PROVIDER),minikube)
 	sed -i 's|\(imagePullPolicy\): IfNotPresent|\1: Never|g' deploy/namespace-init.yaml
@@ -215,13 +218,14 @@ endif
 
 ifeq ($(OSFLAG), OSX)
 ifeq ($(IMAGE_PULL_MODE), remote)
-	sed -i '' 's|\(image:\).*|\1 $(DOCKER_ORGANIZATION)/$(DOCKER_REGISTRY):$(GITCOMMIT)|g' deploy/namespace-init.yaml
-	sed -i '' 's|\(imagePullPolicy\): IfNotPresent|\1: Always|g' deploy/namespace-init.yaml
+	sed -i 's|\(image:\).*|\1 $(DOCKER_ORGANIZATION)/$(DOCKER_REGISTRY):$(GITCOMMIT)|g' deploy/namespace-init.yaml
+	sed -i 's|\(imagePullPolicy\): IfNotPresent|\1: Always|g' deploy/namespace-init.yaml
 else
-	sed -i '' 's|\(image:\).*|\1 $(DOCKER_REGISTRY):$(GITCOMMIT)|g' deploy/namespace-init.yaml
+	sed -i 's|\(image:\).*|\1 $(DOCKER_REGISTRY):$(GITCOMMIT)|g' deploy/namespace-init.yaml
+	sed -i '' 's|image: virtuslab/jenkins-operator:.*|image: $(DOCKER_REGISTRY):$(GITCOMMIT)|g' chart/jenkins-operator/values.yaml	
 endif
 ifeq ($(KUBERNETES_PROVIDER),minikube)
-	sed -i '' 's|\(imagePullPolicy\): IfNotPresent|\1: Never|g' deploy/namespace-init.yaml
+	sed -i 's|\(imagePullPolicy\): IfNotPresent|\1: Never|g' deploy/namespace-init.yaml
 endif
 endif
 
