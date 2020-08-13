@@ -82,3 +82,8 @@ Before any big pull request please consult the maintainers to ensure a common di
 ## About the authors
 
 This project was originally developed by [VirtusLab](https://virtuslab.com/) and the following [CONTRIBUTORS](https://github.com/jenkinsci/kubernetes-operator/graphs/contributors).
+
+
+
+
+
