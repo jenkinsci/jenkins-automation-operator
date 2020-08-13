@@ -3,8 +3,8 @@ FROM registry.access.redhat.com/ubi8/ubi:latest
 ARG GO_PACKAGE_PATH=github.com/jenkinsci/jenkins-operator
 
 # Basics
-ENV GIT_COMMITTER_NAME OpenShift Developer Sevices
-ENV GIT_COMMITTER_EMAIL openshift-dev-services+jenkins@redhat.com
+ENV GIT_COMMITTER_NAME="OpenShift Developer Sevices"
+ENV GIT_COMMITTER_EMAIL=openshift-dev-services+jenkins@redhat.com
 ENV LANG=en_US.utf8
 
 # Go

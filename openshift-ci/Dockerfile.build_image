@@ -3,13 +3,13 @@ FROM registry.access.redhat.com/ubi8/ubi:latest AS builder
 ARG GO_PACKAGE_PATH=github.com/jenkinsci/jenkins-operator
 
 # Basics
-ENV GIT_COMMITTER_NAME OpenShift Developer Sevices
-ENV GIT_COMMITTER_EMAIL openshift-dev-services+jenkins@redhat.com
+ENV GIT_COMMITTER_NAME="OpenShift Developer Sevices"
+ENV GIT_COMMITTER_EMAIL=openshift-dev-services+jenkins@redhat.com
 ENV LANG=en_US.utf8
 
 # Go
-ENV GOPATH /tmp/go
-ENV GOROOT /tmp/goroot/go
+ENV GOPATH=/tmp/go
+ENV GOROOT=/tmp/goroot/go
 ENV GO_VERSION=1.14.1
 ENV GO_DOWNLOAD_SITE=https://dl.google.com/go/
 ENV GO_DIST=go$GO_VERSION.linux-amd64.tar.gz
@@ -59,7 +59,7 @@ LABEL maintainer "openshift-dev-services+jenkins@redhat.com"
 ENV LANG=en_US.utf8
 ENV OPERATOR_NAME=jenkins-operator
 ENV OPERATOR=/usr/local/bin/$OPERATOR_NAME
-ENV GOPATH /tmp/go
+ENV GOPATH=/tmp/go
 
 COPY --from=builder $GOPATH/src/github.com/jenkinsci/jenkins-operator/build/_output/bin/${OPERATOR_NAME} ${OPERATOR}
 
