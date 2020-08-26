@@ -8,6 +8,9 @@ build/_output
 build/_test
 # Created by https://www.gitignore.io/api/go,vim,emacs,visualstudiocode
 
+# Smoke test logs
+/smoke/logs*
+
 ### Emacs ###
 # -*- mode: gitignore; -*-
 *~

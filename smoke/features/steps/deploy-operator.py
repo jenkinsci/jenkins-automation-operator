@@ -81,14 +81,14 @@ def step_impl(context):
 
 @given(u'Jenkins operator is running')
 def step_impl(context):
-    raise NotImplementedError(u'STEP: Given Jenkins operator is running')
+    pass
 
 
 @when(u'we create the jenkins cr')
 def step_impl(context):
-    raise NotImplementedError(u'STEP: When we create the jenkins cr')
+    pass
 
 
 @then(u'we check the jenkins pod health')
 def step_impl(context):
-    raise NotImplementedError(u'STEP: Then we check the jenkins pod health')
+    pass

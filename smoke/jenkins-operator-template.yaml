@@ -104,7 +104,10 @@ objects:
   - apiGroups:
     - jenkins.io
     resources:
-    - '*'
+    - jenkins
+    - jenkinsimages
+    - jenkinsimagebuilds
+    - cascs
     verbs:
     - get
     - create
@@ -153,13 +156,35 @@ objects:
     namespace: ${JENKINS_OPERATOR_NAMESPACE}
   rules:
   - apiGroups:
-    - '*'
+    - jenkins.io
     resources:
-    - '*'
+    - jenkins
+    - jenkinsimages
+    - jenkinsimagebuilds
+    - cascs
+    verbs:
+    - get
+    - create
+    - update
+    - list
+    - watch
+  - apiGroups:
+    - "*"
+    resources:
+    - "*"
+    verbs:
+    - "get"
+    - "list"
+    - "watch"
+  - apiGroups:
+    - ""
+    resources:
+    - "*"
     verbs:
     - get
     - list
     - watch
+    - update
   - nonResourceURLs:
     - '*'
     verbs:

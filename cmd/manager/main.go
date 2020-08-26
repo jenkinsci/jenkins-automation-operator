@@ -245,6 +245,7 @@ func filterGKVsFromAddToScheme(gvks []schema.GroupVersionKind) []schema.GroupVer
 		// Custom Resources
 		{Group: "jenkins.io", Kind: "Jenkins", Version: matchAnyValue},
 		{Group: "jenkins.io", Kind: "JenkinsImage", Version: matchAnyValue},
+		{Group: "jenkins.io", Kind: "Casc", Version: matchAnyValue},
 	}
 
 	ownGVKs := []schema.GroupVersionKind{}
