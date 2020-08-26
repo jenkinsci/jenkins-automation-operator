@@ -1,0 +1,12 @@
+08/26/2020 01:29:40 PM: INFO: Project is not present, creating project: jenkins-test...
+08/26/2020 01:29:42 PM: INFO: Project jenkins-test is created!!!
+08/26/2020 01:29:42 PM: INFO: using crd to create the required resources
+08/26/2020 01:29:44 PM: INFO: customresourcedefinition.apiextensions.k8s.io/jenkins.jenkins.io created
+customresourcedefinition.apiextensions.k8s.io/jenkinsimages.jenkins.io created
+customresourcedefinition.apiextensions.k8s.io/jenkinsimagebuilds.jenkins.io created
+customresourcedefinition.apiextensions.k8s.io/cascs.jenkins.io created
+
+08/26/2020 01:35:34 PM: INFO: Project is not present, creating project: jenkins-test...
+08/26/2020 01:35:36 PM: INFO: Project jenkins-test is created!!!
+08/26/2020 01:35:36 PM: INFO: using crd to create the required resources
+08/26/2020 01:35:38 PM: INFO: None
