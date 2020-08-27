@@ -10,18 +10,21 @@ before_all(context), after_all(context)
 '''
 
 import subprocess
+from pyfiglet import Figlet
 from pyshould import should
+from clint.textui import puts,colored, indent
 
 '''
 before_scenario(context, scenario), after_scenario(context, scenario)
     These run before and after each scenario is run.
     The scenario passed in is an instance of Scenario.
 '''
-
+f = Figlet(font='starwars', width=100)
 def before_scenario(_context, _scenario):
-    print("Getting OC status before {} scenario".format(_scenario))
+    print(colored.red(f.renderText('Jenkins Operator')))
+    print(colored.yellow("Getting OC status before {} scenario".format(_scenario)))
     code, output = subprocess.getstatusoutput('oc get project default')
-    print("[CODE] {}".format(code))
-    print("[CMD] {}".format(output))
+    print(colored.yellow("[CODE] {}".format(code)))
+    print(colored.yellow("[CMD] {}".format(output)))
     code | should.be_equal_to(0)
-    print("***Connected to cluster***")
+    print(colored.green("***Connected to cluster***"))

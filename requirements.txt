@@ -3,3 +3,5 @@ pyshould
 requests
 kubernetes
 urllib3
+pyfiglet
+clint
