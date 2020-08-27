@@ -84,6 +84,8 @@ objects:
     - update
     - list
     - watch
+    - delete
+    - patch
   - apiGroups:
     - ""
     resources:
@@ -105,6 +107,7 @@ objects:
     - jenkins.io
     resources:
     - jenkins
+    - jenkins/finalizers
     - jenkinsimages
     - jenkinsimagebuilds
     - cascs
