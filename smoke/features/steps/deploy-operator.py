@@ -40,10 +40,8 @@ def loginCluster(context):
     if not project.is_present():
         logger.info("Project is not present, creating project: {}...".format(project_name))
         project.create() | should.be_truthy.desc("Project {} is created".format(project_name))
-
     logger.info(f'Project {project_name} is created!!!')
     context.project = project
-    
 
 
 @then(u'we build the jenkins operator image')

@@ -20,11 +20,15 @@ before_scenario(context, scenario), after_scenario(context, scenario)
     The scenario passed in is an instance of Scenario.
 '''
 f = Figlet(font='starwars', width=100)
-def before_scenario(_context, _scenario):
+
+def before_feature(_context,_feature):
     print(colored.red(f.renderText('Jenkins Operator')))
-    print(colored.yellow("Getting OC status before {} scenario".format(_scenario)))
+    print(colored.yellow("checking cluster environment for {} scenario".format(_feature)))
+
+def before_scenario(_context, _scenario):
+    print(colored.yellow("Checking cluster environment for {} scenario".format(_scenario)))
     code, output = subprocess.getstatusoutput('oc get project default')
     print(colored.yellow("[CODE] {}".format(code)))
     print(colored.yellow("[CMD] {}".format(output)))
     code | should.be_equal_to(0)
-    print(colored.green("***Connected to cluster***"))
+    print(colored.green("*************Connected to cluster*************"))
