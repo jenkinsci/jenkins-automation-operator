@@ -2,10 +2,10 @@ package jenkinsimage
 
 import (
 	"context"
+
 	"k8s.io/client-go/kubernetes"
 
 	jenkinsv1alpha2 "github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
-
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
 
 	"github.com/pkg/errors"

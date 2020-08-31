@@ -4,9 +4,10 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"os"
 	"time"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	logx "github.com/jenkinsci/kubernetes-operator/pkg/log"
 	"github.com/jenkinsci/kubernetes-operator/pkg/util"
