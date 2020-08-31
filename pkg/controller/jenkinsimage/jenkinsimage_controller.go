@@ -2,6 +2,7 @@ package jenkinsimage
 
 import (
 	"context"
+	"k8s.io/client-go/kubernetes"
 
 	jenkinsv1alpha2 "github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 
@@ -26,8 +27,8 @@ var log = logf.Log.WithName("controller_jenkinsimage")
 
 // Add creates a new JenkinsImage Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
-func Add(mgr manager.Manager) error {
-	r := &ReconcileJenkinsImage{client: mgr.GetClient(), scheme: mgr.GetScheme()}
+func Add(mgr manager.Manager, clientSet kubernetes.Clientset) error {
+	r := &ReconcileJenkinsImage{client: mgr.GetClient(), clientSet: clientSet, scheme: mgr.GetScheme()}
 	return add(mgr, r)
 }
 
@@ -71,8 +72,9 @@ var _ reconcile.Reconciler = &ReconcileJenkinsImage{}
 type ReconcileJenkinsImage struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
-	client client.Client
-	scheme *runtime.Scheme
+	client    client.Client
+	clientSet kubernetes.Clientset
+	scheme    *runtime.Scheme
 }
 
 // Reconcile reads that state of the cluster for a JenkinsImage object and makes changes based on the state read
@@ -122,7 +124,7 @@ func (r *ReconcileJenkinsImage) Reconcile(request reconcile.Request) (reconcile.
 	reqLogger.Info("Skip reconcile: ConfigMap already exists", "ConfigMap.Namespace", foundConfigMap.Namespace, "ConfigMap.Name", foundConfigMap.Name)
 
 	// Define a new Pod object
-	pod := resources.NewBuilderPod(instance)
+	pod := resources.NewBuilderPod(instance, &r.clientSet)
 	// Set JenkinsImage instance as the owner and controller
 	if err := controllerutil.SetControllerReference(instance, pod, r.scheme); err != nil {
 		return reconcile.Result{}, err

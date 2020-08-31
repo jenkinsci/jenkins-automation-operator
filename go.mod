@@ -11,6 +11,7 @@ require (
 	github.com/emersion/go-smtp v0.11.2
 	github.com/go-logr/logr v0.1.0
 	github.com/go-logr/zapr v0.1.1
+	github.com/go-openapi/errors v0.19.2
 	github.com/go-openapi/spec v0.19.4
 	github.com/golang/mock v1.3.1
 	github.com/golangci/golangci-lint v1.26.0 // indirect

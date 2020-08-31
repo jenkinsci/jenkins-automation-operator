@@ -129,6 +129,12 @@ func main() {
 	if resources.IsRouteAPIAvailable(clientSet) {
 		logger.Info("Route API found: Route creation will be performed")
 	}
+
+	if resources.IsImageRegistryAvailable(clientSet) {
+		logger.Info("Internal Image Registry found: It is very likely that we are running on OpenShift")
+		logger.Info("If JenkinsImages are built without specified destination, they will be pushed into it.")
+	}
+
 	c := make(chan e.Event)
 	go notifications.Listen(c, events, mgr.GetClient())
 
@@ -143,7 +149,7 @@ func main() {
 		fatal(errors.Wrap(err, "failed to setup controllers"), *debug)
 	}
 	// setup JenkinsImage controller
-	if err = jenkinsimage.Add(mgr); err != nil {
+	if err = jenkinsimage.Add(mgr, *clientSet); err != nil {
 		fatal(errors.Wrap(err, "failed to setup controllers"), *debug)
 	}
 

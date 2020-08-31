@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"os"
 	"time"
 
@@ -23,7 +24,28 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-var logger = logx.Log
+var (
+	logger           = logx.Log
+	EmptyListOptions = metav1.ListOptions{}
+	EmptyGetOptions  = metav1.GetOptions{}
+)
+
+const (
+	ServiceAccountNameAnnotation = "kubernetes.io/service-account.name"
+	BuilderServiceAccountName    = "builder"
+)
+
+// GetDockerBuilderSecretName returns the *first* Docker secret used for pushing images into the openshift registry
+// in the current namespace or empty string
+func GetDockerBuilderSecretName(namespace string, clientSet *kubernetes.Clientset) string {
+	secrets, _ := clientSet.CoreV1().Secrets(namespace).List(EmptyListOptions)
+	for _, secret := range secrets.Items {
+		if secret.ObjectMeta.Annotations[ServiceAccountNameAnnotation] == BuilderServiceAccountName {
+			return secret.Name
+		}
+	}
+	return ""
+}
 
 //nolint:gocritic
 func GetSecretData(k8sClient client.Client, secretName, namespace string) (data []byte, requeue bool, err error) {
