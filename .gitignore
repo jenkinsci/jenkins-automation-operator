@@ -2,6 +2,7 @@ kubeconfig
 .idea
 deploy/namespace-init.yaml
 /gen-crd-api-reference-docs
+.kube
 
 # Temporary Build Files
 build/_output
@@ -10,6 +11,7 @@ build/_test
 
 # Smoke test logs
 /smoke/logs*
+smoke/features/steps/__pycache__
 
 ### Emacs ###
 # -*- mode: gitignore; -*-
