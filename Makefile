@@ -27,6 +27,21 @@ include config.base.env
 config ?= config.minikube.env
 include $(config)
 
+#-----------------------------------------------------------------------------
+# Global Variables
+#-----------------------------------------------------------------------------
+V_FLAG ?= -v
+OUTPUT_DIR ?= $(shell echo ${PWD})/out
+LOGS_DIR ?= $(OUTPUT_DIR)/logs
+GOLANGCI_LINT_BIN=$(OUTPUT_DIR)/golangci-lint
+PYTHON_VENV_DIR=$(OUTPUT_DIR)/venv3
+
+
+# -- Variables for smoke tests
+TEST_SMOKE_START_JENKINS ?= local
+TEST_SMOKE_OUTPUT_DIR ?= $(OUTPUT_DIR)/smoke-tests
+TEST_SMOKE_ARTIFACTS ?= /tmp/artifacts
+
 # Release version for redhat operator
 OLM_OPERATOR_VERSION ?= 0.4.1
 GIT_COMMIT_ID ?= $(shell git rev-parse --short HEAD)
@@ -298,6 +313,7 @@ clean: ## Cleanup any build binaries or packages
 	rm $(NAME) || echo "Couldn't delete, not there."
 	rm build/_output/bin/jenkins-operator || echo "Couldn't delete, not there."
 	rm -r $(BUILDDIR) || echo "Couldn't delete, not there."
+	$(Q)-rm -rf ${V_FLAG} $(OUTPUT_DIR)
 
 .PHONY: spring-clean
 spring-clean: ## Cleanup git ignored files (interactive)
@@ -572,3 +588,74 @@ olm-publish: olm-image
 olm-release:
 	@echo "check the image here https://quay.io/repository/redhat-developer/openshift-jenkins-operator?tag=$(OLM_OPERATOR_TAG_LONG)&tab=tags"
 	@echo "do a PR simular to this https://github.com/operator-framework/community-operators/pull/1851"
+
+# .PHONY: lint-go-code
+# ## Checks the code with golangci-lint
+# lint-go-code: $(GOLANGCI_LINT_BIN)
+# 	# This is required for OpenShift CI enviroment
+# 	# Ref: https://github.com/openshift/release/pull/3438#issuecomment-482053250
+# 	$(Q)GOCACHE=$(GOCACHE) $(OUTPUT_DIR)/golangci-lint ${V_FLAG} run --deadline=30m
+
+# $(GOLANGCI_LINT_BIN):
+# 	$(Q)curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ./out v1.18.0
+
+.PHONY: setup-venv
+## Setup virtual environment for smoke test
+setup-venv:
+	$(Q)python3 -m venv $(PYTHON_VENV_DIR)
+	$(Q)$(PYTHON_VENV_DIR)/bin/pip install --upgrade setuptools
+	$(Q)$(PYTHON_VENV_DIR)/bin/pip install --upgrade pip
+
+## -- Test targets --
+
+# Generate namespace name for smoke test
+out/test-namespace:
+	@echo -n "test-namespace-$(shell uuidgen | tr '[:upper:]' '[:lower:]' | head -c 8)" > $(OUTPUT_DIR)/test-namespace
+	
+
+.PHONY: get-test-namespace
+get-test-namespace: out/test-namespace
+	$(eval TEST_NAMESPACE := $(shell cat $(OUTPUT_DIR)/test-namespace))
+
+
+.PHONY: e2e-create-namespace
+e2e-create-namespace:
+	$(Q)kubectl create namespace $(TEST_NAMESPACE)
+
+.PHONY: smoke-setup
+smoke-setup: e2e-cleanup e2e-create-namespace
+	$(Q)mkdir -p ${LOGS_DIR}/smoke
+
+.PHONY: e2e-cleanup
+e2e-cleanup: get-test-namespace
+	$(Q)-kubectl delete namespace $(TEST_NAMESPACE) --timeout=45s --wait
+
+.PHONY: e2e-smoke-setup
+## Setup the environment for the smoke tests
+test-smoke-setup: setup-venv smoke-setup set-test-namespace
+ifeq ($(TEST_SMOKE_START_JENKINS), local)
+test-smoke-setup:
+	$(Q)echo "Starting local Jenkins instance"
+	$(Q)$(PYTHON_VENV_DIR)/bin/pip install -q -r requirements.txt
+endif
+
+
+.PHONY: set-test-namespace
+set-test-namespace: get-test-namespace
+	$(Q)oc project $(TEST_NAMESPACE)
+
+.PHONY: e2e-smoke-template
+## Runs smoke tests using template
+e2e-smoke-template: setup-venv smoke-setup set-test-namespace test-smoke-artifacts
+	$(Q)echo "Starting local Jenkins instance"
+	$(Q)$(PYTHON_VENV_DIR)/bin/pip install -q -r requirements.txt
+	$(Q)echo "Running smoke tests"
+	$(Q)TEST_NAMESPACE=$(TEST_NAMESPACE) \
+		$(PYTHON_VENV_DIR)/bin/behave --junit --junit-directory $(TEST_SMOKE_OUTPUT_DIR) --no-capture --no-capture-stderr smoke/features
+
+.PHONY: test-smoke-artifacts
+## Collect artifacts from smoke tests to be archived in CI
+test-smoke-artifacts:
+	$(Q)echo "Gathering smoke tests artifacts"
+	$(Q)mkdir -p $(TEST_SMOKE_ARTIFACTS) \
+	    && cp -rvf $(TEST_SMOKE_OUTPUT_DIR) $(TEST_SMOKE_ARTIFACTS)/

@@ -94,9 +94,9 @@ class Openshift(object):
         return None
 
 
-    def new_app_with_params(self, template_name, namespace, paramsfile):
+    def new_app_with_params(self, template_name, paramsfile):
         # oc new-app ruby-helloworld-sample --param-file=helloworld.params
-        cmd = f'oc new-app {template_name} -n {namespace} --param-file={paramsfile}'
+        cmd = f'oc new-app {template_name} --param-file={paramsfile}'
         output, exit_status = self.cmd.run(cmd)
         print(f"starting: {output}, {exit_status}")
         if exit_status == 0:

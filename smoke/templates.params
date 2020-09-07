@@ -1,2 +1,2 @@
-JENKINS_OPERATOR_NAMESPACE = jenkins-test
 JENKINS_OPERATOR_IMAGE = quay.io/redhat-developer/openshift-jenkins-operator:latest
+JENKINS_OPERATOR_NAMESPACE = test-namespace-81ff4f1d
