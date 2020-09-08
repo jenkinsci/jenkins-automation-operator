@@ -61,19 +61,8 @@ def given_namespace_from_env_is_used(context, project_env):
 
 @given(u'We have a openshift cluster')
 def loginCluster(context):
-    # project = Project(project_name)
-    # context.oc = oc
-    # context.logger = logger
-    pass
-
-
-@then(u'we build the jenkins operator image')
-def step_impl(context):
-    pass
-
-@then(u'we push to openshift internal registry')
-def step_impl(context):
-    pass
+    print("Using [{}]".format(current_project))
+    
 
 @when(u'the resources are created using the crd')
 def createResources(context):

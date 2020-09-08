@@ -630,14 +630,14 @@ smoke-setup: e2e-cleanup e2e-create-namespace
 e2e-cleanup: get-test-namespace
 	$(Q)-kubectl delete namespace $(TEST_NAMESPACE) --timeout=45s --wait
 
-.PHONY: e2e-smoke-setup
-## Setup the environment for the smoke tests
-test-smoke-setup: setup-venv smoke-setup set-test-namespace
-ifeq ($(TEST_SMOKE_START_JENKINS), local)
-test-smoke-setup:
-	$(Q)echo "Starting local Jenkins instance"
-	$(Q)$(PYTHON_VENV_DIR)/bin/pip install -q -r requirements.txt
-endif
+# .PHONY: e2e-smoke-setup
+# ## Setup the environment for the smoke tests
+# test-smoke-setup: setup-venv smoke-setup set-test-namespace
+# ifeq ($(TEST_SMOKE_START_JENKINS), local)
+# test-smoke-setup:
+# 	$(Q)echo "Starting local Jenkins instance"
+# 	$(Q)$(PYTHON_VENV_DIR)/bin/pip install -q -r requirements.txt
+# endif
 
 
 .PHONY: set-test-namespace
