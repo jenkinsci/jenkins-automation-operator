@@ -33,7 +33,7 @@ func buildSecretTypeMeta() metav1.TypeMeta {
 // GetOperatorCredentialsSecretName returns name of Kubernetes secret used to store jenkins operator credentials
 // to allow calls to Jenkins API
 func GetOperatorCredentialsSecretName(jenkins *v1alpha2.Jenkins) string {
-	return fmt.Sprintf("%s-credentials-%s", constants.OperatorName, jenkins.Name)
+	return fmt.Sprintf("%s-%s-credentials", constants.LabelAppValue, jenkins.Name)
 }
 
 // NewOperatorCredentialsSecret builds the Kubernetes secret used to store jenkins operator credentials

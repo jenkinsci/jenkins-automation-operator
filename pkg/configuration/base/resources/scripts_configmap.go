@@ -326,7 +326,7 @@ func buildInitBashScript(jenkins *v1alpha2.Jenkins) (*string, error) {
 }
 
 func getScriptsConfigMapName(jenkins *v1alpha2.Jenkins) string {
-	return fmt.Sprintf("%s-scripts-%s", constants.OperatorName, jenkins.ObjectMeta.Name)
+	return fmt.Sprintf("%s-%s-scripts", constants.LabelAppValue, jenkins.ObjectMeta.Name)
 }
 
 // NewScriptsConfigMap builds Kubernetes config map used to store scripts

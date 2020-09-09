@@ -93,7 +93,7 @@ func (c *Configuration) GetJenkinsDeployment() (*appsv1.Deployment, error) {
 	currentJenkinsDeployment := &appsv1.Deployment{}
 	err := c.Client.Get(context.TODO(), types.NamespacedName{Name: jenkinsDeploymentName, Namespace: c.Jenkins.Namespace}, currentJenkinsDeployment)
 	if err != nil {
-		return nil, stackerr.WithStack(err)
+		return nil, err
 	}
 	return currentJenkinsDeployment, nil
 }

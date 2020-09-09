@@ -107,7 +107,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 // Reconcile it's a main reconciliation loop which maintain desired state based on Jenkins.Spec.
 func (r *ReconcileJenkins) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	reconcileFailLimit := uint64(10)
-	logger := logx.WithValues("cr", request.Name)
+	logger := logx.WithName("")
 	logger.V(log.VDebug).Info("Reconciling Jenkins")
 
 	result, jenkins, err := r.reconcile(request)
@@ -130,12 +130,7 @@ func (r *ReconcileJenkins) Reconcile(request reconcile.Request) (reconcile.Resul
 		}
 		reconcileErrors[request.Name] = lastErrors
 		if lastErrors.counter >= reconcileFailLimit {
-			if log.Debug {
-				logger.V(log.VWarn).Info(fmt.Sprintf("Reconcile loop failed %d times with the same error, giving up: %+v", reconcileFailLimit, err))
-			} else {
-				logger.V(log.VWarn).Info(fmt.Sprintf("Reconcile loop failed %d times with the same error, giving up: %s", reconcileFailLimit, err))
-			}
-
+			logger.V(log.VWarn).Info(fmt.Sprintf("Reconcile loop failed %d times with the same error, giving up: %+v", reconcileFailLimit, err))
 			*r.notificationEvents <- event.Event{
 				Jenkins: *jenkins,
 				Phase:   event.PhaseBase,
@@ -333,9 +328,13 @@ func (r *ReconcileJenkins) setDefaults(jenkins *v1alpha2.Jenkins) (requeue bool,
 	}
 
 	if len(jenkinsContainer.Image) == 0 {
-		logger.Info("Setting default Jenkins master image: " + constants.DefaultJenkinsMasterImage)
+		jenkinsMasterImage := constants.DefaultJenkinsMasterImage
 		changed = true
-		jenkinsContainer.Image = constants.DefaultJenkinsMasterImage
+		if resources.IsRouteAPIAvailable(&r.clientSet) {
+			jenkinsMasterImage = constants.DefaultOpenShiftJenkinsMasterImage
+		}
+		logger.Info("Setting default Jenkins master image: " + jenkinsMasterImage)
+		jenkinsContainer.Image = jenkinsMasterImage
 		jenkinsContainer.ImagePullPolicy = corev1.PullAlways
 	}
 	if len(jenkinsContainer.ImagePullPolicy) == 0 {
@@ -354,10 +353,10 @@ func (r *ReconcileJenkins) setDefaults(jenkins *v1alpha2.Jenkins) (requeue bool,
 		changed = true
 		jenkinsContainer.LivenessProbe = resources.NewProbe(containerProbeURI, containerProbePortName, corev1.URISchemeHTTP, 80, 5, 12)
 	}
-	if len(jenkinsContainer.Command) == 0 {
+	if len(jenkinsContainer.Command) == 0 && !resources.IsRouteAPIAvailable(&r.clientSet) {
 		logger.Info("Setting default Jenkins container command")
-		changed = true
 		jenkinsContainer.Command = resources.GetJenkinsMasterContainerBaseCommand()
+		changed = true
 	}
 	if isJavaOpsVariableNotSet(jenkinsContainer) {
 		logger.Info("Setting default Jenkins container JAVA_OPTS environment variable")

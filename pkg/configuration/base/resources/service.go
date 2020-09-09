@@ -39,12 +39,12 @@ func UpdateService(actual corev1.Service, config v1alpha2.Service) corev1.Servic
 
 // GetJenkinsHTTPServiceName returns Kubernetes service name used for expose Jenkins HTTP endpoint
 func GetJenkinsHTTPServiceName(jenkins *v1alpha2.Jenkins) string {
-	return fmt.Sprintf("%s-http-%s", constants.OperatorName, jenkins.ObjectMeta.Name)
+	return fmt.Sprintf("%s-%s", constants.LabelAppValue, jenkins.ObjectMeta.Name)
 }
 
 // GetJenkinsSlavesServiceName returns Kubernetes service name used for expose Jenkins slave endpoint
 func GetJenkinsSlavesServiceName(jenkins *v1alpha2.Jenkins) string {
-	return fmt.Sprintf("%s-slave-%s", constants.OperatorName, jenkins.ObjectMeta.Name)
+	return fmt.Sprintf("%s-%s-jnlp", constants.LabelAppValue, jenkins.ObjectMeta.Name)
 }
 
 // GetJenkinsHTTPServiceFQDN returns Kubernetes service FQDN used for expose Jenkins HTTP endpoint
@@ -54,7 +54,7 @@ func GetJenkinsHTTPServiceFQDN(jenkins *v1alpha2.Jenkins) (string, error) {
 		return "", err
 	}
 
-	return fmt.Sprintf("%s-http-%s.%s.svc.%s", constants.OperatorName, jenkins.ObjectMeta.Name, jenkins.ObjectMeta.Namespace, clusterDomain), nil
+	return fmt.Sprintf("%s-%s.%s.svc.%s", constants.LabelAppValue, jenkins.ObjectMeta.Name, jenkins.ObjectMeta.Namespace, clusterDomain), nil
 }
 
 // GetJenkinsSlavesServiceFQDN returns Kubernetes service FQDN used for expose Jenkins slave endpoint
@@ -64,7 +64,7 @@ func GetJenkinsSlavesServiceFQDN(jenkins *v1alpha2.Jenkins) (string, error) {
 		return "", err
 	}
 
-	return fmt.Sprintf("%s-slave-%s.%s.svc.%s", constants.OperatorName, jenkins.ObjectMeta.Name, jenkins.ObjectMeta.Namespace, clusterDomain), nil
+	return fmt.Sprintf("%s-%s-jnlp.%s.svc.%s", constants.LabelAppValue, jenkins.ObjectMeta.Name, jenkins.ObjectMeta.Namespace, clusterDomain), nil
 }
 
 // GetClusterDomain returns Kubernetes cluster domain, default to "cluster.local"

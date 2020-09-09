@@ -14,10 +14,21 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
+const (
+	oauthAnnotationKey     = "serviceaccounts.openshift.io/oauth-redirectreference.jenkins"
+	oauthAnnotationPattern = "{\"kind\":\"OAuthRedirectReference\",\"apiVersion\":\"v1\",\"reference\":{\"kind\":\"Route\",\"name\":\"%s\"}}"
+)
+
 func (r *ReconcileJenkinsBaseConfiguration) createServiceAccount(meta metav1.ObjectMeta) error {
 	serviceAccount := &corev1.ServiceAccount{}
 	err := r.Client.Get(context.TODO(), types.NamespacedName{Name: meta.Name, Namespace: meta.Namespace}, serviceAccount)
 	annotations := r.Configuration.Jenkins.Spec.ServiceAccount.Annotations
+	if annotations == nil {
+		annotations = make(map[string]string)
+	}
+	oauthAnnotationValue := fmt.Sprintf(oauthAnnotationPattern, meta.Name)
+	annotations[oauthAnnotationKey] = oauthAnnotationValue
+
 	msg := fmt.Sprintf("createServiceAccount with annotations %v", annotations)
 	r.logger.V(log.VDebug).Info(msg)
 	if err != nil && apierrors.IsNotFound(err) {

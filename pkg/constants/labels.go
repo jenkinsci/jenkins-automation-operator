@@ -4,7 +4,7 @@ const (
 	// LabelAppKey application Kubernetes label name
 	LabelAppKey = "app"
 	// LabelAppValue application Kubernetes label value
-	LabelAppValue = OperatorName
+	LabelAppValue = "jenkins"
 
 	// LabelWatchKey Kubernetes label used to enable watch for reconcile loop
 	LabelWatchKey = "watch"

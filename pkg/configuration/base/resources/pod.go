@@ -42,8 +42,8 @@ const (
 	// This script is provided by user
 	ConfigurationAsCodeSecretVolumePath = "/tmp" + "/configuration-as-code-secrets"
 
-	httpPortName  = "http"
-	slavePortName = "slavelistener"
+	httpPortName = "http"
+	jnlpPortName = "jnlp"
 )
 
 func buildPodTypeMeta() metav1.TypeMeta {
@@ -67,6 +67,14 @@ func GetJenkinsMasterContainerBaseCommand() []string {
 func GetJenkinsMasterContainerBaseEnvs(jenkins *v1alpha2.Jenkins) []corev1.EnvVar {
 	envVars := []corev1.EnvVar{
 		{
+			Name:  "OPENSHIFT_ENABLE_OAUTH",
+			Value: "true",
+		},
+		{
+			Name:  "OPENSHIFT_ENABLE_REDIRECT_PROMPT",
+			Value: "true",
+		},
+		{
 			Name:  "COPY_REFERENCE_FILE_LOG",
 			Value: fmt.Sprintf("%s/%s", getJenkinsHomePath(jenkins), "copy_reference_file.log"),
 		},
@@ -75,7 +83,6 @@ func GetJenkinsMasterContainerBaseEnvs(jenkins *v1alpha2.Jenkins) []corev1.EnvVa
 			Value: ConfigurationAsCodeSecretVolumePath,
 		},
 	}
-
 	return envVars
 }
 
@@ -204,7 +211,7 @@ func NewJenkinsMasterContainer(jenkins *v1alpha2.Jenkins) corev1.Container {
 				Protocol:      corev1.ProtocolTCP,
 			},
 			{
-				Name:          slavePortName,
+				Name:          jnlpPortName,
 				ContainerPort: constants.DefaultSlavePortInt32,
 				Protocol:      corev1.ProtocolTCP,
 			},
@@ -249,7 +256,7 @@ func newContainers(jenkins *v1alpha2.Jenkins) (containers []corev1.Container) {
 
 // GetJenkinsMasterPodName returns Jenkins pod name for given CR
 func GetJenkinsMasterPodName(name string) string {
-	return fmt.Sprintf("jenkins-%s", name)
+	return fmt.Sprintf("%s-%s", constants.LabelAppValue, name)
 }
 
 // GetJenkinsMasterPodLabels returns Jenkins pod labels for given CR

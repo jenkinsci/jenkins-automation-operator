@@ -29,7 +29,13 @@ import (
 )
 
 const (
-	fetchAllPlugins = 1
+	fetchAllPlugins                       = 1
+	RequeueAfterAfterMasterPodNotReadyMax = time.Second * 60
+	UseDeploymentAnnotation               = "jenkins.io/use-deployment"
+)
+
+var (
+	requeueAfterAfterMasterPodNotReady = time.Second * 5
 )
 
 // ReconcileJenkinsBaseConfiguration defines values required for Jenkins base configuration.
@@ -43,7 +49,7 @@ type ReconcileJenkinsBaseConfiguration struct {
 func New(config configuration.Configuration, jenkinsAPIConnectionSettings jenkinsclient.JenkinsAPIConnectionSettings) *ReconcileJenkinsBaseConfiguration {
 	return &ReconcileJenkinsBaseConfiguration{
 		Configuration:                config,
-		logger:                       log.Log.WithValues("cr", config.Jenkins.Name),
+		logger:                       log.Log.WithName(""),
 		jenkinsAPIConnectionSettings: jenkinsAPIConnectionSettings,
 	}
 }
@@ -126,12 +132,12 @@ func (r *ReconcileJenkinsBaseConfiguration) Reconcile() (reconcile.Result, jenki
 }
 
 func useDeploymentForJenkinsMaster(jenkins *v1alpha2.Jenkins) bool {
-	if val, ok := jenkins.Annotations["jenkins.io/use-deployment"]; ok {
-		if val == "true" {
-			return true
+	if val, ok := jenkins.Annotations[UseDeploymentAnnotation]; ok {
+		if val == "false" {
+			return false
 		}
 	}
-	return false
+	return true
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) ensureResourcesRequiredForJenkinsPod(metaObject metav1.ObjectMeta) error {
@@ -349,8 +355,13 @@ func (r *ReconcileJenkinsBaseConfiguration) waitForJenkins() (reconcile.Result, 
 	}
 
 	if jenkinsMasterPod.Status.Phase != corev1.PodRunning {
-		r.logger.V(log.VDebug).Info("Jenkins master pod not ready")
-		return reconcile.Result{Requeue: true, RequeueAfter: time.Second * 5}, nil
+		requeueAfterAfterMasterPodNotReady *= 2
+		// increase requeue time until the maximum value
+		if requeueAfterAfterMasterPodNotReady > RequeueAfterAfterMasterPodNotReadyMax {
+			requeueAfterAfterMasterPodNotReady = RequeueAfterAfterMasterPodNotReadyMax
+		}
+		r.logger.V(log.VDebug).Info(fmt.Sprintf("Jenkins master pod not ready: Will retry reconciliation in %s", requeueAfterAfterMasterPodNotReady))
+		return reconcile.Result{Requeue: true, RequeueAfter: requeueAfterAfterMasterPodNotReady}, nil
 	}
 
 	containersReadyCount := 0

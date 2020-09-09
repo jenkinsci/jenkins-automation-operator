@@ -174,7 +174,7 @@ GlobalConfiguration.all().get(GlobalJobDslSecurityConfiguration.class).save()
 
 // GetBaseConfigurationConfigMapName returns name of Kubernetes config map used to base configuration.
 func GetBaseConfigurationConfigMapName(jenkins *v1alpha2.Jenkins) string {
-	return fmt.Sprintf("%s-base-configuration-%s", constants.OperatorName, jenkins.ObjectMeta.Name)
+	return fmt.Sprintf("%s-%s-base-configuration", constants.LabelAppValue, jenkins.ObjectMeta.Name)
 }
 
 // NewBaseConfigurationConfigMap builds Kubernetes config map used to base configuration.
