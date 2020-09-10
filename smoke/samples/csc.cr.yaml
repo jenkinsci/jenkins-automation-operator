@@ -1,8 +1,0 @@
-apiVersion: operators.coreos.com/v1
-kind: CatalogSourceConfig
-metadata:
-  name: jenkins-example
-  namespace: openshift-marketplace
-spec:
-  targetNamespace: openshift-operators 
-  packages: openshift-jenkins-operator

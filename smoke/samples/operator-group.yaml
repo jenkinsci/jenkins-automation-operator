@@ -1,8 +1,0 @@
-apiVersion: operators.coreos.com/v1
-kind: OperatorGroup
-metadata:
-  name: myproject-jenkins-operator
-  namespace: myproject
-spec:
-  targetNamespaces:
-  - myproject
