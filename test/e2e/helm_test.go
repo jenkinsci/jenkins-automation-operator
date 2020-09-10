@@ -4,6 +4,7 @@ package e2e
 
 import (
 	"fmt"
+	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base"
 	"os/exec"
 	"testing"
 
@@ -51,13 +52,16 @@ func TestDeployHelmChart(t *testing.T) {
 	err = framework.AddToFrameworkScheme(apis.AddToScheme, cascServiceList)
 	require.NoError(t, err)
 
+	annotations := map[string]string{base.UseDeploymentAnnotation: "false"}
 	jenkins := &v1alpha2.Jenkins{
 		TypeMeta: v1alpha2.JenkinsTypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "jenkins",
-			Namespace: namespace,
+			Name:        "jenkins",
+			Namespace:   namespace,
+			Annotations: annotations,
 		},
 	}
+	jenkins.Annotations[base.UseDeploymentAnnotation] = "false"
 
 	casc := &v1alpha3.Casc{
 		ObjectMeta: metav1.ObjectMeta{

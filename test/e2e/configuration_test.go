@@ -87,6 +87,7 @@ func TestConfiguration(t *testing.T) {
 	createUserConfigurationSecret(t, namespace, stringData)
 	createUserConfigurationConfigMap(t, namespace, numberOfExecutors, systemMessageEnvName)
 	jenkins := createJenkinsCR(t, jenkinsCRName, namespace, priorityClassName, &[]v1alpha2.SeedJob{mySeedJob.SeedJob})
+	jenkins.Annotations[base.UseDeploymentAnnotation] = "false"
 	createDefaultLimitsForContainersInNamespace(t, namespace)
 	createKubernetesCredentialsProviderSecret(t, namespace, mySeedJob)
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)

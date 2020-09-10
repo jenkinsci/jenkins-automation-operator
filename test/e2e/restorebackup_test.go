@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base"
+
 	"github.com/jenkinsci/kubernetes-operator/internal/try"
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/client"
@@ -30,6 +32,7 @@ func TestBackupAndRestore(t *testing.T) {
 	jobID := "e2e-jenkins-operator"
 	createPVC(t, namespace)
 	jenkins := createJenkinsWithBackupAndRestoreConfigured(t, "e2e", namespace)
+	jenkins.Annotations[base.UseDeploymentAnnotation] = "false"
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
 
 	jenkinsClient, cleanUpFunc := verifyJenkinsAPIConnection(t, jenkins, namespace)
@@ -89,11 +92,14 @@ func createPVC(t *testing.T, namespace string) {
 
 func createJenkinsWithBackupAndRestoreConfigured(t *testing.T, name, namespace string) *v1alpha2.Jenkins {
 	containerName := "backup"
+	// TODO fix e2e to use deployment instead of pod
+	annotations := map[string]string{base.UseDeploymentAnnotation: "false"}
 	jenkins := &v1alpha2.Jenkins{
 		TypeMeta: v1alpha2.JenkinsTypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
+			Name:        name,
+			Namespace:   namespace,
+			Annotations: annotations,
 		},
 		Spec: v1alpha2.JenkinsSpec{
 			Backup: v1alpha2.Backup{

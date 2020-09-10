@@ -29,8 +29,10 @@ import (
 )
 
 var (
-	retryInterval = time.Second * 5
-	timeout       = time.Second * 60
+	retryInterval               = time.Second * 5
+	timeout                     = time.Second * 60
+	namespaceTerminationTimeout = time.Second * 120
+	retries                     = 30
 )
 
 // checkConditionFunc is used to check if a condition for the jenkins CR is set
@@ -44,32 +46,30 @@ func waitForJobToFinish(t *testing.T, job *gojenkins.Job, tick, timeout time.Dur
 		if err != nil {
 			return false, err
 		}
-
 		queued, err := job.IsQueued()
 		if err != nil {
 			return false, err
 		}
-
 		if !running && !queued {
 			return true, nil
 		}
-
 		return false, nil
 	}, tick, timeout)
 	require.NoError(t, err)
 }
 
 func waitForJenkinsBaseConfigurationToComplete(t *testing.T, jenkins *v1alpha2.Jenkins) {
-	t.Log("Waiting for Jenkins base configuration to complete")
-	_, err := WaitUntilJenkinsConditionSet(retryInterval, 170, jenkins, func(jenkins *v1alpha2.Jenkins, err error) bool {
-		t.Logf("Current Jenkins status: '%+v', error '%s'", jenkins.Status, err)
-		return err == nil && jenkins.Status.BaseConfigurationCompletedTime != nil
+	t.Logf("Waiting for Jenkins base configuration to complete: Will retry %+v times every %+v", retries, retryInterval)
+	_, err := WaitUntilJenkinsConditionSet(retryInterval, retries, jenkins, func(jenkins *v1alpha2.Jenkins, err error) bool {
+		completedTime := jenkins.Status.BaseConfigurationCompletedTime
+		t.Logf("Current Jenkins status BaseConfigurationCompletedTime: '%+v', error '%s'", completedTime, err)
+		return err == nil && completedTime != nil
 	})
 	if err != nil {
+		t.Errorf("Waiting for BaseConfiguration to complete failed with : %+v", jenkins)
 		t.Fatal(err)
 	}
 	t.Log("Jenkins pod is running")
-
 	// update jenkins CR because Operator sets default values
 	namespacedName := types.NamespacedName{Namespace: jenkins.Namespace, Name: jenkins.Name}
 	err = framework.Global.Client.Get(goctx.TODO(), namespacedName, jenkins)
@@ -77,7 +77,8 @@ func waitForJenkinsBaseConfigurationToComplete(t *testing.T, jenkins *v1alpha2.J
 }
 
 func waitForRecreateJenkinsMasterPod(t *testing.T, jenkins *v1alpha2.Jenkins) {
-	err := wait.Poll(retryInterval, 30*retryInterval, func() (bool, error) {
+	t.Logf("Waiting for Jenkins Master Pod to be ready: Will every %+v until %v", retryInterval, 30*retryInterval)
+	IsJenkinsMasterPodRecreated := func() (bool, error) {
 		lo := metav1.ListOptions{
 			LabelSelector: labels.SelectorFromSet(resources.GetJenkinsMasterPodLabels(*jenkins)).String(),
 		}
@@ -88,10 +89,11 @@ func waitForRecreateJenkinsMasterPod(t *testing.T, jenkins *v1alpha2.Jenkins) {
 		if len(podList.Items) != 1 {
 			return false, nil
 		}
-
 		return podList.Items[0].DeletionTimestamp == nil, nil
-	})
+	}
+	err := wait.Poll(retryInterval, 30*retryInterval, IsJenkinsMasterPodRecreated)
 	if err != nil {
+		t.Errorf("Waiting for Jenkins Master Pod to recreate failed with jenkins: %+v", jenkins)
 		t.Fatal(err)
 	}
 	t.Log("Jenkins pod has been recreated")
@@ -99,14 +101,16 @@ func waitForRecreateJenkinsMasterPod(t *testing.T, jenkins *v1alpha2.Jenkins) {
 
 func waitForJenkinsUserConfigurationToComplete(t *testing.T, casc *v1alpha3.Casc) {
 	t.Log("Waiting for Jenkins user configuration to complete")
-	_, err := WaitUntilCascConditionSet(retryInterval, 110, casc, func(casc *v1alpha3.Casc, err error) bool {
-		t.Logf("Current Casc status: '%+v', error '%s'", casc.Status, err)
-		return err == nil && casc.Status.Phase == constants.JenkinsStatusCompleted
+	_, err := WaitUntilCascConditionSet(retryInterval, retries, casc, func(casc *v1alpha3.Casc, err error) bool {
+		phase := casc.Status.Phase
+		t.Logf("Current Casc status phase: '%+v', error '%s'", phase, err)
+		return err == nil && phase == constants.JenkinsStatusCompleted
 	})
 	if err != nil {
+		t.Errorf("Waiting for Jenkins user configuration to complete failed with casc: %+v", casc)
 		t.Fatal(err)
 	}
-	t.Log("Casc completed")
+	t.Logf("Casc completed with casc: %+v", casc)
 }
 
 func waitForJenkinsSafeRestart(t *testing.T, jenkinsClient jenkinsclient.Jenkins) {
@@ -123,7 +127,7 @@ func waitForJenkinsSafeRestart(t *testing.T, jenkinsClient jenkinsclient.Jenkins
 	require.NoError(t, err)
 }
 
-// WaitUntilJenkinsConditionSet retries until the specified condition check becomes true for the casc CR
+// WaitUntilCascConditionSet retries until the specified condition check becomes true for the casc CR
 func WaitUntilCascConditionSet(retryInterval time.Duration, retries int, casc *v1alpha3.Casc, checkCondition checkCascConditionFunc) (*v1alpha3.Casc, error) {
 	cascStatus := &v1alpha3.Casc{}
 	err := wait.Poll(retryInterval, time.Duration(retries)*retryInterval, func() (bool, error) {
@@ -152,13 +156,12 @@ func WaitUntilJenkinsConditionSet(retryInterval time.Duration, retries int, jenk
 }
 
 func waitUntilNamespaceDestroyed(namespace string) error {
-	err := try.Until(func() (bool, error) {
+	isNamespaceDestroyed := func() (bool, error) {
 		var namespaceList v1.NamespaceList
 		err := framework.Global.Client.List(context.TODO(), &namespaceList, &client.ListOptions{})
 		if err != nil {
 			return true, err
 		}
-
 		exists := false
 		for _, namespaceItem := range namespaceList.Items {
 			if namespaceItem.Name == namespace {
@@ -166,9 +169,8 @@ func waitUntilNamespaceDestroyed(namespace string) error {
 				break
 			}
 		}
-
 		return !exists, nil
-	}, time.Second, time.Second*120)
-
+	}
+	err := try.Until(isNamespaceDestroyed, time.Second, namespaceTerminationTimeout)
 	return err
 }

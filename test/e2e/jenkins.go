@@ -80,16 +80,18 @@ func createJenkinsCR(t *testing.T, name, namespace, priorityClassName string, se
 	if seedJob != nil {
 		seedJobs = append(seedJobs, *seedJob...)
 	}
-
+	// TODO fix e2e to use deployment instead of pod
+	annotations := map[string]string{"test": "label", base.UseDeploymentAnnotation: "false"}
 	jenkins := &v1alpha2.Jenkins{
 		TypeMeta: v1alpha2.JenkinsTypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
+			Name:        name,
+			Namespace:   namespace,
+			Annotations: annotations,
 		},
 		Spec: v1alpha2.JenkinsSpec{
 			Master: v1alpha2.JenkinsMaster{
-				Annotations: map[string]string{"test": "label"},
+				Annotations: annotations,
 				Containers: []v1alpha2.Container{
 					{
 						Name: resources.JenkinsMasterContainerName,
