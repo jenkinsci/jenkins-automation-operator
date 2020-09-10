@@ -40,14 +40,14 @@ func getJenkins(t *testing.T, namespace, name string) *v1alpha2.Jenkins {
 
 func getJenkinsMasterPod(t *testing.T, jenkins *v1alpha2.Jenkins) *corev1.Pod {
 	lo := metav1.ListOptions{
-		LabelSelector: labels.SelectorFromSet(resources.GetJenkinsMasterPodLabels(*jenkins)).String(),
+		LabelSelector: labels.SelectorFromSet(resources.GetJenkinsMasterPodLabels(jenkins)).String(),
 	}
 	podList, err := framework.Global.KubeClient.CoreV1().Pods(jenkins.ObjectMeta.Namespace).List(lo)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(podList.Items) != 1 {
-		t.Fatalf("Jenkins pod not found, pod list: %+v", podList)
+		t.Fatalf("Jenkins deployment not found, pod list: %+v", podList)
 	}
 	return &podList.Items[0]
 }
@@ -180,7 +180,7 @@ func createJenkinsCR(t *testing.T, name, namespace, priorityClassName string, se
 
 func createJenkinsAPIClientFromServiceAccount(t *testing.T, jenkins *v1alpha2.Jenkins, jenkinsAPIURL string) (jenkinsclient.Jenkins, error) {
 	t.Log("Creating Jenkins API client from service account")
-	podName := resources.GetJenkinsMasterPodName(jenkins.ObjectMeta.Name)
+	podName := resources.GetJenkinsMasterPodName(jenkins.Name)
 
 	clientSet, err := kubernetes.NewForConfig(framework.Global.KubeConfig)
 	if err != nil {

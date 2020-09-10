@@ -18,7 +18,6 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/constants"
 	"github.com/jenkinsci/kubernetes-operator/pkg/groovy"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
-	"github.com/jenkinsci/kubernetes-operator/pkg/notifications/reason"
 	stackerr "github.com/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -177,17 +176,6 @@ func New(jenkinsClient jenkinsclient.Jenkins, config configuration.Configuration
 
 // EnsureSeedJobs configures seed job and runs it for every entry from Jenkins.Spec.SeedJobs
 func (s *seedJobs) EnsureSeedJobs(jenkins *v1alpha2.Jenkins) (done bool, err error) {
-	if s.isRecreatePodNeeded(*jenkins) {
-		message := "Some seed job has been deleted, recreating pod"
-		s.logger.Info(message)
-
-		restartReason := reason.NewPodRestart(
-			reason.OperatorSource,
-			[]string{message},
-		)
-		return false, s.RestartJenkinsMasterPod(restartReason)
-	}
-
 	if len(jenkins.Spec.SeedJobs) > 0 {
 		err := s.createAgent(s.jenkinsClient, s.Client, jenkins, jenkins.Namespace, AgentName)
 		if err != nil {

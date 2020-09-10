@@ -80,7 +80,7 @@ func waitForRecreateJenkinsMasterPod(t *testing.T, jenkins *v1alpha2.Jenkins) {
 	t.Logf("Waiting for Jenkins Master Pod to be ready: Will every %+v until %v", retryInterval, 30*retryInterval)
 	IsJenkinsMasterPodRecreated := func() (bool, error) {
 		lo := metav1.ListOptions{
-			LabelSelector: labels.SelectorFromSet(resources.GetJenkinsMasterPodLabels(*jenkins)).String(),
+			LabelSelector: labels.SelectorFromSet(resources.GetJenkinsMasterPodLabels(jenkins)).String(),
 		}
 		podList, err := framework.Global.KubeClient.CoreV1().Pods(jenkins.ObjectMeta.Namespace).List(lo)
 		if err != nil {

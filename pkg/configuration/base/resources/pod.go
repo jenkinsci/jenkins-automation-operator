@@ -260,14 +260,14 @@ func GetJenkinsMasterPodName(name string) string {
 }
 
 // GetJenkinsMasterPodLabels returns Jenkins pod labels for given CR
-func GetJenkinsMasterPodLabels(jenkins v1alpha2.Jenkins) map[string]string {
+func GetJenkinsMasterPodLabels(jenkins *v1alpha2.Jenkins) map[string]string {
 	var labels map[string]string
 	if jenkins.Spec.Master.Labels == nil {
 		labels = map[string]string{}
 	} else {
 		labels = jenkins.Spec.Master.Labels
 	}
-	for key, value := range BuildResourceLabels(&jenkins) {
+	for key, value := range BuildResourceLabels(jenkins) {
 		labels[key] = value
 	}
 	return labels
@@ -278,7 +278,7 @@ func NewJenkinsMasterPod(objectMeta metav1.ObjectMeta, jenkins *v1alpha2.Jenkins
 	serviceAccountName := objectMeta.Name
 	objectMeta.Annotations = jenkins.Spec.Master.Annotations
 	objectMeta.Name = GetJenkinsMasterPodName(jenkins.Name)
-	objectMeta.Labels = GetJenkinsMasterPodLabels(*jenkins)
+	objectMeta.Labels = GetJenkinsMasterPodLabels(jenkins)
 
 	return &corev1.Pod{
 		TypeMeta:   buildPodTypeMeta(),

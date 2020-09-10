@@ -249,7 +249,7 @@ func verifyJenkinsMasterPodAttributes(t *testing.T, jenkins *v1alpha2.Jenkins) {
 	assert.Equal(t, jenkins.Spec.Master.SecurityContext, jenkinsPod.Spec.SecurityContext)
 	assert.Equal(t, jenkins.Spec.Master.Containers[0].Command, jenkinsPod.Spec.Containers[0].Command)
 
-	assert.Equal(t, resources.GetJenkinsMasterPodLabels(*jenkins), jenkinsPod.Labels)
+	assert.Equal(t, resources.GetJenkinsMasterPodLabels(jenkins), jenkinsPod.Labels)
 	assert.Equal(t, jenkins.Spec.Master.PriorityClassName, jenkinsPod.Spec.PriorityClassName)
 
 	for _, actualContainer := range jenkinsPod.Spec.Containers {

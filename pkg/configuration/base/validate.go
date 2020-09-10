@@ -280,9 +280,9 @@ func (r *ReconcileJenkinsBaseConfiguration) validateJenkinsMasterPodEnvs() []str
 		if userEnv.Name == constants.JavaOpsVariableName {
 			javaOpts = userEnv
 		}
-		if _, overriding := baseEnvNames[userEnv.Name]; overriding {
-			messages = append(messages, fmt.Sprintf("Jenkins Master container env '%s' cannot be overridden", userEnv.Name))
-		}
+		//if _, overriding := baseEnvNames[userEnv.Name]; overriding {
+		//	messages = append(messages, fmt.Sprintf("Jenkins Master container env '%s' cannot be overridden", userEnv.Name))
+		//}
 	}
 
 	requiredFlags := map[string]bool{

@@ -11,8 +11,6 @@ import (
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/notifications/event"
-	"github.com/jenkinsci/kubernetes-operator/pkg/notifications/reason"
-
 	stackerr "github.com/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -40,27 +38,6 @@ type Configuration struct {
 	JenkinsAPIConnectionSettings jenkinsclient.JenkinsAPIConnectionSettings
 }
 
-// RestartJenkinsMasterPod terminate Jenkins master pod and notifies about it.
-func (c *Configuration) RestartJenkinsMasterPod(reason reason.Reason) error {
-	currentJenkinsMasterPod, err := c.GetJenkinsMasterPod()
-	if err != nil {
-		return err
-	}
-
-	if c.IsJenkinsTerminating(*currentJenkinsMasterPod) {
-		return nil
-	}
-
-	*c.Notifications <- event.Event{
-		Jenkins: *c.Jenkins,
-		Phase:   event.PhaseBase,
-		Level:   v1alpha2.NotificationLevelInfo,
-		Reason:  reason,
-	}
-
-	return stackerr.WithStack(c.Client.Delete(context.TODO(), currentJenkinsMasterPod))
-}
-
 // GetJenkinsMasterPod gets the jenkins master pod.
 func (c *Configuration) GetJenkinsMasterPod() (*corev1.Pod, error) {
 	jenkinsMasterPodName := resources.GetJenkinsMasterPodName(c.Jenkins.Name)
@@ -74,7 +51,6 @@ func (c *Configuration) GetJenkinsMasterPod() (*corev1.Pod, error) {
 
 // WaitUntilCreateJenkinsMasterPod waits for jenkins master pod to be ready
 func (c *Configuration) WaitUntilCreateJenkinsMasterPod() (currentJenkinsMasterPod *corev1.Pod, err error) {
-	currentJenkinsMasterPod, err = c.GetJenkinsMasterPod()
 	for {
 		if err != nil && !errors.IsNotFound(err) {
 			return nil, stackerr.WithStack(err)
@@ -99,7 +75,7 @@ func (c *Configuration) GetJenkinsDeployment() (*appsv1.Deployment, error) {
 }
 
 // IsJenkinsTerminating returns true if the Jenkins pod is terminating.
-func (c *Configuration) IsJenkinsTerminating(pod corev1.Pod) bool {
+func (c *Configuration) IsJenkinsTerminating(pod *corev1.Pod) bool {
 	return pod.ObjectMeta.DeletionTimestamp != nil
 }
 

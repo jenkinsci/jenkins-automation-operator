@@ -9,16 +9,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
+	"github.com/go-logr/logr"
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha3"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/groovy"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
-	"github.com/jenkinsci/kubernetes-operator/pkg/notifications/reason"
-
-	"github.com/go-logr/logr"
 	stackerr "github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -29,13 +26,7 @@ import (
 )
 
 const (
-	fetchAllPlugins                       = 1
-	RequeueAfterAfterMasterPodNotReadyMax = time.Second * 60
-	UseDeploymentAnnotation               = "jenkins.io/use-deployment"
-)
-
-var (
-	requeueAfterAfterMasterPodNotReady = time.Second * 5
+	fetchAllPlugins = 1
 )
 
 // ReconcileJenkinsBaseConfiguration defines values required for Jenkins base configuration.
@@ -56,29 +47,25 @@ func New(config configuration.Configuration, jenkinsAPIConnectionSettings jenkin
 
 // Reconcile takes care of base configuration.
 func (r *ReconcileJenkinsBaseConfiguration) Reconcile() (reconcile.Result, jenkinsclient.Jenkins, error) {
-	metaObject := resources.NewResourceObjectMeta(r.Configuration.Jenkins)
+	jenkinsConfig := resources.NewResourceObjectMeta(r.Configuration.Jenkins)
 
 	// Create Necessary Resources
-	err := r.ensureResourcesRequiredForJenkinsPod(metaObject)
+	err := r.ensureResourcesRequiredForJenkinsDeployment(jenkinsConfig)
 	if err != nil {
 		return reconcile.Result{}, nil, err
 	}
 	r.logger.V(log.VDebug).Info("Kubernetes resources are present")
 
-	if useDeploymentForJenkinsMaster(r.Configuration.Jenkins) {
-		result, err := r.ensureJenkinsDeployment(metaObject)
-		if err != nil {
-			return reconcile.Result{}, nil, err
-		}
-		if result.Requeue {
-			return result, nil, nil
-		}
-		r.logger.V(log.VDebug).Info("Jenkins Deployment is present")
-
-		return result, nil, err
+	result, err := r.ensureJenkinsDeployment(jenkinsConfig)
+	if err != nil {
+		return reconcile.Result{}, nil, err
 	}
+	if result.Requeue {
+		return result, nil, nil
+	}
+	r.logger.V(log.VDebug).Info("Jenkins Deployment is present")
 
-	result, err := r.ensureJenkinsMasterPod(metaObject)
+	result, err = r.ensureJenkinsMasterPod()
 	if err != nil {
 		return reconcile.Result{}, nil, err
 	}
@@ -95,15 +82,6 @@ func (r *ReconcileJenkinsBaseConfiguration) Reconcile() (reconcile.Result, jenki
 		return reconcile.Result{Requeue: false}, nil, nil
 	}
 
-	result, err = r.waitForJenkins()
-	if err != nil {
-		return reconcile.Result{}, nil, err
-	}
-	if result.Requeue {
-		return result, nil, nil
-	}
-	r.logger.V(log.VDebug).Info("Jenkins master pod is ready")
-
 	jenkinsClient, err := r.Configuration.GetJenkinsClient()
 	if err != nil {
 		return reconcile.Result{}, nil, err
@@ -118,12 +96,6 @@ func (r *ReconcileJenkinsBaseConfiguration) Reconcile() (reconcile.Result, jenki
 		//TODO add what plugins have been changed
 		message := "Some plugins have changed, restarting Jenkins"
 		r.logger.Info(message)
-
-		restartReason := reason.NewPodRestart(
-			reason.OperatorSource,
-			[]string{message},
-		)
-		return reconcile.Result{Requeue: true}, nil, r.Configuration.RestartJenkinsMasterPod(restartReason)
 	}
 
 	result, err = r.ensureBaseConfiguration(jenkinsClient)
@@ -131,16 +103,7 @@ func (r *ReconcileJenkinsBaseConfiguration) Reconcile() (reconcile.Result, jenki
 	return result, jenkinsClient, err
 }
 
-func useDeploymentForJenkinsMaster(jenkins *v1alpha2.Jenkins) bool {
-	if val, ok := jenkins.Annotations[UseDeploymentAnnotation]; ok {
-		if val == "false" {
-			return false
-		}
-	}
-	return true
-}
-
-func (r *ReconcileJenkinsBaseConfiguration) ensureResourcesRequiredForJenkinsPod(metaObject metav1.ObjectMeta) error {
+func (r *ReconcileJenkinsBaseConfiguration) ensureResourcesRequiredForJenkinsDeployment(metaObject metav1.ObjectMeta) error {
 	if err := r.createOperatorCredentialsSecret(metaObject); err != nil {
 		return err
 	}
@@ -343,52 +306,6 @@ func (r *ReconcileJenkinsBaseConfiguration) filterEvents(source corev1.EventList
 	return events
 }
 
-func (r *ReconcileJenkinsBaseConfiguration) waitForJenkins() (reconcile.Result, error) {
-	jenkinsMasterPod, err := r.Configuration.GetJenkinsMasterPod()
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-
-	if r.IsJenkinsTerminating(*jenkinsMasterPod) {
-		r.logger.V(log.VDebug).Info("Jenkins master pod is terminating")
-		return reconcile.Result{Requeue: true, RequeueAfter: time.Second * 5}, nil
-	}
-
-	if jenkinsMasterPod.Status.Phase != corev1.PodRunning {
-		requeueAfterAfterMasterPodNotReady *= 2
-		// increase requeue time until the maximum value
-		if requeueAfterAfterMasterPodNotReady > RequeueAfterAfterMasterPodNotReadyMax {
-			requeueAfterAfterMasterPodNotReady = RequeueAfterAfterMasterPodNotReadyMax
-		}
-		r.logger.V(log.VDebug).Info(fmt.Sprintf("Jenkins master pod not ready: Will retry reconciliation in %s", requeueAfterAfterMasterPodNotReady))
-		return reconcile.Result{Requeue: true, RequeueAfter: requeueAfterAfterMasterPodNotReady}, nil
-	}
-
-	containersReadyCount := 0
-	for _, containerStatus := range jenkinsMasterPod.Status.ContainerStatuses {
-		if containerStatus.State.Terminated != nil {
-			message := fmt.Sprintf("Container '%s' is terminated, status '%+v'", containerStatus.Name, containerStatus)
-			r.logger.Info(message)
-
-			restartReason := reason.NewPodRestart(
-				reason.KubernetesSource,
-				[]string{message},
-			)
-			return reconcile.Result{Requeue: true}, r.Configuration.RestartJenkinsMasterPod(restartReason)
-		}
-		if !containerStatus.Ready {
-			r.logger.V(log.VDebug).Info(fmt.Sprintf("Container '%s' not ready, readiness probe failed", containerStatus.Name))
-		} else {
-			containersReadyCount++
-		}
-	}
-	if containersReadyCount != len(jenkinsMasterPod.Status.ContainerStatuses) {
-		return reconcile.Result{Requeue: true, RequeueAfter: time.Second * 5}, nil
-	}
-
-	return reconcile.Result{}, nil
-}
-
 func (r *ReconcileJenkinsBaseConfiguration) ensureBaseConfiguration(jenkinsClient jenkinsclient.Jenkins) (reconcile.Result, error) {
 	customization := v1alpha3.Customization{
 		Secret:         v1alpha3.SecretRef{Name: ""},
@@ -401,17 +318,4 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureBaseConfiguration(jenkinsClien
 		return groovyScript
 	})
 	return reconcile.Result{Requeue: requeue}, err
-}
-
-func (r *ReconcileJenkinsBaseConfiguration) handleAdmissionControllerChanges(currentJenkinsMasterPod *corev1.Pod) {
-	if !reflect.DeepEqual(r.Configuration.Jenkins.Spec.Master.SecurityContext, currentJenkinsMasterPod.Spec.SecurityContext) {
-		r.Configuration.Jenkins.Spec.Master.SecurityContext = currentJenkinsMasterPod.Spec.SecurityContext
-		r.logger.Info(fmt.Sprintf("The Admission controller has changed the Jenkins master pod spec.securityContext, changing the Jenkinc CR spec.master.securityContext to '%+v'", currentJenkinsMasterPod.Spec.SecurityContext))
-	}
-	for i, container := range r.Configuration.Jenkins.Spec.Master.Containers {
-		if !reflect.DeepEqual(container.SecurityContext, currentJenkinsMasterPod.Spec.Containers[i].SecurityContext) {
-			r.Configuration.Jenkins.Spec.Master.Containers[i].SecurityContext = currentJenkinsMasterPod.Spec.Containers[i].SecurityContext
-			r.logger.Info(fmt.Sprintf("The Admission controller has changed the securityContext, changing the Jenkins CR spec.master.containers[%s].securityContext to '+%v'", container.Name, currentJenkinsMasterPod.Spec.Containers[i].SecurityContext))
-		}
-	}
 }
