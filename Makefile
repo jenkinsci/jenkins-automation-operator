@@ -646,7 +646,7 @@ set-test-namespace: get-test-namespace
 
 .PHONY: e2e-smoke-template
 ## Runs smoke tests using template
-e2e-smoke-template: setup-venv smoke-setup set-test-namespace test-smoke-artifacts
+e2e-smoke-template: setup-venv smoke-setup set-test-namespace
 	$(Q)echo "Starting local Jenkins instance"
 	$(Q)$(PYTHON_VENV_DIR)/bin/pip install -q -r requirements.txt
 	$(Q)echo "Running smoke tests"

@@ -13,6 +13,7 @@ config.load_kube_config()
 v1 = client.CoreV1Api()
 podStatus = {}
 operatorPods = {}
+operator_image = "quay.io/redhat-developer/openshift-jenkins-operator:latest"
 def get_filename_datetime():
     # Use current date to get a text file name.
     return "" + str(date.today()) + ".txt"
@@ -31,7 +32,6 @@ logger.setLevel(logging.INFO)
 current_project = ''
 paramfile = 'smoke/templates.params'
 oc = Openshift()
-
 # STEP
 @given(u'Project "{project_name}" is used')
 def given_project_is_used(context, project_name):
@@ -85,6 +85,17 @@ def createTemplate(context):
 def createOperator(context):
     template_name = 'jenkins-operator-template'
     logger.info('Applying the template')
+    if os.path.exists(paramfile):
+        print("Removing param file")
+        os.remove(paramfile)
+    if not os.path.exists(paramfile):
+        print("Creating the param file for the template to use")
+        logger.info("Creating the param file for the template to use")
+        f = open(paramfile, "w")
+        f.write("JENKINS_OPERATOR_NAMESPACE = %s\n"%current_project)
+        f.write("JENKINS_OPERATOR_IMAGE = %s\n"%operator_image)
+        f.close()
+
     oc.new_app_with_params(template_name,paramfile)
     time.sleep(10)
     
