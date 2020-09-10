@@ -1,2 +1,0 @@
-JENKINS_OPERATOR_NAMESPACE = test-namespace-90e750b3
-JENKINS_OPERATOR_IMAGE = quay.io/redhat-developer/openshift-jenkins-operator:latest

@@ -12,11 +12,3 @@ Feature: Deploy Jenkins Operator on operator hub
     Then We create template from yaml
     And Apply template with oc new-app
     Then Check for pod creation and state
-  
-  Scenario: Test jenkins CR creation
-    Given Jenkins operator is running
-    When we create the jenkins cr
-    Then we check the jenkins pod health
-
-  
-
