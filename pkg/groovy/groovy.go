@@ -51,19 +51,24 @@ func New(jenkinsClient jenkinsclient.Jenkins, k8sClient k8s.Client, groovyIface 
 }
 
 // EnsureSingle runs single groovy script
-func (g *Groovy) EnsureSingle(source, name, hash, groovyScript string) (requeue bool, err error) {
-	if g.isGroovyScriptAlreadyApplied(source, name, hash, g.configurationType) {
+func (g *Groovy) EnsureSingle(source, scriptName, hash, groovyScript string) (requeue bool, err error) {
+	scriptType := g.configurationType
+	if g.isGroovyScriptAlreadyApplied(source, scriptName, hash, scriptType) {
+		g.logger.V(log.VWarn).Info(fmt.Sprintf("Groovy script '%s' has been already applied: skipping", scriptName))
 		return false, nil
 	}
+	g.logger.V(log.VWarn).Info(fmt.Sprintf("About to execute groovy scripts using jenkinsClient: %s", g.jenkinsClient))
+	g.logger.V(log.VWarn).Info(fmt.Sprintf("Triggering execution of groovy script '%s'", scriptName))
 	logs, err := g.jenkinsClient.ExecuteScript(groovyScript)
 	if err != nil {
 		if groovyErr, ok := err.(*jenkinsclient.GroovyScriptExecutionFailed); ok {
-			groovyErr.ConfigurationType = g.configurationType
-			groovyErr.Name = name
+			groovyErr.ConfigurationType = scriptType
+			groovyErr.Name = scriptName
 			groovyErr.Source = source
 			groovyErr.Logs = logs
-			g.logger.V(log.VWarn).Info(fmt.Sprintf("%s Source '%s' Name '%s' groovy script execution failed, logs :\n%s", g.configurationType, source, name, logs))
+			g.logger.V(log.VWarn).Info(fmt.Sprintf("Execution of script type: '%s', named: '%s' from configmap: '%s' failed with the following logs:\n%s", scriptType, scriptName, source, logs))
 		}
+		g.logger.V(log.VWarn).Info(fmt.Sprintf("Successful execution of script type: '%s', named: '%s' from configmap: '%s'", scriptType, scriptName, source))
 		return true, err
 	}
 	// Add the script to appliedGroovyScripts in the right object
@@ -71,15 +76,15 @@ func (g *Groovy) EnsureSingle(source, name, hash, groovyScript string) (requeue 
 	case *v1alpha3.Casc:
 		var appliedGroovyScripts []v1alpha3.AppliedGroovyScript
 		for _, ags := range v.Status.AppliedGroovyScripts {
-			if ags.ConfigurationType == g.configurationType && ags.Source == source && ags.Name == name {
+			if ags.ConfigurationType == scriptType && ags.Source == source && ags.Name == scriptName {
 				continue
 			}
 			appliedGroovyScripts = append(appliedGroovyScripts, ags)
 		}
 		appliedGroovyScripts = append(appliedGroovyScripts, v1alpha3.AppliedGroovyScript{
-			ConfigurationType: g.configurationType,
+			ConfigurationType: scriptType,
 			Source:            source,
-			Name:              name,
+			Name:              scriptName,
 			Hash:              hash,
 		})
 		v.Status.AppliedGroovyScripts = appliedGroovyScripts
@@ -90,15 +95,15 @@ func (g *Groovy) EnsureSingle(source, name, hash, groovyScript string) (requeue 
 	case *v1alpha2.Jenkins:
 		var appliedGroovyScripts []v1alpha2.AppliedGroovyScript
 		for _, ags := range v.Status.AppliedGroovyScripts {
-			if ags.ConfigurationType == g.configurationType && ags.Source == source && ags.Name == name {
+			if ags.ConfigurationType == scriptType && ags.Source == source && ags.Name == scriptName {
 				continue
 			}
 			appliedGroovyScripts = append(appliedGroovyScripts, ags)
 		}
 		appliedGroovyScripts = append(appliedGroovyScripts, v1alpha2.AppliedGroovyScript{
-			ConfigurationType: g.configurationType,
+			ConfigurationType: scriptType,
 			Source:            source,
-			Name:              name,
+			Name:              scriptName,
 			Hash:              hash,
 		})
 		v.Status.AppliedGroovyScripts = appliedGroovyScripts
@@ -157,7 +162,7 @@ func (g *Groovy) Ensure(filter func(name string) bool, updateGroovyScript func(g
 			names = append(names, name)
 		}
 		sort.Strings(names)
-
+		// FIXME check that scripts are listed in right order ?
 		for _, name := range names {
 			groovyScript := updateGroovyScript(configMap.Data[name])
 			if !filter(name) {

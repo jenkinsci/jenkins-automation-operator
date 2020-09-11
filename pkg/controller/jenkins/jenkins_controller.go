@@ -7,6 +7,8 @@ import (
 	"reflect"
 	"time"
 
+	appsv1 "k8s.io/api/apps/v1"
+
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base"
@@ -37,7 +39,7 @@ type reconcileError struct {
 
 const (
 	APIVersion             = "core/v1"
-	PodKind                = "Pod"
+	DeploymentKind         = "Deployment"
 	SecretKind             = "Secret"
 	ConfigMapKind          = "ConfigMap"
 	containerProbeURI      = "login"
@@ -51,7 +53,7 @@ var _ reconcile.Reconciler = &ReconcileJenkins{}
 // Add creates a newReconcilierConfiguration Jenkins Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
 func Add(mgr manager.Manager, jenkinsAPIConnectionSettings jenkinsclient.JenkinsAPIConnectionSettings, clientSet kubernetes.Clientset, config rest.Config, notificationEvents *chan event.Event) error {
-	reconciler := newReconciler(mgr, jenkinsAPIConnectionSettings, clientSet, config, notificationEvents)
+	reconciler := NewReconciler(mgr, jenkinsAPIConnectionSettings, clientSet, config, notificationEvents)
 	return add(mgr, reconciler)
 }
 
@@ -70,10 +72,9 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return errors.WithStack(err)
 	}
 
-	// Watch for changes to secondary resource Pods and requeue the owner Jenkins
-
-	podResource := &source.Kind{Type: &corev1.Pod{TypeMeta: metav1.TypeMeta{APIVersion: APIVersion, Kind: PodKind}}}
-	err = c.Watch(podResource, &handler.EnqueueRequestForOwner{
+	// Watch for changes to secondary resource Deployment and requeue the owner Jenkins
+	deploymentResource := &source.Kind{Type: &appsv1.Deployment{TypeMeta: metav1.TypeMeta{APIVersion: APIVersion, Kind: DeploymentKind}}}
+	err = c.Watch(deploymentResource, &handler.EnqueueRequestForOwner{
 		IsController: true,
 		OwnerType:    &v1alpha2.Jenkins{},
 	})
@@ -108,8 +109,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 func (r *ReconcileJenkins) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	reconcileFailLimit := uint64(10)
 	logger := logx.WithName("")
-	logger.V(log.VDebug).Info("Reconciling Jenkins")
-
+	logger.V(log.VDebug).Info(fmt.Sprintf("Reconciling Jenkins: %s", request.Name))
 	result, jenkins, err := r.reconcile(request)
 	if err != nil && apierrors.IsConflict(err) {
 		return reconcile.Result{Requeue: true}, nil
@@ -131,15 +131,7 @@ func (r *ReconcileJenkins) Reconcile(request reconcile.Request) (reconcile.Resul
 		reconcileErrors[request.Name] = lastErrors
 		if lastErrors.counter >= reconcileFailLimit {
 			logger.V(log.VWarn).Info(fmt.Sprintf("Reconcile loop failed %d times with the same error, giving up: %+v", reconcileFailLimit, err))
-			*r.notificationEvents <- event.Event{
-				Jenkins: *jenkins,
-				Phase:   event.PhaseBase,
-				Level:   v1alpha2.NotificationLevelWarning,
-				Reason: reason.NewReconcileLoopFailed(
-					reason.OperatorSource,
-					[]string{fmt.Sprintf("Reconcile loop failed %d times with the same error, giving up: %s", reconcileFailLimit, err)},
-				),
-			}
+			r.sendNewReconcileLoopFailedNotification(jenkins, reconcileFailLimit, err)
 			return reconcile.Result{Requeue: false}, nil
 		}
 
@@ -150,16 +142,7 @@ func (r *ReconcileJenkins) Reconcile(request reconcile.Request) (reconcile.Resul
 		}
 
 		if groovyErr, ok := err.(*jenkinsclient.GroovyScriptExecutionFailed); ok {
-			*r.notificationEvents <- event.Event{
-				Jenkins: *jenkins,
-				Phase:   event.PhaseBase,
-				Level:   v1alpha2.NotificationLevelWarning,
-				Reason: reason.NewGroovyScriptExecutionFailed(
-					reason.OperatorSource,
-					[]string{fmt.Sprintf("%s Source '%s' Name '%s' groovy script execution failed", groovyErr.ConfigurationType, groovyErr.Source, groovyErr.Name)},
-					[]string{fmt.Sprintf("%s Source '%s' Name '%s' groovy script execution failed, logs: %+v", groovyErr.ConfigurationType, groovyErr.Source, groovyErr.Name, groovyErr.Logs)}...,
-				),
-			}
+			r.sendNewGroovyScriptExecutionFailedNotification(jenkins, groovyErr)
 			return reconcile.Result{Requeue: false}, nil
 		}
 		return reconcile.Result{Requeue: true}, nil
@@ -205,40 +188,40 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request) (reconcile.Resul
 
 	config := r.newReconcilierConfiguration(jenkins)
 	// Reconcile base configuration
+	logger.V(log.VDebug).Info("Creating base configuration reconcilier to start validation")
 	baseConfiguration := base.New(config, r.jenkinsAPIConnectionSettings)
-
-	var baseMessages []string
-	baseMessages, err = baseConfiguration.Validate(jenkins)
+	var baseConfigurationValidationMessages []string
+	baseConfigurationValidationMessages, err = baseConfiguration.Validate(jenkins)
 	if err != nil {
+		logger.V(log.VDebug).Info(fmt.Sprintf("Error while trying to validate base configuration %s", err))
 		return reconcile.Result{}, jenkins, err
 	}
-	if len(baseMessages) > 0 {
+	if len(baseConfigurationValidationMessages) > 0 {
 		message := "Validation of base configuration failed, please correct Jenkins CR."
-		*r.notificationEvents <- event.Event{
-			Jenkins: *jenkins,
-			Phase:   event.PhaseBase,
-			Level:   v1alpha2.NotificationLevelWarning,
-			Reason:  reason.NewBaseConfigurationFailed(reason.HumanSource, []string{message}, append([]string{message}, baseMessages...)...),
-		}
+		r.sendNewBaseConfigurationFailedNotification(jenkins, message, baseConfigurationValidationMessages)
 		logger.V(log.VWarn).Info(message)
-		for _, msg := range baseMessages {
+		for _, msg := range baseConfigurationValidationMessages {
 			logger.V(log.VWarn).Info(msg)
 		}
 		return reconcile.Result{}, jenkins, nil // don't requeue
 	}
-
-	var result reconcile.Result
-	var jenkinsClient jenkinsclient.Jenkins
-	result, jenkinsClient, err = baseConfiguration.Reconcile()
+	logger.V(log.VDebug).Info("Base configuration validation finished: No errors on validation messages")
+	logger.V(log.VDebug).Info("Starting base configuration reconciliation...")
+	result, jenkinsClient, err := baseConfiguration.Reconcile()
 	if err != nil {
+		logger.V(log.VDebug).Info(fmt.Sprintf("Base configuration reconciliation failed with error, requeuing:  %s ", err))
+		//FIXME What we do not requeue ?
 		return reconcile.Result{}, jenkins, err
 	}
-	if result.Requeue {
-		return result, jenkins, nil
-	}
+	logger.V(log.VDebug).Info("Base configuration reconciliation successful.")
+	//if result.Requeue {
+	//	return result, jenkins, nil
+	//}
 	if jenkinsClient == nil {
+		logger.V(log.VDebug).Info("Base configuration reconciliation succeeded but returned a nil jenkinsClient. Cannot continue.")
 		return reconcile.Result{Requeue: false}, jenkins, nil
 	}
+	logger.V(log.VDebug).Info(fmt.Sprintf("Base configuration reconcialiation finished successfully: jenkinsClient %+v created", jenkinsClient))
 	if jenkins.Status.BaseConfigurationCompletedTime == nil {
 		now := metav1.Now()
 		jenkins.Status.Phase = constants.JenkinsStatusCompleted
@@ -247,15 +230,9 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request) (reconcile.Resul
 		if err != nil {
 			return reconcile.Result{}, jenkins, errors.WithStack(err)
 		}
-
-		message := fmt.Sprintf("Base configuration phase is complete, took %s",
-			jenkins.Status.BaseConfigurationCompletedTime.Sub(jenkins.Status.ProvisionStartTime.Time))
-		*r.notificationEvents <- event.Event{
-			Jenkins: *jenkins,
-			Phase:   event.PhaseBase,
-			Level:   v1alpha2.NotificationLevelInfo,
-			Reason:  reason.NewBaseConfigurationComplete(reason.OperatorSource, []string{message}),
-		}
+		time := jenkins.Status.BaseConfigurationCompletedTime.Sub(jenkins.Status.ProvisionStartTime.Time)
+		message := fmt.Sprintf("Base configuration phase is complete, took %s", time)
+		r.sendNewBaseConfigurationCompleteNotification(jenkins, message)
 		logger.Info(message)
 	}
 
@@ -269,12 +246,7 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request) (reconcile.Resul
 	}
 	if len(messages) > 0 {
 		message := "Validation of user configuration failed, please correct Jenkins CR"
-		*r.notificationEvents <- event.Event{
-			Jenkins: *jenkins,
-			Phase:   event.PhaseUser,
-			Level:   v1alpha2.NotificationLevelWarning,
-			Reason:  reason.NewUserConfigurationFailed(reason.HumanSource, []string{message}, append([]string{message}, messages...)...),
-		}
+		r.sendNewUserConfigurationFailedNotification(jenkins, message, messages)
 
 		logger.V(log.VWarn).Info(message)
 		for _, msg := range messages {
@@ -299,17 +271,21 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request) (reconcile.Resul
 		if err != nil {
 			return reconcile.Result{}, jenkins, errors.WithStack(err)
 		}
-		message := fmt.Sprintf("User configuration phase is complete, took %s",
-			jenkins.Status.UserConfigurationCompletedTime.Sub(jenkins.Status.ProvisionStartTime.Time))
-		*r.notificationEvents <- event.Event{
-			Jenkins: *jenkins,
-			Phase:   event.PhaseUser,
-			Level:   v1alpha2.NotificationLevelInfo,
-			Reason:  reason.NewUserConfigurationComplete(reason.OperatorSource, []string{message}),
-		}
+		time := jenkins.Status.UserConfigurationCompletedTime.Sub(jenkins.Status.ProvisionStartTime.Time)
+		message := fmt.Sprintf("User configuration phase is complete, took %s", time)
+		r.sendNewUserConfigurationCompleteNotification(jenkins, message)
 		logger.Info(message)
 	}
 	return reconcile.Result{}, jenkins, nil
+}
+
+func (r *ReconcileJenkins) sendNewBaseConfigurationFailedNotification(jenkins *v1alpha2.Jenkins, message string, baseMessages []string) {
+	*r.notificationEvents <- event.Event{
+		Jenkins: *jenkins,
+		Phase:   event.PhaseBase,
+		Level:   v1alpha2.NotificationLevelWarning,
+		Reason:  reason.NewBaseConfigurationFailed(reason.HumanSource, []string{message}, append([]string{message}, baseMessages...)...),
+	}
 }
 
 func (r *ReconcileJenkins) setDefaults(jenkins *v1alpha2.Jenkins) (requeue bool, err error) {
@@ -393,7 +369,7 @@ func (r *ReconcileJenkins) setDefaults(jenkins *v1alpha2.Jenkins) (requeue bool,
 		changed = true
 		jenkins.Spec.SlaveService = v1alpha2.Service{
 			Type: corev1.ServiceTypeClusterIP,
-			Port: constants.DefaultSlavePortInt32,
+			Port: constants.DefaultJNLPPortInt32,
 		}
 	}
 	if len(jenkins.Spec.Master.Containers) > 1 {

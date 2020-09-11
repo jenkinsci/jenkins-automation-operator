@@ -100,17 +100,18 @@ func waitForRecreateJenkinsMasterPod(t *testing.T, jenkins *v1alpha2.Jenkins) {
 }
 
 func waitForJenkinsUserConfigurationToComplete(t *testing.T, casc *v1alpha3.Casc) {
-	t.Log("Waiting for Jenkins user configuration to complete")
-	_, err := WaitUntilCascConditionSet(retryInterval, retries, casc, func(casc *v1alpha3.Casc, err error) bool {
+	t.Logf("Waiting for Casc user configuration to complete for Casc CR: %+v", casc)
+	isJenkinsStatusCompleted := func(casc *v1alpha3.Casc, err error) bool {
 		phase := casc.Status.Phase
 		t.Logf("Current Casc status phase: '%+v', error '%s'", phase, err)
 		return err == nil && phase == constants.JenkinsStatusCompleted
-	})
+	}
+	_, err := WaitUntilCascConditionSet(retryInterval, retries, casc, isJenkinsStatusCompleted)
 	if err != nil {
 		t.Errorf("Waiting for Jenkins user configuration to complete failed with casc: %+v", casc)
 		t.Fatal(err)
 	}
-	t.Logf("Casc completed with casc: %+v", casc)
+	t.Logf("Casc completed with for casc named: %+v having annotations %+v", casc.Name, casc.Annotations)
 }
 
 func waitForJenkinsSafeRestart(t *testing.T, jenkinsClient jenkinsclient.Jenkins) {

@@ -31,7 +31,7 @@ import (
 )
 
 const (
-	jenkinsAnnotation = "jenkins.io/jenkins-reference"
+	JenkinsReferenceAnnotation = "jenkins.io/jenkins-reference"
 )
 
 var logx = log.Log
@@ -106,14 +106,15 @@ func (r *ReconcileCasc) Reconcile(request reconcile.Request) (reconcile.Result, 
 	}
 
 	if casc.Status.Phase == constants.JenkinsStatusCompleted {
-		return reconcile.Result{}, nil // Nothing to see here, move along...
+		return reconcile.Result{Requeue: false}, nil // Nothing to see here, move along...
 	}
 
 	// fetch the jenkins CR
-	value, _ := GetAnnotation(jenkinsAnnotation, casc.ObjectMeta)
-	logger.V(log.VDebug).Info(fmt.Sprintf("Jenkins annotation: %s, value: %s", jenkinsAnnotation, value))
+	jenkinsName, _ := GetAnnotation(JenkinsReferenceAnnotation, casc.ObjectMeta)
+	message := fmt.Sprintf("Casc configuration references Jenkins instance annotation: %s, jenkinsName: %s", JenkinsReferenceAnnotation, jenkinsName)
+	logger.V(log.VDebug).Info(message)
 	jenkins := &v1alpha2.Jenkins{}
-	err = r.client.Get(context.TODO(), types.NamespacedName{Name: value, Namespace: casc.Namespace}, jenkins)
+	err = r.client.Get(context.TODO(), types.NamespacedName{Name: jenkinsName, Namespace: casc.Namespace}, jenkins)
 	if err != nil {
 		// Error reading the object - requeue the request.
 		return reconcile.Result{}, err
@@ -121,6 +122,8 @@ func (r *ReconcileCasc) Reconcile(request reconcile.Request) (reconcile.Result, 
 
 	// check if jenkins Cr is completed
 	if jenkins.Status.Phase != constants.JenkinsStatusCompleted {
+		message = fmt.Sprintf("Jenkins CR '%s' has not reached status 'Completed' yet. Requeuing casc configuration", jenkinsName)
+		logger.V(log.VDebug).Info(message)
 		return reconcile.Result{Requeue: true}, nil
 	}
 	// setControllerReference
@@ -136,7 +139,7 @@ func (r *ReconcileCasc) Reconcile(request reconcile.Request) (reconcile.Result, 
 		Jenkins:                      jenkins,
 		Casc:                         casc,
 		Scheme:                       r.scheme,
-		Config:                       &r.config,
+		RestConfig:                   r.config,
 		JenkinsAPIConnectionSettings: r.jenkinsAPIConnectionSettings,
 	}
 
@@ -171,14 +174,9 @@ func (r *ReconcileCasc) Reconcile(request reconcile.Request) (reconcile.Result, 
 	}
 
 	result, err := userConfiguration.ReconcileCasc()
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-
 	if result.Requeue {
-		return result, nil
+		return result, err
 	}
-
 	//Update the status
 	casc.Status.LastTransitionTime = metav1.Now()
 	casc.Status.Phase = constants.JenkinsStatusCompleted
@@ -186,7 +184,10 @@ func (r *ReconcileCasc) Reconcile(request reconcile.Request) (reconcile.Result, 
 	if err != nil {
 		return reconcile.Result{}, err
 	}
-	message := fmt.Sprintf("Configuration as code phase for jenkins %s is complete", jenkins.Name)
+	//TODO Add fields for time
+	//time := casc.Status.ConfigurationCompleteTime.Sub(casc.Status.ConfigurationStartTime)
+	time := casc.Status.LastTransitionTime.Sub(casc.CreationTimestamp.Time)
+	message = fmt.Sprintf("Configuration as code phase is complete, took %s", time)
 	*r.notificationEvents <- event.Event{
 		Jenkins: *jenkins,
 		Phase:   event.PhaseUser,
@@ -194,7 +195,6 @@ func (r *ReconcileCasc) Reconcile(request reconcile.Request) (reconcile.Result, 
 		Reason:  reason.NewUserConfigurationComplete(reason.OperatorSource, []string{message}),
 	}
 	logger.V(log.VDebug).Info(message)
-
 	return reconcile.Result{}, nil
 }
 

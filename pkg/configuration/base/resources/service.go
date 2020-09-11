@@ -42,8 +42,8 @@ func GetJenkinsHTTPServiceName(jenkins *v1alpha2.Jenkins) string {
 	return fmt.Sprintf("%s-%s", constants.LabelAppValue, jenkins.ObjectMeta.Name)
 }
 
-// GetJenkinsSlavesServiceName returns Kubernetes service name used for expose Jenkins slave endpoint
-func GetJenkinsSlavesServiceName(jenkins *v1alpha2.Jenkins) string {
+// GetJenkinsJNLPServiceName returns Kubernetes service name used for expose Jenkins slave endpoint
+func GetJenkinsJNLPServiceName(jenkins *v1alpha2.Jenkins) string {
 	return fmt.Sprintf("%s-%s-jnlp", constants.LabelAppValue, jenkins.ObjectMeta.Name)
 }
 
@@ -57,8 +57,8 @@ func GetJenkinsHTTPServiceFQDN(jenkins *v1alpha2.Jenkins) (string, error) {
 	return fmt.Sprintf("%s-%s.%s.svc.%s", constants.LabelAppValue, jenkins.ObjectMeta.Name, jenkins.ObjectMeta.Namespace, clusterDomain), nil
 }
 
-// GetJenkinsSlavesServiceFQDN returns Kubernetes service FQDN used for expose Jenkins slave endpoint
-func GetJenkinsSlavesServiceFQDN(jenkins *v1alpha2.Jenkins) (string, error) {
+// GetJenkinsJNLPServiceFQDN returns Kubernetes service FQDN used for expose Jenkins slave endpoint
+func GetJenkinsJNLPServiceFQDN(jenkins *v1alpha2.Jenkins) (string, error) {
 	clusterDomain, err := getClusterDomain()
 	if err != nil {
 		return "", err
@@ -70,15 +70,12 @@ func GetJenkinsSlavesServiceFQDN(jenkins *v1alpha2.Jenkins) (string, error) {
 // GetClusterDomain returns Kubernetes cluster domain, default to "cluster.local"
 func getClusterDomain() (string, error) {
 	clusterDomain := "cluster.local"
-
 	if ok, err := isRunningInCluster(); !ok {
 		return clusterDomain, nil
 	} else if err != nil {
 		return "", nil
 	}
-
 	apiSvc := "kubernetes.default.svc"
-
 	cname, err := net.LookupCNAME(apiSvc)
 	if err != nil {
 		return "", stackerr.WithStack(err)

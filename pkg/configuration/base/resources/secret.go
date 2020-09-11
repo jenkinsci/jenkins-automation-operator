@@ -96,7 +96,12 @@ func WriteDataToTempFile(data []byte) (filename string, requeue bool, err error)
 	return tmpFile.Name(), false, nil
 }
 
-func CopySecret(k8sClient client.Client, k8sClientSet kubernetes.Clientset, restConfig *rest.Config, podName, secretName, namespace string) (requeue bool, err error) {
+func CopySecret(k8sClient client.Client, k8sClientSet kubernetes.Clientset, restConfig rest.Config, podName, secretName, namespace string) (requeue bool, err error) {
+	logger.V(logx.VDebug).Info(fmt.Sprintf("Copying secret '%s' from pod to pod's filesystem using restConfig: %+v ", secretName, restConfig))
+	if len(secretName) == 0 {
+		logger.Error(err, "secretName is empty in casc configuration: Skipping secret copy")
+		return false, nil
+	}
 	restConfig.GroupVersion = &schema.GroupVersion{Group: "", Version: "v1"}
 	restConfig.APIPath = "/api"
 	restConfig.ContentType = runtime.ContentTypeJSON

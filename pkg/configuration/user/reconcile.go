@@ -37,14 +37,13 @@ func New(configuration configuration.Configuration, jenkinsClient jenkinsclient.
 
 // ReconcileCasc is a reconcile loop for casc.
 func (r *reconcileUserConfiguration) ReconcileCasc() (reconcile.Result, error) {
-	result, err := r.ensureCasc(r.jenkinsClient)
+	result, err := r.ensureCasc()
 	if err != nil {
 		return reconcile.Result{}, err
 	}
 	if result.Requeue {
 		return result, nil
 	}
-
 	return reconcile.Result{}, nil
 }
 
@@ -86,9 +85,9 @@ func (r *reconcileUserConfiguration) ensureSeedJobs() (reconcile.Result, error) 
 	return reconcile.Result{}, nil
 }
 
-func (r *reconcileUserConfiguration) ensureCasc(jenkinsClient jenkinsclient.Jenkins) (reconcile.Result, error) {
+func (r *reconcileUserConfiguration) ensureCasc() (reconcile.Result, error) {
 	//Yaml
-	configurationAsCodeClient := casc.New(jenkinsClient, r.Configuration.Client, r.Configuration.ClientSet, r.Configuration.Config, "user-casc", r.Configuration.Casc, r.Configuration.Casc.Spec.ConfigurationAsCode)
+	configurationAsCodeClient := casc.New(r.Configuration, r.RestConfig, r.jenkinsClient, "user-casc", r.Configuration.Casc, r.Configuration.Casc.Spec.ConfigurationAsCode)
 	requeue, err := configurationAsCodeClient.EnsureCasc(r.Configuration.Jenkins.Name)
 	if err != nil {
 		return reconcile.Result{}, err
@@ -98,7 +97,7 @@ func (r *reconcileUserConfiguration) ensureCasc(jenkinsClient jenkinsclient.Jenk
 	}
 
 	// Groovy
-	configurationAsCodeClient = casc.New(jenkinsClient, r.Configuration.Client, r.Configuration.ClientSet, r.Configuration.Config, "user-groovy", r.Configuration.Casc, r.Configuration.Casc.Spec.GroovyScripts)
+	configurationAsCodeClient = casc.New(r.Configuration, r.RestConfig, r.jenkinsClient, "user-groovy", r.Configuration.Casc, r.Configuration.Casc.Spec.GroovyScripts)
 	requeue, err = configurationAsCodeClient.EnsureGroovy(r.Configuration.Jenkins.Name)
 	if err != nil {
 		return reconcile.Result{}, err

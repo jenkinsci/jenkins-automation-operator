@@ -32,7 +32,7 @@ func updateJenkinsCR(t *testing.T, jenkins *v1alpha2.Jenkins) {
 		},
 		corev1.EnvVar{
 			Name:  "JNLP_SERVICE_NAME",
-			Value: resources.GetJenkinsSlavesServiceName(jenkins),
+			Value: resources.GetJenkinsJNLPServiceName(jenkins),
 		},
 	)
 

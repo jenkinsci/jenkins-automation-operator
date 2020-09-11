@@ -8,7 +8,6 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration"
-	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
 
 	"github.com/go-logr/logr"
@@ -53,7 +52,7 @@ func (t *backupTriggers) add(namespace string, name string, trigger backupTrigge
 
 var triggers = backupTriggers{triggers: make(map[string]backupTrigger)}
 
-// BackupAndRestore represents Jenkins backup and restore client
+// BackupAndRestore represents Jenkins backup and restore client . This type extends configuration.Configuration
 type BackupAndRestore struct {
 	configuration.Configuration
 	logger logr.Logger
@@ -137,7 +136,7 @@ func (bar *BackupAndRestore) Restore(jenkinsClient jenkinsclient.Jenkins) error 
 		backupNumber = jenkins.Status.LastBackup
 	}
 	bar.logger.Info(fmt.Sprintf("Restoring backup '%d'", backupNumber))
-	podName := resources.GetJenkinsMasterPodName(jenkins.Name)
+	podName := bar.GetJenkinsMasterPodName()
 	command := jenkins.Spec.Restore.Action.Exec.Command
 	command = append(command, fmt.Sprintf("%d", backupNumber))
 	_, _, err := bar.Exec(podName, jenkins.Spec.Restore.ContainerName, command)
@@ -170,7 +169,7 @@ func (bar *BackupAndRestore) Backup(setBackupDoneBeforePodDeletion bool) error {
 	}
 	backupNumber := jenkins.Status.PendingBackup
 	bar.logger.Info(fmt.Sprintf("Performing backup '%d'", backupNumber))
-	podName := resources.GetJenkinsMasterPodName(jenkins.Name)
+	podName := bar.GetJenkinsMasterPodName()
 	command := jenkins.Spec.Backup.Action.Exec.Command
 	command = append(command, fmt.Sprintf("%d", backupNumber))
 	_, _, err := bar.Exec(podName, jenkins.Spec.Backup.ContainerName, command)

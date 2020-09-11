@@ -30,8 +30,8 @@ type PodRestart struct {
 	Undefined
 }
 
-// PodCreation informs that pod is being created.
-type PodCreation struct {
+// DeploymentEvent informs that pod is being created.
+type DeploymentEvent struct {
 	Undefined
 }
 
@@ -94,9 +94,9 @@ func NewPodRestart(source Source, short []string, verbose ...string) *PodRestart
 	}
 }
 
-// NewPodCreation returns new instance of PodCreation.
-func NewPodCreation(source Source, short []string, verbose ...string) *PodCreation {
-	return &PodCreation{
+// NewDeploymentEvent returns new instance of DeploymentEvent.
+func NewDeploymentEvent(source Source, short []string, verbose ...string) *DeploymentEvent {
+	return &DeploymentEvent{
 		Undefined{
 			source:  source,
 			short:   short,

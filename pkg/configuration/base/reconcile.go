@@ -5,9 +5,9 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
-	"reflect"
 	"strings"
-	"time"
+
+	"reflect"
 
 	"github.com/go-logr/logr"
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha3"
@@ -21,7 +21,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -48,46 +47,33 @@ func New(config configuration.Configuration, jenkinsAPIConnectionSettings jenkin
 // Reconcile takes care of base configuration.
 func (r *ReconcileJenkinsBaseConfiguration) Reconcile() (reconcile.Result, jenkinsclient.Jenkins, error) {
 	jenkinsConfig := resources.NewResourceObjectMeta(r.Configuration.Jenkins)
-
 	// Create Necessary Resources
-	err := r.ensureResourcesRequiredForJenkinsDeployment(jenkinsConfig)
+	err := r.ensureResourcesRequiredForJenkinsDeploymentArePresent(jenkinsConfig)
 	if err != nil {
 		return reconcile.Result{}, nil, err
 	}
 	r.logger.V(log.VDebug).Info("Kubernetes resources are present")
 
-	result, err := r.ensureJenkinsDeployment(jenkinsConfig)
+	result, err := r.ensureJenkinsDeploymentIsPresent(jenkinsConfig)
 	if err != nil {
+		r.logger.V(log.VDebug).Info(fmt.Sprintf("Error when ensuring if Jenkins Deployment is present %s", err))
 		return reconcile.Result{}, nil, err
 	}
-	if result.Requeue {
-		return result, nil, nil
-	}
-	r.logger.V(log.VDebug).Info("Jenkins Deployment is present")
-
-	result, err = r.ensureJenkinsMasterPod()
+	r.logger.V(log.VDebug).Info(fmt.Sprintf("Jenkins Deployment is present: Requeue result is: %+v", result.Requeue))
+	r.logger.V(log.VDebug).Info("Ensuring that Deployment is ready")
+	result, err = r.ensureJenkinsDeploymentIsReady()
 	if err != nil {
+		r.logger.V(log.VDebug).Info(fmt.Sprintf("Error when ensuring that Deployment is ready %s", err))
 		return reconcile.Result{}, nil, err
 	}
-	if result.Requeue {
-		return result, nil, nil
-	}
-	r.logger.V(log.VDebug).Info("Jenkins master pod is present")
+	r.logger.V(log.VDebug).Info(fmt.Sprintf("Deployment for jenkins.jenkins.io { %s } is ready ", r.Jenkins.Name))
 
-	stopReconcileLoop, err := r.detectJenkinsMasterPodStartingIssues()
-	if err != nil {
-		return reconcile.Result{}, nil, err
-	}
-	if stopReconcileLoop {
-		return reconcile.Result{Requeue: false}, nil, nil
-	}
-
-	jenkinsClient, err := r.Configuration.GetJenkinsClient()
-	if err != nil {
+	jenkinsClient, err2 := r.Configuration.GetJenkinsClient()
+	if err2 != nil {
+		r.logger.V(log.VDebug).Info(fmt.Sprintf("Error when try to configure JenkinsClient: %s", err2))
 		return reconcile.Result{}, nil, err
 	}
 	r.logger.V(log.VDebug).Info("Jenkins API client set")
-
 	ok, err := r.verifyPlugins(jenkinsClient)
 	if err != nil {
 		return reconcile.Result{}, nil, err
@@ -97,13 +83,12 @@ func (r *ReconcileJenkinsBaseConfiguration) Reconcile() (reconcile.Result, jenki
 		message := "Some plugins have changed, restarting Jenkins"
 		r.logger.Info(message)
 	}
-
 	result, err = r.ensureBaseConfiguration(jenkinsClient)
-
 	return result, jenkinsClient, err
+	//return result, nil, err
 }
 
-func (r *ReconcileJenkinsBaseConfiguration) ensureResourcesRequiredForJenkinsDeployment(metaObject metav1.ObjectMeta) error {
+func (r *ReconcileJenkinsBaseConfiguration) ensureResourcesRequiredForJenkinsDeploymentArePresent(metaObject metav1.ObjectMeta) error {
 	if err := r.createOperatorCredentialsSecret(metaObject); err != nil {
 		return err
 	}
@@ -140,13 +125,13 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureResourcesRequiredForJenkinsDep
 	}
 	r.logger.V(log.VDebug).Info("Jenkins HTTP Service is present")
 
-	if err := r.createService(metaObject, resources.GetJenkinsSlavesServiceName(r.Configuration.Jenkins), r.Configuration.Jenkins.Spec.SlaveService); err != nil {
+	if err := r.createService(metaObject, resources.GetJenkinsJNLPServiceName(r.Configuration.Jenkins), r.Configuration.Jenkins.Spec.SlaveService); err != nil {
 		return err
 	}
 	r.logger.V(log.VDebug).Info("Jenkins slave Service is present")
 
 	if resources.IsRouteAPIAvailable(&r.ClientSet) {
-		r.logger.V(log.VDebug).Info("Route API is available. Now creating route.")
+		r.logger.V(log.VDebug).Info("Route API is available. Now ensuring route is present")
 		if err := r.createRoute(metaObject, httpServiceName, r.Configuration.Jenkins); err != nil {
 			return err
 		}
@@ -248,48 +233,13 @@ func (r *ReconcileJenkinsBaseConfiguration) compareVolumes(actualPod corev1.Pod)
 			withoutServiceAccount = append(withoutServiceAccount, volume)
 		}
 	}
-
 	return reflect.DeepEqual(
 		append(resources.GetJenkinsMasterPodBaseVolumes(r.Configuration.Jenkins), r.Configuration.Jenkins.Spec.Master.Volumes...),
 		withoutServiceAccount,
 	)
 }
 
-func (r *ReconcileJenkinsBaseConfiguration) detectJenkinsMasterPodStartingIssues() (stopReconcileLoop bool, err error) {
-	jenkinsMasterPod, err := r.Configuration.GetJenkinsMasterPod()
-	if err != nil {
-		return false, err
-	}
-
-	if r.Configuration.Jenkins.Status.ProvisionStartTime == nil {
-		return true, nil
-	}
-
-	if jenkinsMasterPod.Status.Phase == corev1.PodPending {
-		timeout := r.Configuration.Jenkins.Status.ProvisionStartTime.Add(time.Minute * 2).UTC()
-		now := time.Now().UTC()
-		if now.After(timeout) {
-			events := &corev1.EventList{}
-			err = r.Client.List(context.TODO(), events, client.InNamespace(r.Configuration.Jenkins.Namespace))
-			if err != nil {
-				return false, stackerr.WithStack(err)
-			}
-
-			filteredEvents := r.filterEvents(*events, *jenkinsMasterPod)
-
-			if len(filteredEvents) == 0 {
-				return false, nil
-			}
-
-			r.logger.Info(fmt.Sprintf("Jenkins master pod starting timeout, events '%+v'", filteredEvents))
-			return true, nil
-		}
-	}
-
-	return false, nil
-}
-
-func (r *ReconcileJenkinsBaseConfiguration) filterEvents(source corev1.EventList, jenkinsMasterPod corev1.Pod) []string {
+func (r *ReconcileJenkinsBaseConfiguration) FilterEvents(source corev1.EventList, jenkinsMasterPod corev1.Pod) []string {
 	events := []string{}
 	for _, eventItem := range source.Items {
 		if r.Configuration.Jenkins.Status.ProvisionStartTime.UTC().After(eventItem.LastTimestamp.UTC()) {

@@ -6,8 +6,10 @@ metadata:
   name: example-casc
 spec:
   configurationAsCode:
+    secret: 
+      name: user-secret
     configurations: 
-    - name: jenkins-operator-user-configuration
+    - name: jenkins-example-user-configuration
   groovyScripts:
     configurations:
-    - name: jenkins-operator-user-configuration
+    - name: jenkins-example-user-configuration

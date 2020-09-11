@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	podLogTailLimit       int64 = 15
+	podLogTailLimit       int64 = 100
 	kubernetesEventsLimit int64 = 15
 	// MUST match the labels in the deployment manifest: deploy/operator.yaml
 	operatorPodLabels = map[string]string{
@@ -102,9 +102,9 @@ func printKubernetesEvents(t *testing.T, namespace string) {
 		t.Errorf("Couldn't get kubernetes events: %s", err)
 	} else {
 		t.Logf("Last %d events from kubernetes:\n", kubernetesEventsLimit)
-
 		for _, event := range events {
-			t.Logf("%+v\n\n", event)
+			regarding := event.Regarding
+			t.Logf("Received event: %+v regarding: %+v/%+v : Note: %+v", event.Reason, regarding.Kind, regarding.Name, event.Note)
 		}
 	}
 }
@@ -119,7 +119,6 @@ func printKubernetesPods(t *testing.T, namespace string) {
 	if err != nil {
 		t.Errorf("Couldn't get kubernetes pods: %s", err)
 	}
-
 	for _, pod := range podList.Items {
 		t.Logf("%+v\n\n", pod)
 	}

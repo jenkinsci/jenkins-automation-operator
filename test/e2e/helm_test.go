@@ -4,13 +4,13 @@ package e2e
 
 import (
 	"fmt"
-	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base"
 	"os/exec"
 	"testing"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis"
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha3"
+	"github.com/jenkinsci/kubernetes-operator/pkg/controller/casc"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/stretchr/testify/require"
@@ -51,22 +51,22 @@ func TestDeployHelmChart(t *testing.T) {
 	}
 	err = framework.AddToFrameworkScheme(apis.AddToScheme, cascServiceList)
 	require.NoError(t, err)
-
-	annotations := map[string]string{base.UseDeploymentAnnotation: "false"}
 	jenkins := &v1alpha2.Jenkins{
 		TypeMeta: v1alpha2.JenkinsTypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        "jenkins",
-			Namespace:   namespace,
-			Annotations: annotations,
+			Name:      "jenkins",
+			Namespace: namespace,
 		},
 	}
-	jenkins.Annotations[base.UseDeploymentAnnotation] = "false"
 
+	annotations := map[string]string{
+		casc.JenkinsReferenceAnnotation: jenkins.Name,
+	}
 	casc := &v1alpha3.Casc{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "casc-example",
-			Namespace: namespace,
+			Name:        "casc-example",
+			Namespace:   namespace,
+			Annotations: annotations,
 		},
 	}
 

@@ -11,14 +11,14 @@ import (
 )
 
 const (
-	basicSettingsGroovyScriptName               = "1-basic-settings.groovy"
-	enableCSRFGroovyScriptName                  = "2-enable-csrf.groovy"
-	disableUsageStatsGroovyScriptName           = "3-disable-usage-stats.groovy"
-	enableMasterAccessControlGroovyScriptName   = "4-enable-master-access-control.groovy"
-	disableInsecureFeaturesGroovyScriptName     = "5-disable-insecure-features.groovy"
-	configureKubernetesPluginGroovyScriptName   = "6-configure-kubernetes-plugin.groovy"
-	configureViewsGroovyScriptName              = "7-configure-views.groovy"
-	disableJobDslScriptApprovalGroovyScriptName = "8-disable-job-dsl-script-approval.groovy"
+	basicSettingsGroovyScriptName             = "1-basic-settings.groovy"
+	enableCSRFGroovyScriptName                = "2-enable-csrf.groovy"
+	disableUsageStatsGroovyScriptName         = "3-disable-usage-stats.groovy"
+	enableMasterAccessControlGroovyScriptName = "4-enable-master-access-control.groovy"
+	disableInsecureFeaturesGroovyScriptName   = "5-disable-insecure-features.groovy"
+	//configureKubernetesPluginGroovyScriptName   = "6-configure-kubernetes-plugin.groovy"
+	configureViewsGroovyScriptName = "7-configure-views.groovy"
+	//disableJobDslScriptApprovalGroovyScriptName = "8-disable-job-dsl-script-approval.groovy"
 )
 
 const basicSettingsFmt = `
@@ -111,7 +111,8 @@ if (jenkins.getDescriptor("jenkins.CLI") != null) {
 jenkins.save()
 `
 
-const configureKubernetesPluginFmt = `
+const ConfigureKubernetesPluginFmt = `
+import com.cloudbees.hudson.plugins.modeling.*
 import com.cloudbees.plugins.credentials.CredentialsScope
 import com.cloudbees.plugins.credentials.SystemCredentialsProvider
 import com.cloudbees.plugins.credentials.domains.Domain
@@ -162,7 +163,7 @@ if (jenkins.getView(nonSeedViewName) == null) {
 jenkins.save()
 `
 
-const disableJobDSLScriptApproval = `
+const DisableJobDSLScriptApproval = `
 import jenkins.model.Jenkins
 import javaposse.jobdsl.plugin.GlobalJobDslSecurityConfiguration
 import jenkins.model.GlobalConfiguration
@@ -180,27 +181,27 @@ func GetBaseConfigurationConfigMapName(jenkins *v1alpha2.Jenkins) string {
 // NewBaseConfigurationConfigMap builds Kubernetes config map used to base configuration.
 func NewBaseConfigurationConfigMap(meta metav1.ObjectMeta, jenkins *v1alpha2.Jenkins) (*corev1.ConfigMap, error) {
 	meta.Name = GetBaseConfigurationConfigMapName(jenkins)
-	jenkinsServiceFQDN, err := GetJenkinsHTTPServiceFQDN(jenkins)
-	if err != nil {
-		return nil, err
-	}
-	jenkinsSlavesServiceFQDN, err := GetJenkinsSlavesServiceFQDN(jenkins)
-	if err != nil {
-		return nil, err
-	}
+	//jenkinsServiceFQDN, err := GetJenkinsHTTPServiceFQDN(jenkins)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//jenkinsSlavesServiceFQDN, err := GetJenkinsJNLPServiceFQDN(jenkins)
+	//if err != nil {
+	//	return nil, err
+	//}
 	groovyScriptsMap := map[string]string{
 		basicSettingsGroovyScriptName:             fmt.Sprintf(basicSettingsFmt, constants.DefaultAmountOfExecutors),
 		enableCSRFGroovyScriptName:                enableCSRF,
 		disableUsageStatsGroovyScriptName:         disableUsageStats,
 		enableMasterAccessControlGroovyScriptName: enableMasterAccessControl,
 		disableInsecureFeaturesGroovyScriptName:   disableInsecureFeatures,
-		configureKubernetesPluginGroovyScriptName: fmt.Sprintf(configureKubernetesPluginFmt,
+		/*configureKubernetesPluginGroovyScriptName: fmt.Sprintf(configureKubernetesPluginFmt,
 			jenkins.ObjectMeta.Namespace,
 			fmt.Sprintf("http://%s:%d", jenkinsServiceFQDN, jenkins.Spec.Service.Port),
 			fmt.Sprintf("%s:%d", jenkinsSlavesServiceFQDN, jenkins.Spec.SlaveService.Port),
-		),
-		configureViewsGroovyScriptName:              configureViews,
-		disableJobDslScriptApprovalGroovyScriptName: disableJobDSLScriptApproval,
+		),*/
+		configureViewsGroovyScriptName: configureViews,
+		//disableJobDslScriptApprovalGroovyScriptName: disableJobDSLScriptApproval,
 	}
 	if jenkins.Spec.Master.DisableCSRFProtection {
 		delete(groovyScriptsMap, enableCSRFGroovyScriptName)

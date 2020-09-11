@@ -28,6 +28,8 @@ import (
 )
 
 const (
+	SeedJobsType = "seed-jobs"
+
 	// UsernameSecretKey is username data key in Kubernetes secret used to create Jenkins username/password credential
 	UsernameSecretKey = "username"
 	// PasswordSecretKey is password data key in Kubernetes secret used to create Jenkins username/password credential
@@ -247,13 +249,14 @@ func (s *seedJobs) createJobs(jenkins *v1alpha2.Jenkins) (requeue bool, err erro
 		Secret:         v1alpha3.SecretRef{Name: ""},
 		Configurations: []v1alpha3.ConfigMapRef{{Name: ""}},
 	}
-	groovyClient := groovy.New(s.jenkinsClient, s.Client, jenkins, "seed-jobs", customization)
+	groovyClient := groovy.New(s.jenkinsClient, s.Client, jenkins, SeedJobsType, customization)
+	//FIXME ensure that jobs are run in alphabetical order
 	for _, seedJob := range jenkins.Spec.SeedJobs {
 		credentialValue, err := s.credentialValue(jenkins.Namespace, seedJob)
 		if err != nil {
+			s.logger.V(log.VWarn).Info(fmt.Sprintf("Error while trying to get credentials value for seedJob with ID: %s ", seedJob.ID))
 			return true, err
 		}
-
 		groovyScript, err := seedJobCreatingGroovyScript(seedJob)
 		if err != nil {
 			return true, err
@@ -262,11 +265,14 @@ func (s *seedJobs) createJobs(jenkins *v1alpha2.Jenkins) (requeue bool, err erro
 		hash := sha256.New()
 		hash.Write([]byte(groovyScript))
 		hash.Write([]byte(credentialValue))
-		requeue, err := groovyClient.EnsureSingle(seedJob.ID, fmt.Sprintf("%s.groovy", seedJob.ID), base64.URLEncoding.EncodeToString(hash.Sum(nil)), groovyScript)
+		scriptName := fmt.Sprintf("%s.groovy", seedJob.ID)
+		//FIXME check if scriptHash is really used ? it has a nil argument, and EnsureSingle() does not seem to use it
+		scriptHash := base64.URLEncoding.EncodeToString(hash.Sum(nil))
+		requeue, err := groovyClient.EnsureSingle(seedJob.ID, scriptName, scriptHash, groovyScript)
 		if err != nil {
+			s.logger.V(log.VWarn).Info(fmt.Sprintf("Error while triggering seedJob with ID : %s", seedJob.ID))
 			return true, err
 		}
-
 		if requeue {
 			return true, nil
 		}
@@ -386,7 +392,7 @@ func agentDeploymentName(jenkins v1alpha2.Jenkins, agentName string) string {
 }
 
 func agentDeployment(jenkins *v1alpha2.Jenkins, namespace string, agentName string, secret string) (*appsv1.Deployment, error) {
-	jenkinsSlavesServiceFQDN, err := resources.GetJenkinsSlavesServiceFQDN(jenkins)
+	jenkinsSlavesServiceFQDN, err := resources.GetJenkinsJNLPServiceFQDN(jenkins)
 	if err != nil {
 		return nil, err
 	}

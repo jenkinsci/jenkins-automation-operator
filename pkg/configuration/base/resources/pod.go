@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/constants"
-
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/kubernetes/pkg/client/conditions"
@@ -45,13 +45,6 @@ const (
 	httpPortName = "http"
 	jnlpPortName = "jnlp"
 )
-
-func buildPodTypeMeta() metav1.TypeMeta {
-	return metav1.TypeMeta{
-		Kind:       "Pod",
-		APIVersion: "v1",
-	}
-}
 
 // GetJenkinsMasterContainerBaseCommand returns default Jenkins master container command
 func GetJenkinsMasterContainerBaseCommand() []string {
@@ -212,7 +205,7 @@ func NewJenkinsMasterContainer(jenkins *v1alpha2.Jenkins) corev1.Container {
 			},
 			{
 				Name:          jnlpPortName,
-				ContainerPort: constants.DefaultSlavePortInt32,
+				ContainerPort: constants.DefaultJNLPPortInt32,
 				Protocol:      corev1.ProtocolTCP,
 			},
 		},
@@ -297,25 +290,12 @@ func NewJenkinsMasterPod(objectMeta metav1.ObjectMeta, jenkins *v1alpha2.Jenkins
 	}
 }
 
-/* isPodRunning eturn a condition function that indicates whether the given pod is currently running
-func isPodRunning(k8sClient k8s.Client, name, namespace string) (ready bool, err error) {
-	pod := &corev1.Pod{}
-	err = k8sClient.Get(context.TODO(), types.NamespacedName{Name: name, Namespace: namespace}, pod)
-	if err != nil && !apierrors.IsNotFound(err) {
-		return false, stackerr.WithStack(err)
-	} else if err != nil {
-		return false, stackerr.WithStack(err)
-	} else {
-		for {
-			if (pod.Status.Phase != corev1.PodSucceeded) {
-				time.Sleep(time.Millisecond * 10)
-			}
-		}
+func buildPodTypeMeta() metav1.TypeMeta {
+	return metav1.TypeMeta{
+		Kind:       "Pod",
+		APIVersion: "v1",
 	}
-
-	return
 }
-*/
 
 // return a condition function that indicates whether the given pod is
 // currently running

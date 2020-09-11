@@ -87,7 +87,7 @@ func TestConfiguration(t *testing.T) {
 	createUserConfigurationSecret(t, namespace, stringData)
 	createUserConfigurationConfigMap(t, namespace, numberOfExecutors, systemMessageEnvName)
 	jenkins := createJenkinsCR(t, jenkinsCRName, namespace, priorityClassName, &[]v1alpha2.SeedJob{mySeedJob.SeedJob})
-	jenkins.Annotations[base.UseDeploymentAnnotation] = "false"
+	//jenkins.Annotations[base.UseDeploymentAnnotation] = "false"
 	createDefaultLimitsForContainersInNamespace(t, namespace)
 	createKubernetesCredentialsProviderSecret(t, namespace, mySeedJob)
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
@@ -246,9 +246,19 @@ func verifyJenkinsMasterPodAttributes(t *testing.T, jenkins *v1alpha2.Jenkins) {
 	assert.Equal(t, resources.JenkinsMasterContainerName, jenkinsPod.Spec.Containers[0].Name)
 	assert.Equal(t, len(jenkins.Spec.Master.Containers), len(jenkinsPod.Spec.Containers))
 
-	assert.Equal(t, jenkins.Spec.Master.SecurityContext, jenkinsPod.Spec.SecurityContext)
+	expectedSecurityContext := jenkins.Spec.Master.SecurityContext
+	if expectedSecurityContext == nil {
+		expectedSecurityContext = getEmptySecurityContext()
+	}
+	assert.Equal(t, expectedSecurityContext, jenkinsPod.Spec.SecurityContext)
 	assert.Equal(t, jenkins.Spec.Master.Containers[0].Command, jenkinsPod.Spec.Containers[0].Command)
 
+	// The deployment adds "pod-template-hash" as actualLabels; removing it for the comparaison
+	actualLabels := jenkinsPod.Labels
+	_, ok := actualLabels["pod-template-hash"]
+	if ok {
+		delete(actualLabels, "pod-template-hash")
+	}
 	assert.Equal(t, resources.GetJenkinsMasterPodLabels(jenkins), jenkinsPod.Labels)
 	assert.Equal(t, jenkins.Spec.Master.PriorityClassName, jenkinsPod.Spec.PriorityClassName)
 
@@ -289,6 +299,19 @@ func verifyJenkinsMasterPodAttributes(t *testing.T, jenkins *v1alpha2.Jenkins) {
 	}
 
 	t.Log("Jenkins pod attributes are valid")
+}
+
+func getEmptySecurityContext() *corev1.PodSecurityContext {
+	return &corev1.PodSecurityContext{
+		SELinuxOptions:     nil,
+		RunAsUser:          nil,
+		RunAsNonRoot:       nil,
+		SupplementalGroups: nil,
+		FSGroup:            nil,
+		RunAsGroup:         nil,
+		Sysctls:            nil,
+		WindowsOptions:     nil,
+	}
 }
 
 func verifyContainer(t *testing.T, expected corev1.Container, actual corev1.Container) {

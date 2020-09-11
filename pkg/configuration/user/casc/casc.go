@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/jenkinsci/kubernetes-operator/pkg/configuration"
+
 	"github.com/go-logr/logr"
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha3"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/groovy"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-	k8s "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const groovyUtf8MaxStringLength = 65535
@@ -23,69 +23,78 @@ type ConfigurationAsCode interface {
 	EnsureGroovy(jenkinsName string) (requeue bool, err error)
 }
 
+// TODO merge configurationAsCode struct and configuration.Configuration struct
+// into a single one. See backuprestore.go for inheritance
 type configurationAsCode struct {
+	configuration.Configuration
+	RestConfig   rest.Config
 	Casc         *v1alpha3.Casc
 	GroovyClient *groovy.Groovy
-	K8sClient    k8s.Client
-	ClientSet    kubernetes.Clientset
-	RestConfig   *rest.Config
 	Logger       logr.Logger
 }
 
 // New creates new instance of ConfigurationAsCode
-func New(jenkinsClient jenkinsclient.Jenkins, k8sClient k8s.Client, clientSet kubernetes.Clientset, restConfig *rest.Config, configurationType string, casc *v1alpha3.Casc, customization v1alpha3.Customization) ConfigurationAsCode {
+func New(config configuration.Configuration, restConfig rest.Config, jenkinsClient jenkinsclient.Jenkins, configurationType string, casc *v1alpha3.Casc, customization v1alpha3.Customization) ConfigurationAsCode {
 	return &configurationAsCode{
-		GroovyClient: groovy.New(jenkinsClient, k8sClient, casc, configurationType, customization),
-		Casc:         casc,
-		K8sClient:    k8sClient,
-		ClientSet:    clientSet,
-		RestConfig:   restConfig,
-		Logger:       log.Log.WithValues("cr", casc.Name),
+		Configuration: config,
+		Casc:          casc,
+		RestConfig:    restConfig,
+		GroovyClient:  groovy.New(jenkinsClient, config.Client, casc, configurationType, customization),
+		Logger:        log.Log.WithValues("cr", casc.Name),
 	}
 }
 
 // EnsureCasc configures Jenkins with help Configuration as a code plugin
 func (c *configurationAsCode) EnsureCasc(jenkinsName string) (requeue bool, err error) {
 	//Add Labels to secret
-	if err := resources.AddLabelToWatchedSecrets(jenkinsName, c.Casc.Spec.ConfigurationAsCode.Secret.Name, c.Casc.ObjectMeta.Namespace, c.K8sClient); err != nil {
+	namespace := c.Casc.ObjectMeta.Namespace
+	secretName := c.Casc.Spec.ConfigurationAsCode.Secret.Name
+	if err := resources.AddLabelToWatchedSecrets(jenkinsName, secretName, namespace, c.Client); err != nil {
+		c.Logger.V(log.VDebug).Info(fmt.Sprintf("Error while adding labels to secret '%s' : %s", secretName, err))
 		return true, err
 	}
 	c.Logger.V(log.VDebug).Info("labels added to configurationAsCode secret")
 
 	//Add Labels to configmaps
-	if err := resources.AddLabelToWatchedCMs(jenkinsName, c.Casc.ObjectMeta.Namespace, c.K8sClient, c.Casc.Spec.ConfigurationAsCode.Configurations); err != nil {
+	configMaps := c.Casc.Spec.ConfigurationAsCode.Configurations
+	if err := resources.AddLabelToWatchedCMs(jenkinsName, namespace, c.Client, configMaps); err != nil {
 		return true, err
 	}
-	c.Logger.V(log.VDebug).Info("labels added to configurationAsCode configmap")
+	c.Logger.V(log.VDebug).Info(fmt.Sprintf("labels added to configurationAsCode configmap: '%+v'", configMaps))
+	podName := c.GetJenkinsMasterPodName()
 	// Reconcile
-	requeue, err = resources.CopySecret(c.K8sClient, c.ClientSet, c.RestConfig, resources.GetJenkinsMasterPodName(jenkinsName), c.Casc.Spec.ConfigurationAsCode.Secret.Name, c.Casc.ObjectMeta.Namespace)
+	c.Logger.V(log.VDebug).Info(fmt.Sprintf("Copying secret '%s' from pod to pod's filesystem using restConfig: %+v ", secretName, c))
+	requeue, err = resources.CopySecret(c.Client, c.ClientSet, c.RestConfig, podName, secretName, namespace)
 	if err != nil || requeue {
 		return requeue, err
 	}
 
-	return c.GroovyClient.Ensure(func(name string) bool {
+	hasYamlSuffix := func(name string) bool {
 		return strings.HasSuffix(name, ".yaml") || strings.HasSuffix(name, ".yml")
-	}, func(groovyScript string) string {
+	}
+	prepareScript := func(groovyScript string) string {
 		return fmt.Sprintf(applyConfigurationAsCodeGroovyScriptFmt, prepareScript(groovyScript))
-	})
+	}
+	return c.GroovyClient.Ensure(hasYamlSuffix, prepareScript)
 }
 
 // EnsureCasc configures Jenkins with help Configuration as a code plugin
-func (c *configurationAsCode) EnsureGroovy(jenkinsName string) (requeue bool, err error) {
+func (c *configurationAsCode) EnsureGroovy(jenkinsCRName string) (requeue bool, err error) {
 	//Add Labels to secret
-	if err := resources.AddLabelToWatchedSecrets(jenkinsName, c.Casc.Spec.GroovyScripts.Secret.Name, c.Casc.ObjectMeta.Namespace, c.K8sClient); err != nil {
+	if err := resources.AddLabelToWatchedSecrets(jenkinsCRName, c.Casc.Spec.GroovyScripts.Secret.Name, c.Casc.ObjectMeta.Namespace, c.Client); err != nil {
 		return true, err
 	}
-	c.Logger.V(log.VDebug).Info("labels added to configuration as conde secret")
+	c.Logger.V(log.VDebug).Info("labels added to configuration as code secret")
 
 	//Add Labels to configmaps
-	if err := resources.AddLabelToWatchedCMs(jenkinsName, c.Casc.ObjectMeta.Namespace, c.K8sClient, c.Casc.Spec.GroovyScripts.Configurations); err != nil {
+	if err := resources.AddLabelToWatchedCMs(jenkinsCRName, c.Casc.ObjectMeta.Namespace, c.Client, c.Casc.Spec.GroovyScripts.Configurations); err != nil {
 		return true, err
 	}
 	c.Logger.V(log.VDebug).Info("labels added to configuration as code configmap")
 
+	podName := c.GetJenkinsMasterPodName()
 	// Reconcile
-	requeue, err = resources.CopySecret(c.K8sClient, c.ClientSet, c.RestConfig, resources.GetJenkinsMasterPodName(jenkinsName), c.Casc.Spec.ConfigurationAsCode.Secret.Name, c.Casc.ObjectMeta.Namespace)
+	requeue, err = resources.CopySecret(c.Client, c.ClientSet, c.RestConfig, podName, c.Casc.Spec.ConfigurationAsCode.Secret.Name, c.Casc.ObjectMeta.Namespace)
 	if err != nil || requeue {
 		return requeue, err
 	}

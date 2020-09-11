@@ -41,7 +41,7 @@ type CopyOptions struct {
 	Namespace  string
 	NoPreserve bool
 
-	ClientConfig      *restclient.Config
+	ClientConfig      restclient.Config
 	K8sclient         kubernetes.Clientset
 	ExecParentCmdName string
 
@@ -49,7 +49,7 @@ type CopyOptions struct {
 }
 
 // NewCopyOptions creates the options for copy
-func NewCopyOptions(clientConfig *restclient.Config, clientSet kubernetes.Clientset, ioStreams genericclioptions.IOStreams) *CopyOptions {
+func NewCopyOptions(clientConfig restclient.Config, clientSet kubernetes.Clientset, ioStreams genericclioptions.IOStreams) *CopyOptions {
 	return &CopyOptions{
 		ClientConfig: clientConfig,
 		K8sclient:    clientSet,
@@ -428,7 +428,7 @@ func (o *CopyOptions) execute(options *exec.ExecOptions) error {
 		options.ContainerName = o.Container
 	}
 
-	options.Config = o.ClientConfig
+	options.Config = &o.ClientConfig
 	options.PodClient = o.K8sclient.CoreV1()
 
 	if err := options.Run(); err != nil {

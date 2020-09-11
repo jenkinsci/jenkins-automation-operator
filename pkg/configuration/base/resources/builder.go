@@ -142,7 +142,7 @@ func getVolumes(cr *jenkinsv1alpha2.JenkinsImage, clientSet *kubernetes.Clientse
 			},
 		},
 	}
-	logger.Info(fmt.Sprintf("Config volume of type ConfigMap and name :  %s created", name))
+	logger.Info(fmt.Sprintf("RestConfig volume of type ConfigMap and name :  %s created", name))
 	name = fmt.Sprintf(NameWithSuffixFormat, cr.Name, DockerSecretSuffix)
 	secretName := getPushSecretName(cr, clientSet)
 	logger.Info(fmt.Sprintf("Push to registry will be using secret:  %s ", secretName))

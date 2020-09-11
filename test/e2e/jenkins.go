@@ -81,17 +81,17 @@ func createJenkinsCR(t *testing.T, name, namespace, priorityClassName string, se
 		seedJobs = append(seedJobs, *seedJob...)
 	}
 	// TODO fix e2e to use deployment instead of pod
-	annotations := map[string]string{"test": "label", base.UseDeploymentAnnotation: "false"}
+	//annotations := map[string]string{"test": "label", base.UseDeploymentAnnotation: "false"}
 	jenkins := &v1alpha2.Jenkins{
 		TypeMeta: v1alpha2.JenkinsTypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        name,
-			Namespace:   namespace,
-			Annotations: annotations,
+			Name:      name,
+			Namespace: namespace,
+			//Annotations: annotations,
 		},
 		Spec: v1alpha2.JenkinsSpec{
 			Master: v1alpha2.JenkinsMaster{
-				Annotations: annotations,
+				//Annotations: annotations,
 				Containers: []v1alpha2.Container{
 					{
 						Name: resources.JenkinsMasterContainerName,
@@ -186,7 +186,11 @@ func createJenkinsAPIClientFromServiceAccount(t *testing.T, jenkins *v1alpha2.Je
 	if err != nil {
 		return nil, err
 	}
-	config := configuration.Configuration{Jenkins: jenkins, ClientSet: *clientSet, Config: framework.Global.KubeConfig}
+	config := configuration.Configuration{
+		Jenkins:    jenkins,
+		ClientSet:  *clientSet,
+		RestConfig: *framework.Global.KubeConfig,
+	}
 	r := base.New(config, jenkinsclient.JenkinsAPIConnectionSettings{})
 
 	token, _, err := r.Configuration.Exec(podName, resources.JenkinsMasterContainerName, []string{"cat", "/var/run/secrets/kubernetes.io/serviceaccount/token"})
@@ -221,7 +225,8 @@ func verifyJenkinsAPIConnection(t *testing.T, jenkins *v1alpha2.Jenkins, namespa
 	}, &service)
 	require.NoError(t, err)
 
-	podName := resources.GetJenkinsMasterPodName(jenkins.ObjectMeta.Name)
+	//podName := resources.GetJenkinsMasterPodName(jenkins.ObjectMeta.Name)
+	podName := getJenkinsMasterPod(t, jenkins).Name
 	port, cleanUpFunc, waitFunc, portForwardFunc, err := setupPortForwardToPod(t, namespace, podName, int(constants.DefaultHTTPPortInt32))
 	if err != nil {
 		t.Fatal(err)

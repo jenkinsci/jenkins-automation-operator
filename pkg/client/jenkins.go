@@ -212,7 +212,6 @@ func (jenkins *jenkins) GetNodeSecret(name string) (string, error) {
 			result[name] = match[i]
 		}
 	}
-
 	return result["secret"], nil
 }
 
