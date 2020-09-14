@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/constants"
 	corev1 "k8s.io/api/core/v1"
@@ -247,11 +245,6 @@ func newContainers(jenkins *v1alpha2.Jenkins) (containers []corev1.Container) {
 	return
 }
 
-// GetJenkinsMasterPodName returns Jenkins pod name for given CR
-func GetJenkinsMasterPodName(name string) string {
-	return fmt.Sprintf("%s-%s", constants.LabelAppValue, name)
-}
-
 // GetJenkinsMasterPodLabels returns Jenkins pod labels for given CR
 func GetJenkinsMasterPodLabels(jenkins *v1alpha2.Jenkins) map[string]string {
 	var labels map[string]string
@@ -264,37 +257,6 @@ func GetJenkinsMasterPodLabels(jenkins *v1alpha2.Jenkins) map[string]string {
 		labels[key] = value
 	}
 	return labels
-}
-
-// NewJenkinsMasterPod builds Jenkins Master Kubernetes Pod resource
-func NewJenkinsMasterPod(objectMeta metav1.ObjectMeta, jenkins *v1alpha2.Jenkins) *corev1.Pod {
-	serviceAccountName := objectMeta.Name
-	objectMeta.Annotations = jenkins.Spec.Master.Annotations
-	objectMeta.Name = GetJenkinsMasterPodName(jenkins.Name)
-	objectMeta.Labels = GetJenkinsMasterPodLabels(jenkins)
-
-	return &corev1.Pod{
-		TypeMeta:   buildPodTypeMeta(),
-		ObjectMeta: objectMeta,
-		Spec: corev1.PodSpec{
-			ServiceAccountName: serviceAccountName,
-			RestartPolicy:      corev1.RestartPolicyNever,
-			NodeSelector:       jenkins.Spec.Master.NodeSelector,
-			Containers:         newContainers(jenkins),
-			Volumes:            append(GetJenkinsMasterPodBaseVolumes(jenkins), jenkins.Spec.Master.Volumes...),
-			SecurityContext:    jenkins.Spec.Master.SecurityContext,
-			ImagePullSecrets:   jenkins.Spec.Master.ImagePullSecrets,
-			Tolerations:        jenkins.Spec.Master.Tolerations,
-			PriorityClassName:  jenkins.Spec.Master.PriorityClassName,
-		},
-	}
-}
-
-func buildPodTypeMeta() metav1.TypeMeta {
-	return metav1.TypeMeta{
-		Kind:       "Pod",
-		APIVersion: "v1",
-	}
 }
 
 // return a condition function that indicates whether the given pod is
