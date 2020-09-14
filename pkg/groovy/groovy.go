@@ -60,6 +60,8 @@ func (g *Groovy) EnsureSingle(source, scriptName, hash, groovyScript string) (re
 	g.logger.V(log.VWarn).Info(fmt.Sprintf("About to execute groovy scripts using jenkinsClient: %s", g.jenkinsClient))
 	g.logger.V(log.VWarn).Info(fmt.Sprintf("Triggering execution of groovy script '%s'", scriptName))
 	logs, err := g.jenkinsClient.ExecuteScript(groovyScript)
+
+	g.logger.V(log.VWarn).Info(fmt.Sprintf("Logs for groovy script execution '%s'", logs))
 	if err != nil {
 		if groovyErr, ok := err.(*jenkinsclient.GroovyScriptExecutionFailed); ok {
 			groovyErr.ConfigurationType = scriptType

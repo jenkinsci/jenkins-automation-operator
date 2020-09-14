@@ -180,7 +180,6 @@ func createJenkinsCR(t *testing.T, name, namespace, priorityClassName string, se
 
 func createJenkinsAPIClientFromServiceAccount(t *testing.T, jenkins *v1alpha2.Jenkins, jenkinsAPIURL string) (jenkinsclient.Jenkins, error) {
 	t.Log("Creating Jenkins API client from service account")
-	deploymentName := resources.GetJenkinsDeploymentName(jenkins.Name)
 
 	clientSet, err := kubernetes.NewForConfig(framework.Global.KubeConfig)
 	if err != nil {
@@ -193,7 +192,12 @@ func createJenkinsAPIClientFromServiceAccount(t *testing.T, jenkins *v1alpha2.Je
 	}
 	r := base.New(config, jenkinsclient.JenkinsAPIConnectionSettings{})
 
-	token, _, err := r.Configuration.Exec(deploymentName, resources.JenkinsMasterContainerName, []string{"cat", "/var/run/secrets/kubernetes.io/serviceaccount/token"})
+	jenkinsPod, err := r.Configuration.GetPodByDeployment()
+	if err != nil {
+		return nil, err
+	}
+
+	token, _, err := r.Configuration.Exec(jenkinsPod.Name, resources.JenkinsMasterContainerName, []string{"cat", "/var/run/secrets/kubernetes.io/serviceaccount/token"})
 	if err != nil {
 		return nil, err
 	}
