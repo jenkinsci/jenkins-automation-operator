@@ -14,7 +14,7 @@ import (
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
-	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/user"
+	//"github.com/jenkinsci/kubernetes-operator/pkg/configuration/user"
 	"github.com/jenkinsci/kubernetes-operator/pkg/constants"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
 	"github.com/jenkinsci/kubernetes-operator/pkg/notifications/event"
@@ -208,7 +208,7 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request) (reconcile.Resul
 	}
 	logger.V(log.VDebug).Info("Base configuration validation finished: No errors on validation messages")
 	logger.V(log.VDebug).Info("Starting base configuration reconciliation...")
-	result, jenkinsClient, err := baseConfiguration.Reconcile()
+	_, jenkinsClient, err := baseConfiguration.Reconcile()
 	if err != nil {
 		if r.isJenkinsPodTerminating(err) {
 			logger.Info(fmt.Sprintf("Jenkins Pod in Terminating state with DeletionTimestamp set detected. Changing Jenkins Phase to %s", constants.JenkinsStatusReinitializing))
@@ -250,7 +250,7 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request) (reconcile.Resul
 	}
 
 	// Reconcile seedjobs and backups
-	userConfiguration := user.New(config, jenkinsClient)
+	/*userConfiguration := user.New(config, jenkinsClient)
 
 	var messages []string
 	messages, err = userConfiguration.Validate(jenkins)
@@ -288,7 +288,7 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request) (reconcile.Resul
 		message := fmt.Sprintf("User configuration phase is complete, took %s", time)
 		r.sendNewUserConfigurationCompleteNotification(jenkins, message)
 		logger.Info(message)
-	}
+	}*/
 	return reconcile.Result{}, jenkins, nil
 }
 

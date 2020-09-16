@@ -66,6 +66,11 @@ type JenkinsSpec struct {
 
 	// JenkinsAPISettings defines configuration used by the operator to gain admin access to the Jenkins API
 	JenkinsAPISettings JenkinsAPISettings `json:"jenkinsAPISettings"`
+
+	// ConfigurationAsCode defines configuration of Jenkins customization via Configuration as Code Jenkins plugin
+	// +optional
+	ConfigurationAsCode Customization `json:"configurationAsCode,omitempty"`
+	
 }
 
 // AuthorizationStrategy defines authorization strategy of the operator for the Jenkins API
@@ -81,6 +86,22 @@ const (
 // JenkinsAPISettings defines configuration used by the operator to gain admin access to the Jenkins API
 type JenkinsAPISettings struct {
 	AuthorizationStrategy AuthorizationStrategy `json:"authorizationStrategy"`
+}
+
+// SecretRef is reference to Kubernetes secret
+type SecretRef struct {
+	Name string `json:"name"`
+}
+
+// ConfigMapRef is reference to Kubernetes ConfigMap
+type ConfigMapRef struct {
+	Name string `json:"name"`
+}
+
+// Customization defines configuration of Jenkins customization
+type Customization struct {
+	Secret         SecretRef      `json:"secret"`
+	ConfigMap 	   ConfigMapRef   `json:"configMap"`
 }
 
 // ServiceAccount defines Kubernetes service account attributes

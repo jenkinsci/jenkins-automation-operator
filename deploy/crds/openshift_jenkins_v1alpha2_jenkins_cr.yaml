@@ -4,6 +4,9 @@ metadata:
   annotations:
   name: jenkins
 spec:
+  configurationAsCode:
+    configMap:
+      name: jenkins-operator-user-configuration
   jenkinsAPIConnectionSettings:
     useNodePort: true
   jenkinsAPISettings:

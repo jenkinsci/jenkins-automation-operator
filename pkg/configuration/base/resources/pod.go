@@ -39,6 +39,11 @@ const (
 	// This script is provided by user
 	ConfigurationAsCodeSecretVolumePath = "/tmp" + "/configuration-as-code-secrets"
 
+	// ConfigurationAsCodeConfigVolumePath is a path where are CasC configs used to configure Jenkins
+	// This script is provided by user
+	ConfigurationAsCodeConfigVolumePath = jenkinsPath + "/configuration-as-code"
+
+
 	httpPortName = "http"
 	jnlpPortName = "jnlp"
 )
@@ -71,6 +76,10 @@ func GetJenkinsMasterContainerBaseEnvs(jenkins *v1alpha2.Jenkins) []corev1.EnvVa
 		{
 			Name:  "SECRETS",
 			Value: ConfigurationAsCodeSecretVolumePath,
+		},
+		{
+			Name:  "CASC_JENKINS_CONFIG",
+			Value: ConfigurationAsCodeConfigVolumePath,
 		},
 	}
 	return envVars
@@ -132,6 +141,18 @@ func GetJenkinsMasterPodBaseVolumes(jenkins *v1alpha2.Jenkins) []corev1.Volume {
 		},
 	}
 
+	if len(jenkins.Spec.ConfigurationAsCode.ConfigMap.Name) > 0 {
+		volumes = append(volumes, corev1.Volume{
+			Name: getConfigurationAsCodeConfigVolumeName(jenkins),
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					DefaultMode: &configMapVolumeSourceDefaultMode,
+					SecretName:  jenkins.Spec.ConfigurationAsCode.ConfigMap.Name,
+				},
+			},
+		})
+	}
+
 	return volumes
 }
 
@@ -160,7 +181,19 @@ func GetJenkinsMasterContainerBaseVolumeMounts(jenkins *v1alpha2.Jenkins) []core
 		},
 	}
 
+	if len(jenkins.Spec.ConfigurationAsCode.ConfigMap.Name) > 0 {
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      getConfigurationAsCodeConfigVolumeName(jenkins),
+			MountPath: ConfigurationAsCodeConfigVolumePath,
+			ReadOnly:  true,
+		})
+	}
+
 	return volumeMounts
+}
+
+func getConfigurationAsCodeConfigVolumeName(jenkins *v1alpha2.Jenkins) string {
+	return "casc-" + jenkins.Spec.ConfigurationAsCode.ConfigMap.Name
 }
 
 // NewJenkinsMasterContainer returns Jenkins master Kubernetes container
