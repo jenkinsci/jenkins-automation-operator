@@ -43,7 +43,6 @@ const (
 	// This script is provided by user
 	ConfigurationAsCodeConfigVolumePath = jenkinsPath + "/configuration-as-code"
 
-
 	httpPortName = "http"
 	jnlpPortName = "jnlp"
 )
@@ -73,15 +72,22 @@ func GetJenkinsMasterContainerBaseEnvs(jenkins *v1alpha2.Jenkins) []corev1.EnvVa
 			Name:  "COPY_REFERENCE_FILE_LOG",
 			Value: fmt.Sprintf("%s/%s", getJenkinsHomePath(jenkins), "copy_reference_file.log"),
 		},
-		{
+	}
+
+	if len(jenkins.Spec.ConfigurationAsCode.Secret.Name) > 0 {
+		envVars = append(envVars, corev1.EnvVar{
 			Name:  "SECRETS",
 			Value: ConfigurationAsCodeSecretVolumePath,
-		},
-		{
+		})
+	}
+
+	if len(jenkins.Spec.ConfigurationAsCode.ConfigMap.Name) > 0 {
+		envVars = append(envVars, corev1.EnvVar{
 			Name:  "CASC_JENKINS_CONFIG",
 			Value: ConfigurationAsCodeConfigVolumePath,
-		},
+		})
 	}
+
 	return envVars
 }
 
@@ -145,9 +151,23 @@ func GetJenkinsMasterPodBaseVolumes(jenkins *v1alpha2.Jenkins) []corev1.Volume {
 		volumes = append(volumes, corev1.Volume{
 			Name: getConfigurationAsCodeConfigVolumeName(jenkins),
 			VolumeSource: corev1.VolumeSource{
-				Secret: &corev1.SecretVolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
 					DefaultMode: &configMapVolumeSourceDefaultMode,
-					SecretName:  jenkins.Spec.ConfigurationAsCode.ConfigMap.Name,
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: jenkins.Spec.ConfigurationAsCode.ConfigMap.Name,
+					},
+				},
+			},
+		})
+	}
+
+	if len(jenkins.Spec.ConfigurationAsCode.Secret.Name) > 0 {
+		volumes = append(volumes, corev1.Volume{
+			Name: getConfigurationAsCodeSecretVolumeName(jenkins),
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					DefaultMode: &secretVolumeSourceDefaultMode,
+					SecretName:  jenkins.Spec.ConfigurationAsCode.Secret.Name,
 				},
 			},
 		})
@@ -189,11 +209,23 @@ func GetJenkinsMasterContainerBaseVolumeMounts(jenkins *v1alpha2.Jenkins) []core
 		})
 	}
 
+	if len(jenkins.Spec.ConfigurationAsCode.Secret.Name) > 0 {
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      getConfigurationAsCodeSecretVolumeName(jenkins),
+			MountPath: ConfigurationAsCodeSecretVolumePath,
+			ReadOnly:  true,
+		})
+	}
+
 	return volumeMounts
 }
 
 func getConfigurationAsCodeConfigVolumeName(jenkins *v1alpha2.Jenkins) string {
 	return "casc-" + jenkins.Spec.ConfigurationAsCode.ConfigMap.Name
+}
+
+func getConfigurationAsCodeSecretVolumeName(jenkins *v1alpha2.Jenkins) string {
+	return "casc-" + jenkins.Spec.ConfigurationAsCode.Secret.Name
 }
 
 // NewJenkinsMasterContainer returns Jenkins master Kubernetes container

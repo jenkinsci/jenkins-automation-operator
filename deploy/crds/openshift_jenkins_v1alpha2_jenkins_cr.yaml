@@ -16,6 +16,23 @@ spec:
       kind: ClusterRole
       apiGroup: "rbac.authorization.k8s.io"
   master:
+    basePlugins:
+    - name: kubernetes
+      version: "1.18.3"
+    - name: workflow-job
+      version: "2.34"
+    - name: workflow-aggregator
+      version: "2.6"
+    - name: git
+      version: "3.12.0"
+    - name: job-dsl
+      version: "1.76"
+    - name: configuration-as-code
+      version: "1.29"
+    - name: configuration-as-code-support
+      version: "1.19"
+    - name: kubernetes-credentials-provider
+      version: "0.12.1"
     disableCSRFProtection: true
     containers:
     - name: jenkins-master
@@ -48,7 +65,7 @@ spec:
           -XX:+UseCGroupMemoryLimitForHeap -XX:MaxRAMFraction=1
           -Djenkins.install.runSetupWizard=false -Djava.awt.headless=true
           -Dhudson.security.csrf.DefaultCrumbIssuer.EXCLUDE_SESSION_ID=true
-      image: 'quay.io/openshift/origin-jenkins:4.6'
+      image: 'image-registry.openshift-image-registry.svc:5000/jawed/jenkins-job-dsl:latest'
       imagePullPolicy: Always
       livenessProbe:
         httpGet:
