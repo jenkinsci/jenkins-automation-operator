@@ -68,6 +68,23 @@ func (r *ReconcileJenkinsBaseConfiguration) Reconcile() (reconcile.Result, jenki
 	}
 	r.logger.V(log.VDebug).Info(fmt.Sprintf("Deployment for jenkins.jenkins.io { %s } is ready ", r.Jenkins.Name))
 
+	jenkinsPod, err := r.Configuration.GetPodByDeployment()
+	if err != nil {
+		r.logger.V(log.VDebug).Info(fmt.Sprintf("Error when checking if Deployment has Pod : %s", err.Error()))
+		return reconcile.Result{}, nil, err
+	}
+
+	if jenkinsPod != nil {
+		r.logger.V(log.VDebug).Info(fmt.Sprintf("Jenkins Pod created with name : %s", jenkinsPod.Name))
+		if jenkinsPod.DeletionTimestamp != nil {
+			r.logger.V(log.VDebug).Info(fmt.Sprintf("Jenkins Pod deletion timestamp set to %s with Pod Phase : %s", jenkinsPod.DeletionTimestamp, jenkinsPod.Status.Phase))
+			return reconcile.Result{}, nil, fmt.Errorf("jenkins pod has been deleted")
+		}
+	} else {
+		r.logger.V(log.VWarn).Info(fmt.Sprintf("Jenkins Pod not created for Deployment : %s", r.Jenkins.Name))
+		return reconcile.Result{}, nil, err
+	}
+
 	jenkinsClient, err2 := r.Configuration.GetJenkinsClient()
 	if err2 != nil {
 		r.logger.V(log.VDebug).Info(fmt.Sprintf("Error when try to configure JenkinsClient: %s", err2))

@@ -60,11 +60,17 @@ func waitForJobToFinish(t *testing.T, job *gojenkins.Job, tick, timeout time.Dur
 
 func waitForJenkinsBaseConfigurationToComplete(t *testing.T, jenkins *v1alpha2.Jenkins) {
 	t.Logf("Waiting for Jenkins base configuration to complete: Will retry %+v times every %+v", retries, retryInterval)
-	_, err := WaitUntilJenkinsConditionSet(retryInterval, retries, jenkins, func(jenkins *v1alpha2.Jenkins, err error) bool {
-		completedTime := jenkins.Status.BaseConfigurationCompletedTime
-		t.Logf("Current Jenkins status BaseConfigurationCompletedTime: '%+v', error '%s'", completedTime, err)
+	var completedTime *metav1.Time
+	isJenkinsBaseConfigurationCompletedTimeSet := func(jenkins *v1alpha2.Jenkins, err error) bool {
+		completedTime = jenkins.Status.BaseConfigurationCompletedTime
+		t.Logf("Current Jenkins status BaseConfigurationCompletedTime: '%+v', error '%s' in namespace %s", completedTime, err, jenkins.Namespace)
+		jenkinsPhase := jenkins.Status.Phase
+		if len(jenkinsPhase) > 0 {
+			t.Logf("Jenkins instance %s in Phase: %s", jenkins.Name, jenkinsPhase)
+		}
 		return err == nil && completedTime != nil
-	})
+	}
+	_, err := WaitForCondition(retryInterval, retries, jenkins, isJenkinsBaseConfigurationCompletedTimeSet)
 	if err != nil {
 		t.Errorf("Waiting for BaseConfiguration to complete failed with : %+v", jenkins)
 		t.Fatal(err)
@@ -73,23 +79,44 @@ func waitForJenkinsBaseConfigurationToComplete(t *testing.T, jenkins *v1alpha2.J
 	// update jenkins CR because Operator sets default values
 	namespacedName := types.NamespacedName{Namespace: jenkins.Namespace, Name: jenkins.Name}
 	err = framework.Global.Client.Get(goctx.TODO(), namespacedName, jenkins)
+
 	assert.NoError(t, err)
+
+	t.Log("Sleep for 10 seconds after BaseConfiguration completes")
+	time.Sleep(10 * time.Second)
 }
 
-func waitForRecreateJenkinsMasterPod(t *testing.T, jenkins *v1alpha2.Jenkins) {
+func waitForJenkinsPodRecreation(t *testing.T, jenkins *v1alpha2.Jenkins) {
 	t.Logf("Waiting for Jenkins Master Pod to be ready: Will every %+v until %v", retryInterval, 30*retryInterval)
 	IsJenkinsMasterPodRecreated := func() (bool, error) {
 		lo := metav1.ListOptions{
-			LabelSelector: labels.SelectorFromSet(resources.GetJenkinsMasterPodLabels(jenkins)).String(),
+			LabelSelector: labels.SelectorFromSet(resources.BuildResourceLabels(jenkins)).String(),
 		}
 		podList, err := framework.Global.KubeClient.CoreV1().Pods(jenkins.ObjectMeta.Namespace).List(lo)
 		if err != nil {
+			t.Logf("Error while listing Jenkins Pods List : %+v \n Error: %+v", podList, err)
 			return false, err
 		}
-		if len(podList.Items) != 1 {
+		pods := podList.Items
+		if len(pods) != 1 {
+			if len(pods) == 2 {
+				t.Logf("Two pods are present for the Deployment selector")
+				for i, p := range pods {
+					t.Logf("Pod no. %d is in the %s Status.Phase", i, p.Status.Phase)
+				}
+				return false, nil
+			}
+			return false, nil
+		} else if len(pods) == 1 {
+			jenkinsPod := pods[0]
+			t.Logf("Detected single Jenkins Pod %s for given selector with DeletionTimestamp %s", jenkinsPod.Name, jenkinsPod.DeletionTimestamp)
+			if jenkinsPod.Status.Phase == "Running" && jenkinsPod.DeletionTimestamp == nil {
+				t.Logf("Jenkins Pod %s  is in Running state now", jenkinsPod.Name)
+				return true, nil
+			}
 			return false, nil
 		}
-		return podList.Items[0].DeletionTimestamp == nil, nil
+		return false, err
 	}
 	err := wait.Poll(retryInterval, 30*retryInterval, IsJenkinsMasterPodRecreated)
 	if err != nil {
@@ -142,8 +169,8 @@ func WaitUntilCascConditionSet(retryInterval time.Duration, retries int, casc *v
 	return cascStatus, nil
 }
 
-// WaitUntilJenkinsConditionSet retries until the specified condition check becomes true for the jenkins CR
-func WaitUntilJenkinsConditionSet(retryInterval time.Duration, retries int, jenkins *v1alpha2.Jenkins, checkCondition checkConditionFunc) (*v1alpha2.Jenkins, error) {
+// WaitForCondition retries until the specified condition check becomes true for the jenkins CR
+func WaitForCondition(retryInterval time.Duration, retries int, jenkins *v1alpha2.Jenkins, checkCondition checkConditionFunc) (*v1alpha2.Jenkins, error) {
 	jenkinsStatus := &v1alpha2.Jenkins{}
 	err := wait.Poll(retryInterval, time.Duration(retries)*retryInterval, func() (bool, error) {
 		namespacedName := types.NamespacedName{Namespace: jenkins.Namespace, Name: jenkins.Name}

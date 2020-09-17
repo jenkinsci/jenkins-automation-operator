@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"reflect"
+	"strings"
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -132,7 +133,7 @@ func (r *ReconcileJenkins) Reconcile(request reconcile.Request) (reconcile.Resul
 		if lastErrors.counter >= reconcileFailLimit {
 			logger.V(log.VWarn).Info(fmt.Sprintf("Reconcile loop failed %d times with the same error, giving up: %+v", reconcileFailLimit, err))
 			r.sendNewReconcileLoopFailedNotification(jenkins, reconcileFailLimit, err)
-			return reconcile.Result{Requeue: false}, nil
+			return reconcile.Result{}, nil
 		}
 
 		if log.Debug {
@@ -143,7 +144,7 @@ func (r *ReconcileJenkins) Reconcile(request reconcile.Request) (reconcile.Resul
 
 		if groovyErr, ok := err.(*jenkinsclient.GroovyScriptExecutionFailed); ok {
 			r.sendNewGroovyScriptExecutionFailedNotification(jenkins, groovyErr)
-			return reconcile.Result{Requeue: false}, nil
+			return reconcile.Result{}, nil
 		}
 		return reconcile.Result{Requeue: true}, nil
 	}
@@ -188,7 +189,7 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request) (reconcile.Resul
 
 	config := r.newReconcilierConfiguration(jenkins)
 	// Reconcile base configuration
-	logger.V(log.VDebug).Info("Creating base configuration reconcilier to start validation")
+	logger.V(log.VDebug).Info("Starting base configuration reconciliation for validation")
 	baseConfiguration := base.New(config, r.jenkinsAPIConnectionSettings)
 	var baseConfigurationValidationMessages []string
 	baseConfigurationValidationMessages, err = baseConfiguration.Validate(jenkins)
@@ -209,6 +210,18 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request) (reconcile.Resul
 	logger.V(log.VDebug).Info("Starting base configuration reconciliation...")
 	result, jenkinsClient, err := baseConfiguration.Reconcile()
 	if err != nil {
+		if r.isJenkinsPodTerminating(err) {
+			logger.Info(fmt.Sprintf("Jenkins Pod in Terminating state with DeletionTimestamp set detected. Changing Jenkins Phase to %s", constants.JenkinsStatusReinitializing))
+			jenkins.Status.Phase = constants.JenkinsStatusReinitializing
+			jenkins.Status.BaseConfigurationCompletedTime = nil
+			// update Jenkins CR Status from Completed to Reinitializing
+			err = r.client.Update(context.TODO(), jenkins)
+			if err != nil {
+				return reconcile.Result{}, jenkins, errors.WithStack(err)
+			}
+			logger.Info("Base configuration reinitialized, jenkins pod restarted")
+			return reconcile.Result{Requeue: true}, jenkins, err
+		}
 		logger.V(log.VDebug).Info(fmt.Sprintf("Base configuration reconciliation failed with error, requeuing:  %s ", err))
 		//FIXME What we do not requeue ?
 		return reconcile.Result{}, jenkins, err
@@ -219,7 +232,7 @@ func (r *ReconcileJenkins) reconcile(request reconcile.Request) (reconcile.Resul
 	//}
 	if jenkinsClient == nil {
 		logger.V(log.VDebug).Info("Base configuration reconciliation succeeded but returned a nil jenkinsClient. Cannot continue.")
-		return reconcile.Result{Requeue: false}, jenkins, nil
+		return reconcile.Result{}, jenkins, nil
 	}
 	logger.V(log.VDebug).Info(fmt.Sprintf("Base configuration reconcialiation finished successfully: jenkinsClient %+v created", jenkinsClient))
 	if jenkins.Status.BaseConfigurationCompletedTime == nil {
@@ -462,4 +475,8 @@ func (r *ReconcileJenkins) handleDeprecatedData(jenkins *v1alpha2.Jenkins) (requ
 		return changed, errors.WithStack(r.client.Update(context.TODO(), jenkins))
 	}
 	return changed, nil
+}
+
+func (r *ReconcileJenkins) isJenkinsPodTerminating(err error) bool {
+	return strings.Contains(err.Error(), "Terminating state with DeletionTimestamp")
 }

@@ -18,7 +18,7 @@ import (
 	stackerr "github.com/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -43,7 +43,10 @@ type Configuration struct {
 	Notifications                *chan event.Event
 }
 
-var logx = log.Log
+var (
+	logx   = log.Log
+	logger = logx.WithName("configuration.go")
+)
 
 // GetJenkinsMasterPod gets the jenkins master pod.
 func (c *Configuration) GetJenkinsMasterPod() (*corev1.Pod, error) {
@@ -53,7 +56,6 @@ func (c *Configuration) GetJenkinsMasterPod() (*corev1.Pod, error) {
 
 // GetJenkinsDeployment gets the jenkins master deployment.
 func (c *Configuration) GetJenkinsDeployment() (*appsv1.Deployment, error) {
-	logger := logx.WithName("")
 	logger.V(log.VDebug).Info(fmt.Sprintf("Getting JenkinsDeploymentName for : %+v", c.Jenkins.Name))
 	jenkinsDeploymentName := resources.GetJenkinsDeploymentName(c.Jenkins.Name)
 	currentJenkinsDeployment := &appsv1.Deployment{}
@@ -108,9 +110,9 @@ func (c *Configuration) CreateOrUpdateResource(obj metav1.Object) error {
 	_ = controllerutil.SetControllerReference(c.Jenkins, obj, c.Scheme)
 
 	err := c.Client.Create(context.TODO(), runtimeObj)
-	if err != nil && errors.IsAlreadyExists(err) {
+	if err != nil && k8serrors.IsAlreadyExists(err) {
 		return c.UpdateResource(obj)
-	} else if err != nil && !errors.IsAlreadyExists(err) {
+	} else if err != nil && !k8serrors.IsAlreadyExists(err) {
 		return stackerr.WithStack(err)
 	}
 
@@ -224,14 +226,19 @@ func (c *Configuration) GetPodByDeployment() (*corev1.Pod, error) {
 	err := c.Client.List(context.TODO(), &pods, &listOptions)
 	if len(pods.Items) == 0 {
 		return &pod, stackerr.Errorf("Deployment has no pod attached yet")
+	} else if len(pods.Items) > 0 {
+		for i, p := range pods.Items {
+			logger.V(log.VDebug).Info(fmt.Sprintf("Pod %d with name %s is in Phase %s", i, p.Name, p.Status.Phase))
+			if p.DeletionTimestamp != nil {
+				return nil, fmt.Errorf("pod %s is in Terminating state with DeletionTimestamp %s, possible Jenkins restart in progress", p.Name, p.DeletionTimestamp)
+			}
+		}
 	}
-	pod = pods.Items[0]
 	return &pod, err
 }
 
 // GetJenkinsClientFromServiceAccount gets jenkins client from a serviceAccount.
 func (c *Configuration) GetJenkinsClientFromServiceAccount() (jenkinsclient.Jenkins, error) {
-	logger := logx.WithName("")
 	logger.V(log.VDebug).Info("Creating Jenkins Client from serviceAccount")
 	jenkinsAPIUrl, err := c.getJenkinsAPIUrl()
 	if err != nil {
@@ -250,7 +257,6 @@ func (c *Configuration) GetJenkinsClientFromServiceAccount() (jenkinsclient.Jenk
 
 // GetJenkinsClientFromSecret gets jenkins client from a secret.
 func (c *Configuration) GetJenkinsClientFromSecret() (jenkinsclient.Jenkins, error) {
-	logger := logx.WithName("")
 	logger.V(log.VDebug).Info("Creating Jenkins Client from Secret")
 	jenkinsAPIUrl, err := c.getJenkinsAPIUrl()
 	logger.V(log.VDebug).Info(fmt.Sprintf("Creating Jenkins Client from Secret with URL: %+v", jenkinsAPIUrl))

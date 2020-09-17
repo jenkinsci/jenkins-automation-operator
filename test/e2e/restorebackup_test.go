@@ -30,7 +30,6 @@ func TestBackupAndRestore(t *testing.T) {
 	jobID := "e2e-jenkins-operator"
 	createPVC(t, namespace)
 	jenkins := createJenkinsWithBackupAndRestoreConfigured(t, "e2e", namespace)
-	//	jenkins.Annotations[base.UseDeploymentAnnotation] = "false"
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
 
 	jenkinsClient, cleanUpFunc := verifyJenkinsAPIConnection(t, jenkins, namespace)
@@ -43,8 +42,8 @@ func TestBackupAndRestore(t *testing.T) {
 	// FIXME: waitForJobToFinish use
 	time.Sleep(60 * time.Second) // wait for the build to complete
 
-	restartJenkinsMasterPod(t, jenkins)
-	waitForRecreateJenkinsMasterPod(t, jenkins)
+	deleteJenkinsPod(t, jenkins)
+	waitForJenkinsPodRecreation(t, jenkins)
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
 	jenkinsClient2, cleanUpFunc2 := verifyJenkinsAPIConnection(t, jenkins, namespace)
 	defer cleanUpFunc2()

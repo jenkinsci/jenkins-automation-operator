@@ -19,4 +19,6 @@ const (
 	JavaOpsVariableName = "JAVA_OPTS"
 	// JenkinsStatusCompleted is the completed status value.
 	JenkinsStatusCompleted = "Completed"
+	// JenkinsStatusReinitializing is the status given if Jenkins instance is being recreated
+	JenkinsStatusReinitializing = "Reinitializing"
 )

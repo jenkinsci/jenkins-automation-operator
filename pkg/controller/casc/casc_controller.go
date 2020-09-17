@@ -106,7 +106,7 @@ func (r *ReconcileCasc) Reconcile(request reconcile.Request) (reconcile.Result, 
 	}
 
 	if casc.Status.Phase == constants.JenkinsStatusCompleted {
-		return reconcile.Result{Requeue: false}, nil // Nothing to see here, move along...
+		return reconcile.Result{}, nil // Nothing to see here, move along...
 	}
 
 	// fetch the jenkins CR

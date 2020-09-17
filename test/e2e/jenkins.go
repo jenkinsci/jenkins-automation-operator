@@ -2,7 +2,9 @@ package e2e
 
 import (
 	"context"
+	"fmt"
 	"testing"
+	"time"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha3"
@@ -49,7 +51,13 @@ func getJenkinsMasterPod(t *testing.T, jenkins *v1alpha2.Jenkins) *corev1.Pod {
 	if len(podList.Items) != 1 {
 		t.Fatalf("Jenkins deployment not found, pod list: %+v", podList)
 	}
-	return &podList.Items[0]
+	jenkinsPod := &podList.Items[0]
+	if jenkinsPod != nil {
+		t.Log(fmt.Sprintf("Jenkins Pod being used for e2e : %s", jenkinsPod.Name))
+		t.Log(fmt.Sprintf("Replicaset which owns the pod : %+v", jenkinsPod.OwnerReferences[0]))
+	}
+
+	return jenkinsPod
 }
 
 func createCascCR(t *testing.T, jenkinsCRName, name, namespace string, groovyScripts, cascConfig v1alpha3.Customization) *v1alpha3.Casc {
@@ -75,32 +83,76 @@ func createCascCR(t *testing.T, jenkinsCRName, name, namespace string, groovyScr
 	return casc
 }
 
+func createSimpleJenkinsCR(t *testing.T, name, namespace string) *v1alpha2.Jenkins {
+	jenkins := &v1alpha2.Jenkins{
+		TypeMeta: v1alpha2.JenkinsTypeMeta(),
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Spec: v1alpha2.JenkinsSpec{
+			Master: v1alpha2.JenkinsMaster{
+				Containers: []v1alpha2.Container{
+					{
+						Name: resources.JenkinsMasterContainerName,
+						ReadinessProbe: &corev1.Probe{
+							Handler: corev1.Handler{
+								HTTPGet: &corev1.HTTPGetAction{
+									Path:   "/login",
+									Port:   intstr.FromString("http"),
+									Scheme: corev1.URISchemeHTTP,
+								},
+							},
+							InitialDelaySeconds: int32(80),
+							TimeoutSeconds:      int32(4),
+							FailureThreshold:    int32(10),
+						},
+						LivenessProbe: &corev1.Probe{
+							Handler: corev1.Handler{
+								HTTPGet: &corev1.HTTPGetAction{
+									Path:   "/login",
+									Port:   intstr.FromString("http"),
+									Scheme: corev1.URISchemeHTTP,
+								},
+							},
+							InitialDelaySeconds: int32(80),
+							TimeoutSeconds:      int32(4),
+							FailureThreshold:    int32(10),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	t.Logf("Jenkins CR for TestJenkinsPodRestart %+v", *jenkins)
+	if err := framework.Global.Client.Create(context.TODO(), jenkins, nil); err != nil {
+		t.Fatal(err)
+	}
+
+	return jenkins
+}
+
 func createJenkinsCR(t *testing.T, name, namespace, priorityClassName string, seedJob *[]v1alpha2.SeedJob) *v1alpha2.Jenkins {
 	var seedJobs []v1alpha2.SeedJob
 	if seedJob != nil {
 		seedJobs = append(seedJobs, *seedJob...)
 	}
 	// TODO fix e2e to use deployment instead of pod
-	//annotations := map[string]string{"test": "label", base.UseDeploymentAnnotation: "false"}
+	annotations := map[string]string{"test": "label"}
 	jenkins := &v1alpha2.Jenkins{
 		TypeMeta: v1alpha2.JenkinsTypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-			//Annotations: annotations,
+			Name:        name,
+			Namespace:   namespace,
+			Annotations: annotations,
 		},
 		Spec: v1alpha2.JenkinsSpec{
 			Master: v1alpha2.JenkinsMaster{
-				//Annotations: annotations,
+				Annotations: annotations,
 				Containers: []v1alpha2.Container{
 					{
 						Name: resources.JenkinsMasterContainerName,
-						Env: []corev1.EnvVar{
-							{
-								Name:  "TEST_ENV",
-								Value: "test_env_value",
-							},
-						},
 						ReadinessProbe: &corev1.Probe{
 							Handler: corev1.Handler{
 								HTTPGet: &corev1.HTTPGetAction{
@@ -260,12 +312,17 @@ func verifyJenkinsAPIConnection(t *testing.T, jenkins *v1alpha2.Jenkins, namespa
 	return client, cleanUpFunc
 }
 
-func restartJenkinsMasterPod(t *testing.T, jenkins *v1alpha2.Jenkins) {
-	t.Log("Restarting Jenkins master pod")
+func deleteJenkinsPod(t *testing.T, jenkins *v1alpha2.Jenkins) {
+	t.Log("Deleting Jenkins pod")
 	jenkinsPod := getJenkinsMasterPod(t, jenkins)
+	if jenkinsPod != nil {
+		t.Log("Jenkins Pod name : " + jenkinsPod.Name)
+	}
+
 	err := framework.Global.Client.Delete(context.TODO(), jenkinsPod)
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log("Jenkins master pod has been restarted")
+	t.Log("Jenkins master pod has been deleted \n Waiting for 10 seconds after deletion")
+	time.Sleep(10 * time.Second)
 }

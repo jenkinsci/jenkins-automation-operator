@@ -29,13 +29,18 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsDeploymentIsReady() (re
 		return reconcile.Result{Requeue: true}, err
 	}
 	r.logger.Info(fmt.Sprintf("Deployment %s exist and has availableReplicas", deploymentName))
+	if r.Jenkins.Status.Phase == constants.JenkinsStatusReinitializing {
+		now := metav1.Now()
+		r.Jenkins.Status.BaseConfigurationCompletedTime = &now
+		r.logger.Info("Jenkins BaseConfiguration Completed after reinitialization")
+	}
 	r.Jenkins.Status.Phase = constants.JenkinsStatusCompleted
 	err = r.Client.Update(context.TODO(), r.Configuration.Jenkins)
 	if err != nil {
-		r.logger.Info(fmt.Sprintf("Error while updating Jenkins %s: %s", r.Jenkins.Name, err))
+		r.logger.Info(fmt.Sprintf("Error while updating Jenkins %s: %s", r.Configuration.Jenkins.Name, err))
 		return reconcile.Result{Requeue: true}, err
 	}
-	return reconcile.Result{Requeue: false}, nil
+	return reconcile.Result{}, nil
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsDeploymentIsPresent(meta metav1.ObjectMeta) (reconcile.Result, error) {
@@ -76,10 +81,10 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureJenkinsDeploymentIsPresent(met
 	} else if err != nil {
 		deploymentName := jenkinsDeployment.Name
 		r.logger.Info(fmt.Sprintf("Error while getting Deployment %s and error type is different from not found: %s", deploymentName, err))
-		return reconcile.Result{Requeue: false}, stackerr.WithStack(err)
+		return reconcile.Result{}, stackerr.WithStack(err)
 	}
 	r.logger.Info(fmt.Sprintf("Deployment %s exist or has been created without any error", jenkinsDeployment.Name))
-	return reconcile.Result{Requeue: false}, nil
+	return reconcile.Result{}, nil
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) sendSuccessfulDeploymentCreationNotification(deploymentName string) {

@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
+	"k8s.io/apimachinery/pkg/types"
+
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha3"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/client"
 
@@ -12,19 +14,19 @@ import (
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 )
 
-func TestJenkinsMasterPodRestart(t *testing.T) {
+func TestJenkinsPodRestart(t *testing.T) {
 	t.Parallel()
 	namespace, ctx := setupTest(t)
 
 	defer showLogsAndCleanup(t, ctx)
 
-	jenkins := createJenkinsCR(t, e2e, namespace, "", nil)
+	jenkinsCRName := "e2e"
+	jenkins := createSimpleJenkinsCR(t, jenkinsCRName, namespace)
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
-	restartJenkinsMasterPod(t, jenkins)
-	waitForRecreateJenkinsMasterPod(t, jenkins)
+	deleteJenkinsPod(t, jenkins)
+	waitForJenkinsPodRecreation(t, jenkins)
 	checkBaseConfigurationCompleteTimeIsNotSet(t, jenkins)
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
 }
