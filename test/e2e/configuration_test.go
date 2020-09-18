@@ -31,78 +31,11 @@ func TestConfiguration(t *testing.T) {
 	namespace, ctx := setupTest(t)
 	defer showLogsAndCleanup(t, ctx)
 	jenkinsCRName := e2e
-	cascCRName := cascE2e
 	numberOfExecutors := 6
 	numberOfExecutorsEnvName := "NUMBER_OF_EXECUTORS"
 	systemMessage := "Configuration as Code integration works!!!"
 	systemMessageEnvName := "SYSTEM_MESSAGE"
 	priorityClassName := ""
-	mySeedJob := newSeedJobConfig()
-	groovyScripts := newGroovyScripts()
-	cascConfig := newCascConfiguration()
-	stringData := make(map[string]string)
-	stringData[systemMessageEnvName] = systemMessage
-	stringData[numberOfExecutorsEnvName] = strconv.Itoa(numberOfExecutors)
-
-	// base
-	createUserConfigurationSecret(t, namespace, stringData)
-	createUserConfigurationConfigMap(t, namespace, numberOfExecutors, systemMessageEnvName)
-	jenkins := createJenkinsCR(t, jenkinsCRName, namespace, priorityClassName, newSeedJobs(mySeedJob))
-
-	createDefaultLimitsForContainersInNamespace(t, namespace)
-	createKubernetesCredentialsProviderSecret(t, namespace, mySeedJob)
-	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
-
-	verifyJenkinsMasterPodAttributes(t, jenkins)
-	jenkinsClient, cleanUpFunc := verifyJenkinsAPIConnection(t, jenkins, namespace)
-	defer cleanUpFunc()
-	verifyPlugins(t, jenkinsClient, jenkins)
-
-	// user
-	casc := createCascCR(t, jenkinsCRName, cascCRName, namespace, groovyScripts, cascConfig)
-	waitForJenkinsUserConfigurationToComplete(t, casc)
-	verifyUserConfiguration(t, jenkinsClient, 6, systemMessage)
-	time.Sleep(60 * time.Second)
-	verifyJenkinsSeedJobs(t, jenkinsClient, []seedJobConfig{mySeedJob})
-}
-
-func newCascConfiguration() v1alpha3.Customization {
-	return v1alpha3.Customization{
-		Configurations: []v1alpha3.ConfigMapRef{
-			{
-				Name: userConfigurationConfigMapName,
-			},
-		},
-		Secret: v1alpha3.SecretRef{
-			Name: userConfigurationSecretName,
-		},
-	}
-}
-
-func newSeedJobs(mySeedJob seedJobConfig) *[]v1alpha2.SeedJob {
-	return &[]v1alpha2.SeedJob{mySeedJob.SeedJob}
-}
-
-func newSeedJobConfig() seedJobConfig {
-	return seedJobConfig{
-		SeedJob: v1alpha2.SeedJob{
-			ID:                    "jenkins-operator",
-			CredentialID:          "jenkins-operator",
-			JenkinsCredentialType: v1alpha2.NoJenkinsCredentialCredentialType,
-			Targets:               "cicd/jobs/*.jenkins",
-			Description:           "Jenkins Operator repository",
-			RepositoryBranch:      "master",
-			RepositoryURL:         "https://github.com/jenkinsci/kubernetes-operator.git",
-			PollSCM:               "1 1 1 1 1",
-			UnstableOnDeprecation: true,
-			BuildPeriodically:     "1 1 1 1 1",
-			FailOnMissingPlugin:   true,
-			IgnoreMissingFiles:    true,
-			//AdditionalClasspath: can fail with the seed job agent
-			GitHubPushTrigger: true,
-		},
-	}
-}
 
 func newGroovyScripts() v1alpha3.Customization {
 	return v1alpha3.Customization{
@@ -115,6 +48,25 @@ func newGroovyScripts() v1alpha3.Customization {
 			Name: userConfigurationSecretName,
 		},
 	}
+
+	stringData := make(map[string]string)
+	stringData[systemMessageEnvName] = systemMessage
+	stringData[numberOfExecutorsEnvName] = strconv.Itoa(numberOfExecutors)
+
+	// base
+	createUserConfigurationSecret(t, namespace, stringData)
+	createUserConfigurationConfigMap(t, namespace, numberOfExecutors, systemMessageEnvName)
+	jenkins := createJenkinsCR(t, jenkinsCRName, namespace, priorityClassName, cascConfig)
+	//jenkins.Annotations[base.UseDeploymentAnnotation] = "false"
+	createDefaultLimitsForContainersInNamespace(t, namespace)
+	createKubernetesCredentialsProviderSecret(t, namespace, mySeedJob)
+	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
+	verifyJenkinsMasterPodAttributes(t, jenkins)
+	jenkinsClient, cleanUpFunc := verifyJenkinsAPIConnection(t, jenkins, namespace)
+	defer cleanUpFunc()
+	verifyPlugins(t, jenkinsClient, jenkins)
+	verifyUserConfiguration(t, jenkinsClient, 6, systemMessage)
+	time.Sleep(60 * time.Second)
 }
 
 func TestPlugins(t *testing.T) {
@@ -198,6 +150,8 @@ func createUserConfigurationConfigMap(t *testing.T, namespace string, numberOfEx
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      userConfigurationConfigMapName,
 			Namespace: namespace,
+			Labels:
+			  type: e2e-jenkins-config
 		},
 		Data: map[string]string{
 			"1-set-executors.groovy": fmt.Sprintf(`

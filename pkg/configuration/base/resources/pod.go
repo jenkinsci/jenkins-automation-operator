@@ -8,6 +8,7 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/constants"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/kubernetes/pkg/client/conditions"
@@ -32,19 +33,27 @@ const (
 	jenkinsInitConfigurationVolumeName = "init-configuration"
 	jenkinsInitConfigurationVolumePath = jenkinsPath + "/init-configuration"
 
-	// GroovyScriptsSecretVolumePath is a path where are groovy scripts used to configure Jenkins
-	// This script is provided by user
-	//GroovyScriptsSecretVolumePath = "/tmp" + "/groovy-scripts-secrets"
-	// ConfigurationAsCodeSecretVolumePath is a path where are CasC configs used to configure Jenkins
-	// This script is provided by user
+	ConfigurationAsCodeVolumeName       = "casc-config"
+	ConfigurationAsCodeVolumePath       = jenkinsPath + "/configuration-as-code"
+	ConfigurationAsCodeSecretVolumeName = "casc-secret"
 	ConfigurationAsCodeSecretVolumePath = "/tmp" + "/configuration-as-code-secrets"
-
-	// ConfigurationAsCodeConfigVolumePath is a path where are CasC configs used to configure Jenkins
-	// This script is provided by user
-	ConfigurationAsCodeConfigVolumePath = jenkinsPath + "/configuration-as-code"
 
 	httpPortName = "http"
 	jnlpPortName = "jnlp"
+
+	// JenkinsSCConfigName is the Jenkins side car container name for reloading config
+	JenkinsSCConfigName            = "jenkins-sc-config"
+	JenkinsSCConfigImage           = "kiwigrid/k8s-sidecar:0.1.144"
+	JenkinsSCConfigImagePullPolicy = "IfNotPresent"
+	JenkinsSCConfigReqURL          = "http://localhost:8080/reload-configuration-as-code/?casc-reload-token=$(POD_NAME)"
+	JenkinsSCConfigReqMethod       = "POST"
+	JenkinsSCConfigReqRetry        = "10"
+	JenkinsSCConfigCPULimit        = "100m"
+	JenkinsSCConfigMEMLimit        = "100Mi"
+	JenkinsSCConfigCPURequest      = "50m"
+	JenkinsSCConfigMEMRequest      = "50Mi"
+	JenkinsSCConfigLabel           = "type"
+	JenkinsSCConfigLabelValue      = "%s-jenkins-config"
 )
 
 // GetJenkinsMasterContainerBaseCommand returns default Jenkins master container command
@@ -60,6 +69,14 @@ func GetJenkinsMasterContainerBaseCommand() []string {
 // GetJenkinsMasterContainerBaseEnvs returns Jenkins master pod envs required by operator
 func GetJenkinsMasterContainerBaseEnvs(jenkins *v1alpha2.Jenkins) []corev1.EnvVar {
 	envVars := []corev1.EnvVar{
+		{
+			Name: "POD_NAME",
+			ValueFrom: &corev1.EnvVarSource{
+				FieldRef: &corev1.ObjectFieldSelector{
+					FieldPath: "metadata.name",
+				},
+			},
+		},
 		{
 			Name:  "OPENSHIFT_ENABLE_OAUTH",
 			Value: "true",
@@ -81,10 +98,10 @@ func GetJenkinsMasterContainerBaseEnvs(jenkins *v1alpha2.Jenkins) []corev1.EnvVa
 		})
 	}
 
-	if len(jenkins.Spec.ConfigurationAsCode.ConfigMap.Name) > 0 {
+	if jenkins.Spec.ConfigurationAsCode.Enabled {
 		envVars = append(envVars, corev1.EnvVar{
 			Name:  "CASC_JENKINS_CONFIG",
-			Value: ConfigurationAsCodeConfigVolumePath,
+			Value: ConfigurationAsCodeVolumePath,
 		})
 	}
 
@@ -147,30 +164,41 @@ func GetJenkinsMasterPodBaseVolumes(jenkins *v1alpha2.Jenkins) []corev1.Volume {
 		},
 	}
 
-	if len(jenkins.Spec.ConfigurationAsCode.ConfigMap.Name) > 0 {
+	if jenkins.Spec.ConfigurationAsCode.Enabled {
+		// target volume for the init container
+		// All casc configmaps will be copied here
 		volumes = append(volumes, corev1.Volume{
-			Name: getConfigurationAsCodeConfigVolumeName(jenkins),
+			Name: ConfigurationAsCodeVolumeName,
 			VolumeSource: corev1.VolumeSource{
-				ConfigMap: &corev1.ConfigMapVolumeSource{
-					DefaultMode: &configMapVolumeSourceDefaultMode,
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: jenkins.Spec.ConfigurationAsCode.ConfigMap.Name,
+				EmptyDir: &corev1.EmptyDirVolumeSource{},
+			},
+		})
+		// Loop to add all casc configmap volumes
+		for _, cm := range jenkins.Spec.ConfigurationAsCode.Configurations {
+			volumes = append(volumes, corev1.Volume{
+				Name: fmt.Sprintf("casc-init-%s", cm.Name),
+				VolumeSource: corev1.VolumeSource{
+					ConfigMap: &corev1.ConfigMapVolumeSource{
+						DefaultMode: &configMapVolumeSourceDefaultMode,
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: cm.Name,
+						},
 					},
 				},
-			},
-		})
-	}
-
-	if len(jenkins.Spec.ConfigurationAsCode.Secret.Name) > 0 {
-		volumes = append(volumes, corev1.Volume{
-			Name: getConfigurationAsCodeSecretVolumeName(jenkins),
-			VolumeSource: corev1.VolumeSource{
-				Secret: &corev1.SecretVolumeSource{
-					DefaultMode: &secretVolumeSourceDefaultMode,
-					SecretName:  jenkins.Spec.ConfigurationAsCode.Secret.Name,
+			})
+		}
+		// Add casc secret volume
+		if len(jenkins.Spec.ConfigurationAsCode.Secret.Name) > 0 {
+			volumes = append(volumes, corev1.Volume{
+				Name: ConfigurationAsCodeSecretVolumeName,
+				VolumeSource: corev1.VolumeSource{
+					Secret: &corev1.SecretVolumeSource{
+						DefaultMode: &secretVolumeSourceDefaultMode,
+						SecretName:  jenkins.Spec.ConfigurationAsCode.Secret.Name,
+					},
 				},
-			},
-		})
+			})
+		}
 	}
 
 	return volumes
@@ -201,31 +229,22 @@ func GetJenkinsMasterContainerBaseVolumeMounts(jenkins *v1alpha2.Jenkins) []core
 		},
 	}
 
-	if len(jenkins.Spec.ConfigurationAsCode.ConfigMap.Name) > 0 {
+	if jenkins.Spec.ConfigurationAsCode.Enabled {
 		volumeMounts = append(volumeMounts, corev1.VolumeMount{
-			Name:      getConfigurationAsCodeConfigVolumeName(jenkins),
-			MountPath: ConfigurationAsCodeConfigVolumePath,
-			ReadOnly:  true,
+			Name:      ConfigurationAsCodeVolumeName,
+			MountPath: ConfigurationAsCodeVolumePath,
+			ReadOnly:  false,
 		})
-	}
-
-	if len(jenkins.Spec.ConfigurationAsCode.Secret.Name) > 0 {
-		volumeMounts = append(volumeMounts, corev1.VolumeMount{
-			Name:      getConfigurationAsCodeSecretVolumeName(jenkins),
-			MountPath: ConfigurationAsCodeSecretVolumePath,
-			ReadOnly:  true,
-		})
+		if len(jenkins.Spec.ConfigurationAsCode.Secret.Name) > 0 {
+			volumeMounts = append(volumeMounts, corev1.VolumeMount{
+				Name:      ConfigurationAsCodeSecretVolumeName,
+				MountPath: ConfigurationAsCodeSecretVolumePath,
+				ReadOnly:  false,
+			})
+		}
 	}
 
 	return volumeMounts
-}
-
-func getConfigurationAsCodeConfigVolumeName(jenkins *v1alpha2.Jenkins) string {
-	return "casc-" + jenkins.Spec.ConfigurationAsCode.ConfigMap.Name
-}
-
-func getConfigurationAsCodeSecretVolumeName(jenkins *v1alpha2.Jenkins) string {
-	return "casc-" + jenkins.Spec.ConfigurationAsCode.Secret.Name
 }
 
 // NewJenkinsMasterContainer returns Jenkins master Kubernetes container
@@ -278,6 +297,112 @@ func NewJenkinsMasterContainer(jenkins *v1alpha2.Jenkins) corev1.Container {
 	}
 }
 
+// NewJenkinsSCConfigContainer returns Jenkins side container for config reloading
+func NewJenkinsSCConfigContainer(jenkins *v1alpha2.Jenkins) corev1.Container {
+	envs := map[string]string{
+		"LABEL":             JenkinsSCConfigLabel,
+		"LABEL_VALUE":       fmt.Sprintf(JenkinsSCConfigLabelValue, jenkins.Name),
+		"FOLDER":            ConfigurationAsCodeVolumePath,
+		"REQ_URL":           JenkinsSCConfigReqURL,
+		"REQ_METHOD":        JenkinsSCConfigReqMethod,
+		"REQ_RETRY_CONNECT": JenkinsSCConfigReqRetry,
+	}
+
+	envVars := []corev1.EnvVar{
+		{
+			Name: "POD_NAME",
+			ValueFrom: &corev1.EnvVarSource{
+				FieldRef: &corev1.ObjectFieldSelector{
+					FieldPath: "metadata.name",
+				},
+			},
+		},
+	}
+
+	for k, v := range envs {
+		envVars = append(envVars, corev1.EnvVar{
+			Name:  k,
+			Value: v,
+		})
+	}
+
+	volumeMounts := []corev1.VolumeMount{
+		{
+			Name:      ConfigurationAsCodeVolumeName,
+			MountPath: ConfigurationAsCodeVolumePath,
+			ReadOnly:  false,
+		},
+		{
+			Name:      "jenkins-home",
+			MountPath: getJenkinsHomePath(jenkins),
+			ReadOnly:  true,
+		},
+	}
+
+	return corev1.Container{
+		Name:            JenkinsSCConfigName,
+		Image:           JenkinsSCConfigImage,
+		ImagePullPolicy: corev1.PullIfNotPresent,
+		Env:             envVars,
+		Resources: corev1.ResourceRequirements{
+			Requests: corev1.ResourceList{
+				corev1.ResourceCPU:    resource.MustParse(JenkinsSCConfigCPURequest),
+				corev1.ResourceMemory: resource.MustParse(JenkinsSCConfigMEMRequest),
+			},
+			Limits: corev1.ResourceList{
+				corev1.ResourceCPU:    resource.MustParse(JenkinsSCConfigCPULimit),
+				corev1.ResourceMemory: resource.MustParse(JenkinsSCConfigMEMLimit),
+			},
+		},
+		VolumeMounts: volumeMounts,
+	}
+}
+
+// NewJenkinsInitContainer returns Jenkins init container to copy configmap to make it writable
+func NewJenkinsInitContainer(jenkins *v1alpha2.Jenkins) corev1.Container {
+	jenkinsContainer := jenkins.Spec.Master.Containers[0]
+	volumeMounts := []corev1.VolumeMount{
+		{
+			Name:      ConfigurationAsCodeVolumeName,
+			MountPath: ConfigurationAsCodeVolumePath,
+			ReadOnly:  false,
+		},
+	}
+
+	if jenkins.Spec.ConfigurationAsCode.Enabled {
+		for _, cm := range jenkins.Spec.ConfigurationAsCode.Configurations {
+			volumeMounts = append(volumeMounts, corev1.VolumeMount{
+				Name:      fmt.Sprintf("casc-init-%s", cm.Name),
+				MountPath: jenkinsPath + fmt.Sprintf("/casc-init-%s", cm.Name),
+				ReadOnly:  false,
+			})
+		}
+	}
+
+	command := []string{
+		"bash",
+		"-c",
+		fmt.Sprintf("find %s/casc-init* -type f |xargs cp -rfLt %s", jenkinsPath, ConfigurationAsCodeVolumePath),
+	}
+	return corev1.Container{
+		Name:            fmt.Sprintf("init-%s", jenkinsContainer.Name),
+		Image:           jenkinsContainer.Image,
+		ImagePullPolicy: jenkinsContainer.ImagePullPolicy,
+		Command:         command,
+		Resources: corev1.ResourceRequirements{
+			Requests: corev1.ResourceList{
+				corev1.ResourceCPU:    resource.MustParse(JenkinsSCConfigCPURequest),
+				corev1.ResourceMemory: resource.MustParse(JenkinsSCConfigMEMRequest),
+			},
+			Limits: corev1.ResourceList{
+				corev1.ResourceCPU:    resource.MustParse(JenkinsSCConfigCPULimit),
+				corev1.ResourceMemory: resource.MustParse(JenkinsSCConfigMEMLimit),
+			},
+		},
+		VolumeMounts: volumeMounts,
+	}
+}
+
 // ConvertJenkinsContainerToKubernetesContainer converts Jenkins container to Kubernetes container
 func ConvertJenkinsContainerToKubernetesContainer(container v1alpha2.Container) corev1.Container {
 	return corev1.Container{
@@ -301,11 +426,20 @@ func ConvertJenkinsContainerToKubernetesContainer(container v1alpha2.Container) 
 
 func newContainers(jenkins *v1alpha2.Jenkins) (containers []corev1.Container) {
 	containers = append(containers, NewJenkinsMasterContainer(jenkins))
-
+	if jenkins.Spec.ConfigurationAsCode.Enabled && jenkins.Spec.ConfigurationAsCode.EnableAutoReload  {
+		containers = append(containers, NewJenkinsSCConfigContainer(jenkins))
+	}
 	for _, container := range jenkins.Spec.Master.Containers[1:] {
 		containers = append(containers, ConvertJenkinsContainerToKubernetesContainer(container))
 	}
 
+	return
+}
+
+func newInitContainers(jenkins *v1alpha2.Jenkins) (containers []corev1.Container) {
+	if jenkins.Spec.ConfigurationAsCode.Enabled {
+		containers = append(containers, NewJenkinsInitContainer(jenkins))
+	}
 	return
 }
 

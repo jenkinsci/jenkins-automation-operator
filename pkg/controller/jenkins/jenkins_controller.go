@@ -353,7 +353,7 @@ func (r *ReconcileJenkins) setDefaults(jenkins *v1alpha2.Jenkins) (requeue bool,
 		changed = true
 		jenkinsContainer.Env = append(jenkinsContainer.Env, corev1.EnvVar{
 			Name:  constants.JavaOpsVariableName,
-			Value: "-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:MaxRAMFraction=1 -Djenkins.install.runSetupWizard=false -Djava.awt.headless=true",
+			Value: "-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:MaxRAMFraction=1 -Djenkins.install.runSetupWizard=false -Djava.awt.headless=true -Dcasc.reload.token=$(POD_NAME)",
 		})
 	}
 	if len(jenkins.Spec.Master.BasePlugins) == 0 {

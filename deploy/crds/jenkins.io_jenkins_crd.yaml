@@ -79,14 +79,20 @@ spec:
                 description: ConfigurationAsCode defines configuration of Jenkins
                   customization via Configuration as Code Jenkins plugin
                 properties:
-                  configMap:
-                    description: ConfigMapRef is reference to Kubernetes ConfigMap
-                    properties:
-                      name:
-                        type: string
-                    required:
-                    - name
-                    type: object
+                  configurations:
+                    items:
+                      description: ConfigMapRef is reference to Kubernetes ConfigMap
+                      properties:
+                        name:
+                          type: string
+                      required:
+                      - name
+                      type: object
+                    type: array
+                  enableAutoReload:
+                    type: boolean
+                  enabled:
+                    type: boolean
                   secret:
                     description: SecretRef is reference to Kubernetes secret
                     properties:
@@ -96,7 +102,9 @@ spec:
                     - name
                     type: object
                 required:
-                - configMap
+                - configurations
+                - enableAutoReload
+                - enabled
                 - secret
                 type: object
               jenkinsAPISettings:

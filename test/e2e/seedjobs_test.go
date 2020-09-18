@@ -121,66 +121,6 @@ func createKubernetesCredentialsProviderSecret(t *testing.T, namespace string, c
 	require.NoError(t, err)
 }
 
-func verifyJenkinsSeedJobs(t *testing.T, jenkinsClient jenkinsclient.Jenkins, seedJobs []seedJobConfig) {
-	var err error
-	for _, seedJob := range seedJobs {
-		if seedJob.JenkinsCredentialType == v1alpha2.BasicSSHCredentialType || seedJob.JenkinsCredentialType == v1alpha2.UsernamePasswordCredentialType {
-			err = verifyIfJenkinsCredentialExists(jenkinsClient, seedJob.CredentialID)
-			assert.NoErrorf(t, err, "Jenkins credential '%s' not created for seed job ID '%s'", seedJob.CredentialID, seedJob.ID)
-		}
-
-		verifySeedJobProperties(t, jenkinsClient, seedJob)
-
-		for _, requireJobName := range seedJob.JobNames {
-			err = try.Until(func() (end bool, err error) {
-				_, err = jenkinsClient.GetJob(requireJobName)
-				return err == nil, err
-			}, time.Second*2, time.Minute*2)
-			assert.NoErrorf(t, err, "Jenkins job '%s' not created by seed job ID '%s'", requireJobName, seedJob.ID)
-		}
-	}
-}
-
-func verifySeedJobProperties(t *testing.T, jenkinsClient jenkinsclient.Jenkins, seedJob seedJobConfig) {
-	data := struct {
-		ID                    string
-		CredentialID          string
-		Targets               string
-		RepositoryBranch      string
-		RepositoryURL         string
-		GitHubPushTrigger     bool
-		BuildPeriodically     string
-		PollSCM               string
-		IgnoreMissingFiles    bool
-		AdditionalClasspath   string
-		FailOnMissingPlugin   bool
-		UnstableOnDeprecation bool
-		SeedJobSuffix         string
-		AgentName             string
-	}{
-		ID:                    seedJob.ID,
-		CredentialID:          seedJob.CredentialID,
-		Targets:               seedJob.Targets,
-		RepositoryBranch:      seedJob.RepositoryBranch,
-		RepositoryURL:         seedJob.RepositoryURL,
-		GitHubPushTrigger:     seedJob.GitHubPushTrigger,
-		BuildPeriodically:     seedJob.BuildPeriodically,
-		PollSCM:               seedJob.PollSCM,
-		IgnoreMissingFiles:    seedJob.IgnoreMissingFiles,
-		AdditionalClasspath:   seedJob.AdditionalClasspath,
-		FailOnMissingPlugin:   seedJob.FailOnMissingPlugin,
-		UnstableOnDeprecation: seedJob.UnstableOnDeprecation,
-		SeedJobSuffix:         constants.SeedJobSuffix,
-		AgentName:             seedjobs.AgentName,
-	}
-
-	groovyScript, err := render.Render(verifySeedJobPropertiesGroovyScriptTemplate, data)
-	assert.NoError(t, err, groovyScript)
-
-	logs, err := jenkinsClient.ExecuteScript(groovyScript)
-	assert.NoError(t, err, logs, groovyScript)
-}
-
 func verifyIfJenkinsCredentialExists(jenkinsClient jenkinsclient.Jenkins, credentialName string) error {
 	groovyScriptFmt := `import com.cloudbees.plugins.credentials.Credentials
 

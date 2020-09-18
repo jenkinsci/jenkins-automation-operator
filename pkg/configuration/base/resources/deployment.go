@@ -31,6 +31,7 @@ func NewJenkinsDeployment(objectMeta metav1.ObjectMeta, jenkins *v1alpha2.Jenkin
 				Spec: corev1.PodSpec{
 					ServiceAccountName: serviceAccountName,
 					NodeSelector:       jenkins.Spec.Master.NodeSelector,
+					InitContainers:     newInitContainers(jenkins),
 					Containers:         newContainers(jenkins),
 					Volumes:            append(GetJenkinsMasterPodBaseVolumes(jenkins), jenkins.Spec.Master.Volumes...),
 					SecurityContext:    jenkins.Spec.Master.SecurityContext,

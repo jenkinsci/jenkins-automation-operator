@@ -122,10 +122,10 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureResourcesRequiredForJenkinsDep
 	}
 	r.logger.V(log.VDebug).Info("Init configuration config map is present")
 
-	if err := r.createBaseConfigurationConfigMap(metaObject); err != nil {
+	/*if err := r.createBaseConfigurationConfigMap(metaObject); err != nil {
 		return err
 	}
-	r.logger.V(log.VDebug).Info("Base configuration config map is present")
+	r.logger.V(log.VDebug).Info("Base configuration config map is present")*/
 
 	if err := r.createRBAC(metaObject); err != nil {
 		return err

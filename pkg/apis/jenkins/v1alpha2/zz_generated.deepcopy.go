@@ -136,7 +136,11 @@ func (in *Container) DeepCopy() *Container {
 func (in *Customization) DeepCopyInto(out *Customization) {
 	*out = *in
 	out.Secret = in.Secret
-	out.ConfigMap = in.ConfigMap
+	if in.Configurations != nil {
+		in, out := &in.Configurations, &out.Configurations
+		*out = make([]ConfigMapRef, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 
@@ -591,7 +595,7 @@ func (in *JenkinsSpec) DeepCopyInto(out *JenkinsSpec) {
 	}
 	in.ServiceAccount.DeepCopyInto(&out.ServiceAccount)
 	out.JenkinsAPISettings = in.JenkinsAPISettings
-	out.ConfigurationAsCode = in.ConfigurationAsCode
+	in.ConfigurationAsCode.DeepCopyInto(&out.ConfigurationAsCode)
 	return
 }
 

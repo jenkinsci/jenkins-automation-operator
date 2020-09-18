@@ -99,8 +99,10 @@ type ConfigMapRef struct {
 
 // Customization defines configuration of Jenkins customization
 type Customization struct {
-	Secret    SecretRef    `json:"secret"`
-	ConfigMap ConfigMapRef `json:"configMap"`
+	Enabled          bool           `json:"enabled"`
+	Secret           SecretRef      `json:"secret"`
+	Configurations   []ConfigMapRef `json:"configurations"`
+	EnableAutoReload bool           `json:"enableAutoReload"`
 }
 
 // ServiceAccount defines Kubernetes service account attributes
