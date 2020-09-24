@@ -22,11 +22,3 @@ func (r *ReconcileJenkinsBaseConfiguration) createInitConfigurationConfigMap(met
 	}
 	return stackerr.WithStack(r.CreateOrUpdateResource(configMap))
 }
-
-func (r *ReconcileJenkinsBaseConfiguration) createBaseConfigurationConfigMap(meta metav1.ObjectMeta) error {
-	configMap, err := resources.NewBaseConfigurationConfigMap(meta, r.Configuration.Jenkins)
-	if err != nil {
-		return err
-	}
-	return stackerr.WithStack(r.CreateOrUpdateResource(configMap))
-}

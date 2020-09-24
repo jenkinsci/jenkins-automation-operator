@@ -99,9 +99,8 @@ func (r *ReconcileJenkinsBaseConfiguration) Reconcile() (reconcile.Result, jenki
 		message := "Some plugins have changed, restarting Jenkins"
 		r.logger.Info(message)
 	}
-	//result, err = r.ensureBaseConfiguration(jenkinsClient)
+	
 	return result, jenkinsClient, err
-	//return result, nil, err
 }
 
 func (r *ReconcileJenkinsBaseConfiguration) ensureResourcesRequiredForJenkinsDeploymentArePresent(metaObject metav1.ObjectMeta) error {
@@ -119,11 +118,6 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureResourcesRequiredForJenkinsDep
 		return err
 	}
 	r.logger.V(log.VDebug).Info("Init configuration config map is present")
-
-	/*if err := r.createBaseConfigurationConfigMap(metaObject); err != nil {
-		return err
-	}
-	r.logger.V(log.VDebug).Info("Base configuration config map is present")*/
 
 	if err := r.createRBAC(metaObject); err != nil {
 		return err
@@ -271,17 +265,3 @@ func (r *ReconcileJenkinsBaseConfiguration) FilterEvents(source corev1.EventList
 	}
 	return events
 }
-
-/*func (r *ReconcileJenkinsBaseConfiguration) ensureBaseConfiguration(jenkinsClient jenkinsclient.Jenkins) (reconcile.Result, error) {
-	customization := v1alpha3.Customization{
-		Secret:         v1alpha3.SecretRef{Name: ""},
-		Configurations: []v1alpha3.ConfigMapRef{{Name: resources.GetBaseConfigurationConfigMapName(r.Configuration.Jenkins)}},
-	}
-	groovyClient := groovy.New(jenkinsClient, r.Client, r.Configuration.Jenkins, "base-groovy", customization)
-	requeue, err := groovyClient.Ensure(func(name string) bool {
-		return strings.HasSuffix(name, ".groovy")
-	}, func(groovyScript string) string {
-		return groovyScript
-	})
-	return reconcile.Result{Requeue: requeue}, err
-}*/

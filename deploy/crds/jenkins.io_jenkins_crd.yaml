@@ -89,6 +89,8 @@ spec:
                       - name
                       type: object
                     type: array
+                  defaultConfig:
+                    type: boolean
                   enableAutoReload:
                     type: boolean
                   enabled:
@@ -103,6 +105,7 @@ spec:
                     type: object
                 required:
                 - configurations
+                - defaultConfig
                 - enableAutoReload
                 - enabled
                 - secret

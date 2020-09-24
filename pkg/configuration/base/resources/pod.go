@@ -41,6 +41,9 @@ const (
 	httpPortName = "http"
 	jnlpPortName = "jnlp"
 
+	//defaut configmap for jenkins configuration
+	JenkinsDefaultConfigMapName    = "jenkins-default-configuration"
+
 	// JenkinsSCConfigName is the Jenkins side car container name for reloading config
 	JenkinsSCConfigName            = "jenkins-sc-config"
 	JenkinsSCConfigImage           = "kiwigrid/k8s-sidecar:0.1.144"
@@ -163,7 +166,6 @@ func GetJenkinsMasterPodBaseVolumes(jenkins *v1alpha2.Jenkins) []corev1.Volume {
 			},
 		},
 	}
-
 	if jenkins.Spec.ConfigurationAsCode.Enabled {
 		// target volume for the init container
 		// All casc configmaps will be copied here
@@ -173,6 +175,20 @@ func GetJenkinsMasterPodBaseVolumes(jenkins *v1alpha2.Jenkins) []corev1.Volume {
 				EmptyDir: &corev1.EmptyDirVolumeSource{},
 			},
 		})
+		// volume for default config configmap
+		if jenkins.Spec.ConfigurationAsCode.DefaultConfig {
+			volumes = append(volumes, corev1.Volume{
+				Name: fmt.Sprintf("casc-default-%s", JenkinsDefaultConfigMapName),
+				VolumeSource: corev1.VolumeSource{
+					ConfigMap: &corev1.ConfigMapVolumeSource{
+						DefaultMode: &configMapVolumeSourceDefaultMode,
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: JenkinsDefaultConfigMapName,
+						},
+					},
+				},
+			})
+		}	
 		// Loop to add all casc configmap volumes
 		for _, cm := range jenkins.Spec.ConfigurationAsCode.Configurations {
 			volumes = append(volumes, corev1.Volume{
@@ -382,7 +398,7 @@ func NewJenkinsInitContainer(jenkins *v1alpha2.Jenkins) corev1.Container {
 	command := []string{
 		"bash",
 		"-c",
-		fmt.Sprintf("find %s/casc-init* -type f |xargs cp -rfLt %s", jenkinsPath, ConfigurationAsCodeVolumePath),
+		fmt.Sprintf("find %s/casc-* -type f |xargs cp -rfLt %s", jenkinsPath, ConfigurationAsCodeVolumePath),
 	}
 	return corev1.Container{
 		Name:            fmt.Sprintf("init-%s", jenkinsContainer.Name),
