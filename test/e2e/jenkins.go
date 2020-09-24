@@ -41,22 +41,35 @@ func getJenkins(t *testing.T, namespace, name string) *v1alpha2.Jenkins {
 }
 
 func getJenkinsMasterPod(t *testing.T, jenkins *v1alpha2.Jenkins) *corev1.Pod {
+	podLabels := resources.GetJenkinsMasterPodLabels(jenkins)
+	t.Logf("Trying to find a pod with PodLabels: %s", podLabels)
 	lo := metav1.ListOptions{
-		LabelSelector: labels.SelectorFromSet(resources.GetJenkinsMasterPodLabels(jenkins)).String(),
+		LabelSelector: labels.SelectorFromSet(podLabels).String(),
 	}
 	podList, err := framework.Global.KubeClient.CoreV1().Pods(jenkins.ObjectMeta.Namespace).List(lo)
 	if err != nil {
+		t.Logf("Master pod not found: error : %+v", err)
 		t.Fatal(err)
 	}
-	if len(podList.Items) != 1 {
+	pods := podList.Items
+	if len(pods) == 0 {
 		t.Fatalf("Jenkins deployment not found, pod list: %+v", podList)
+		// Fatalf will make the test to fail
 	}
-	jenkinsPod := &podList.Items[0]
-	if jenkinsPod != nil {
-		t.Log(fmt.Sprintf("Jenkins Pod being used for e2e : %s", jenkinsPod.Name))
-		t.Log(fmt.Sprintf("Replicaset which owns the pod : %+v", jenkinsPod.OwnerReferences[0]))
+	// trying to find the pod that is not in restarting state
+	jenkinsPod := &pods[0]
+	if len(pods) > 1 {
+		for i, pod := range pods {
+			phase := pod.Status.Phase
+			t.Logf("Pod no. %d is in the %s Status.Phase", i, phase)
+			if (phase == corev1.PodRunning) || (phase == corev1.PodPending) {
+				jenkinsPod = &pod
+				break
+			}
+		}
 	}
-
+	t.Log(fmt.Sprintf("Jenkins Pod being used for e2e : %s", jenkinsPod.Name))
+	t.Log(fmt.Sprintf("Replicaset which owns the pod : %+v", jenkinsPod.OwnerReferences[0]))
 	return jenkinsPod
 }
 
@@ -148,6 +161,9 @@ func createJenkinsCR(t *testing.T, name, namespace, priorityClassName string, se
 			Annotations: annotations,
 		},
 		Spec: v1alpha2.JenkinsSpec{
+			//			JenkinsAPISettings: v1alpha2.JenkinsAPISettings{
+			//				AuthorizationStrategy: v1alpha2.ServiceAccountAuthorizationStrategy,
+			//			},
 			Master: v1alpha2.JenkinsMaster{
 				Annotations: annotations,
 				Containers: []v1alpha2.Container{
@@ -232,7 +248,6 @@ func createJenkinsCR(t *testing.T, name, namespace, priorityClassName string, se
 
 func createJenkinsAPIClientFromServiceAccount(t *testing.T, jenkins *v1alpha2.Jenkins, jenkinsAPIURL string) (jenkinsclient.Jenkins, error) {
 	t.Log("Creating Jenkins API client from service account")
-
 	clientSet, err := kubernetes.NewForConfig(framework.Global.KubeConfig)
 	if err != nil {
 		return nil, err
@@ -275,14 +290,21 @@ func createJenkinsAPIClientFromSecret(t *testing.T, jenkins *v1alpha2.Jenkins, j
 
 func verifyJenkinsAPIConnection(t *testing.T, jenkins *v1alpha2.Jenkins, namespace string) (jenkinsclient.Jenkins, func()) {
 	var service corev1.Service
+	serviceName := resources.GetJenkinsHTTPServiceName(jenkins)
+	t.Logf("Verifying jenkins API connection to service: %s", serviceName)
 	err := framework.Global.Client.Get(context.TODO(), types.NamespacedName{
 		Namespace: jenkins.Namespace,
-		Name:      resources.GetJenkinsHTTPServiceName(jenkins),
+		Name:      serviceName,
 	}, &service)
+	t.Logf("Service returned for name: %s found is: %+v", serviceName, service)
 	require.NoError(t, err)
+	t.Logf("No error found when trying to find service: %s", serviceName)
 
 	//podName := resources.GetJenkinsMasterPodName(jenkins.ObjectMeta.Name)
+	t.Logf("Trying to find Jenkins Master Pod for Jenkins CR: %s", jenkins.Name)
 	podName := getJenkinsMasterPod(t, jenkins).Name
+	t.Logf("Jenkins Master Pod is : %s", podName)
+
 	port, cleanUpFunc, waitFunc, portForwardFunc, err := setupPortForwardToPod(t, namespace, podName, int(constants.DefaultHTTPPortInt32))
 	if err != nil {
 		t.Fatal(err)

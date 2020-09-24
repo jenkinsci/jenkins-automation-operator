@@ -27,9 +27,12 @@ func TestBackupAndRestore(t *testing.T) {
 
 	defer showLogsAndCleanup(t, ctx)
 
+	// For the test, the created seed job and the jenkins CR have
+	// the same names. The seed job name must match what is in
+	// the file cicd/jobs/e2e.jenkins ; so here we set "e2e-jenkins-operator"
 	jobID := "e2e-jenkins-operator"
 	createPVC(t, namespace)
-	jenkins := createJenkinsWithBackupAndRestoreConfigured(t, "e2e", namespace)
+	jenkins := createJenkinsWithBackupAndRestoreConfigured(t, jobID, namespace)
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
 
 	jenkinsClient, cleanUpFunc := verifyJenkinsAPIConnection(t, jenkins, namespace)
@@ -53,6 +56,8 @@ func TestBackupAndRestore(t *testing.T) {
 
 func waitForJob(t *testing.T, jenkinsClient client.Jenkins, jobID string) {
 	t.Logf("Waiting for job: %s to be created by seed job", jobID)
+	allJobs, _ := jenkinsClient.GetAllJobNames()
+	t.Logf("All jobs in the current Jenkins: %s ", allJobs)
 	err := try.Until(func() (end bool, err error) {
 		_, err = jenkinsClient.GetJob(jobID)
 		return err == nil, err
@@ -102,15 +107,15 @@ func createJenkinsWithBackupAndRestoreConfigured(t *testing.T, name, namespace s
 		Spec: v1alpha2.JenkinsSpec{
 			Master: v1alpha2.JenkinsMaster{
 				Containers: []v1alpha2.Container{
-					getBasicMasterContainer(),
-					getBackupContainer(backupContainerName),
+					newBasicMasterContainer(),
+					newBackupContainer(backupContainerName),
 				},
 				Volumes: getBackupVolumes(),
 			},
-			SeedJobs: getSeedJobs(),
-			Service:  getService(),
-			Backup:   getBackupSpec(backupContainerName),
-			Restore:  getRestoreSpec(backupContainerName),
+			SeedJobs: newSeedJobs(name),
+			Service:  newService(),
+			Backup:   newBackupSpec(backupContainerName),
+			Restore:  newRestoreSpec(backupContainerName),
 		},
 	}
 	updateJenkinsCR(t, jenkins)
@@ -122,25 +127,25 @@ func createJenkinsWithBackupAndRestoreConfigured(t *testing.T, name, namespace s
 	return jenkins
 }
 
-func getBasicMasterContainer() v1alpha2.Container {
+func newBasicMasterContainer() v1alpha2.Container {
 	return v1alpha2.Container{
 		Name:  resources.JenkinsMasterContainerName,
 		Image: "jenkins/jenkins:lts",
 	}
 }
 
-func getService() v1alpha2.Service {
+func newService() v1alpha2.Service {
 	return v1alpha2.Service{
 		Type: corev1.ServiceTypeNodePort,
 		Port: constants.DefaultHTTPPortInt32,
 	}
 }
 
-func getSeedJobs() []v1alpha2.SeedJob {
+func newSeedJobs(seedJobName string) []v1alpha2.SeedJob {
 	return []v1alpha2.SeedJob{
 		{
-			ID:                    "jenkins-operator",
-			CredentialID:          "jenkins-operator",
+			ID:                    seedJobName,
+			CredentialID:          seedJobName,
 			JenkinsCredentialType: v1alpha2.NoJenkinsCredentialCredentialType,
 			Targets:               "cicd/jobs/*.jenkins",
 			Description:           "Jenkins Operator repository",
@@ -150,7 +155,7 @@ func getSeedJobs() []v1alpha2.SeedJob {
 	}
 }
 
-func getBackupSpec(containerName string) v1alpha2.Backup {
+func newBackupSpec(containerName string) v1alpha2.Backup {
 	return v1alpha2.Backup{
 		ContainerName: containerName,
 		Action: v1alpha2.Handler{
@@ -161,7 +166,7 @@ func getBackupSpec(containerName string) v1alpha2.Backup {
 	}
 }
 
-func getRestoreSpec(containerName string) v1alpha2.Restore {
+func newRestoreSpec(containerName string) v1alpha2.Restore {
 	return v1alpha2.Restore{
 		ContainerName: containerName,
 		Action: v1alpha2.Handler{
@@ -172,7 +177,7 @@ func getRestoreSpec(containerName string) v1alpha2.Restore {
 	}
 }
 
-func getBackupContainer(containerName string) v1alpha2.Container {
+func newBackupContainer(containerName string) v1alpha2.Container {
 	return v1alpha2.Container{
 		Name:            containerName,
 		Image:           "virtuslab/jenkins-operator-backup-pvc:v0.0.8",

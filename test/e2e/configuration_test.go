@@ -109,9 +109,7 @@ func TestPlugins(t *testing.T) {
 	namespace, ctx := setupTest(t)
 	// Deletes test namespace
 	defer showLogsAndCleanup(t, ctx)
-
 	jobID := "k8s-e2e"
-
 	priorityClassName := ""
 	seedJobs := &[]v1alpha2.SeedJob{
 		{
@@ -126,9 +124,12 @@ func TestPlugins(t *testing.T) {
 	}
 
 	jenkins := createJenkinsCR(t, "k8s-e2e", namespace, priorityClassName, seedJobs)
+	t.Logf("Jenkins CR created : %s in namespace: %s", jenkins.Name, namespace)
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
+	t.Logf("Base configuration completed at : %+v", jenkins.Status.BaseConfigurationCompletedTime)
 
 	jenkinsClient, cleanUpFunc := verifyJenkinsAPIConnection(t, jenkins, namespace)
+
 	defer cleanUpFunc()
 	waitForJob(t, jenkinsClient, jobID)
 	job, err := jenkinsClient.GetJob(jobID)
