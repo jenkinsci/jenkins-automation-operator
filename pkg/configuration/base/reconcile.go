@@ -78,7 +78,7 @@ func (r *ReconcileJenkinsBaseConfiguration) Reconcile() (reconcile.Result, jenki
 		r.logger.V(log.VDebug).Info(fmt.Sprintf("Jenkins Pod created with name : %s", jenkinsPod.Name))
 		if jenkinsPod.DeletionTimestamp != nil {
 			r.logger.V(log.VDebug).Info(fmt.Sprintf("Jenkins Pod deletion timestamp set to %s with Pod Phase : %s", jenkinsPod.DeletionTimestamp, jenkinsPod.Status.Phase))
-			return reconcile.Result{}, nil, fmt.Errorf("jenkins pod has been deleted")
+			return reconcile.Result{Requeue: true}, nil, fmt.Errorf("jenkins pod has been deleted")
 		}
 	} else {
 		r.logger.V(log.VWarn).Info(fmt.Sprintf("Jenkins Pod not created for Deployment : %s", r.Jenkins.Name))

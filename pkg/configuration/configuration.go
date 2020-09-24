@@ -56,11 +56,12 @@ func (c *Configuration) GetJenkinsMasterPod() (*corev1.Pod, error) {
 
 // GetJenkinsDeployment gets the jenkins master deployment.
 func (c *Configuration) GetJenkinsDeployment() (*appsv1.Deployment, error) {
-	logger.V(log.VDebug).Info(fmt.Sprintf("Getting JenkinsDeploymentName for : %+v", c.Jenkins.Name))
-	jenkinsDeploymentName := resources.GetJenkinsDeploymentName(c.Jenkins.Name)
+	deploymentName := resources.GetJenkinsDeploymentName(c.Jenkins.Name)
+	logger.V(log.VDebug).Info(fmt.Sprintf("Getting JenkinsDeploymentName for : %+v, querying deployment named: %s", c.Jenkins.Name, deploymentName))
 	currentJenkinsDeployment := &appsv1.Deployment{}
-	err := c.Client.Get(context.TODO(), types.NamespacedName{Name: jenkinsDeploymentName, Namespace: c.Jenkins.Namespace}, currentJenkinsDeployment)
+	err := c.Client.Get(context.TODO(), types.NamespacedName{Name: deploymentName, Namespace: c.Jenkins.Namespace}, currentJenkinsDeployment)
 	if err != nil {
+		logger.V(log.VDebug).Info(fmt.Sprintf("No deployment named: %s found: %+v", deploymentName, err))
 		return nil, err
 	}
 	return currentJenkinsDeployment, nil
@@ -208,13 +209,18 @@ func (c *Configuration) GetJenkinsMasterPodName() string {
 func (c *Configuration) GetReplicaSetByDeployment() (appsv1.ReplicaSet, error) {
 	deployment, _ := c.GetJenkinsDeployment()
 	selector, err := metav1.LabelSelectorAsSelector(deployment.Spec.Selector)
+	replicasSetList := appsv1.ReplicaSetList{}
 	if err != nil {
-		return appsv1.ReplicaSet{}, err
+		logger.V(log.VDebug).Info(fmt.Sprintf("Error while getting the replicaset using selector: %s : error: %+v", selector, err))
 	}
-	replicasSet := appsv1.ReplicaSetList{}
 	listOptions := client.ListOptions{LabelSelector: selector}
-	err = c.Client.List(context.TODO(), &replicasSet, &listOptions)
-	return replicasSet.Items[0], err
+	err = c.Client.List(context.TODO(), &replicasSetList, &listOptions)
+	if err != nil || len(replicasSetList.Items) == 0 {
+		logger.V(log.VDebug).Info(fmt.Sprintf("Error while getting the replicaset using selector: %s : error: %+v", selector, err))
+	}
+	replicaSet := replicasSetList.Items[0]
+	logger.V(log.VDebug).Info(fmt.Sprintf("Successfully got the ReplicaSet: %s", replicaSet.Name))
+	return replicaSet, err
 }
 
 func (c *Configuration) GetPodByDeployment() (*corev1.Pod, error) {
@@ -222,19 +228,13 @@ func (c *Configuration) GetPodByDeployment() (*corev1.Pod, error) {
 	selector, _ := metav1.LabelSelectorAsSelector(replicaSet.Spec.Selector)
 	listOptions := client.ListOptions{LabelSelector: selector}
 	pods := corev1.PodList{}
-	pod := corev1.Pod{}
 	err := c.Client.List(context.TODO(), &pods, &listOptions)
-	if len(pods.Items) == 0 {
-		return &pod, stackerr.Errorf("Deployment has no pod attached yet")
-	} else if len(pods.Items) > 0 {
-		for i, p := range pods.Items {
-			logger.V(log.VDebug).Info(fmt.Sprintf("Pod %d with name %s is in Phase %s", i, p.Name, p.Status.Phase))
-			if p.DeletionTimestamp != nil {
-				return nil, fmt.Errorf("pod %s is in Terminating state with DeletionTimestamp %s, possible Jenkins restart in progress", p.Name, p.DeletionTimestamp)
-			}
-		}
+	if err != nil || len(pods.Items) == 0 {
+		return nil, stackerr.Errorf("Deployment has no pod attached yet: Error was: %+v", err)
 	}
-	return &pod, err
+	pod := pods.Items[0]
+	logger.V(log.VDebug).Info(fmt.Sprintf("Successfully got the Pod: %s", pod.Name))
+	return &pods.Items[0], err
 }
 
 // GetJenkinsClientFromServiceAccount gets jenkins client from a serviceAccount.
@@ -247,6 +247,7 @@ func (c *Configuration) GetJenkinsClientFromServiceAccount() (jenkinsclient.Jenk
 	logger.V(log.VDebug).Info(fmt.Sprintf("Creating Jenkins Client from serviceAccount with URL: %+v", jenkinsAPIUrl))
 	masterPod, _ := c.GetPodByDeployment()
 	podName := masterPod.Name
+	logger.V(log.VDebug).Info(fmt.Sprintf("Abot to execute cat command on Pod: %s", podName))
 	token, _, err := c.Exec(podName, resources.JenkinsMasterContainerName, []string{"cat", "/var/run/secrets/kubernetes.io/serviceaccount/token"})
 	if err != nil {
 		logger.V(log.VDebug).Info(fmt.Sprintf("Error while getJenkinsAPIUrl: %s", err))
