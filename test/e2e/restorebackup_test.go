@@ -52,6 +52,7 @@ func TestBackupAndRestore(t *testing.T) {
 }
 
 func waitForJob(t *testing.T, jenkinsClient client.Jenkins, jobID string) {
+	t.Logf("Waiting for job: %s to be created by seed job", jobID)
 	err := try.Until(func() (end bool, err error) {
 		_, err = jenkinsClient.GetJob(jobID)
 		return err == nil, err
@@ -88,7 +89,7 @@ func createPVC(t *testing.T, namespace string) {
 }
 
 func createJenkinsWithBackupAndRestoreConfigured(t *testing.T, name, namespace string) *v1alpha2.Jenkins {
-	containerName := "backup"
+	backupContainerName := "backup"
 	// TODO fix e2e to use deployment instead of pod
 	//annotations := map[string]string{base.UseDeploymentAnnotation: "false"}
 	jenkins := &v1alpha2.Jenkins{
@@ -99,91 +100,17 @@ func createJenkinsWithBackupAndRestoreConfigured(t *testing.T, name, namespace s
 			//		Annotations: annotations,
 		},
 		Spec: v1alpha2.JenkinsSpec{
-			Backup: v1alpha2.Backup{
-				ContainerName: containerName,
-				Action: v1alpha2.Handler{
-					Exec: &corev1.ExecAction{
-						Command: []string{"/home/user/bin/backup.sh"},
-					},
-				},
-			},
-			Restore: v1alpha2.Restore{
-				ContainerName: containerName,
-				Action: v1alpha2.Handler{
-					Exec: &corev1.ExecAction{
-						Command: []string{"/home/user/bin/restore.sh"},
-					},
-				},
-			},
 			Master: v1alpha2.JenkinsMaster{
 				Containers: []v1alpha2.Container{
-					{
-						Name: resources.JenkinsMasterContainerName,
-						VolumeMounts: []corev1.VolumeMount{
-							{
-								Name:      "plugins-cache",
-								MountPath: "/usr/share/jenkins/ref/plugins",
-							},
-						},
-					},
-					{
-						Name:            containerName,
-						Image:           "virtuslab/jenkins-operator-backup-pvc:v0.0.6",
-						ImagePullPolicy: corev1.PullIfNotPresent,
-						Env: []corev1.EnvVar{
-							{
-								Name:  "BACKUP_DIR",
-								Value: "/backup",
-							},
-							{
-								Name:  "JENKINS_HOME",
-								Value: "/jenkins-home",
-							},
-						},
-						VolumeMounts: []corev1.VolumeMount{
-							{
-								Name:      "backup",
-								MountPath: "/backup",
-							},
-							{
-								Name:      "jenkins-home",
-								MountPath: "/jenkins-home",
-							},
-						},
-					},
+					getBasicMasterContainer(),
+					getBackupContainer(backupContainerName),
 				},
-				Volumes: []corev1.Volume{
-					{
-						Name: "backup",
-						VolumeSource: corev1.VolumeSource{
-							PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-								ClaimName: pvcName,
-							},
-						},
-					},
-					{
-						Name: "plugins-cache",
-						VolumeSource: corev1.VolumeSource{
-							EmptyDir: &corev1.EmptyDirVolumeSource{},
-						},
-					},
-				},
+				Volumes: getBackupVolumes(),
 			},
-			SeedJobs: []v1alpha2.SeedJob{
-				{
-					ID:                    "jenkins-operator",
-					CredentialID:          "jenkins-operator",
-					JenkinsCredentialType: v1alpha2.NoJenkinsCredentialCredentialType,
-					Targets:               "cicd/jobs/*.jenkins",
-					Description:           "Jenkins Operator repository",
-					RepositoryBranch:      "master",
-					RepositoryURL:         "https://github.com/jenkinsci/kubernetes-operator.git",
-				},
-			},
-			Service: v1alpha2.Service{
-				Type: corev1.ServiceTypeNodePort,
-				Port: constants.DefaultHTTPPortInt32,
-			},
+			SeedJobs: getSeedJobs(),
+			Service:  getService(),
+			Backup:   getBackupSpec(backupContainerName),
+			Restore:  getRestoreSpec(backupContainerName),
 		},
 	}
 	updateJenkinsCR(t, jenkins)
@@ -193,4 +120,92 @@ func createJenkinsWithBackupAndRestoreConfigured(t *testing.T, name, namespace s
 	require.NoError(t, err)
 
 	return jenkins
+}
+
+func getBasicMasterContainer() v1alpha2.Container {
+	return v1alpha2.Container{
+		Name:  resources.JenkinsMasterContainerName,
+		Image: "jenkins/jenkins:lts",
+	}
+}
+
+func getService() v1alpha2.Service {
+	return v1alpha2.Service{
+		Type: corev1.ServiceTypeNodePort,
+		Port: constants.DefaultHTTPPortInt32,
+	}
+}
+
+func getSeedJobs() []v1alpha2.SeedJob {
+	return []v1alpha2.SeedJob{
+		{
+			ID:                    "jenkins-operator",
+			CredentialID:          "jenkins-operator",
+			JenkinsCredentialType: v1alpha2.NoJenkinsCredentialCredentialType,
+			Targets:               "cicd/jobs/*.jenkins",
+			Description:           "Jenkins Operator repository",
+			RepositoryBranch:      "master",
+			RepositoryURL:         "https://github.com/jenkinsci/kubernetes-operator.git",
+		},
+	}
+}
+
+func getBackupSpec(containerName string) v1alpha2.Backup {
+	return v1alpha2.Backup{
+		ContainerName: containerName,
+		Action: v1alpha2.Handler{
+			Exec: &corev1.ExecAction{
+				Command: []string{"/home/user/bin/backup.sh"},
+			},
+		},
+	}
+}
+
+func getRestoreSpec(containerName string) v1alpha2.Restore {
+	return v1alpha2.Restore{
+		ContainerName: containerName,
+		Action: v1alpha2.Handler{
+			Exec: &corev1.ExecAction{
+				Command: []string{"/home/user/bin/restore.sh"},
+			},
+		},
+	}
+}
+
+func getBackupContainer(containerName string) v1alpha2.Container {
+	return v1alpha2.Container{
+		Name:            containerName,
+		Image:           "virtuslab/jenkins-operator-backup-pvc:v0.0.8",
+		ImagePullPolicy: corev1.PullIfNotPresent,
+		Env: []corev1.EnvVar{
+			{
+				Name:  "BACKUP_DIR",
+				Value: "/backup",
+			},
+			{
+				Name:  "JENKINS_HOME",
+				Value: "/jenkins-home",
+			},
+		},
+		VolumeMounts: []corev1.VolumeMount{
+			{
+				Name:      "backup",
+				MountPath: "/backup",
+			},
+			{
+				Name:      "jenkins-home",
+				MountPath: "/jenkins-home",
+			},
+		},
+	}
+}
+
+func getBackupVolumes() []corev1.Volume {
+	return []corev1.Volume{{
+		Name: "backup",
+		VolumeSource: corev1.VolumeSource{
+			EmptyDir: &corev1.EmptyDirVolumeSource{},
+		},
+	},
+	}
 }
