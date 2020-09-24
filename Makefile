@@ -209,7 +209,6 @@ ifeq ($(KUBERNETES_PROVIDER),crc)
 endif
 	cp deploy/crds/jenkins_$(API_VERSION)_jenkins_crd.yaml deploy/crds/jenkins_all_crd.yaml
 	cat deploy/crds/jenkins_$(API_VERSION)_jenkinsimage_crd.yaml >> deploy/crds/jenkins_all_crd.yaml
-	cat deploy/crds/jenkins_$(API_VERSION_NEXT)_casc_crd.yaml >> deploy/crds/jenkins_all_crd.yaml
 	cp deploy/service_account.yaml deploy/namespace-init.yaml
 	cat deploy/role.yaml >> deploy/namespace-init.yaml
 	cat deploy/role_binding.yaml >> deploy/namespace-init.yaml
@@ -233,14 +232,14 @@ endif
 
 ifeq ($(OSFLAG), OSX)
 ifeq ($(IMAGE_PULL_MODE), remote)
-	sed -i 's|\(image:\).*|\1 $(DOCKER_ORGANIZATION)/$(DOCKER_REGISTRY):$(GITCOMMIT)|g' deploy/namespace-init.yaml
-	sed -i 's|\(imagePullPolicy\): IfNotPresent|\1: Always|g' deploy/namespace-init.yaml
+	sed -i '' 's|\(image:\).*|\1 $(DOCKER_ORGANIZATION)/$(DOCKER_REGISTRY):$(GITCOMMIT)|g' deploy/namespace-init.yaml
+	sed -i '' 's|\(imagePullPolicy\): IfNotPresent|\1: Always|g' deploy/namespace-init.yaml
 else
-	sed -i 's|\(image:\).*|\1 $(DOCKER_REGISTRY):$(GITCOMMIT)|g' deploy/namespace-init.yaml
+	sed -i '' 's|\(image:\).*|\1 $(DOCKER_REGISTRY):$(GITCOMMIT)|g' deploy/namespace-init.yaml
 	sed -i '' 's|image: virtuslab/jenkins-operator:.*|image: $(DOCKER_REGISTRY):$(GITCOMMIT)|g' chart/jenkins-operator/values.yaml	
 endif
 ifeq ($(KUBERNETES_PROVIDER),minikube)
-	sed -i 's|\(imagePullPolicy\): IfNotPresent|\1: Never|g' deploy/namespace-init.yaml
+	sed -i '' 's|\(imagePullPolicy\): IfNotPresent|\1: Never|g' deploy/namespace-init.yaml
 endif
 endif
 
@@ -302,7 +301,6 @@ endif
 	@echo "Applying creation of crds from deploy/crds/jenkins_$(API_VERSION)_jenkins_crd.yaml"
 	kubectl apply -f deploy/crds/jenkins_$(API_VERSION)_jenkins_crd.yaml
 	kubectl apply -f deploy/crds/jenkins_$(API_VERSION)_jenkinsimage_crd.yaml
-	kubectl apply -f deploy/crds/jenkins_$(API_VERSION_V1ALPHA3)_casc_crd.yaml
 	@echo "Watching '$(WATCH_NAMESPACE)' namespace"
 	build/_output/bin/jenkins-operator $(OPERATOR_ARGS)
 
@@ -427,7 +425,6 @@ minikube-run: minikube-start ## Run the operator locally and use minikube as Kub
 	@echo "+ $@"
 	kubectl config use-context minikube
 	kubectl apply -f deploy/crds/jenkins_$(API_VERSION)_jenkins_crd.yaml
-	kubectl apply -f deploy/crds/jenkins_$(API_VERSION_V1ALPHA3)_casc_crd.yaml
 	@echo "Watching '$(WATCH_NAMESPACE)' namespace"
 	build/_output/bin/jenkins-operator $(OPERATOR_ARGS)
 
@@ -438,7 +435,6 @@ crc-run: crc-start ## Run the operator locally and use CodeReady Containers as K
 	@echo "+ $@"
 	oc project $(CRC_OC_PROJECT)
 	kubectl apply -f deploy/crds/jenkins_$(API_VERSION)_jenkins_crd.yaml
-	kubectl apply -f deploy/crds/jenkins_$(API_VERSION_V1ALPHA3)_casc_crd.yaml
 	@echo "Watching '$(WATCH_NAMESPACE)' namespace"
 	build/_output/bin/jenkins-operator $(OPERATOR_ARGS)
 

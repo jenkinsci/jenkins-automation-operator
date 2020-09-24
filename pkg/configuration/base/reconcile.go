@@ -10,11 +10,9 @@ import (
 	"reflect"
 
 	"github.com/go-logr/logr"
-	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha3"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
-	"github.com/jenkinsci/kubernetes-operator/pkg/groovy"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
 	stackerr "github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -101,7 +99,7 @@ func (r *ReconcileJenkinsBaseConfiguration) Reconcile() (reconcile.Result, jenki
 		message := "Some plugins have changed, restarting Jenkins"
 		r.logger.Info(message)
 	}
-	result, err = r.ensureBaseConfiguration(jenkinsClient)
+	//result, err = r.ensureBaseConfiguration(jenkinsClient)
 	return result, jenkinsClient, err
 	//return result, nil, err
 }
@@ -274,7 +272,7 @@ func (r *ReconcileJenkinsBaseConfiguration) FilterEvents(source corev1.EventList
 	return events
 }
 
-func (r *ReconcileJenkinsBaseConfiguration) ensureBaseConfiguration(jenkinsClient jenkinsclient.Jenkins) (reconcile.Result, error) {
+/*func (r *ReconcileJenkinsBaseConfiguration) ensureBaseConfiguration(jenkinsClient jenkinsclient.Jenkins) (reconcile.Result, error) {
 	customization := v1alpha3.Customization{
 		Secret:         v1alpha3.SecretRef{Name: ""},
 		Configurations: []v1alpha3.ConfigMapRef{{Name: resources.GetBaseConfigurationConfigMapName(r.Configuration.Jenkins)}},
@@ -286,4 +284,4 @@ func (r *ReconcileJenkinsBaseConfiguration) ensureBaseConfiguration(jenkinsClien
 		return groovyScript
 	})
 	return reconcile.Result{Requeue: requeue}, err
-}
+}*/

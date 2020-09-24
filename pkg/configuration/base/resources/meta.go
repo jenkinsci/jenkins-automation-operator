@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
-	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha3"
 	"github.com/jenkinsci/kubernetes-operator/pkg/constants"
 
 	corev1 "k8s.io/api/core/v1"
@@ -86,7 +85,7 @@ func AddLabelToWatchedSecrets(crName, secretName, namespace string, k8sClient k8
 }
 
 //Adds label to watched configmaps
-func AddLabelToWatchedCMs(crName, namespace string, k8sClient k8s.Client, configmaps []v1alpha3.ConfigMapRef) error {
+func AddLabelToWatchedCMs(crName, namespace string, k8sClient k8s.Client, configmaps []v1alpha2.ConfigMapRef) error {
 	labelsForWatchedResources := BuildLabelsForWatchedResources(crName)
 
 	for _, configMapRef := range configmaps {

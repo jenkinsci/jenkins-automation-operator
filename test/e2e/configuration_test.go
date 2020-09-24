@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
-	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha3"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
@@ -24,7 +23,6 @@ import (
 )
 
 const e2e = "e2e"
-const cascE2e = "casc-e2e"
 
 func TestConfiguration(t *testing.T) {
 	t.Parallel()
@@ -36,15 +34,31 @@ func TestConfiguration(t *testing.T) {
 	systemMessage := "Configuration as Code integration works!!!"
 	systemMessageEnvName := "SYSTEM_MESSAGE"
 	priorityClassName := ""
-
-func newGroovyScripts() v1alpha3.Customization {
-	return v1alpha3.Customization{
-		Configurations: []v1alpha3.ConfigMapRef{
+	mySeedJob := seedJobConfig{
+		SeedJob: v1alpha2.SeedJob{
+			ID:                    "jenkins-operator",
+			CredentialID:          "jenkins-operator",
+			JenkinsCredentialType: v1alpha2.NoJenkinsCredentialCredentialType,
+			Targets:               "cicd/jobs/*.jenkins",
+			Description:           "Jenkins Operator repository",
+			RepositoryBranch:      "master",
+			RepositoryURL:         "https://github.com/jenkinsci/kubernetes-operator.git",
+			PollSCM:               "1 1 1 1 1",
+			UnstableOnDeprecation: true,
+			BuildPeriodically:     "1 1 1 1 1",
+			FailOnMissingPlugin:   true,
+			IgnoreMissingFiles:    true,
+			//AdditionalClasspath: can fail with the seed job agent
+			GitHubPushTrigger: true,
+		},
+	}
+	cascConfig := v1alpha2.Customization{
+		Configurations: []v1alpha2.ConfigMapRef{
 			{
 				Name: userConfigurationConfigMapName,
 			},
 		},
-		Secret: v1alpha3.SecretRef{
+		Secret: v1alpha2.SecretRef{
 			Name: userConfigurationSecretName,
 		},
 	}
@@ -88,8 +102,18 @@ func TestPlugins(t *testing.T) {
 		},
 	}
 
-	jenkins := createJenkinsCR(t, "k8s-e2e", namespace, priorityClassName, seedJobs)
-	t.Logf("Jenkins CR created : %s in namespace: %s", jenkins.Name, namespace)
+	cascConfig := v1alpha2.Customization{
+		Configurations: []v1alpha2.ConfigMapRef{
+			{
+				Name: userConfigurationConfigMapName,
+			},
+		},
+		Secret: v1alpha2.SecretRef{
+			Name: userConfigurationSecretName,
+		},
+	}
+
+	jenkins := createJenkinsCR(t, "k8s-e2e", namespace, priorityClassName, cascConfig)
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
 	t.Logf("Base configuration completed at : %+v", jenkins.Status.BaseConfigurationCompletedTime)
 	jenkinsClient, cleanUpFunc := verifyJenkinsAPIConnection(t, jenkins, namespace)
@@ -122,8 +146,17 @@ func TestPriorityClass(t *testing.T) {
 	jenkinsCRName := "k8s-ete-priority-class-existing"
 	// One of the existing priority classes
 	priorityClassName := "system-cluster-critical"
-
-	jenkins := createJenkinsCR(t, jenkinsCRName, namespace, priorityClassName, nil)
+	cascConfig := v1alpha2.Customization{
+		Configurations: []v1alpha2.ConfigMapRef{
+			{
+				Name: userConfigurationConfigMapName,
+			},
+		},
+		Secret: v1alpha2.SecretRef{
+			Name: userConfigurationSecretName,
+		},
+	}
+	jenkins := createJenkinsCR(t, jenkinsCRName, namespace, priorityClassName, cascConfig)
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
 	verifyJenkinsMasterPodAttributes(t, jenkins)
 	_, cleanUpFunc := verifyJenkinsAPIConnection(t, jenkins, namespace)
@@ -150,8 +183,7 @@ func createUserConfigurationConfigMap(t *testing.T, namespace string, numberOfEx
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      userConfigurationConfigMapName,
 			Namespace: namespace,
-			Labels:
-			  type: e2e-jenkins-config
+			Labels: map[string]string{"type": "e2e-jenkins-config"},  
 		},
 		Data: map[string]string{
 			"1-set-executors.groovy": fmt.Sprintf(`

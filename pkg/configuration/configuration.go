@@ -7,8 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha3"
-
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
@@ -38,7 +36,6 @@ type Configuration struct {
 	RestConfig                   rest.Config
 	JenkinsAPIConnectionSettings jenkinsclient.JenkinsAPIConnectionSettings
 	Jenkins                      *v1alpha2.Jenkins
-	Casc                         *v1alpha3.Casc
 	Scheme                       *runtime.Scheme
 	Notifications                *chan event.Event
 }

@@ -9,8 +9,6 @@ import (
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis"
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
-	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha3"
-	"github.com/jenkinsci/kubernetes-operator/pkg/controller/casc"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/stretchr/testify/require"
@@ -43,12 +41,6 @@ func TestDeployHelmChart(t *testing.T) {
 	err = framework.AddToFrameworkScheme(apis.AddToScheme, jenkinsServiceList)
 	require.NoError(t, err)
 
-	cascServiceList := &v1alpha3.CascList{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       v1alpha3.Kind,
-			APIVersion: v1alpha3.SchemeGroupVersion.String(),
-		},
-	}
 	err = framework.AddToFrameworkScheme(apis.AddToScheme, cascServiceList)
 	require.NoError(t, err)
 	jenkins := &v1alpha2.Jenkins{
@@ -61,13 +53,6 @@ func TestDeployHelmChart(t *testing.T) {
 
 	annotations := map[string]string{
 		casc.JenkinsReferenceAnnotation: jenkins.Name,
-	}
-	casc := &v1alpha3.Casc{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:        "casc-example",
-			Namespace:   namespace,
-			Annotations: annotations,
-		},
 	}
 
 	cmd := exec.Command("helm", "upgrade", "jenkins", "./chart/jenkins-operator", "--namespace", namespace, "--debug",

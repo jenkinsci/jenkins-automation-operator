@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
-	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha3"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/constants"
 	"github.com/jenkinsci/kubernetes-operator/pkg/plugins"
@@ -363,7 +362,7 @@ func (r *ReconcileJenkinsBaseConfiguration) verifyBasePlugins(requiredBasePlugin
 }
 
 //nolint:unparam
-func (r *ReconcileJenkinsBaseConfiguration) validateCustomization(customization v1alpha3.Customization, name string) ([]string, error) {
+func (r *ReconcileJenkinsBaseConfiguration) validateCustomization(customization v1alpha2.Customization, name string) ([]string, error) {
 	var messages []string
 	if len(customization.Secret.Name) == 0 && len(customization.Configurations) == 0 {
 		return nil, nil

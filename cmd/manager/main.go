@@ -7,8 +7,6 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/jenkinsci/kubernetes-operator/pkg/controller/casc"
-
 	"github.com/jenkinsci/kubernetes-operator/pkg/controller/jenkinsimage"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
@@ -150,11 +148,6 @@ func main() {
 	}
 	// setup JenkinsImage controller
 	if err = jenkinsimage.Add(mgr, *clientSet); err != nil {
-		fatal(errors.Wrap(err, "failed to setup controllers"), *debug)
-	}
-
-	// setup Casc controller
-	if err := casc.Add(mgr, jenkinsAPIConnectionSettings, *clientSet, *cfg, &c); err != nil {
 		fatal(errors.Wrap(err, "failed to setup controllers"), *debug)
 	}
 

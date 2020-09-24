@@ -6,7 +6,6 @@ import (
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis"
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
-	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha3"
 	"github.com/jenkinsci/kubernetes-operator/pkg/constants"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
@@ -54,12 +53,6 @@ func setupTest(t *testing.T) (string, *framework.Context) {
 		t.Fatalf("could not add scheme to framework scheme: %v", err)
 	}
 
-	cascServiceList := &v1alpha3.CascList{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       v1alpha3.Kind,
-			APIVersion: v1alpha3.SchemeGroupVersion.String(),
-		},
-	}
 	err = framework.AddToFrameworkScheme(apis.AddToScheme, cascServiceList)
 	if err != nil {
 		t.Fatalf("could not add scheme to framework scheme: %v", err)
