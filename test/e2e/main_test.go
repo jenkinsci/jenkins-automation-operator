@@ -53,17 +53,12 @@ func setupTest(t *testing.T) (string, *framework.Context) {
 		t.Fatalf("could not add scheme to framework scheme: %v", err)
 	}
 
-	err = framework.AddToFrameworkScheme(apis.AddToScheme, cascServiceList)
-	if err != nil {
-		t.Fatalf("could not add scheme to framework scheme: %v", err)
-	}
-
 	namespace, err := ctx.GetOperatorNamespace()
 	if err != nil {
 		t.Fatalf("could not get namespace: %v", err)
 	}
 	t.Logf("Test namespace '%s'", namespace)
-
+	
 	// wait for jenkins-operator to be ready
 	err = e2eutil.WaitForDeployment(t, framework.Global.KubeClient, namespace, jenkinsOperatorDeploymentName, 1, retryInterval, timeout)
 	if err != nil {

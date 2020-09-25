@@ -32,6 +32,8 @@ spec:
       version: "1.76"
     - name: configuration-as-code
       version: "1.29"
+    - name: configuration-as-code-groovy
+      version: "1.1"
     - name: configuration-as-code-support
       version: "1.19"
     - name: kubernetes-credentials-provider

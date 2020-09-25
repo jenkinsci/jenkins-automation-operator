@@ -76,6 +76,7 @@ func GetJenkinsMasterContainerBaseEnvs(jenkins *v1alpha2.Jenkins) []corev1.EnvVa
 			Name: "POD_NAME",
 			ValueFrom: &corev1.EnvVarSource{
 				FieldRef: &corev1.ObjectFieldSelector{
+					APIVersion: "v1",
 					FieldPath: "metadata.name",
 				},
 			},
@@ -383,6 +384,14 @@ func NewJenkinsInitContainer(jenkins *v1alpha2.Jenkins) corev1.Container {
 			MountPath: ConfigurationAsCodeVolumePath,
 			ReadOnly:  false,
 		},
+	}
+
+	if jenkins.Spec.ConfigurationAsCode.DefaultConfig {
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name: 	   fmt.Sprintf("casc-default-%s", JenkinsDefaultConfigMapName),
+			MountPath: jenkinsPath + fmt.Sprintf("/casc-default-%s", JenkinsDefaultConfigMapName),
+			ReadOnly:  false,
+		})
 	}
 
 	if jenkins.Spec.ConfigurationAsCode.Enabled {

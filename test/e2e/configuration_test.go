@@ -34,25 +34,9 @@ func TestConfiguration(t *testing.T) {
 	systemMessage := "Configuration as Code integration works!!!"
 	systemMessageEnvName := "SYSTEM_MESSAGE"
 	priorityClassName := ""
-	mySeedJob := seedJobConfig{
-		SeedJob: v1alpha2.SeedJob{
-			ID:                    "jenkins-operator",
-			CredentialID:          "jenkins-operator",
-			JenkinsCredentialType: v1alpha2.NoJenkinsCredentialCredentialType,
-			Targets:               "cicd/jobs/*.jenkins",
-			Description:           "Jenkins Operator repository",
-			RepositoryBranch:      "master",
-			RepositoryURL:         "https://github.com/jenkinsci/kubernetes-operator.git",
-			PollSCM:               "1 1 1 1 1",
-			UnstableOnDeprecation: true,
-			BuildPeriodically:     "1 1 1 1 1",
-			FailOnMissingPlugin:   true,
-			IgnoreMissingFiles:    true,
-			//AdditionalClasspath: can fail with the seed job agent
-			GitHubPushTrigger: true,
-		},
-	}
 	cascConfig := v1alpha2.Customization{
+		Enabled: true,
+		DefaultConfig: true,
 		Configurations: []v1alpha2.ConfigMapRef{
 			{
 				Name: userConfigurationConfigMapName,
@@ -71,16 +55,13 @@ func TestConfiguration(t *testing.T) {
 	createUserConfigurationSecret(t, namespace, stringData)
 	createUserConfigurationConfigMap(t, namespace, numberOfExecutors, systemMessageEnvName)
 	jenkins := createJenkinsCR(t, jenkinsCRName, namespace, priorityClassName, cascConfig)
-	//jenkins.Annotations[base.UseDeploymentAnnotation] = "false"
 	createDefaultLimitsForContainersInNamespace(t, namespace)
-	createKubernetesCredentialsProviderSecret(t, namespace, mySeedJob)
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
 	verifyJenkinsMasterPodAttributes(t, jenkins)
 	jenkinsClient, cleanUpFunc := verifyJenkinsAPIConnection(t, jenkins, namespace)
 	defer cleanUpFunc()
 	verifyPlugins(t, jenkinsClient, jenkins)
 	verifyUserConfiguration(t, jenkinsClient, 6, systemMessage)
-	time.Sleep(60 * time.Second)
 }
 
 func TestPlugins(t *testing.T) {
@@ -90,17 +71,6 @@ func TestPlugins(t *testing.T) {
 	defer showLogsAndCleanup(t, ctx)
 	jobID := "k8s-e2e"
 	priorityClassName := ""
-	seedJobs := &[]v1alpha2.SeedJob{
-		{
-			ID:                    "jenkins-operator",
-			CredentialID:          "jenkins-operator",
-			JenkinsCredentialType: v1alpha2.NoJenkinsCredentialCredentialType,
-			Targets:               "cicd/jobs/k8s.jenkins",
-			Description:           "Jenkins Operator repository",
-			RepositoryBranch:      "master",
-			RepositoryURL:         "https://github.com/jenkinsci/kubernetes-operator.git",
-		},
-	}
 
 	cascConfig := v1alpha2.Customization{
 		Configurations: []v1alpha2.ConfigMapRef{
@@ -186,17 +156,15 @@ func createUserConfigurationConfigMap(t *testing.T, namespace string, numberOfEx
 			Labels: map[string]string{"type": "e2e-jenkins-config"},  
 		},
 		Data: map[string]string{
-			"1-set-executors.groovy": fmt.Sprintf(`
-import jenkins.model.Jenkins
-Jenkins.instance.setNumExecutors(%d)
-Jenkins.instance.save()`, numberOfExecutors),
-			"1-casc.yaml": fmt.Sprintf(`
+			"1-set-executors.yaml": fmt.Sprintf(`
+groovy:
+  - script: >
+      import jenkins.model.Jenkins;
+      Jenkins.instance.setNumExecutors(%d);
+      Jenkins.instance.save();`, numberOfExecutors),
+			"1-system-message.yaml": fmt.Sprintf(`
 jenkins:
   systemMessage: "${%s}"`, systemMessageEnvName),
-			"2-casc.yaml": `
-unclassified:
-  location:
-    url: http://external-jenkins-url:8080`,
 		},
 	}
 

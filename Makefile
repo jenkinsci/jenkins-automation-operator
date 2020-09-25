@@ -212,6 +212,7 @@ endif
 	cp deploy/service_account.yaml deploy/namespace-init.yaml
 	cat deploy/role.yaml >> deploy/namespace-init.yaml
 	cat deploy/role_binding.yaml >> deploy/namespace-init.yaml
+	cat deploy/default-config.yaml >> deploy/namespace-init.yaml
 ifneq ($(BUILDTAGS), Helm)
 	cat deploy/operator.yaml >> deploy/namespace-init.yaml
 endif
