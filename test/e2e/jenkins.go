@@ -252,11 +252,7 @@ func createJenkinsAPIClientFromServiceAccount(t *testing.T, jenkins *v1alpha2.Je
 	if err != nil {
 		return nil, err
 	}
-	config := configuration.Configuration{
-		Jenkins:    jenkins,
-		ClientSet:  *clientSet,
-		RestConfig: *framework.Global.KubeConfig,
-	}
+	config := getJenkinsReconcilerConfiguration(jenkins, clientSet)
 	r := base.New(config, jenkinsclient.JenkinsAPIConnectionSettings{})
 
 	jenkinsPod, err := r.Configuration.GetPodByDeployment()
@@ -270,6 +266,14 @@ func createJenkinsAPIClientFromServiceAccount(t *testing.T, jenkins *v1alpha2.Je
 	}
 
 	return jenkinsclient.NewBearerTokenAuthorization(jenkinsAPIURL, token.String())
+}
+
+func getJenkinsReconcilerConfiguration(jenkins *v1alpha2.Jenkins, clientSet *kubernetes.Clientset) configuration.Configuration {
+	return configuration.Configuration{
+		Jenkins:    jenkins,
+		ClientSet:  *clientSet,
+		RestConfig: *framework.Global.KubeConfig,
+	}
 }
 
 func createJenkinsAPIClientFromSecret(t *testing.T, jenkins *v1alpha2.Jenkins, jenkinsAPIURL string) (jenkinsclient.Jenkins, error) {

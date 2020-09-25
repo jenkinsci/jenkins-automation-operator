@@ -17,14 +17,17 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	//kclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const pvcName = "pvc-jenkins"
+const (
+	pvcName          = "pvc-jenkins"
+	BackupVolumeName = "backup"
+)
 
 func TestBackupAndRestore(t *testing.T) {
 	t.Parallel()
 	namespace, ctx := setupTest(t)
-
 	defer showLogsAndCleanup(t, ctx)
 
 	// For the test, the created seed job and the jenkins CR have
@@ -35,6 +38,14 @@ func TestBackupAndRestore(t *testing.T) {
 	jenkins := createJenkinsWithBackupAndRestoreConfigured(t, jobID, namespace)
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
 
+	_, cleanUpFunc := verifyJenkinsAPIConnection(t, jenkins, namespace)
+	defer cleanUpFunc()
+
+	//clientSet, err := kubernetes.NewForConfig(framework.Global.KubeConfig)
+	//if err != nil {
+	//	t.Fatalf("Failed to get kubernetes client: error: %s", err)
+	//}
+	t.Logf("Jenkins namespace: %s", jenkins.Namespace)
 	jenkinsClient, cleanUpFunc := verifyJenkinsAPIConnection(t, jenkins, namespace)
 	defer cleanUpFunc()
 	waitForJob(t, jenkinsClient, jobID)
@@ -88,7 +99,6 @@ func createPVC(t *testing.T, namespace string) {
 			},
 		},
 	}
-
 	err := framework.Global.Client.Create(context.TODO(), pvc, nil)
 	require.NoError(t, err)
 }
@@ -110,9 +120,9 @@ func createJenkinsWithBackupAndRestoreConfigured(t *testing.T, name, namespace s
 					newBasicMasterContainer(),
 					newBackupContainer(backupContainerName),
 				},
-				Volumes: getBackupVolumes(),
+				Volumes: newBackupVolumes(),
 			},
-			SeedJobs: newSeedJobs(name),
+			SeedJobs: newSeedJobByName(name),
 			Service:  newService(),
 			Backup:   newBackupSpec(backupContainerName),
 			Restore:  newRestoreSpec(backupContainerName),
@@ -141,7 +151,7 @@ func newService() v1alpha2.Service {
 	}
 }
 
-func newSeedJobs(seedJobName string) []v1alpha2.SeedJob {
+func newSeedJobByName(seedJobName string) []v1alpha2.SeedJob {
 	return []v1alpha2.SeedJob{
 		{
 			ID:                    seedJobName,
@@ -194,7 +204,7 @@ func newBackupContainer(containerName string) v1alpha2.Container {
 		},
 		VolumeMounts: []corev1.VolumeMount{
 			{
-				Name:      "backup",
+				Name:      BackupVolumeName,
 				MountPath: "/backup",
 			},
 			{
@@ -205,11 +215,13 @@ func newBackupContainer(containerName string) v1alpha2.Container {
 	}
 }
 
-func getBackupVolumes() []corev1.Volume {
+func newBackupVolumes() []corev1.Volume {
 	return []corev1.Volume{{
-		Name: "backup",
+		Name: BackupVolumeName,
 		VolumeSource: corev1.VolumeSource{
-			EmptyDir: &corev1.EmptyDirVolumeSource{},
+			PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+				ClaimName: pvcName,
+			},
 		},
 	},
 	}

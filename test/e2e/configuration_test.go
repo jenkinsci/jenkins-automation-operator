@@ -29,9 +29,7 @@ const cascE2e = "casc-e2e"
 func TestConfiguration(t *testing.T) {
 	t.Parallel()
 	namespace, ctx := setupTest(t)
-
 	defer showLogsAndCleanup(t, ctx)
-
 	jenkinsCRName := e2e
 	cascCRName := cascE2e
 	numberOfExecutors := 6
@@ -39,7 +37,54 @@ func TestConfiguration(t *testing.T) {
 	systemMessage := "Configuration as Code integration works!!!"
 	systemMessageEnvName := "SYSTEM_MESSAGE"
 	priorityClassName := ""
-	mySeedJob := seedJobConfig{
+	mySeedJob := newSeedJobConfig()
+	groovyScripts := newGroovyScripts()
+	cascConfig := newCascConfiguration()
+	stringData := make(map[string]string)
+	stringData[systemMessageEnvName] = systemMessage
+	stringData[numberOfExecutorsEnvName] = strconv.Itoa(numberOfExecutors)
+
+	// base
+	createUserConfigurationSecret(t, namespace, stringData)
+	createUserConfigurationConfigMap(t, namespace, numberOfExecutors, systemMessageEnvName)
+	jenkins := createJenkinsCR(t, jenkinsCRName, namespace, priorityClassName, newSeedJobs(mySeedJob))
+
+	createDefaultLimitsForContainersInNamespace(t, namespace)
+	createKubernetesCredentialsProviderSecret(t, namespace, mySeedJob)
+	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
+
+	verifyJenkinsMasterPodAttributes(t, jenkins)
+	jenkinsClient, cleanUpFunc := verifyJenkinsAPIConnection(t, jenkins, namespace)
+	defer cleanUpFunc()
+	verifyPlugins(t, jenkinsClient, jenkins)
+
+	// user
+	casc := createCascCR(t, jenkinsCRName, cascCRName, namespace, groovyScripts, cascConfig)
+	waitForJenkinsUserConfigurationToComplete(t, casc)
+	verifyUserConfiguration(t, jenkinsClient, 6, systemMessage)
+	time.Sleep(60 * time.Second)
+	verifyJenkinsSeedJobs(t, jenkinsClient, []seedJobConfig{mySeedJob})
+}
+
+func newCascConfiguration() v1alpha3.Customization {
+	return v1alpha3.Customization{
+		Configurations: []v1alpha3.ConfigMapRef{
+			{
+				Name: userConfigurationConfigMapName,
+			},
+		},
+		Secret: v1alpha3.SecretRef{
+			Name: userConfigurationSecretName,
+		},
+	}
+}
+
+func newSeedJobs(mySeedJob seedJobConfig) *[]v1alpha2.SeedJob {
+	return &[]v1alpha2.SeedJob{mySeedJob.SeedJob}
+}
+
+func newSeedJobConfig() seedJobConfig {
+	return seedJobConfig{
 		SeedJob: v1alpha2.SeedJob{
 			ID:                    "jenkins-operator",
 			CredentialID:          "jenkins-operator",
@@ -57,7 +102,10 @@ func TestConfiguration(t *testing.T) {
 			GitHubPushTrigger: true,
 		},
 	}
-	groovyScripts := v1alpha3.Customization{
+}
+
+func newGroovyScripts() v1alpha3.Customization {
+	return v1alpha3.Customization{
 		Configurations: []v1alpha3.ConfigMapRef{
 			{
 				Name: userConfigurationConfigMapName,
@@ -67,41 +115,6 @@ func TestConfiguration(t *testing.T) {
 			Name: userConfigurationSecretName,
 		},
 	}
-
-	cascConfig := v1alpha3.Customization{
-		Configurations: []v1alpha3.ConfigMapRef{
-			{
-				Name: userConfigurationConfigMapName,
-			},
-		},
-		Secret: v1alpha3.SecretRef{
-			Name: userConfigurationSecretName,
-		},
-	}
-
-	stringData := make(map[string]string)
-	stringData[systemMessageEnvName] = systemMessage
-	stringData[numberOfExecutorsEnvName] = strconv.Itoa(numberOfExecutors)
-
-	// base
-	createUserConfigurationSecret(t, namespace, stringData)
-	createUserConfigurationConfigMap(t, namespace, numberOfExecutors, systemMessageEnvName)
-	jenkins := createJenkinsCR(t, jenkinsCRName, namespace, priorityClassName, &[]v1alpha2.SeedJob{mySeedJob.SeedJob})
-	//jenkins.Annotations[base.UseDeploymentAnnotation] = "false"
-	createDefaultLimitsForContainersInNamespace(t, namespace)
-	createKubernetesCredentialsProviderSecret(t, namespace, mySeedJob)
-	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
-	verifyJenkinsMasterPodAttributes(t, jenkins)
-	jenkinsClient, cleanUpFunc := verifyJenkinsAPIConnection(t, jenkins, namespace)
-	defer cleanUpFunc()
-	verifyPlugins(t, jenkinsClient, jenkins)
-
-	// user
-	casc := createCascCR(t, jenkinsCRName, cascCRName, namespace, groovyScripts, cascConfig)
-	waitForJenkinsUserConfigurationToComplete(t, casc)
-	verifyUserConfiguration(t, jenkinsClient, 6, systemMessage)
-	time.Sleep(60 * time.Second)
-	verifyJenkinsSeedJobs(t, jenkinsClient, []seedJobConfig{mySeedJob})
 }
 
 func TestPlugins(t *testing.T) {
@@ -127,7 +140,6 @@ func TestPlugins(t *testing.T) {
 	t.Logf("Jenkins CR created : %s in namespace: %s", jenkins.Name, namespace)
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
 	t.Logf("Base configuration completed at : %+v", jenkins.Status.BaseConfigurationCompletedTime)
-
 	jenkinsClient, cleanUpFunc := verifyJenkinsAPIConnection(t, jenkins, namespace)
 
 	defer cleanUpFunc()
@@ -249,7 +261,7 @@ func verifyJenkinsMasterPodAttributes(t *testing.T, jenkins *v1alpha2.Jenkins) {
 
 	expectedSecurityContext := jenkins.Spec.Master.SecurityContext
 	if expectedSecurityContext == nil {
-		expectedSecurityContext = getEmptySecurityContext()
+		expectedSecurityContext = newEmptySecurityContext()
 	}
 	assert.Equal(t, expectedSecurityContext, jenkinsPod.Spec.SecurityContext)
 	assert.Equal(t, jenkins.Spec.Master.Containers[0].Command, jenkinsPod.Spec.Containers[0].Command)
@@ -302,7 +314,7 @@ func verifyJenkinsMasterPodAttributes(t *testing.T, jenkins *v1alpha2.Jenkins) {
 	t.Log("Jenkins pod attributes are valid")
 }
 
-func getEmptySecurityContext() *corev1.PodSecurityContext {
+func newEmptySecurityContext() *corev1.PodSecurityContext {
 	return &corev1.PodSecurityContext{
 		SELinuxOptions:     nil,
 		RunAsUser:          nil,

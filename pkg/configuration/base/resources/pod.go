@@ -15,8 +15,7 @@ import (
 )
 
 const (
-	// JenkinsMasterContainerName is the Jenkins master container name in pod
-	JenkinsMasterContainerName = "jenkins-master"
+	JenkinsMasterContainerName = constants.DefaultJenkinsMasterContainerName
 	// JenkinsHomeVolumeName is the Jenkins home volume name
 	JenkinsHomeVolumeName = "jenkins-home"
 	jenkinsPath           = "/var/jenkins"

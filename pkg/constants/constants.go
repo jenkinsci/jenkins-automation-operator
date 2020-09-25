@@ -21,4 +21,6 @@ const (
 	JenkinsStatusCompleted = "Completed"
 	// JenkinsStatusReinitializing is the status given if Jenkins instance is being recreated
 	JenkinsStatusReinitializing = "Reinitializing"
+	// DefaultJenkinsMasterContainerName is the Jenkins master container name in pod
+	DefaultJenkinsMasterContainerName = "jenkins-master"
 )

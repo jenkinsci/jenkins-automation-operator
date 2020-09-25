@@ -58,13 +58,14 @@ func (c *Configuration) GetJenkinsMasterPod() (*corev1.Pod, error) {
 func (c *Configuration) GetJenkinsDeployment() (*appsv1.Deployment, error) {
 	deploymentName := resources.GetJenkinsDeploymentName(c.Jenkins.Name)
 	logger.V(log.VDebug).Info(fmt.Sprintf("Getting JenkinsDeploymentName for : %+v, querying deployment named: %s", c.Jenkins.Name, deploymentName))
-	currentJenkinsDeployment := &appsv1.Deployment{}
-	err := c.Client.Get(context.TODO(), types.NamespacedName{Name: deploymentName, Namespace: c.Jenkins.Namespace}, currentJenkinsDeployment)
+	jenkinsDeployment := &appsv1.Deployment{}
+	namespacedName := types.NamespacedName{Name: deploymentName, Namespace: c.Jenkins.Namespace}
+	err := c.Client.Get(context.TODO(), namespacedName, jenkinsDeployment)
 	if err != nil {
 		logger.V(log.VDebug).Info(fmt.Sprintf("No deployment named: %s found: %+v", deploymentName, err))
 		return nil, err
 	}
-	return currentJenkinsDeployment, nil
+	return jenkinsDeployment, nil
 }
 
 // IsJenkinsTerminating returns true if the Jenkins pod is terminating.
