@@ -32,7 +32,7 @@ var (
 	retryInterval               = time.Second * 5
 	timeout                     = time.Second * 60
 	namespaceTerminationTimeout = time.Second * 120
-	retries                     = 30
+	retries                     = 60
 )
 
 // checkConditionFunc is used to check if a condition for the jenkins CR is set
