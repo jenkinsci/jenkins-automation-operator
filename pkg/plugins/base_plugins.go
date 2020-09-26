@@ -2,7 +2,7 @@ package plugins
 
 const (
 	configurationAsCodePlugin           = "configuration-as-code:1.38"
-	configurationAsCodeGroovyPlugin	 	= "configuration-as-code-groovy:1.1"
+	configurationAsCodeGroovyPlugin     = "configuration-as-code-groovy:1.1"
 	gitPlugin                           = "git:4.2.2"
 	jobDslPlugin                        = "job-dsl:1.77"
 	kubernetesCredentialsProviderPlugin = "kubernetes-credentials-provider:0.13"

@@ -42,7 +42,7 @@ const (
 	jnlpPortName = "jnlp"
 
 	//defaut configmap for jenkins configuration
-	JenkinsDefaultConfigMapName    = "jenkins-default-configuration"
+	JenkinsDefaultConfigMapName = "jenkins-default-configuration"
 
 	// JenkinsSCConfigName is the Jenkins side car container name for reloading config
 	JenkinsSCConfigName            = "jenkins-sc-config"
@@ -77,7 +77,7 @@ func GetJenkinsMasterContainerBaseEnvs(jenkins *v1alpha2.Jenkins) []corev1.EnvVa
 			ValueFrom: &corev1.EnvVarSource{
 				FieldRef: &corev1.ObjectFieldSelector{
 					APIVersion: "v1",
-					FieldPath: "metadata.name",
+					FieldPath:  "metadata.name",
 				},
 			},
 		},
@@ -189,7 +189,7 @@ func GetJenkinsMasterPodBaseVolumes(jenkins *v1alpha2.Jenkins) []corev1.Volume {
 					},
 				},
 			})
-		}	
+		}
 		// Loop to add all casc configmap volumes
 		for _, cm := range jenkins.Spec.ConfigurationAsCode.Configurations {
 			volumes = append(volumes, corev1.Volume{
@@ -388,7 +388,7 @@ func NewJenkinsInitContainer(jenkins *v1alpha2.Jenkins) corev1.Container {
 
 	if jenkins.Spec.ConfigurationAsCode.DefaultConfig {
 		volumeMounts = append(volumeMounts, corev1.VolumeMount{
-			Name: 	   fmt.Sprintf("casc-default-%s", JenkinsDefaultConfigMapName),
+			Name:      fmt.Sprintf("casc-default-%s", JenkinsDefaultConfigMapName),
 			MountPath: jenkinsPath + fmt.Sprintf("/casc-default-%s", JenkinsDefaultConfigMapName),
 			ReadOnly:  false,
 		})
@@ -451,7 +451,7 @@ func ConvertJenkinsContainerToKubernetesContainer(container v1alpha2.Container) 
 
 func newContainers(jenkins *v1alpha2.Jenkins) (containers []corev1.Container) {
 	containers = append(containers, NewJenkinsMasterContainer(jenkins))
-	if jenkins.Spec.ConfigurationAsCode.Enabled && jenkins.Spec.ConfigurationAsCode.EnableAutoReload  {
+	if jenkins.Spec.ConfigurationAsCode.Enabled && jenkins.Spec.ConfigurationAsCode.EnableAutoReload {
 		containers = append(containers, NewJenkinsSCConfigContainer(jenkins))
 	}
 	for _, container := range jenkins.Spec.Master.Containers[1:] {

@@ -100,7 +100,7 @@ type ConfigMapRef struct {
 // Customization defines configuration of Jenkins customization
 type Customization struct {
 	Enabled          bool           `json:"enabled"`
-	DefaultConfig	 bool			`json:"defaultConfig"`
+	DefaultConfig    bool           `json:"defaultConfig"`
 	Secret           SecretRef      `json:"secret"`
 	Configurations   []ConfigMapRef `json:"configurations"`
 	EnableAutoReload bool           `json:"enableAutoReload"`

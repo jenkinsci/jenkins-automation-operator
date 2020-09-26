@@ -35,7 +35,7 @@ func TestConfiguration(t *testing.T) {
 	systemMessageEnvName := "SYSTEM_MESSAGE"
 	priorityClassName := ""
 	cascConfig := v1alpha2.Customization{
-		Enabled: true,
+		Enabled:       true,
 		DefaultConfig: true,
 		Configurations: []v1alpha2.ConfigMapRef{
 			{
@@ -153,7 +153,7 @@ func createUserConfigurationConfigMap(t *testing.T, namespace string, numberOfEx
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      userConfigurationConfigMapName,
 			Namespace: namespace,
-			Labels: map[string]string{"type": "e2e-jenkins-config"},  
+			Labels:    map[string]string{"type": "e2e-jenkins-config"},
 		},
 		Data: map[string]string{
 			"1-set-executors.yaml": fmt.Sprintf(`

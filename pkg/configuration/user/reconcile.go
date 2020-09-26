@@ -6,8 +6,6 @@ import (
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/backuprestore"
-	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/user/casc"
-	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/user/seedjobs"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
 
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -15,7 +13,6 @@ import (
 
 // ReconcileUserConfiguration defines API client for reconcile User Configuration
 type ReconcileUserConfiguration interface {
-	ReconcileCasc() (reconcile.Result, error)
 	ReconcileOthers() (reconcile.Result, error)
 	Validate(jenkins *v1alpha2.Jenkins) ([]string, error)
 }

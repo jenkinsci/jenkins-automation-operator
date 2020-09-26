@@ -63,14 +63,14 @@ func (r *ReconcileJenkins) sendNewReconcileLoopFailedNotification(jenkins *v1alp
 	}
 }
 
-func (r *ReconcileJenkins) sendNewUserConfigurationFailedNotification(jenkins *v1alpha2.Jenkins, message string, messages []string) {
+/*func (r *ReconcileJenkins) sendNewUserConfigurationFailedNotification(jenkins *v1alpha2.Jenkins, message string, messages []string) {
 	*r.notificationEvents <- event.Event{
 		Jenkins: *jenkins,
 		Phase:   event.PhaseUser,
 		Level:   v1alpha2.NotificationLevelWarning,
 		Reason:  reason.NewUserConfigurationFailed(reason.HumanSource, []string{message}, append([]string{message}, messages...)...),
 	}
-}
+}*/
 
 func (r *ReconcileJenkins) sendNewBaseConfigurationCompleteNotification(jenkins *v1alpha2.Jenkins, message string) {
 	*r.notificationEvents <- event.Event{
@@ -81,14 +81,14 @@ func (r *ReconcileJenkins) sendNewBaseConfigurationCompleteNotification(jenkins 
 	}
 }
 
-func (r *ReconcileJenkins) sendNewUserConfigurationCompleteNotification(jenkins *v1alpha2.Jenkins, message string) {
+/*func (r *ReconcileJenkins) sendNewUserConfigurationCompleteNotification(jenkins *v1alpha2.Jenkins, message string) {
 	*r.notificationEvents <- event.Event{
 		Jenkins: *jenkins,
 		Phase:   event.PhaseUser,
 		Level:   v1alpha2.NotificationLevelInfo,
 		Reason:  reason.NewUserConfigurationComplete(reason.OperatorSource, []string{message}),
 	}
-}
+}*/
 
 func (r *ReconcileJenkins) sendNewGroovyScriptExecutionFailedNotification(jenkins *v1alpha2.Jenkins, groovyErr *jenkinsclient.GroovyScriptExecutionFailed) {
 	*r.notificationEvents <- event.Event{

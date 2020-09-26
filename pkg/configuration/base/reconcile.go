@@ -99,7 +99,7 @@ func (r *ReconcileJenkinsBaseConfiguration) Reconcile() (reconcile.Result, jenki
 		message := "Some plugins have changed, restarting Jenkins"
 		r.logger.Info(message)
 	}
-	
+
 	return result, jenkinsClient, err
 }
 
