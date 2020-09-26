@@ -1,28 +1,16 @@
 {{- $root := . -}}
-{{ range .Values.casc.configuration.configurationAsCode }}
+{{- if .Values.jenkins.backup.enabled }}
+{{- range .Values.jenkins.configurationAsCode.configurations }}
   {{ if .content }}
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .configMapName }}
+  name: {{ .name }}
   namespace: {{ $root.Values.jenkins.namespace }}
 {{- with .content }}
 data: {{ toYaml . | nindent 2 }}
 {{- end }}
   {{ end }}
 {{ end }}
-
-{{ range .Values.casc.configuration.groovyScripts }}
-  {{ if .content }}
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: {{ .configMapName }}
-  namespace: {{ $root.Values.jenkins.namespace }}
-{{- with .content }}
-data: {{ toYaml . | nindent 2 }}
-{{- end }}
-  {{ end }}
 {{ end }}

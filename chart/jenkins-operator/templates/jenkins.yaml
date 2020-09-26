@@ -104,7 +104,14 @@ spec:
     securityContext:
     {{- toYaml . | nindent 6 }}
     {{- end }}
-  {{- with .Values.jenkins.seedJobs }}
-  seedJobs: {{- toYaml . | nindent 4 }}
+  {{- with .Values.jenkins.configurationAsCode }}
+  configurationAsCode:
+    enabled: {{ .enabled }}
+    defaultConfig: {{ .defaultConfig }}
+    configurations:
+      {{- range .configurations }}
+      - name: {{ .name }}
+      {{- end }}
+    enableAutoReload: {{ .enableAutoReload }}
   {{- end }}
 {{- end }}

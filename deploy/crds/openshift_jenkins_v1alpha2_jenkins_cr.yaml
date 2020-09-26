@@ -38,7 +38,6 @@ spec:
       version: "1.19"
     - name: kubernetes-credentials-provider
       version: "0.12.1"
-    disableCSRFProtection: true
     containers:
     - name: jenkins-master
       command:

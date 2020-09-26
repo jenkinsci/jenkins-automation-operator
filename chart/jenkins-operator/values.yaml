@@ -86,9 +86,33 @@ jenkins:
       version: "1.77"
     - name: configuration-as-code
       version: "1.38"
+    - name: configuration-as-code-groovy
+      version: "1.1"
     - name: kubernetes-credentials-provider
       version: "0.13"
+  configurationAsCode:
+    enabled: true
+    defaultConfig: true
+    configurations:
+      - name: user-configuration-1
+        content:
+          1-system-message.yaml: |
+            jenkins:
+              systemMessage: "Configuration as Code integration works!!!"
+      - name: user-configuration-2
+        content:
+          1-configure-theme.groovy: |
+            groovy:
+              - script: >
+                  import jenkins.*;
+                  import jenkins.model.*;
+                  import hudson.*;
+                  import hudson.model.*;
+                  Jenkins jenkins = Jenkins.getInstance();
 
+                  jenkins.setSystemMessage("Insert your Jenkins system message here");
+                  jenkins.save();
+    enableAutoReload: true
   # plugins are plugins required by the user
   # You can define plugins here
   # See https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/customization/#install-plugins for more details
@@ -99,19 +123,6 @@ jenkins:
   # - name: simple-theme-plugin
   #   version: 0.5.1
   plugins: []
-
-  # seedJobs is placeholder for jenkins seed jobs
-  # For seed job creation tutorial, check https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/configuration/#prepare-job-definitions-and-pipelines
-  # See https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/configuration/#configure-seed-jobs for additional info
-  # Example:
-  #
-  # seedJobs:
-  #  - id: jenkins-operator
-  #    targets: "cicd/jobs/*.jenkins"
-  #    description: "Jenkins Operator repository"
-  #    repositoryBranch: master
-  #    repositoryUrl: https://github.com/jenkinsci/kubernetes-operator.git
-  seedJobs: []
 
   # Resource limit/request for Jenkins
   # See https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/ for details
@@ -207,55 +218,12 @@ jenkins:
       - mountPath: /backup # backup volume
         name: backup
 
-  # configuration is section where we can configure Jenkins instance
-  # See https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/customization/ for details
-casc:
-  # enabled can enable or disable the casc instance
-  # Set to false if you have configured CR already and/or you want to deploy an operator only
-  enabled: true
-
-  # apiVersion is the version of the CR manifest
-  apiVersion: jenkins.io/v1alpha3
-
-  # name of resource
-  name: casc-example
-
-  # labels are injected into metadata labels field
-  labels: {}
-
-  configuration:
-    configurationAsCode:
-    - configMapName: jenkins-casc
-      content:
-        1-configure-theme.groovy: |
-          import jenkins.*
-          import jenkins.model.*
-          import hudson.*
-          import hudson.model.*
-          Jenkins jenkins = Jenkins.getInstance()
-
-          jenkins.setSystemMessage("Insert your Jenkins system message here")
-          jenkins.save()
-
-    groovyScripts:
-    - configMapName: jenkins-gs
-      content:
-        1-system-message.yaml: |
-          jenkins:
-            systemMessage: "Configuration as Code integration works!!!"
-
-    # secretRefName of existing secret (previously created)
-    secretRefName: ""
-
-    # secretData creates new secret if secretRefName is empty and fills with data provided in secretData
-    secretData: {}
-
 # operator is section for configuring operator deployment
 operator:
   replicaCount: 1
 
   # image is the name (and tag) of the Jenkins Operator image
-  image: jenkins-operator:42cf38a0-dirty
+  image: quay.io/jkhelil/openshift-jenkins-operator:0.4.1-cae3b6d5
 
   # imagePullPolicy defines policy for pulling images
   imagePullPolicy: IfNotPresent
