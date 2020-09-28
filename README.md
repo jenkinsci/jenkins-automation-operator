@@ -1,9 +1,13 @@
 # Jenkins Operator
 
+[![Container Image Repository on Quay](https://quay.io/repository/redhat-developer/openshift-jenkins-operator/status "Container Image Repository on Quay")](https://quay.io/repository/redhat-developer/openshift-jenkins-operator)
+[![Container Image Repository on Quay](https://quay.io/repository/redhat-developer/openshift-jenkins-operator-bundle/status "Container Image Repository on Quay")](https://quay.io/repository/redhat-developer/openshift-jenkins-operator-bundle)
+[![Container Image Repository on Quay](https://quay.io/repository/redhat-developer/openshift-jenkins-operator-index/status?token=a748987f-6f8c-4803-89f0-f111ee9f6be0 "Container Image Repository on Quay")](https://quay.io/repository/redhat-developer/openshift-jenkins-operator-index)
+
 [![Version](https://img.shields.io/badge/version-v0.4.0-brightgreen.svg)](https://github.com/jenkinsci/kubernetes-operator/releases/tag/v0.4.0)
 [![Build Status](https://travis-ci.org/jenkinsci/kubernetes-operator.svg?branch=master)](https://travis-ci.org/jenkinsci/kubernetes-operator)
 [![Go Report Card](https://goreportcard.com/badge/github.com/jenkinsci/kubernetes-operator "Go Report Card")](https://goreportcard.com/report/github.com/jenkinsci/kubernetes-operator)
-[![Docker Pulls](https://img.shields.io/docker/pulls/virtuslab/jenkins-operator.svg)](https://hub.docker.com/r/virtuslab/jenkins-operator/tags)
+[![Container Image Pulls](https://img.shields.io/docker/pulls/virtuslab/jenkins-operator.svg)](https://hub.docker.com/r/virtuslab/jenkins-operator/tags)
 
 ![logo](/assets/jenkins_gopher_wide.png)
 
