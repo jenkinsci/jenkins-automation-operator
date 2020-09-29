@@ -22,11 +22,6 @@ type JenkinsSpec struct {
 	// as the image of the Master container.
 	JenkinsImageRef JenkinsImage `json:"jenkinsImageRef,omitempty"`
 
-	// SeedJobs defines list of Jenkins Seed Job configurations
-	// More info: https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-seed-jobs-and-pipelines
-	// +optional
-	SeedJobs []SeedJob `json:"seedJobs,omitempty"`
-
 	// Notifications defines list of a services which are used to inform about Jenkins status
 	// Can be used to integrate chat services like Slack, Microsoft Teams or Mailgun
 	// +optional
@@ -67,9 +62,9 @@ type JenkinsSpec struct {
 	// JenkinsAPISettings defines configuration used by the operator to gain admin access to the Jenkins API
 	JenkinsAPISettings JenkinsAPISettings `json:"jenkinsAPISettings"`
 
-	// ConfigurationAsCode defines configuration of Jenkins customization via Configuration as Code Jenkins plugin
+	// ConfigurationAsCode defines configuration of Jenkins configuration via Configuration as Code Jenkins plugin
 	// +optional
-	ConfigurationAsCode Customization `json:"configurationAsCode,omitempty"`
+	ConfigurationAsCode Configuration `json:"configurationAsCode,omitempty"`
 }
 
 // AuthorizationStrategy defines authorization strategy of the operator for the Jenkins API
@@ -97,8 +92,8 @@ type ConfigMapRef struct {
 	Name string `json:"name"`
 }
 
-// Customization defines configuration of Jenkins customization
-type Customization struct {
+// Configuration defines a Jenkins Configuration
+type Configuration struct {
 	Enabled          bool           `json:"enabled"`
 	DefaultConfig    bool           `json:"defaultConfig"`
 	Secret           SecretRef      `json:"secret"`

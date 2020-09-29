@@ -72,7 +72,7 @@ func getJenkinsMasterPod(t *testing.T, jenkins *v1alpha2.Jenkins) *corev1.Pod {
 	return jenkinsPod
 }
 
-func createJenkinsCR(t *testing.T, name, namespace, priorityClassName string, cascConfig v1alpha2.Customization) *v1alpha2.Jenkins {
+func createJenkinsCR(t *testing.T, name, namespace, priorityClassName string, cascConfig v1alpha2.Configuration) *v1alpha2.Jenkins {
 	// TODO fix e2e to use deployment instead of pod
 	annotations := map[string]string{"test": "label"}
 	jenkins := &v1alpha2.Jenkins{

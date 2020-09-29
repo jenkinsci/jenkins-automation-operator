@@ -27,14 +27,8 @@ func TestBackupAndRestore(t *testing.T) {
 	defer showLogsAndCleanup(t, ctx)
 
 	jobID := "e2e-jenkins-operator"
-	numberOfExecutors := 6
-	systemMessage := "Configuration as Code integration works!!!"
-	systemMessageEnvName := "SYSTEM_MESSAGE"
-	stringData := make(map[string]string)
-	stringData[systemMessageEnvName] = systemMessage
-	createUserConfigurationSecret(t, namespace, stringData)
-	createUserConfigurationConfigMap(t, namespace, numberOfExecutors, systemMessageEnvName)
 
+	createTestPrequisites(t, namespace)
 	createPVC(t, namespace)
 	jenkins := createJenkinsWithBackupAndRestoreConfigured(t, "e2e", namespace)
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
@@ -101,10 +95,9 @@ func createJenkinsWithBackupAndRestoreConfigured(t *testing.T, name, namespace s
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
-			//		Annotations: annotations,
 		},
 		Spec: v1alpha2.JenkinsSpec{
-			ConfigurationAsCode: v1alpha2.Customization{
+			ConfigurationAsCode: v1alpha2.Configuration{
 				Enabled:       true,
 				DefaultConfig: true,
 				Configurations: []v1alpha2.ConfigMapRef{

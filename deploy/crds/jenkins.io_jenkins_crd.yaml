@@ -77,7 +77,7 @@ spec:
                 type: object
               configurationAsCode:
                 description: ConfigurationAsCode defines configuration of Jenkins
-                  customization via Configuration as Code Jenkins plugin
+                  configuration via Configuration as Code Jenkins plugin
                 properties:
                   configurations:
                     items:
@@ -2896,71 +2896,6 @@ spec:
                   - apiGroup
                   - kind
                   - name
-                  type: object
-                type: array
-              seedJobs:
-                description: 'SeedJobs defines list of Jenkins Seed Job configurations
-                  More info: https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-seed-jobs-and-pipelines'
-                items:
-                  description: 'SeedJob defines configuration for seed job More info:
-                    https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-seed-jobs-and-pipelines.'
-                  properties:
-                    additionalClasspath:
-                      description: AdditionalClasspath is setting for Job DSL API
-                        plugin to set Additional Classpath
-                      type: string
-                    bitbucketPushTrigger:
-                      description: BitbucketPushTrigger is used for Bitbucket web
-                        hooks
-                      type: boolean
-                    buildPeriodically:
-                      description: BuildPeriodically is setting for scheduled trigger
-                      type: string
-                    credentialID:
-                      description: CredentialID is the Kubernetes secret name which
-                        stores repository access credentials
-                      type: string
-                    credentialType:
-                      description: JenkinsCredentialType is the https://jenkinsci.github.io/kubernetes-credentials-provider-plugin/
-                        credential type
-                      type: string
-                    description:
-                      description: Description is the description of the seed job
-                      type: string
-                    failOnMissingPlugin:
-                      description: FailOnMissingPlugin is setting for Job DSL API
-                        plugin that fails job if required plugin is missing
-                      type: boolean
-                    githubPushTrigger:
-                      description: GitHubPushTrigger is used for GitHub web hooks
-                      type: boolean
-                    id:
-                      description: ID is the unique seed job name
-                      type: string
-                    ignoreMissingFiles:
-                      description: IgnoreMissingFiles is setting for Job DSL API plugin
-                        to ignore files that miss
-                      type: boolean
-                    pollSCM:
-                      description: PollSCM is setting for polling changes in SCM
-                      type: string
-                    repositoryBranch:
-                      description: RepositoryBranch is the repository branch where
-                        are seed job definitions
-                      type: string
-                    repositoryUrl:
-                      description: RepositoryURL is the repository access URL. Can
-                        be SSH or HTTPS.
-                      type: string
-                    targets:
-                      description: Targets is the repository path where are seed job
-                        definitions
-                      type: string
-                    unstableOnDeprecation:
-                      description: UnstableOnDeprecation is setting for Job DSL API
-                        plugin that sets build status as unstable if build using deprecated
-                        features
-                      type: boolean
                   type: object
                 type: array
               service:

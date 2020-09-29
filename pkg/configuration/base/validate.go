@@ -362,26 +362,26 @@ func (r *ReconcileJenkinsBaseConfiguration) verifyBasePlugins(requiredBasePlugin
 }
 
 //nolint:unparam
-func (r *ReconcileJenkinsBaseConfiguration) validateCustomization(customization v1alpha2.Customization, name string) ([]string, error) {
+func (r *ReconcileJenkinsBaseConfiguration) validateConfiguration(configuration v1alpha2.Configuration, name string) ([]string, error) {
 	var messages []string
-	if len(customization.Secret.Name) == 0 && len(customization.Configurations) == 0 {
+	if len(configuration.Secret.Name) == 0 && len(configuration.Configurations) == 0 {
 		return nil, nil
 	}
-	if len(customization.Secret.Name) > 0 && len(customization.Configurations) == 0 {
+	if len(configuration.Secret.Name) > 0 && len(configuration.Configurations) == 0 {
 		messages = append(messages, fmt.Sprintf("%s.secret.name is set but %s.configurations is empty", name, name))
 	}
 
-	if len(customization.Secret.Name) > 0 {
+	if len(configuration.Secret.Name) > 0 {
 		secret := &corev1.Secret{}
-		err := r.Client.Get(context.TODO(), types.NamespacedName{Name: customization.Secret.Name, Namespace: r.Configuration.Jenkins.ObjectMeta.Namespace}, secret)
+		err := r.Client.Get(context.TODO(), types.NamespacedName{Name: configuration.Secret.Name, Namespace: r.Configuration.Jenkins.ObjectMeta.Namespace}, secret)
 		if err != nil && apierrors.IsNotFound(err) {
-			messages = append(messages, fmt.Sprintf("Secret '%s' configured in %s.secret.name not found", customization.Secret.Name, name))
+			messages = append(messages, fmt.Sprintf("Secret '%s' configured in %s.secret.name not found", configuration.Secret.Name, name))
 		} else if err != nil && !apierrors.IsNotFound(err) {
 			return nil, stackerr.WithStack(err)
 		}
 	}
 
-	for index, configMapRef := range customization.Configurations {
+	for index, configMapRef := range configuration.Configurations {
 		if len(configMapRef.Name) == 0 {
 			messages = append(messages, fmt.Sprintf("%s.configurations[%d] name is empty", name, index))
 			continue

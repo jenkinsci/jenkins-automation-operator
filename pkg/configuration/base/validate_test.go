@@ -721,20 +721,20 @@ func TestValidateCustomization(t *testing.T) {
 		},
 	}
 	t.Run("empty", func(t *testing.T) {
-		customization := v1alpha2.Customization{}
+		customization := v1alpha2.Configuration{}
 		fakeClient := fake.NewFakeClient()
 		baseReconcileLoop := New(configuration.Configuration{
 			Jenkins: jenkins,
 			Client:  fakeClient,
 		}, client.JenkinsAPIConnectionSettings{})
 
-		got, err := baseReconcileLoop.validateCustomization(customization, "spec.groovyScripts")
+		got, err := baseReconcileLoop.validateConfiguration(customization, "spec.groovyScripts")
 
 		assert.NoError(t, err)
 		assert.Nil(t, got)
 	})
 	t.Run("secret set but configurations is empty", func(t *testing.T) {
-		customization := v1alpha2.Customization{
+		customization := v1alpha2.Configuration{
 			Secret:         v1alpha2.SecretRef{Name: secretName},
 			Configurations: []v1alpha2.ConfigMapRef{},
 		}
@@ -752,14 +752,14 @@ func TestValidateCustomization(t *testing.T) {
 		err := fakeClient.Create(context.TODO(), secret)
 		require.NoError(t, err)
 
-		got, err := baseReconcileLoop.validateCustomization(customization, "spec.groovyScripts")
+		got, err := baseReconcileLoop.validateConfiguration(customization, "spec.groovyScripts")
 
 		assert.NoError(t, err)
 
 		assert.Equal(t, got, []string{"spec.groovyScripts.secret.name is set but spec.groovyScripts.configurations is empty"})
 	})
 	t.Run("secret and configmap exists", func(t *testing.T) {
-		customization := v1alpha2.Customization{
+		customization := v1alpha2.Configuration{
 			Secret:         v1alpha2.SecretRef{Name: secretName},
 			Configurations: []v1alpha2.ConfigMapRef{{Name: configMapName}},
 		}
@@ -785,14 +785,14 @@ func TestValidateCustomization(t *testing.T) {
 		err = fakeClient.Create(context.TODO(), configMap)
 		require.NoError(t, err)
 
-		got, err := baseReconcileLoop.validateCustomization(customization, "spec.groovyScripts")
+		got, err := baseReconcileLoop.validateConfiguration(customization, "spec.groovyScripts")
 
 		assert.NoError(t, err)
 		assert.Nil(t, got)
 	})
 	t.Run("secret not exists and configmap exists", func(t *testing.T) {
 		configMapName := "configmap-name"
-		customization := v1alpha2.Customization{
+		customization := v1alpha2.Configuration{
 			Secret:         v1alpha2.SecretRef{Name: secretName},
 			Configurations: []v1alpha2.ConfigMapRef{{Name: configMapName}},
 		}
@@ -810,14 +810,14 @@ func TestValidateCustomization(t *testing.T) {
 		err := fakeClient.Create(context.TODO(), configMap)
 		require.NoError(t, err)
 
-		got, err := baseReconcileLoop.validateCustomization(customization, "spec.groovyScripts")
+		got, err := baseReconcileLoop.validateConfiguration(customization, "spec.groovyScripts")
 
 		assert.NoError(t, err)
 
 		assert.Equal(t, got, []string{"Secret 'secretName' configured in spec.groovyScripts.secret.name not found"})
 	})
 	t.Run("secret exists and configmap not exists", func(t *testing.T) {
-		customization := v1alpha2.Customization{
+		customization := v1alpha2.Configuration{
 			Secret:         v1alpha2.SecretRef{Name: secretName},
 			Configurations: []v1alpha2.ConfigMapRef{{Name: configMapName}},
 		}
@@ -835,7 +835,7 @@ func TestValidateCustomization(t *testing.T) {
 		err := fakeClient.Create(context.TODO(), secret)
 		require.NoError(t, err)
 
-		got, err := baseReconcileLoop.validateCustomization(customization, "spec.groovyScripts")
+		got, err := baseReconcileLoop.validateConfiguration(customization, "spec.groovyScripts")
 
 		assert.NoError(t, err)
 

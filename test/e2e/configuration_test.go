@@ -21,19 +21,21 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const e2e = "e2e"
+const (
+	e2e            = "e2e"
+	cascLabelName  = "type"
+	cascLabelValue = "e2e-jenkins-config"
+)
 
 func TestConfiguration(t *testing.T) {
 	t.Parallel()
 	namespace, ctx := setupTest(t)
 	defer showLogsAndCleanup(t, ctx)
 	jenkinsCRName := e2e
-	numberOfExecutors := 6
-	numberOfExecutorsEnvName := "NUMBER_OF_EXECUTORS"
-	systemMessage := "Configuration as Code integration works!!!"
-	systemMessageEnvName := "SYSTEM_MESSAGE"
 	priorityClassName := ""
-	cascConfig := v1alpha2.Customization{
+	systemMessage := "Configuration as Code integration works!!!"
+
+	cascConfig := v1alpha2.Configuration{
 		Enabled:       true,
 		DefaultConfig: true,
 		Configurations: []v1alpha2.ConfigMapRef{
@@ -46,13 +48,7 @@ func TestConfiguration(t *testing.T) {
 		},
 	}
 
-	stringData := make(map[string]string)
-	stringData[systemMessageEnvName] = systemMessage
-	stringData[numberOfExecutorsEnvName] = strconv.Itoa(numberOfExecutors)
-
-	// base
-	createUserConfigurationSecret(t, namespace, stringData)
-	createUserConfigurationConfigMap(t, namespace, numberOfExecutors, systemMessageEnvName)
+	createTestPrequisites(t, namespace)
 	jenkins := createJenkinsCR(t, jenkinsCRName, namespace, priorityClassName, cascConfig)
 	createDefaultLimitsForContainersInNamespace(t, namespace)
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
@@ -71,7 +67,7 @@ func TestPlugins(t *testing.T) {
 	jobID := "e2e-jenkins-operator"
 	priorityClassName := ""
 
-	cascConfig := v1alpha2.Customization{
+	cascConfig := v1alpha2.Configuration{
 		Enabled:       true,
 		DefaultConfig: true,
 		Configurations: []v1alpha2.ConfigMapRef{
@@ -84,6 +80,7 @@ func TestPlugins(t *testing.T) {
 		},
 	}
 
+	createTestPrequisites(t, namespace)
 	jenkins := createJenkinsCR(t, "k8s-e2e", namespace, priorityClassName, cascConfig)
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
 	t.Logf("Base configuration completed at : %+v", jenkins.Status.BaseConfigurationCompletedTime)
@@ -109,7 +106,9 @@ func TestPriorityClass(t *testing.T) {
 	jenkinsCRName := "k8s-ete-priority-class-existing"
 	// One of the existing priority classes
 	priorityClassName := "system-cluster-critical"
-	cascConfig := v1alpha2.Customization{
+	cascConfig := v1alpha2.Configuration{
+		Enabled:       true,
+		DefaultConfig: true,
 		Configurations: []v1alpha2.ConfigMapRef{
 			{
 				Name: userConfigurationConfigMapName,
@@ -119,6 +118,8 @@ func TestPriorityClass(t *testing.T) {
 			Name: userConfigurationSecretName,
 		},
 	}
+
+	createTestPrequisites(t, namespace)
 	jenkins := createJenkinsCR(t, jenkinsCRName, namespace, priorityClassName, cascConfig)
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
 	verifyJenkinsMasterPodAttributes(t, jenkins)
@@ -146,7 +147,7 @@ func createUserConfigurationConfigMap(t *testing.T, namespace string, numberOfEx
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      userConfigurationConfigMapName,
 			Namespace: namespace,
-			Labels:    map[string]string{"type": "e2e-jenkins-config"},
+			Labels:    map[string]string{cascLabelName: cascLabelValue},
 		},
 		Data: map[string]string{
 			"11-set-executors.yaml": fmt.Sprintf(`
@@ -369,4 +370,18 @@ func assertMapContainsElementsFromAnotherMap(t *testing.T, expected map[string]s
 		}
 		assert.Equal(t, expectedValue, actualValue, expected, actual)
 	}
+}
+
+func createTestPrequisites(t *testing.T, namespace string) {
+	numberOfExecutors := 6
+	numberOfExecutorsEnvName := "NUMBER_OF_EXECUTORS"
+	systemMessage := "Configuration as Code integration works!!!"
+	systemMessageEnvName := "SYSTEM_MESSAGE"
+
+	stringData := make(map[string]string)
+	stringData[systemMessageEnvName] = systemMessage
+	stringData[numberOfExecutorsEnvName] = strconv.Itoa(numberOfExecutors)
+
+	createUserConfigurationSecret(t, namespace, stringData)
+	createUserConfigurationConfigMap(t, namespace, numberOfExecutors, systemMessageEnvName)
 }
