@@ -2,7 +2,6 @@ package e2e
 
 import (
 	goctx "context"
-	"net/http"
 	"testing"
 	"time"
 
@@ -10,12 +9,10 @@ import (
 
 	"github.com/jenkinsci/kubernetes-operator/internal/try"
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
-	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
 
 	"github.com/bndr/gojenkins"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/api/core/v1"
@@ -123,41 +120,8 @@ func waitForJenkinsPodRecreation(t *testing.T, jenkins *v1alpha2.Jenkins) {
 	t.Log("Jenkins pod has been recreated")
 }
 
-func waitForJenkinsSafeRestart(t *testing.T, jenkinsClient jenkinsclient.Jenkins) {
-	err := try.Until(func() (end bool, err error) {
-		status, err := jenkinsClient.Poll()
-		if err != nil {
-			return false, err
-		}
-		if status != http.StatusOK {
-			return false, errors.Wrap(err, "couldn't poll data from Jenkins API")
-		}
-		return true, nil
-	}, time.Second, time.Second*70)
-	require.NoError(t, err)
-}
-
-<<<<<<< HEAD
-// WaitUntilCascConditionSet retries until the specified condition check becomes true for the casc CR
-func WaitUntilCascConditionSet(retryInterval time.Duration, retries int, casc *v1alpha3.Casc, checkCondition checkCascConditionFunc) (*v1alpha3.Casc, error) {
-	cascStatus := &v1alpha3.Casc{}
-	err := wait.Poll(retryInterval, time.Duration(retries)*retryInterval, func() (bool, error) {
-		namespacedName := types.NamespacedName{Namespace: casc.Namespace, Name: casc.Name}
-		err := framework.Global.Client.Get(goctx.TODO(), namespacedName, cascStatus)
-		return checkCondition(cascStatus, err), nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	return cascStatus, nil
-}
-
 // WaitForCondition retries until the specified condition check becomes true for the jenkins CR
 func WaitForCondition(retryInterval time.Duration, retries int, jenkins *v1alpha2.Jenkins, checkCondition checkConditionFunc) (*v1alpha2.Jenkins, error) {
-=======
-// WaitUntilJenkinsConditionSet retries until the specified condition check becomes true for the jenkins CR
-func WaitUntilJenkinsConditionSet(retryInterval time.Duration, retries int, jenkins *v1alpha2.Jenkins, checkCondition checkConditionFunc) (*v1alpha2.Jenkins, error) {
->>>>>>> cleanup v1alpha3 api
 	jenkinsStatus := &v1alpha2.Jenkins{}
 	err := wait.Poll(retryInterval, time.Duration(retries)*retryInterval, func() (bool, error) {
 		namespacedName := types.NamespacedName{Namespace: jenkins.Namespace, Name: jenkins.Name}

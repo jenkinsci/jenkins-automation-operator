@@ -214,7 +214,6 @@ func createJenkinsAPIClientFromSecret(t *testing.T, jenkins *v1alpha2.Jenkins, j
 	if err := framework.Global.Client.Get(context.TODO(), namespaceName, adminSecret); err != nil {
 		return nil, err
 	}
-
 	return jenkinsclient.NewUserAndPasswordAuthorization(
 		jenkinsAPIURL,
 		string(adminSecret.Data[resources.OperatorCredentialsSecretUserNameKey]),

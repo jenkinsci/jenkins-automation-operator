@@ -10,7 +10,6 @@ import (
 )
 
 const (
-	skipTestSafeRestart   = false
 	skipTestPriorityClass = false
 )
 

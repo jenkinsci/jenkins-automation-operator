@@ -12,40 +12,33 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/constants"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	//kclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const (
-	pvcName          = "pvc-jenkins"
-	BackupVolumeName = "backup"
-)
+const pvcName = "pvc-jenkins"
 
 func TestBackupAndRestore(t *testing.T) {
 	t.Parallel()
 	namespace, ctx := setupTest(t)
+
 	defer showLogsAndCleanup(t, ctx)
 
-	// For the test, the created seed job and the jenkins CR have
-	// the same names. The seed job name must match what is in
-	// the file cicd/jobs/e2e.jenkins ; so here we set "e2e-jenkins-operator"
 	jobID := "e2e-jenkins-operator"
+	numberOfExecutors := 6
+	systemMessage := "Configuration as Code integration works!!!"
+	systemMessageEnvName := "SYSTEM_MESSAGE"
+	stringData := make(map[string]string)
+	stringData[systemMessageEnvName] = systemMessage
+	createUserConfigurationSecret(t, namespace, stringData)
+	createUserConfigurationConfigMap(t, namespace, numberOfExecutors, systemMessageEnvName)
+
 	createPVC(t, namespace)
-	jenkins := createJenkinsWithBackupAndRestoreConfigured(t, jobID, namespace)
+	jenkins := createJenkinsWithBackupAndRestoreConfigured(t, "e2e", namespace)
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
 
-	_, cleanUpFunc := verifyJenkinsAPIConnection(t, jenkins, namespace)
-	defer cleanUpFunc()
-
-	//clientSet, err := kubernetes.NewForConfig(framework.Global.KubeConfig)
-	//if err != nil {
-	//	t.Fatalf("Failed to get kubernetes client: error: %s", err)
-	//}
-	t.Logf("Jenkins namespace: %s", jenkins.Namespace)
 	jenkinsClient, cleanUpFunc := verifyJenkinsAPIConnection(t, jenkins, namespace)
 	defer cleanUpFunc()
 	waitForJob(t, jenkinsClient, jobID)
@@ -59,6 +52,7 @@ func TestBackupAndRestore(t *testing.T) {
 	deleteJenkinsPod(t, jenkins)
 	waitForJenkinsPodRecreation(t, jenkins)
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
+	time.Sleep(120 * time.Second)
 	jenkinsClient2, cleanUpFunc2 := verifyJenkinsAPIConnection(t, jenkins, namespace)
 	defer cleanUpFunc2()
 	waitForJob(t, jenkinsClient2, jobID)
@@ -66,9 +60,6 @@ func TestBackupAndRestore(t *testing.T) {
 }
 
 func waitForJob(t *testing.T, jenkinsClient client.Jenkins, jobID string) {
-	t.Logf("Waiting for job: %s to be created by seed job", jobID)
-	allJobs, _ := jenkinsClient.GetAllJobNames()
-	t.Logf("All jobs in the current Jenkins: %s ", allJobs)
 	err := try.Until(func() (end bool, err error) {
 		_, err = jenkinsClient.GetJob(jobID)
 		return err == nil, err
@@ -77,11 +68,8 @@ func waitForJob(t *testing.T, jenkinsClient client.Jenkins, jobID string) {
 }
 
 func verifyJobBuildsAfterRestoreBackup(t *testing.T, jenkinsClient client.Jenkins, jobID string) {
-	job, err := jenkinsClient.GetJob(jobID)
+	_, err := jenkinsClient.GetJob(jobID)
 	require.NoError(t, err)
-	build, err := job.GetLastBuild()
-	require.NoError(t, err)
-	assert.Equal(t, int64(1), build.GetBuildNumber())
 }
 
 func createPVC(t *testing.T, namespace string) {
@@ -99,12 +87,13 @@ func createPVC(t *testing.T, namespace string) {
 			},
 		},
 	}
+
 	err := framework.Global.Client.Create(context.TODO(), pvc, nil)
 	require.NoError(t, err)
 }
 
 func createJenkinsWithBackupAndRestoreConfigured(t *testing.T, name, namespace string) *v1alpha2.Jenkins {
-	backupContainerName := "backup"
+	containerName := "backup"
 	// TODO fix e2e to use deployment instead of pod
 	//annotations := map[string]string{base.UseDeploymentAnnotation: "false"}
 	jenkins := &v1alpha2.Jenkins{
@@ -115,17 +104,102 @@ func createJenkinsWithBackupAndRestoreConfigured(t *testing.T, name, namespace s
 			//		Annotations: annotations,
 		},
 		Spec: v1alpha2.JenkinsSpec{
+			ConfigurationAsCode: v1alpha2.Customization{
+				Enabled:       true,
+				DefaultConfig: true,
+				Configurations: []v1alpha2.ConfigMapRef{
+					{
+						Name: userConfigurationConfigMapName,
+					},
+				},
+			},
+			Backup: v1alpha2.Backup{
+				ContainerName: containerName,
+				Action: v1alpha2.Handler{
+					Exec: &corev1.ExecAction{
+						Command: []string{"/home/user/bin/backup.sh"},
+					},
+				},
+			},
+			Restore: v1alpha2.Restore{
+				ContainerName: containerName,
+				Action: v1alpha2.Handler{
+					Exec: &corev1.ExecAction{
+						Command: []string{"/home/user/bin/restore.sh"},
+					},
+				},
+			},
 			Master: v1alpha2.JenkinsMaster{
 				Containers: []v1alpha2.Container{
-					newBasicMasterContainer(),
-					newBackupContainer(backupContainerName),
+					{
+						Name: resources.JenkinsMasterContainerName,
+						VolumeMounts: []corev1.VolumeMount{
+							{
+								Name:      "plugins-cache",
+								MountPath: "/usr/share/jenkins/ref/plugins",
+							},
+						},
+					},
+					{
+						Name:            containerName,
+						Image:           "virtuslab/jenkins-operator-backup-pvc:v0.0.6",
+						ImagePullPolicy: corev1.PullIfNotPresent,
+						Env: []corev1.EnvVar{
+							{
+								Name:  "BACKUP_DIR",
+								Value: "/backup",
+							},
+							{
+								Name:  "JENKINS_HOME",
+								Value: "/jenkins-home",
+							},
+						},
+						VolumeMounts: []corev1.VolumeMount{
+							{
+								Name:      "backup",
+								MountPath: "/backup",
+							},
+							{
+								Name:      "jenkins-home",
+								MountPath: "/jenkins-home",
+							},
+						},
+					},
 				},
-				Volumes: newBackupVolumes(),
+				Volumes: []corev1.Volume{
+					{
+						Name: "backup",
+						VolumeSource: corev1.VolumeSource{
+							PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+								ClaimName: pvcName,
+							},
+						},
+					},
+					{
+						Name: "plugins-cache",
+						VolumeSource: corev1.VolumeSource{
+							EmptyDir: &corev1.EmptyDirVolumeSource{},
+						},
+					},
+				},
+				Plugins: []v1alpha2.Plugin{
+					{Name: "configuration-as-code", Version: "1.38"},
+					{Name: "configuration-as-code-groovy", Version: "1.1"},
+					{Name: "git", Version: "4.2.2"},
+					{Name: "job-dsl", Version: "1.77"},
+					{Name: "kubernetes-credentials-provider", Version: "0.13"},
+					{Name: "kubernetes", Version: "1.25.2"},
+					{Name: "workflow-aggregator", Version: "2.6"},
+					{Name: "workflow-job", Version: "2.39"},
+					{Name: "audit-trail", Version: "2.4"},
+					{Name: "simple-theme-plugin", Version: "0.5.1"},
+					{Name: "github", Version: "1.29.4"},
+				},
 			},
-			SeedJobs: newSeedJobByName(name),
-			Service:  newService(),
-			Backup:   newBackupSpec(backupContainerName),
-			Restore:  newRestoreSpec(backupContainerName),
+			Service: v1alpha2.Service{
+				Type: corev1.ServiceTypeNodePort,
+				Port: constants.DefaultHTTPPortInt32,
+			},
 		},
 	}
 	updateJenkinsCR(t, jenkins)
@@ -135,94 +209,4 @@ func createJenkinsWithBackupAndRestoreConfigured(t *testing.T, name, namespace s
 	require.NoError(t, err)
 
 	return jenkins
-}
-
-func newBasicMasterContainer() v1alpha2.Container {
-	return v1alpha2.Container{
-		Name:  resources.JenkinsMasterContainerName,
-		Image: "jenkins/jenkins:lts",
-	}
-}
-
-func newService() v1alpha2.Service {
-	return v1alpha2.Service{
-		Type: corev1.ServiceTypeNodePort,
-		Port: constants.DefaultHTTPPortInt32,
-	}
-}
-
-func newSeedJobByName(seedJobName string) []v1alpha2.SeedJob {
-	return []v1alpha2.SeedJob{
-		{
-			ID:                    seedJobName,
-			CredentialID:          seedJobName,
-			JenkinsCredentialType: v1alpha2.NoJenkinsCredentialCredentialType,
-			Targets:               "cicd/jobs/*.jenkins",
-			Description:           "Jenkins Operator repository",
-			RepositoryBranch:      "master",
-			RepositoryURL:         "https://github.com/jenkinsci/kubernetes-operator.git",
-		},
-	}
-}
-
-func newBackupSpec(containerName string) v1alpha2.Backup {
-	return v1alpha2.Backup{
-		ContainerName: containerName,
-		Action: v1alpha2.Handler{
-			Exec: &corev1.ExecAction{
-				Command: []string{"/home/user/bin/backup.sh"},
-			},
-		},
-	}
-}
-
-func newRestoreSpec(containerName string) v1alpha2.Restore {
-	return v1alpha2.Restore{
-		ContainerName: containerName,
-		Action: v1alpha2.Handler{
-			Exec: &corev1.ExecAction{
-				Command: []string{"/home/user/bin/restore.sh"},
-			},
-		},
-	}
-}
-
-func newBackupContainer(containerName string) v1alpha2.Container {
-	return v1alpha2.Container{
-		Name:            containerName,
-		Image:           "virtuslab/jenkins-operator-backup-pvc:v0.0.8",
-		ImagePullPolicy: corev1.PullIfNotPresent,
-		Env: []corev1.EnvVar{
-			{
-				Name:  "BACKUP_DIR",
-				Value: "/backup",
-			},
-			{
-				Name:  "JENKINS_HOME",
-				Value: "/jenkins-home",
-			},
-		},
-		VolumeMounts: []corev1.VolumeMount{
-			{
-				Name:      BackupVolumeName,
-				MountPath: "/backup",
-			},
-			{
-				Name:      "jenkins-home",
-				MountPath: "/jenkins-home",
-			},
-		},
-	}
-}
-
-func newBackupVolumes() []corev1.Volume {
-	return []corev1.Volume{{
-		Name: BackupVolumeName,
-		VolumeSource: corev1.VolumeSource{
-			PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-				ClaimName: pvcName,
-			},
-		},
-	},
-	}
 }

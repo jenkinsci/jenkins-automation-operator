@@ -6,6 +6,7 @@ metadata:
 spec:
   configurationAsCode:
     enabled: true
+    defaultConfig: true
     configurations:
       - name: user-configuration-1
       - name: user-configuration-2

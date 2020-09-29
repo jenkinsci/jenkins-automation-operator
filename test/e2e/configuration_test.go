@@ -156,15 +156,30 @@ func createUserConfigurationConfigMap(t *testing.T, namespace string, numberOfEx
 			Labels:    map[string]string{"type": "e2e-jenkins-config"},
 		},
 		Data: map[string]string{
-			"1-set-executors.yaml": fmt.Sprintf(`
+			"11-set-executors.yaml": fmt.Sprintf(`
 groovy:
   - script: >
       import jenkins.model.Jenkins;
       Jenkins.instance.setNumExecutors(%d);
       Jenkins.instance.save();`, numberOfExecutors),
-			"1-system-message.yaml": fmt.Sprintf(`
+			"12-system-message.yaml": fmt.Sprintf(`
 jenkins:
   systemMessage: "${%s}"`, systemMessageEnvName),
+			"13-seed-job.yaml": `
+jobs:
+  - script: >
+      job('e2e-jenkins-operator') {
+        scm {
+          git ('https://github.com/jkhelil/jenkins-job-dsl-seed-demo.git')
+        }
+        steps {
+          dsl {
+            external('jobs/*.groovy')    
+            removeAction('DELETE')
+          }
+        }
+      }
+`,
 		},
 	}
 
