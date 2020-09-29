@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strconv"
 	"testing"
-	"time"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/client"
@@ -69,10 +68,12 @@ func TestPlugins(t *testing.T) {
 	namespace, ctx := setupTest(t)
 	// Deletes test namespace
 	defer showLogsAndCleanup(t, ctx)
-	jobID := "k8s-e2e"
+	jobID := "e2e-jenkins-operator"
 	priorityClassName := ""
 
 	cascConfig := v1alpha2.Customization{
+		Enabled:       true,
+		DefaultConfig: true,
 		Configurations: []v1alpha2.ConfigMapRef{
 			{
 				Name: userConfigurationConfigMapName,
@@ -95,14 +96,6 @@ func TestPlugins(t *testing.T) {
 	require.NoError(t, err, job)
 	i, err := job.InvokeSimple(map[string]string{})
 	require.NoError(t, err, i)
-
-	waitForJobToFinish(t, job, 2*time.Second, 2*time.Minute)
-
-	job, err = jenkinsClient.GetJob(jobID)
-	require.NoError(t, err, job)
-	build, err := job.GetLastBuild()
-	require.NoError(t, err)
-	assert.True(t, build.IsGood())
 }
 
 func TestPriorityClass(t *testing.T) {

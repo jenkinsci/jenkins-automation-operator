@@ -11,10 +11,8 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
 
-	"github.com/bndr/gojenkins"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -32,25 +30,6 @@ var (
 
 // checkConditionFunc is used to check if a condition for the jenkins CR is set
 type checkConditionFunc func(*v1alpha2.Jenkins, error) bool
-
-func waitForJobToFinish(t *testing.T, job *gojenkins.Job, tick, timeout time.Duration) {
-	err := try.Until(func() (end bool, err error) {
-		t.Logf("Waiting for job `%s` to finish", job.GetName())
-		running, err := job.IsRunning()
-		if err != nil {
-			return false, err
-		}
-		queued, err := job.IsQueued()
-		if err != nil {
-			return false, err
-		}
-		if !running && !queued {
-			return true, nil
-		}
-		return false, nil
-	}, tick, timeout)
-	require.NoError(t, err)
-}
 
 func waitForJenkinsBaseConfigurationToComplete(t *testing.T, jenkins *v1alpha2.Jenkins) {
 	t.Logf("Waiting for Jenkins base configuration to complete: Will retry %+v times every %+v", retries, retryInterval)
