@@ -41,8 +41,6 @@ func TestDeployHelmChart(t *testing.T) {
 	err = framework.AddToFrameworkScheme(apis.AddToScheme, jenkinsServiceList)
 	require.NoError(t, err)
 
-	err = framework.AddToFrameworkScheme(apis.AddToScheme, cascServiceList)
-	require.NoError(t, err)
 	jenkins := &v1alpha2.Jenkins{
 		TypeMeta: v1alpha2.JenkinsTypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{
@@ -51,9 +49,6 @@ func TestDeployHelmChart(t *testing.T) {
 		},
 	}
 
-	annotations := map[string]string{
-		casc.JenkinsReferenceAnnotation: jenkins.Name,
-	}
 
 	cmd := exec.Command("helm", "upgrade", "jenkins", "./chart/jenkins-operator", "--namespace", namespace, "--debug",
 		"--set-string", fmt.Sprintf("jenkins.namespace=%s", namespace), "--install")
@@ -61,8 +56,7 @@ func TestDeployHelmChart(t *testing.T) {
 	require.NoError(t, err, string(output))
 
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
-	waitForJenkinsUserConfigurationToComplete(t, casc)
-
+	
 	cmd = exec.Command("helm", "upgrade", "jenkins", "./chart/jenkins-operator", "--namespace", namespace, "--debug",
 		"--set-string", fmt.Sprintf("jenkins.namespace=%s", namespace), "--install")
 	output, err = cmd.CombinedOutput()
@@ -70,5 +64,4 @@ func TestDeployHelmChart(t *testing.T) {
 
 	// Then
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
-	waitForJenkinsUserConfigurationToComplete(t, casc)
 }
