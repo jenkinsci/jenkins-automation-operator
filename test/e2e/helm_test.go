@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os/exec"
 	"testing"
+	"time"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis"
 	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
@@ -54,7 +55,7 @@ func TestDeployHelmChart(t *testing.T) {
 		"--set-string", fmt.Sprintf("jenkins.namespace=%s", namespace), "--install")
 	output, err := cmd.CombinedOutput()
 	require.NoError(t, err, string(output))
-
+	time.Sleep(60 * time.Second)
 	waitForJenkinsBaseConfigurationToComplete(t, jenkins)
 	
 	cmd = exec.Command("helm", "upgrade", "jenkins", "./chart/jenkins-operator", "--namespace", namespace, "--debug",
