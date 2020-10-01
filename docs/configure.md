@@ -1,0 +1,72 @@
+# Configure Jenkins in the Jenkins CR
+
+## How it works
+Wen deploying Jenkins via the operator, you can enable configuration as code for Jenkins.
+When enabled, the operator will add volumeMounts from the configuration configmaps you provide, to the an init container inside the Jenkins pod.
+The role of the init container is to copy the configuration as code files you provide into a target configuration as code volume, mounted to the Jenkins container. This way we have a read write volume on the Jenkins container that holds your configuration as code files.
+Another Sidecar container is also created if you choose to enable autoreload of the configuration as code files. That way, if you change the configmaps for Jenkins configuration, The Jenkins configuration is reloaded.
+
+## Configure Jenkins
+The Jenkins CR exposes attributes to configure Jenkins, you can specify the following in the Jenkins CR spec:
+> - enabled: speicifies if the configuration as code will be enabled
+> - defaultConfig: specifies if you want the default config for Jenkins. See the the default configmap under deploy/default-config.yaml
+> - configurations: an array of configuration profiles(configmap names used to configure Jenkins)
+> - enableAutoReload: specifies if you want to enable configuration auto reload.
+
+Here is an some example of Jenkins configMaps:
+
+* Simple configmap
+    ```yaml
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: Jenkins-operator-user-configuration
+    data:
+      1-system-message.yaml: |
+        jenkins:
+          systemMessage: "Configuration as Code integration works!!!"
+        ```
+* A configmap with seedjobs definition:
+    ```yaml
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+    labels:
+      type: Jenkins-Jenkins-config
+      name: user-configuration-1
+    data:
+      1-system-message.yaml: |
+        jenkins:
+          systemMessage: "New message New version of Configuration as Code integration works!!!"
+          numExecutors: 5
+          scmCheckoutRetryCount: 2
+          mode: NORMAL
+      2-seed-jobs.yaml: |
+        jobs:
+        - script: >
+            job('seed_job') {
+                scm {
+                git ('https://github.com/jkhelil/Jenkins-job-dsl-seed-demo.git')
+                }
+                steps {
+                dsl {
+                    external('jobs/*.groovy')    
+                    removeAction('DELETE')
+                }
+                }
+            }
+        ```
+
+1. Apply one or multiple configmap for Jenkins configuration.
+2. Configure the Jenkins cr with the following:
+    ```yaml
+    spec:
+      configurationAsCode:
+        enabled: true
+        defaultConfig: true
+        configurations:
+          - name: user-configuration-1
+          - name: user-configuration-2
+        enableAutoReload: true
+    ```
+3. check on Jenkins to see the configuration is applied
