@@ -407,7 +407,7 @@ func NewJenkinsInitContainer(jenkins *v1alpha2.Jenkins) corev1.Container {
 	command := []string{
 		"bash",
 		"-c",
-		fmt.Sprintf("find %s/casc-* -type f |xargs cp -rfLt %s", jenkinsPath, ConfigurationAsCodeVolumePath),
+		fmt.Sprintf("if [ `ls %s/casc-* > /dev/null 2>&1; echo $?` -eq 0 ]; then find %s/casc-* -type f -exec cp -fL {} %s \\;; fi", jenkinsPath, jenkinsPath, ConfigurationAsCodeVolumePath),
 	}
 	return corev1.Container{
 		Name:            fmt.Sprintf("init-%s", jenkinsContainer.Name),

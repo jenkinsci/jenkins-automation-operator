@@ -3,6 +3,10 @@ kind: Jenkins
 metadata:
   name: example
 spec:
+  configurationAsCode:
+    enabled: true
+    defaultConfig: true
+    enableAutoReload: true
   jenkinsAPISettings:
     authorizationStrategy: serviceAccount
   master:
