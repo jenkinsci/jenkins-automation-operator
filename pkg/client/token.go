@@ -30,8 +30,10 @@ func (token *UserToken) GetToken() string {
 }
 
 func (jenkins *jenkins) GenerateToken(userName, tokenName string) (*UserToken, error) {
-	token := &UserToken{raw: new(userTokenResponse),
-		base: fmt.Sprintf("/user/%s/descriptorByName/jenkins.security.ApiTokenProperty/generateNewToken", userName)}
+	token := &UserToken{
+		raw:  new(userTokenResponse),
+		base: fmt.Sprintf("/user/%s/descriptorByName/jenkins.security.ApiTokenProperty/generateNewToken", userName),
+	}
 	endpoint := token.base
 	data := map[string]string{"newTokenName": tokenName}
 	r, err := jenkins.Requester.Post(endpoint, nil, token.raw, data)

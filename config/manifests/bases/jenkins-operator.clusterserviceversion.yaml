@@ -1,0 +1,50 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    alm-examples: '[]'
+    capabilities: Basic Install
+    operators.operatorframework.io/builder: operator-sdk-v1.0.0
+    operators.operatorframework.io/project_layout: go.kubebuilder.io/v2
+  name: jenkins-operator.vX.Y.Z
+  namespace: placeholder
+spec:
+  apiservicedefinitions: {}
+  customresourcedefinitions: {}
+  description: Manage your Jenkins instances in kubernetes
+  displayName: jenkins-operator
+  icon:
+  - base64data: ""
+    mediatype: ""
+  install:
+    spec:
+      deployments: null
+    strategy: ""
+  installModes:
+  - supported: true
+    type: OwnNamespace
+  - supported: true
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespaces
+  keywords:
+  - Jenkins
+  - ci-cd
+  - continuous integration
+  - developer tools
+  links:
+  - name: Jenkins Operator
+    url: https://jenkins-operator.domain
+  maintainers:
+  - email: abenaiss@redhat.com
+    name: Akram Ben Aissi
+  - email: vbobade@redhat.com
+    name: Vibhav Bobade
+  - email: jkhelil@redhat.com
+    name: Jawed Khelil
+  maturity: alpha
+  provider:
+    name: Red Hat
+  version: 0.0.0

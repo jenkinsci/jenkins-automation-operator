@@ -7,13 +7,11 @@ import (
 	"os"
 	"time"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	logx "github.com/jenkinsci/kubernetes-operator/pkg/log"
 	"github.com/jenkinsci/kubernetes-operator/pkg/util"
-
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -119,7 +117,7 @@ func CopySecret(k8sClient client.Client, k8sClientSet kubernetes.Clientset, rest
 
 		defer os.Remove(fn)
 
-		//wait for jenkins pods running
+		// wait for jenkins pods running
 		if err = WaitForPodRunning(k8sClient, podName, namespace, time.Duration(30)*time.Second); err != nil {
 			logger.Error(err, "")
 			return true, err

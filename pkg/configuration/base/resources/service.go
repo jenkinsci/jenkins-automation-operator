@@ -2,19 +2,16 @@ package resources
 
 import (
 	"fmt"
-
-	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
-	"github.com/jenkinsci/kubernetes-operator/pkg/constants"
-	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
-	stackerr "github.com/pkg/errors"
-
-	corev1 "k8s.io/api/core/v1"
-
 	"net"
 	"strings"
+
+	"github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
+	"github.com/jenkinsci/kubernetes-operator/pkg/constants"
+	stackerr "github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
 )
 
-//ServiceKind the kind name for Service
+// ServiceKind the kind name for Service
 const ServiceKind = "Service"
 
 // UpdateService returns new service with override fields from config
@@ -69,32 +66,15 @@ func GetJenkinsJNLPServiceFQDN(jenkins *v1alpha2.Jenkins) (string, error) {
 
 // GetClusterDomain returns Kubernetes cluster domain, default to "cluster.local"
 func getClusterDomain() (string, error) {
-	clusterDomain := "cluster.local"
-	if ok, err := isRunningInCluster(); !ok {
-		return clusterDomain, nil
-	} else if err != nil {
-		return "", nil
-	}
 	apiSvc := "kubernetes.default.svc"
 	cname, err := net.LookupCNAME(apiSvc)
 	if err != nil {
 		return "", stackerr.WithStack(err)
 	}
 
-	clusterDomain = strings.TrimPrefix(cname, "kubernetes.default.svc")
+	clusterDomain := strings.TrimPrefix(cname, "kubernetes.default.svc")
 	clusterDomain = strings.TrimPrefix(clusterDomain, ".")
 	clusterDomain = strings.TrimSuffix(clusterDomain, ".")
 
 	return clusterDomain, nil
-}
-
-func isRunningInCluster() (bool, error) {
-	_, err := k8sutil.GetOperatorNamespace()
-	if err != nil {
-		if err == k8sutil.ErrNoNamespace || err == k8sutil.ErrRunLocal {
-			return false, nil
-		}
-		return true, nil
-	}
-	return false, stackerr.WithStack(err)
 }

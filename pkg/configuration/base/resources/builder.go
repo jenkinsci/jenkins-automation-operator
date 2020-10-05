@@ -3,7 +3,7 @@ package resources
 import (
 	"fmt"
 
-	jenkinsv1alpha2 "github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
+	jenkinsv1alpha2 "github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -65,6 +65,7 @@ func NewBuilderPod(cr *jenkinsv1alpha2.JenkinsImage, clientSet *kubernetes.Clien
 			Volumes: volumes,
 		},
 	}
+
 	return p
 }
 
@@ -86,6 +87,7 @@ func GetDestinationRepository(cr *jenkinsv1alpha2.JenkinsImage, clientSet *kuber
 		repositoryArg = fmt.Sprintf("%s=%s/%s:%s", BuilderDestinationArg, destination.Registry, destination.Name, destination.Tag)
 		logger.Info(fmt.Sprintf("Builder pod will push to %s using secret %s", repositoryArg, spec.To.Secret))
 	}
+
 	return repositoryArg
 }
 
@@ -101,6 +103,7 @@ func NewDockerfileConfigMap(cr *jenkinsv1alpha2.JenkinsImage) *corev1.ConfigMap 
 		},
 		Data: data,
 	}
+
 	return dockerfile
 }
 
@@ -111,6 +114,7 @@ func getPluginsList(cr *jenkinsv1alpha2.JenkinsImage) string {
 		plugins += fmt.Sprintf(PluginDefinitionFormat, v.Name, v.Version) + " "
 		logger.Info(fmt.Sprintf("Adding plugin %s:%s ", v.Name, v.Version))
 	}
+
 	return plugins
 }
 
@@ -118,6 +122,7 @@ func getDefaultedBaseImage(cr *jenkinsv1alpha2.JenkinsImage) string {
 	if len(cr.Spec.From.Name) != 0 {
 		return cr.Spec.From.Name
 	}
+
 	return JenkinsImageDefaultBaseImage
 }
 

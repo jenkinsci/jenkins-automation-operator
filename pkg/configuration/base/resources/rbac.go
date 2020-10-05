@@ -13,11 +13,14 @@ const (
 	watchVerb  = "watch"
 	patchVerb  = "patch"
 	updateVerb = "update"
-	//EmptyAPIGroup short hand for the empty API group while defining policies
+
+	// EmptyAPIGroup short hand for the empty API group while defining policies
 	EmptyAPIGroup = ""
-	//OpenshiftAPIGroup the openshift api group name
+
+	// OpenshiftAPIGroup the openshift api group name
 	OpenshiftAPIGroup = "image.openshift.io"
-	//BuildAPIGroup  the openshift api group name for builds
+
+	// BuildAPIGroup  the openshift api group name for builds
 	BuildAPIGroup = "build.openshift.io"
 )
 

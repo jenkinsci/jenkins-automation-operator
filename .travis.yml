@@ -34,32 +34,15 @@ before_install:
       echo "Only docs were updated, stopping build process."
       exit
     fi
-  - make go-dependencies
+  - make controller-gen
+  - make kustomize
 
 jobs:
   include:
     - stage: unit
       name: "Jenkins Operator - unit tests"
       script:
-        - make verify
-    - stage: e2e
-      name: "Backup PVC - e2e"
-      script:
-        - travis_wait 10 make -C backup/pvc/ docker-e2e UID=$(id -u) GID=$(id -g)
-    - stage: e2e
-      name: "Jenkins Operator - e2e"
-      script:
-        - sudo apt-get update
-        - sudo apt-get install socat
-        - make travis-prepare
-        - make build e2e
-    - stage: e2e
-      name: "Jenkins Operator Helm Chart - e2e"
-      script:
-        - sudo apt-get update
-        - sudo apt-get install socat
-        - make travis-prepare
-        - make e2e BUILDTAGS=Helm E2E_TEST_SELECTOR='^.*Helm.*$'
+        - make test
 
 cache:
   directories:

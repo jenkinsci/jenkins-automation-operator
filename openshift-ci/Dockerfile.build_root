@@ -21,7 +21,7 @@ ENV OPERATOR_SDK_DIST=operator-sdk-OPERATOR_SDK_VERSION-x86_64-linux-gnu
 # kubectl
 ENV KUBECTL_VERSION=v1.14.3 
 ENV KUBECTL_DOWNLOAD_SITE=https://storage.googleapis.com/kubernetes-release/release/
-ENV PATH=:$GOPATH/bin:/tmp/goroot/go/bin:$PATH
+ENV PATH=:$GOPATH/bin:/tmp/goroot/go/bin:/usr/bin:/usr/local/bin:/usr/sbin:$PATH
 
 WORKDIR /tmp
 RUN mkdir -p $GOPATH/bin &&  mkdir -p /tmp/goroot

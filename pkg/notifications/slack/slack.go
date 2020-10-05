@@ -7,10 +7,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
+	"github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/notifications/event"
 	"github.com/jenkinsci/kubernetes-operator/pkg/notifications/provider"
-
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -148,5 +147,6 @@ func (s Slack) Send(e event.Event) error {
 	}
 
 	defer func() { _ = resp.Body.Close() }()
+
 	return nil
 }

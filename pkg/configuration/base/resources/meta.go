@@ -4,9 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
+	"github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/constants"
-
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -84,7 +83,7 @@ func AddLabelToWatchedSecrets(crName, secretName, namespace string, k8sClient k8
 	return nil
 }
 
-//Adds label to watched configmaps
+// Adds label to watched configmaps
 func AddLabelToWatchedCMs(crName, namespace string, k8sClient k8s.Client, configmaps []v1alpha2.ConfigMapRef) error {
 	labelsForWatchedResources := BuildLabelsForWatchedResources(crName)
 

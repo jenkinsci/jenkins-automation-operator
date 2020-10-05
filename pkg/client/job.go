@@ -22,9 +22,9 @@ func (jenkins *jenkins) GetBuild(jobName string, number int64) (*gojenkins.Build
 	// workaround end
 
 	build, err := job.GetBuild(number)
-
 	if err != nil {
 		return nil, err
 	}
+
 	return build, nil
 }

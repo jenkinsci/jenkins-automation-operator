@@ -1,6 +1,6 @@
 FROM registry.access.redhat.com/ubi8/ubi:latest AS builder
 
-ARG GO_PACKAGE_PATH=github.com/jenkinsci/jenkins-operator
+ARG GO_PACKAGE_PATH=github.com/jenkinsci/kubernetes-operator
 
 # Basics
 ENV GIT_COMMITTER_NAME="OpenShift Developer Sevices"
@@ -9,20 +9,22 @@ ENV LANG=en_US.utf8
 
 # Go
 ENV GOPATH=/tmp/go
+ENV GOBIN=/tmp/go/bin
 ENV GOROOT=/tmp/goroot/go
+ENV GOCACHE=/tmp/go/.cache 
 ENV GO_VERSION=1.14.1
 ENV GO_DOWNLOAD_SITE=https://dl.google.com/go/
 ENV GO_DIST=go$GO_VERSION.linux-amd64.tar.gz
 
 # Operator SDK
-ENV OPERATOR_SDK_VERSION=v0.17.0
+ENV OPERATOR_SDK_VERSION=v1.0.1
 ENV OPERATOR_SDK_DOWNLOAD_SITE=https://github.com/operator-framework/operator-sdk/releases/download/
 ENV OPERATOR_SDK_DIST=operator-sdk-$OPERATOR_SDK_VERSION-x86_64-linux-gnu
 
 # kubectl
 ENV KUBECTL_VERSION=v1.14.3
 ENV KUBECTL_DOWNLOAD_SITE=https://storage.googleapis.com/kubernetes-release/release/
-ENV PATH=$PATH:$GOROOT/bin:$GOPATH/bin
+ENV PATH=$PATH:$GOROOT/bin:$GOPATH/bin:$GOPATH/bin:/tmp/goroot/go/bin:/usr/bin:/usr/local/bin:/usr/sbin:$PATH
 
 WORKDIR /tmp
 RUN mkdir -p $GOPATH/bin &&  \
@@ -34,33 +36,29 @@ RUN mkdir -p $GOPATH/bin &&  \
     curl -Lo operator-sdk $OPERATOR_SDK_DOWNLOAD_SITE/$OPERATOR_SDK_VERSION/$OPERATOR_SDK_DIST && \
     chmod +x operator-sdk && mv operator-sdk $GOPATH/bin/ && \
     mkdir -p ${GOPATH}/src/${GO_PACKAGE_PATH}/ && \
-    yum -y install --nodocs git make gcc
+    yum -y install --nodocs git make gcc diffutils 
 
 WORKDIR ${GOPATH}/src/${GO_PACKAGE_PATH}
 
 # Copy only relevant things (instead of all) to speed-up the build.
-COPY assets assets
-COPY build build
-COPY cmd cmd
-COPY deploy deploy
-COPY pkg pkg
-COPY version version
-COPY test test
-COPY internal internal
-COPY go.mod go.sum LICENSE Makefile tools.go config.base.env config.minikube.env config.openshift.env VERSION.txt gen-crd-api-config.json ./
-
+COPY main.go main.go
+COPY api/ api/
+COPY hack/ hack/
+COPY controllers/ controllers/
+COPY pkg/ pkg/
+COPY version/ version/
+COPY internal/ internal/
+COPY config/ config/
+COPY scripts/ scripts/
+COPY go.mod go.sum LICENSE Makefile ./
 ARG VERBOSE=2
 RUN make build
 
 FROM registry.access.redhat.com/ubi8/ubi-minimal
-
 LABEL com.redhat.delivery.appregistry=true
 LABEL maintainer "openshift-dev-services+jenkins@redhat.com"
 ENV LANG=en_US.utf8
-ENV OPERATOR_NAME=jenkins-operator
-ENV OPERATOR=/usr/local/bin/$OPERATOR_NAME
 ENV GOPATH=/tmp/go
 
-COPY --from=builder $GOPATH/src/github.com/jenkinsci/jenkins-operator/build/_output/bin/${OPERATOR_NAME} ${OPERATOR}
-
+COPY --from=builder /tmp/go/src/github.com/jenkinsci/kubernetes-operator/build/_output/bin/jenkins-operator /usr/local/bin/jenkins-operator
 ENTRYPOINT [ "/usr/local/bin/jenkins-operator" ]

@@ -111,6 +111,7 @@ func (o *CopyOptions) Run(args []string) error {
 		if _, err := os.Stat(args[0]); err == nil {
 			return o.copyToPod(fileSpec{File: args[0]}, destSpec, &exec.ExecOptions{})
 		}
+
 		return fmt.Errorf("src doesn't exist in local filesystem")
 	}
 
@@ -120,6 +121,7 @@ func (o *CopyOptions) Run(args []string) error {
 	if len(destSpec.PodName) != 0 {
 		return o.copyToPod(srcSpec, destSpec, &exec.ExecOptions{})
 	}
+
 	return fmt.Errorf("one of src or dest must be a remote file specification")
 }
 
@@ -196,6 +198,7 @@ func (o *CopyOptions) copyToPod(src, dest fileSpec, options *exec.ExecOptions) e
 
 	options.Command = cmdArr
 	options.Executor = &exec.DefaultRemoteExecutor{}
+
 	return o.execute(options)
 }
 
@@ -232,6 +235,7 @@ func (o *CopyOptions) copyFromPod(src, dest fileSpec) error {
 	// remove extraneous path shortcuts - these could occur if a path contained extra "../"
 	// and attempted to navigate beyond "/" in a remote filesystem
 	prefix = stripPathShortcuts(prefix)
+
 	return o.untarAll(src, reader, dest.File, prefix)
 }
 
@@ -264,6 +268,7 @@ func makeTar(srcPath, destPath string, writer io.Writer) error {
 
 	srcPath = path.Clean(srcPath)
 	destPath = path.Clean(destPath)
+
 	return recursiveTar(path.Dir(srcPath), path.Base(srcPath), path.Dir(destPath), path.Base(destPath), tarWriter)
 }
 
@@ -284,7 +289,7 @@ func recursiveTar(srcBase, srcFile, destBase, destFile string, tw *tar.Writer) e
 				return err
 			}
 			if len(files) == 0 {
-				//case empty directory
+				// case empty directory
 				hdr, _ := tar.FileInfoHeader(stat, fpath)
 				hdr.Name = destFile
 				if err := tw.WriteHeader(hdr); err != nil {
@@ -296,9 +301,10 @@ func recursiveTar(srcBase, srcFile, destBase, destFile string, tw *tar.Writer) e
 					return err
 				}
 			}
+
 			return nil
 		} else if stat.Mode()&os.ModeSymlink != 0 {
-			//case soft link
+			// case soft link
 			hdr, _ := tar.FileInfoHeader(stat, fpath)
 			target, err := os.Readlink(fpath)
 			if err != nil {
@@ -311,7 +317,7 @@ func recursiveTar(srcBase, srcFile, destBase, destFile string, tw *tar.Writer) e
 				return err
 			}
 		} else {
-			//case regular file or other file type like pipe
+			// case regular file or other file type like pipe
 			hdr, err := tar.FileInfoHeader(stat, fpath)
 			if err != nil {
 				return err
@@ -331,9 +337,11 @@ func recursiveTar(srcBase, srcFile, destBase, destFile string, tw *tar.Writer) e
 			if _, err := io.Copy(tw, f); err != nil {
 				return err
 			}
+
 			return f.Close()
 		}
 	}
+
 	return nil
 }
 
@@ -347,6 +355,7 @@ func (o *CopyOptions) untarAll(src fileSpec, reader io.Reader, destDir, prefix s
 			if err != io.EOF {
 				return err
 			}
+
 			break
 		}
 
@@ -365,17 +374,19 @@ func (o *CopyOptions) untarAll(src fileSpec, reader io.Reader, destDir, prefix s
 
 		if !isDestRelative(destDir, destFileName) {
 			fmt.Fprintf(o.IOStreams.ErrOut, "warning: file %q is outside target destination, skipping\n", destFileName)
+
 			continue
 		}
 
 		baseName := filepath.Dir(destFileName)
-		if err := os.MkdirAll(baseName, 0755); err != nil {
+		if err := os.MkdirAll(baseName, 0o755); err != nil {
 			return err
 		}
 		if header.FileInfo().IsDir() {
-			if err := os.MkdirAll(destFileName, 0755); err != nil {
+			if err := os.MkdirAll(destFileName, 0o755); err != nil {
 				return err
 			}
+
 			continue
 		}
 
@@ -383,9 +394,11 @@ func (o *CopyOptions) untarAll(src fileSpec, reader io.Reader, destDir, prefix s
 			if !symlinkWarningPrinted && len(o.ExecParentCmdName) > 0 {
 				fmt.Fprintf(o.IOStreams.ErrOut, "warning: skipping symlink: %q -> %q (consider using \"%s exec -n %q %q -- tar cf - %q | tar xf -\")\n", destFileName, header.Linkname, o.ExecParentCmdName, src.PodNamespace, src.PodName, src.File)
 				symlinkWarningPrinted = true
+
 				continue
 			}
 			fmt.Fprintf(o.IOStreams.ErrOut, "warning: skipping symlink: %q -> %q\n", destFileName, header.Linkname)
+
 			continue
 		}
 		outFile, err := os.Create(destFileName)
@@ -411,6 +424,7 @@ func isDestRelative(base, dest string) bool {
 	if err != nil {
 		return false
 	}
+
 	return relative == "." || relative == stripPathShortcuts(relative)
 }
 
@@ -434,5 +448,6 @@ func (o *CopyOptions) execute(options *exec.ExecOptions) error {
 	if err := options.Run(); err != nil {
 		return err
 	}
+
 	return nil
 }

@@ -6,7 +6,7 @@ import (
 
 	"github.com/bndr/gojenkins"
 	"github.com/golang/mock/gomock"
-	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
+	"github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
@@ -161,12 +161,12 @@ func TestCompareVolumes(t *testing.T) {
 	})
 }
 
-func TestReconcileJenkinsBaseConfiguration_verifyPlugins(t *testing.T) {
+func TestJenkinsReconcilerBaseConfiguration_verifyPlugins(t *testing.T) {
 	log.SetupLogger(true)
 
 	t.Run("happy, empty base and user plugins", func(t *testing.T) {
 		jenkins := &v1alpha2.Jenkins{}
-		r := ReconcileJenkinsBaseConfiguration{
+		r := JenkinsReconcilerBaseConfiguration{
 			logger: log.Log,
 			Configuration: configuration.Configuration{
 				Jenkins: jenkins,
@@ -194,7 +194,7 @@ func TestReconcileJenkinsBaseConfiguration_verifyPlugins(t *testing.T) {
 				},
 			},
 		}
-		r := ReconcileJenkinsBaseConfiguration{
+		r := JenkinsReconcilerBaseConfiguration{
 			logger: log.Log,
 			Configuration: configuration.Configuration{
 				Jenkins: jenkins,
@@ -238,7 +238,7 @@ func TestReconcileJenkinsBaseConfiguration_verifyPlugins(t *testing.T) {
 				},
 			},
 		}
-		r := ReconcileJenkinsBaseConfiguration{
+		r := JenkinsReconcilerBaseConfiguration{
 			logger: log.Log,
 			Configuration: configuration.Configuration{
 				Jenkins: jenkins,
@@ -275,7 +275,7 @@ func TestReconcileJenkinsBaseConfiguration_verifyPlugins(t *testing.T) {
 				},
 			},
 		}
-		r := ReconcileJenkinsBaseConfiguration{
+		r := JenkinsReconcilerBaseConfiguration{
 			logger: log.Log,
 			Configuration: configuration.Configuration{
 				Jenkins: jenkins,
@@ -312,7 +312,7 @@ func TestReconcileJenkinsBaseConfiguration_verifyPlugins(t *testing.T) {
 				},
 			},
 		}
-		r := ReconcileJenkinsBaseConfiguration{
+		r := JenkinsReconcilerBaseConfiguration{
 			logger: log.Log,
 			Configuration: configuration.Configuration{
 				Jenkins: jenkins,
@@ -349,7 +349,7 @@ func TestReconcileJenkinsBaseConfiguration_verifyPlugins(t *testing.T) {
 				},
 			},
 		}
-		r := ReconcileJenkinsBaseConfiguration{
+		r := JenkinsReconcilerBaseConfiguration{
 			logger: log.Log,
 			Configuration: configuration.Configuration{
 				Jenkins: jenkins,
@@ -386,7 +386,7 @@ func TestReconcileJenkinsBaseConfiguration_verifyPlugins(t *testing.T) {
 				},
 			},
 		}
-		r := ReconcileJenkinsBaseConfiguration{
+		r := JenkinsReconcilerBaseConfiguration{
 			logger: log.Log,
 			Configuration: configuration.Configuration{
 				Jenkins: jenkins,
@@ -415,7 +415,7 @@ func TestReconcileJenkinsBaseConfiguration_verifyPlugins(t *testing.T) {
 				},
 			},
 		}
-		r := ReconcileJenkinsBaseConfiguration{
+		r := JenkinsReconcilerBaseConfiguration{
 			logger: log.Log,
 			Configuration: configuration.Configuration{
 				Jenkins: jenkins,
@@ -665,9 +665,10 @@ func TestEnsureExtraRBAC(t *testing.T) {
 			},
 			Spec: v1alpha2.JenkinsSpec{
 				Roles: []rbacv1.RoleRef{
-					{APIGroup: "rbac.authorization.k8s.io",
-						Kind: clusterRoleKind,
-						Name: "edit",
+					{
+						APIGroup: "rbac.authorization.k8s.io",
+						Kind:     clusterRoleKind,
+						Name:     "edit",
 					},
 				},
 			},

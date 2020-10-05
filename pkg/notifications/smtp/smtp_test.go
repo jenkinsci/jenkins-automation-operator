@@ -12,11 +12,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
+	"github.com/emersion/go-smtp"
+	"github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/notifications/event"
 	"github.com/jenkinsci/kubernetes-operator/pkg/notifications/reason"
-
-	"github.com/emersion/go-smtp"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -62,6 +61,7 @@ func (bkd *testServer) Login(state *smtp.ConnectionState, username, password str
 	if username != testSMTPUsername || password != testSMTPPassword {
 		return nil, errors.New("invalid username or password")
 	}
+
 	return &testSession{event: bkd.event}, nil
 }
 
@@ -79,6 +79,7 @@ func (s *testSession) Mail(from string) error {
 	if from != testFrom {
 		return fmt.Errorf("`From` header is not equal: '%s', expected '%s'", from, testFrom)
 	}
+
 	return nil
 }
 
@@ -86,6 +87,7 @@ func (s *testSession) Rcpt(to string) error {
 	if to != testTo {
 		return fmt.Errorf("`To` header is not equal: '%s', expected '%s'", to, testTo)
 	}
+
 	return nil
 }
 

@@ -78,11 +78,13 @@ func (t *setBearerToken) transport() http.RoundTripper {
 	if t.rt != nil {
 		return t.rt
 	}
+
 	return http.DefaultTransport
 }
 
 func (t *setBearerToken) RoundTrip(r *http.Request) (*http.Response, error) {
 	r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", t.token))
+
 	return t.transport().RoundTrip(r)
 }
 
@@ -93,12 +95,14 @@ func (jenkins *jenkins) CreateOrUpdateJob(config, jobName string) (job *gojenkin
 	if isNotFoundError(err) {
 		job, err = jenkins.CreateJob(config, jobName)
 		created = true
+
 		return job, true, errors.WithStack(err)
 	} else if err != nil {
 		return job, false, errors.WithStack(err)
 	}
 
 	err = job.UpdateConfig(config)
+
 	return job, false, errors.WithStack(err)
 }
 
@@ -189,6 +193,7 @@ func isNotFoundError(err error) bool {
 	if err != nil {
 		return err.Error() == errorNotFound.Error()
 	}
+
 	return false
 }
 
@@ -212,6 +217,7 @@ func (jenkins *jenkins) GetNodeSecret(name string) (string, error) {
 			result[name] = match[i]
 		}
 	}
+
 	return result["secret"], nil
 }
 
@@ -226,5 +232,6 @@ func (jenkins *jenkins) GetPlugins(depth int) (*gojenkins.Plugins, error) {
 	if statusCode != http.StatusOK {
 		return nil, fmt.Errorf("invalid status code returned: %d", statusCode)
 	}
+
 	return &p, nil
 }

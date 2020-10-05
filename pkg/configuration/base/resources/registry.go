@@ -10,10 +10,12 @@ const (
 	DefaultOpenShiftImageRegistryServiceName = "image-registry"
 )
 
-var isImageRegistryAvailable = false
-var imageRegistryAlreadyChecked = false
+var (
+	isImageRegistryAvailable    = false
+	imageRegistryAlreadyChecked = false
+)
 
-//IsImageRegistryAvailable tells if the openshift image registry is installed and working
+// IsImageRegistryAvailable tells if the openshift image registry is installed and working
 func IsImageRegistryAvailable(clientSet *kubernetes.Clientset) bool {
 	if imageRegistryAlreadyChecked {
 		return isImageRegistryAvailable

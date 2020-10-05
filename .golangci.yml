@@ -27,3 +27,6 @@ linters:
     - nakedret
     - nestif
     - godot
+    - nlreturn
+    - noctx
+    - interfacer

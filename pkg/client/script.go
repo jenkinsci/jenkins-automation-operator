@@ -27,6 +27,7 @@ func (e GroovyScriptExecutionFailed) Error() string {
 func (jenkins *jenkins) ExecuteScript(script string) (string, error) {
 	now := time.Now().Unix()
 	verifier := fmt.Sprintf("verifier-%d", now)
+
 	return jenkins.executeScript(script, verifier)
 }
 

@@ -5,12 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
+	"github.com/go-logr/logr"
+	"github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
-
-	"github.com/go-logr/logr"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	k8s "sigs.k8s.io/controller-runtime/pkg/client"
@@ -39,6 +38,7 @@ func (t *backupTriggers) stop(logger logr.Logger, namespace string, name string)
 
 func (t *backupTriggers) get(namespace, name string) (backupTrigger, bool) {
 	trigger, found := t.triggers[t.key(namespace, name)]
+
 	return trigger, found
 }
 
@@ -114,10 +114,12 @@ func (bar *BackupAndRestore) Restore(jenkinsClient jenkinsclient.Jenkins) error 
 	jenkins := bar.Configuration.Jenkins
 	if len(jenkins.Spec.Restore.ContainerName) == 0 || jenkins.Spec.Restore.Action.Exec == nil {
 		bar.logger.V(log.VDebug).Info("Skipping restore backup, backup restore not configured")
+
 		return nil
 	}
 	if jenkins.Status.RestoredBackup != 0 {
 		bar.logger.V(log.VDebug).Info("Skipping restore backup, backup already restored")
+
 		return nil
 	}
 	if jenkins.Status.LastBackup == 0 {
@@ -237,7 +239,7 @@ func (bar *BackupAndRestore) StopBackupTrigger() {
 	triggers.stop(bar.logger, bar.Configuration.Jenkins.Namespace, bar.Configuration.Jenkins.Name)
 }
 
-//IsBackupTriggerEnabled returns true if the backup trigger is enabled
+// IsBackupTriggerEnabled returns true if the backup trigger is enabled
 func (bar *BackupAndRestore) IsBackupTriggerEnabled() bool {
 	_, enabled := triggers.get(bar.Configuration.Jenkins.Namespace, bar.Configuration.Jenkins.Name)
 	return enabled

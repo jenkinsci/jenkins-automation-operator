@@ -8,11 +8,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
+	"github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/notifications/event"
 	"github.com/jenkinsci/kubernetes-operator/pkg/notifications/provider"
 	"github.com/jenkinsci/kubernetes-operator/pkg/notifications/reason"
-
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -63,7 +62,6 @@ func TestSlack_Send(t *testing.T) {
 		var message Message
 		decoder := json.NewDecoder(r.Body)
 		err := decoder.Decode(&message)
-
 		if err != nil {
 			t.Fatal(err)
 		}

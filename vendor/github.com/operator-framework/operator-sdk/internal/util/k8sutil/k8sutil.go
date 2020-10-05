@@ -23,8 +23,10 @@ import (
 	"strings"
 	"unicode"
 
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/rest"
@@ -127,4 +129,59 @@ func FormatOperatorNameDNS1123(name string) string {
 		return dns1123LabelRegexp.ReplaceAllString(name, "-")
 	}
 	return name
+}
+
+// TrimDNS1123Label trims a label to meet the DNS 1123 label length requirement
+// by removing characters from the beginning of label such that len(label) <= 63.
+func TrimDNS1123Label(label string) string {
+	if len(label) > validation.DNS1123LabelMaxLength {
+		return label[len(label)-validation.DNS1123LabelMaxLength:]
+	}
+	return label
+}
+
+// SupportsOwnerReference checks whether a given dependent supports owner references, based on the owner.
+// This function performs following checks:
+//  -- True: Owner is cluster-scoped.
+//  -- True: Both Owner and dependent are Namespaced with in same namespace.
+//  -- False: Owner is Namespaced and dependent is Cluster-scoped.
+//  -- False: Both Owner and dependent are Namespaced with different namespaces.
+func SupportsOwnerReference(restMapper meta.RESTMapper, owner, dependent runtime.Object) (bool, error) {
+	ownerGVK := owner.GetObjectKind().GroupVersionKind()
+	ownerMapping, err := restMapper.RESTMapping(ownerGVK.GroupKind(), ownerGVK.Version)
+	if err != nil {
+		return false, err
+	}
+	mOwner, err := meta.Accessor(owner)
+	if err != nil {
+		return false, err
+	}
+
+	depGVK := dependent.GetObjectKind().GroupVersionKind()
+	depMapping, err := restMapper.RESTMapping(depGVK.GroupKind(), depGVK.Version)
+	if err != nil {
+		return false, err
+	}
+	mDep, err := meta.Accessor(dependent)
+	if err != nil {
+		return false, err
+	}
+	ownerClusterScoped := ownerMapping.Scope.Name() == meta.RESTScopeNameRoot
+	ownerNamespace := mOwner.GetNamespace()
+	depClusterScoped := depMapping.Scope.Name() == meta.RESTScopeNameRoot
+	depNamespace := mDep.GetNamespace()
+
+	if ownerClusterScoped {
+		return true, nil
+	}
+
+	if depClusterScoped {
+		return false, nil
+	}
+
+	if ownerNamespace != depNamespace {
+		return false, nil
+	}
+	// Both owner and dependent are namespace-scoped and in the same namespace.
+	return true, nil
 }

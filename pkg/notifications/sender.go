@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
+	"github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
 	k8sevent "github.com/jenkinsci/kubernetes-operator/pkg/event"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
 	"github.com/jenkinsci/kubernetes-operator/pkg/notifications/event"
@@ -14,7 +14,6 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/notifications/msteams"
 	"github.com/jenkinsci/kubernetes-operator/pkg/notifications/slack"
 	"github.com/jenkinsci/kubernetes-operator/pkg/notifications/smtp"
-
 	"github.com/pkg/errors"
 	k8sclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -32,6 +31,7 @@ func Listen(events chan event.Event, k8sEvent k8sevent.Recorder, k8sClient k8scl
 
 		if !e.Reason.HasMessages() {
 			logger.V(log.VWarn).Info("Reason has no messages, this should not happen")
+
 			continue // skip empty messages
 		}
 
@@ -55,6 +55,7 @@ func Listen(events chan event.Event, k8sEvent k8sevent.Recorder, k8sClient k8scl
 				provider = smtp.New(k8sClient, notificationConfig)
 			default:
 				logger.V(log.VWarn).Info(fmt.Sprintf("Unknown notification service `%+v`", notificationConfig))
+
 				continue
 			}
 

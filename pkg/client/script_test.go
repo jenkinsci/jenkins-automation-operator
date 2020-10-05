@@ -19,6 +19,7 @@ func Test_ExecuteScript(t *testing.T) {
 		ts := httptest.NewTLSServer(http.HandlerFunc(func(responseWriter http.ResponseWriter, request *http.Request) {
 			if strings.Contains(request.URL.Path, "/scriptText") {
 				_, _ = fmt.Fprint(responseWriter, "some output\n"+verifier)
+
 				return
 			}
 			responseWriter.WriteHeader(http.StatusInternalServerError)
@@ -44,6 +45,7 @@ func Test_ExecuteScript(t *testing.T) {
 		ts := httptest.NewTLSServer(http.HandlerFunc(func(responseWriter http.ResponseWriter, request *http.Request) {
 			if strings.Contains(request.URL.Path, "/scriptText") {
 				_, _ = fmt.Fprint(responseWriter, response)
+
 				return
 			}
 			responseWriter.WriteHeader(http.StatusInternalServerError)

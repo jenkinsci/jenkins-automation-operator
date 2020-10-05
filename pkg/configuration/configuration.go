@@ -7,12 +7,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
+	"github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
 	"github.com/jenkinsci/kubernetes-operator/pkg/notifications/event"
-
 	stackerr "github.com/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -22,7 +21,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
-
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/remotecommand"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -62,6 +60,7 @@ func (c *Configuration) GetJenkinsDeployment() (*appsv1.Deployment, error) {
 		logger.V(log.VDebug).Info(fmt.Sprintf("No deployment named: %s found: %+v", deploymentName, err))
 		return nil, err
 	}
+
 	return jenkinsDeployment, nil
 }
 
@@ -158,6 +157,7 @@ func (c *Configuration) GetJenkinsMasterContainer() *v1alpha2.Container {
 		// the first container is the Jenkins master, it is forced jenkins_controller.go
 		return &c.Jenkins.Spec.Master.Containers[0]
 	}
+
 	return nil
 }
 
@@ -204,7 +204,7 @@ func (c *Configuration) GetJenkinsMasterPodName() string {
 	return ""
 }
 
-func (c *Configuration) GetReplicaSetByDeployment() (appsv1.ReplicaSet, error) {
+func (c *Configuration) GetReplicaSetByDeployment() (*appsv1.ReplicaSet, error) {
 	deployment, _ := c.GetJenkinsDeployment()
 	selector, err := metav1.LabelSelectorAsSelector(deployment.Spec.Selector)
 	replicasSetList := appsv1.ReplicaSetList{}
@@ -215,18 +215,25 @@ func (c *Configuration) GetReplicaSetByDeployment() (appsv1.ReplicaSet, error) {
 	err = c.Client.List(context.TODO(), &replicasSetList, &listOptions)
 	if err != nil || len(replicasSetList.Items) == 0 {
 		logger.V(log.VDebug).Info(fmt.Sprintf("Error while getting the replicaset using selector: %s : error: %+v", selector, err))
+		return nil, stackerr.Errorf("Deployment has no replicaSet attached yet: Error was: %+v", err)
 	}
 	replicaSet := replicasSetList.Items[0]
 	logger.V(log.VDebug).Info(fmt.Sprintf("Successfully got the ReplicaSet: %s", replicaSet.Name))
-	return replicaSet, err
+	return &replicaSet, nil
 }
 
 func (c *Configuration) GetPodByDeployment() (*corev1.Pod, error) {
-	replicaSet, _ := c.GetReplicaSetByDeployment()
-	selector, _ := metav1.LabelSelectorAsSelector(replicaSet.Spec.Selector)
+	replicaSet, err := c.GetReplicaSetByDeployment()
+	if err != nil {
+		return nil, err
+	}
+	selector, err := metav1.LabelSelectorAsSelector(replicaSet.Spec.Selector)
+	if err != nil {
+		return nil, err
+	}
 	listOptions := client.ListOptions{LabelSelector: selector}
 	pods := corev1.PodList{}
-	err := c.Client.List(context.TODO(), &pods, &listOptions)
+	err = c.Client.List(context.TODO(), &pods, &listOptions)
 	if err != nil || len(pods.Items) == 0 {
 		return nil, stackerr.Errorf("Deployment has no pod attached yet: Error was: %+v", err)
 	}

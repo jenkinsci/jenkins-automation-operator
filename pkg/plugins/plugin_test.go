@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
-
 	"github.com/stretchr/testify/assert"
 )
 

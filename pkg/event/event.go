@@ -54,14 +54,16 @@ func initializeEventRecorder(config *rest.Config, component string) (record.Even
 		return nil, errors.WithStack(err)
 	}
 	eventBroadcaster := record.NewBroadcaster()
-	//eventBroadcaster.StartLogging(glog.Infof) TODO integrate with proper logger
+	// eventBroadcaster.StartLogging(glog.Infof) TODO integrate with proper logger
 	eventBroadcaster.StartRecordingToSink(
 		&typedcorev1.EventSinkImpl{
-			Interface: client.CoreV1().Events("")})
+			Interface: client.CoreV1().Events(""),
+		})
 	eventRecorder := eventBroadcaster.NewRecorder(
 		scheme.Scheme,
 		v1.EventSource{Component: component},
 	)
+
 	return eventRecorder, nil
 }
 

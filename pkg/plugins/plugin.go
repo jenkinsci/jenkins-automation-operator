@@ -73,6 +73,7 @@ func validatePlugin(name, version, downloadURL string) error {
 			return errors.Errorf("invalid download URL '%s' for plugin name %s:%s, must follow pattern '%s'", downloadURL, name, version, DownloadURLPattern.String())
 		}
 	}
+
 	return nil
 }
 
@@ -96,12 +97,14 @@ func VerifyDependencies(values ...map[Plugin][]Plugin) []string {
 			allPlugins[rootPlugin.Name] = append(allPlugins[rootPlugin.Name], Plugin{
 				Name:                     rootPlugin.Name,
 				Version:                  rootPlugin.Version,
-				rootPluginNameAndVersion: rootPlugin.String()})
+				rootPluginNameAndVersion: rootPlugin.String(),
+			})
 			for _, plugin := range plugins {
 				allPlugins[plugin.Name] = append(allPlugins[plugin.Name], Plugin{
 					Name:                     plugin.Name,
 					Version:                  plugin.Version,
-					rootPluginNameAndVersion: rootPlugin.String()})
+					rootPluginNameAndVersion: rootPlugin.String(),
+				})
 			}
 		}
 	}

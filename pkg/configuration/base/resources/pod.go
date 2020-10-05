@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2"
+	"github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/constants"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -41,7 +41,7 @@ const (
 	httpPortName = "http"
 	jnlpPortName = "jnlp"
 
-	//defaut configmap for jenkins configuration
+	// defaut configmap for jenkins configuration
 	JenkinsDefaultConfigMapName = "jenkins-default-configuration"
 
 	// JenkinsSCConfigName is the Jenkins side car container name for reloading config
@@ -260,7 +260,6 @@ func GetJenkinsMasterContainerBaseVolumeMounts(jenkins *v1alpha2.Jenkins) []core
 			})
 		}
 	}
-
 	return volumeMounts
 }
 
@@ -280,6 +279,7 @@ func NewJenkinsMasterContainer(jenkins *v1alpha2.Jenkins) corev1.Container {
 	for _, env := range jenkinsContainer.Env {
 		if env.Name == jenkinsHomeEnvVar.Name {
 			jenkinsHomeEnvVarExists = true
+
 			break
 		}
 	}
@@ -495,7 +495,7 @@ func isPodRunning(k8sClient client.Client, podName, namespace string) wait.Condi
 		switch pod.Status.Phase {
 		case corev1.PodRunning:
 			return true, nil
-		case corev1.PodFailed, corev1.PodSucceeded:
+		case corev1.PodFailed, corev1.PodSucceeded, corev1.PodPending, corev1.PodUnknown:
 			return false, conditions.ErrPodCompleted
 		}
 		return false, nil

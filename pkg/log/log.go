@@ -34,6 +34,7 @@ func zapLogger(debug bool) logr.Logger {
 	zapLog, err = zapLogCfg.Build(zap.AddStacktrace(zap.DPanicLevel), zap.AddCallerSkip(1))
 	// who watches the watchmen?
 	fatalIfErr(err, log.Fatalf)
+
 	return zapr.NewLogger(zapLog)
 }
 
