@@ -22,7 +22,9 @@ require (
 	github.com/operator-framework/operator-sdk v1.0.1
 	github.com/pkg/errors v0.9.1
 	github.com/robfig/cron v1.2.0 // indirect
+	github.com/sonatard/noctx v0.0.1 // indirect
 	github.com/spf13/pflag v1.0.5
+	github.com/ssgreg/nlreturn v1.0.5 // indirect
 	github.com/stretchr/testify v1.5.1
 	go.uber.org/zap v1.14.1
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect

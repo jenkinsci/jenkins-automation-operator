@@ -62,3 +62,4 @@ ENV GOPATH=/tmp/go
 
 COPY --from=builder /tmp/go/src/github.com/jenkinsci/kubernetes-operator/build/_output/bin/jenkins-operator /usr/local/bin/jenkins-operator
 ENTRYPOINT [ "/usr/local/bin/jenkins-operator" ]
+

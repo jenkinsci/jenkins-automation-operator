@@ -1,7 +1,7 @@
 ## Targets to install golang tools (golangci, goimports, etc...)
 
 # find or download controller-gen
-controller-gen: FORCE
+controller-gen:
 ifeq (, $(shell which controller-gen))
 	@{ \
 	set -e ;\

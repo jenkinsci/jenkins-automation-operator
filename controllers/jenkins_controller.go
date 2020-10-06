@@ -249,7 +249,6 @@ func (r *JenkinsReconciler) reconcile(ctx context.Context, request ctrl.Request,
 			logger.Error(err, "Failed to update Jenkins status")
 			return ctrl.Result{}, err
 		}
-
 		logger.Info("Reconcile loop success !!!")
 		logger.Info(message)
 	}

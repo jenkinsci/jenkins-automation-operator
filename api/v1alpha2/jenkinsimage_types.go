@@ -24,7 +24,6 @@ type JenkinsPlugin struct {
 }
 
 // A JenkinsImage definition
-// +operator-sdk:csv:customresourcedefinitions:type=spec
 type Image struct {
 	// The Image name
 	// +operator-sdk:csv:customresourcedefinitions:type=spec
@@ -38,17 +37,19 @@ type Image struct {
 	Registry string `json:"registry,omitempty"`
 	// Secret is an optional reference to a secret in the same namespace to use for pushing to or pulling from the registry.
 	// +operator-sdk:csv:customresourcedefinitions:xDescriptors="urn:alm:descriptor:io.kubernetes:Secret"
-	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.x-descriptors="urn:alm:descriptor:io.kubernetes:Secret"
-	// +operator-sdk:csv:customresourcedefinitions:type=[spec,status]
 	Secret string `json:"secret,omitempty"`
+}
+
+type JenkinsImageBuild struct {
+	// +operator-sdk:csv:customresourcedefinitions.type=status
+	Image            string `json:"image,omitempty"`
+	MD5Sum           string `json:"md5sum,omitempty"`
+	InstalledPlugins string `json:"installedPlugins,omitempty"`
 }
 
 // JenkinsImageStatus defines the observed state of JenkinsImage
 type JenkinsImageStatus struct {
-	// +operator-sdk:csv:customresourcedefinitions.type=status
-	Image            string          `json:"image,omitempty"`
-	MD5Sum           string          `json:"md5sum,omitempty"`
-	InstalledPlugins []JenkinsPlugin `json:"installedPlugins,omitempty"`
+	Builds []JenkinsImageBuild `json:"builds"`
 }
 
 // +kubebuilder:object:root=true

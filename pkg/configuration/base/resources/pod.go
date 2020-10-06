@@ -502,8 +502,33 @@ func isPodRunning(k8sClient client.Client, podName, namespace string) wait.Condi
 	}
 }
 
+// return a condition function that indicates whether the given pod is
+// currently running
+func isPodCompleted(k8sClient client.Client, podName, namespace string) wait.ConditionFunc {
+	return func() (bool, error) {
+		pod := &corev1.Pod{}
+		err := k8sClient.Get(context.TODO(), types.NamespacedName{Name: podName, Namespace: namespace}, pod)
+		if err != nil {
+			return false, err
+		}
+		switch pod.Status.Phase {
+		case corev1.PodSucceeded:
+			return true, nil
+		case corev1.PodFailed, corev1.PodRunning, corev1.PodPending, corev1.PodUnknown:
+			return false, nil
+		}
+		return false, nil
+	}
+}
+
 // Poll up to timeout seconds for pod to enter running state.
 // Returns an error if the pod never enters the running state.
 func WaitForPodRunning(k8sClient client.Client, podName, namespace string, timeout time.Duration) error {
 	return wait.PollImmediate(time.Second, timeout, isPodRunning(k8sClient, podName, namespace))
+}
+
+// Poll up to timeout seconds for pod to enter running state.
+// Returns an error if the pod never enters the running state.
+func WaitForPodIsCompleted(k8sClient client.Client, podName, namespace string) error {
+	return wait.PollUntil(time.Second, isPodCompleted(k8sClient, podName, namespace), nil)
 }

@@ -18,6 +18,9 @@ package controllers
 
 import (
 	"context"
+	"crypto/md5"
+	"fmt"
+	"strings"
 
 	"github.com/go-logr/logr"
 	jenkinsv1alpha2 "github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
@@ -32,10 +35,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
+const YamlMultilineDataFieldCutSet = "|\n "
+
 // JenkinsImageReconciler reconciles a JenkinsImage object
 type JenkinsImageReconciler struct {
 	client.Client
-	clientSet kubernetes.Clientset
+	ClientSet *kubernetes.Clientset
 	Log       logr.Logger
 	Scheme    *runtime.Scheme
 }
@@ -55,7 +60,7 @@ func (r *JenkinsImageReconciler) SetupWithManager(mgr ctrl.Manager) error {
 // +kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;create;update;patch;delete
 
 func (r *JenkinsImageReconciler) Reconcile(request ctrl.Request) (ctrl.Result, error) {
-	_ = context.Background()
+	ctx := context.Background()
 	reqLogger := r.Log.WithValues("jenkinsimage", request.NamespacedName)
 
 	// Fetch the JenkinsImage instance
@@ -97,7 +102,7 @@ func (r *JenkinsImageReconciler) Reconcile(request ctrl.Request) (ctrl.Result, e
 	reqLogger.Info("Skip reconcile: ConfigMap already exists", "ConfigMap.Namespace", foundConfigMap.Namespace, "ConfigMap.Name", foundConfigMap.Name)
 
 	// Define a new Pod object
-	pod := resources.NewBuilderPod(instance, &r.clientSet)
+	pod := resources.NewBuilderPod(instance, r.ClientSet)
 	// Set JenkinsImage instance as the owner and controller
 	if err := controllerutil.SetControllerReference(instance, pod, r.Scheme); err != nil {
 		return ctrl.Result{Requeue: true}, err
@@ -119,6 +124,57 @@ func (r *JenkinsImageReconciler) Reconcile(request ctrl.Request) (ctrl.Result, e
 	}
 	// Pod already exists - don't requeue
 	reqLogger.Info("Skip reconcile: Pod already exists", "Pod.Namespace", foundPod.Namespace, "Pod.Name", foundPod.Name)
+	go r.updateJenkinsImageStatusWhenPodIsCompleted(ctx, foundPod, instance)
 
 	return ctrl.Result{}, nil
+}
+
+func (r *JenkinsImageReconciler) updateJenkinsImageStatusWhenPodIsCompleted(ctx context.Context, pod *corev1.Pod, instance *jenkinsv1alpha2.JenkinsImage) {
+	err := resources.WaitForPodIsCompleted(r.Client, pod.Name, pod.Namespace)
+	if err == nil && len(pod.Status.ContainerStatuses) == 1 {
+		status := pod.Status.ContainerStatuses[0]
+		if status.State.Terminated != nil {
+			builtImage := strings.Trim(status.State.Terminated.Message, YamlMultilineDataFieldCutSet)
+			r.Log.Info(fmt.Sprintf("Found built image (trimed): %s", builtImage))
+			dockerfileContent, _ := r.getDockerfileContent(instance)
+			dockerfileMD5 := strings.Trim(fmt.Sprintf("%x", md5.Sum([]byte(dockerfileContent))), YamlMultilineDataFieldCutSet)
+			r.Log.Info(fmt.Sprintf("Found image checksum (trimed): %s", dockerfileMD5))
+			build := jenkinsv1alpha2.JenkinsImageBuild{
+				MD5Sum: dockerfileMD5,
+				Image:  builtImage,
+			}
+			if !contains(instance.Status.Builds, build) {
+				instance.Status.Builds = append(instance.Status.Builds, build)
+				r.Log.Info("Updating JenkinsImage with containerStatus from Pod")
+				err = r.Status().Update(ctx, instance)
+				if err != nil {
+					// FIXME We may need go routine error handling using a dedicated channel here
+					r.Log.Error(err, "Failed to update JenkinsImage status")
+				}
+			}
+		}
+	} else {
+		r.Log.Info(fmt.Sprintf("Error while waiting for pod to complete: %+v, containerStatus: %+v", err, pod.Status.ContainerStatuses))
+	}
+}
+
+func (r *JenkinsImageReconciler) getDockerfileContent(instance *jenkinsv1alpha2.JenkinsImage) (string, error) {
+	configMapName := resources.GetDockerfileConfigMapName(instance)
+	configMap := &corev1.ConfigMap{}
+	// Fetch the ConfigMap instance
+	err := r.Client.Get(context.TODO(), types.NamespacedName{Namespace: instance.Name, Name: configMapName}, configMap)
+	if err != nil {
+		return "", err
+	}
+	imageSHA256 := strings.Trim(configMap.Data[resources.DockerfileName], YamlMultilineDataFieldCutSet)
+	return imageSHA256, nil
+}
+
+func contains(s []jenkinsv1alpha2.JenkinsImageBuild, e jenkinsv1alpha2.JenkinsImageBuild) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
 }

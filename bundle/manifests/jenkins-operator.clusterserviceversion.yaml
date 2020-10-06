@@ -2,15 +2,140 @@ apiVersion: operators.coreos.com/v1alpha1
 kind: ClusterServiceVersion
 metadata:
   annotations:
-    alm-examples: '[]'
+    alm-examples: |-
+      [
+        {
+          "apiVersion": "jenkins.jenkins.io/v1alpha2",
+          "kind": "Jenkins",
+          "metadata": {
+            "name": "jenkins-sample"
+          },
+          "spec": {
+            "configurationAsCode": {
+              "defaultConfig": false,
+              "enableAutoReload": true,
+              "enabled": false
+            },
+            "jenkinsAPISettings": {
+              "authorizationStrategy": "serviceAccount"
+            },
+            "master": {
+              "containers": [
+                {
+                  "image": "jenkins/jenkins:lts",
+                  "imagePullPolicy": "Always",
+                  "livenessProbe": {
+                    "failureThreshold": 12,
+                    "httpGet": {
+                      "path": "/login",
+                      "port": "http",
+                      "scheme": "HTTP"
+                    },
+                    "initialDelaySeconds": 80,
+                    "periodSeconds": 10,
+                    "successThreshold": 1,
+                    "timeoutSeconds": 5
+                  },
+                  "name": "jenkins-master",
+                  "readinessProbe": {
+                    "failureThreshold": 3,
+                    "httpGet": {
+                      "path": "/login",
+                      "port": "http",
+                      "scheme": "HTTP"
+                    },
+                    "initialDelaySeconds": 30,
+                    "periodSeconds": 10,
+                    "successThreshold": 1,
+                    "timeoutSeconds": 1
+                  },
+                  "resources": {
+                    "limits": {
+                      "cpu": "1500m",
+                      "memory": "3Gi"
+                    },
+                    "requests": {
+                      "cpu": "1",
+                      "memory": "500Mi"
+                    }
+                  }
+                }
+              ],
+              "disableCSRFProtection": true
+            }
+          }
+        },
+        {
+          "apiVersion": "jenkins.jenkins.io/v1alpha2",
+          "kind": "JenkinsImage",
+          "metadata": {
+            "name": "jenkinsimage-sample"
+          },
+          "spec": {
+            "from": {
+              "name": "jenkins/jenkins",
+              "tag": "lts"
+            },
+            "plugins": [
+              {
+                "name": "kubernetes"
+              }
+            ],
+            "to": {
+              "name": "jenkins-for-jim",
+              "registry": "quay.io/akram",
+              "tag": "latest"
+            }
+          }
+        }
+      ]
     capabilities: Basic Install
-    operators.operatorframework.io/builder: operator-sdk-v1.0.0
+    operators.operatorframework.io/builder: operator-sdk-v1.0.1
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v2
   name: jenkins-operator.v0.0.1
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
-  customresourcedefinitions: {}
+  customresourcedefinitions:
+    owned:
+    - displayName: Jenkins
+      kind: Jenkins
+      name: jenkins.jenkins.jenkins.io
+      specDescriptors:
+      - displayName: Enable this configuration
+        path: configurationAsCode.enabled
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+      - description: JenkinsImageRef a reference to a JenkinsImage in the current namespace. The JenkinsImage must have status to be "SuccessfullyBuilt" ; then the image target image in JenkinsImage.To will be used as the image of the Master container.
+        displayName: JenkinsImage reference
+        path: jenkinsImageRef
+        x-descriptors:
+        - urn:alm:descriptor:io.jenkins.jenkins:JenkinsImage
+      version: v1alpha2
+    - description: JenkinsImage is the Schema for the jenkinsimages API
+      displayName: Jenkins Image
+      kind: JenkinsImage
+      name: jenkinsimages.jenkins.jenkins.io
+      specDescriptors:
+      - description: The Image name
+        displayName: Name
+        path: from.name
+      - description: The registry to pull from or push to this image in the form fully.qdn/myrepository/ Image name will be appended for push
+        displayName: Registry
+        path: from.registry
+      - description: The tag name
+        displayName: Tag
+        path: from.tag
+      - description: The Image name
+        displayName: Name
+        path: to.name
+      - description: The registry to pull from or push to this image in the form fully.qdn/myrepository/ Image name will be appended for push
+        displayName: Registry
+        path: to.registry
+      - description: The tag name
+        displayName: Tag
+        path: to.tag
+      version: v1alpha2
   description: Manage your Jenkins instances in kubernetes
   displayName: jenkins-operator
   icon:
@@ -18,7 +143,178 @@ spec:
     mediatype: ""
   install:
     spec:
-      deployments: []
+      clusterPermissions:
+      - rules:
+        - apiGroups:
+          - apps
+          resources:
+          - deployments
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - ""
+          resources:
+          - pods
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+        - apiGroups:
+          - ""
+          resources:
+          - secrets
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - jenkins.jenkins.io
+          resources:
+          - jenkins
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - jenkins.jenkins.io
+          resources:
+          - jenkins/status
+          verbs:
+          - get
+          - patch
+          - update
+        - apiGroups:
+          - jenkins.jenkins.io
+          resources:
+          - jenkinsimages
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - jenkins.jenkins.io
+          resources:
+          - jenkinsimages/status
+          verbs:
+          - get
+          - patch
+          - update
+        - apiGroups:
+          - route.openshift.io
+          resources:
+          - routes
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - authentication.k8s.io
+          resources:
+          - tokenreviews
+          verbs:
+          - create
+        - apiGroups:
+          - authorization.k8s.io
+          resources:
+          - subjectaccessreviews
+          verbs:
+          - create
+        serviceAccountName: default
+      deployments:
+      - name: jenkins-operator-controller-manager
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              control-plane: controller-manager
+          strategy: {}
+          template:
+            metadata:
+              labels:
+                control-plane: controller-manager
+            spec:
+              containers:
+              - args:
+                - --secure-listen-address=0.0.0.0:8443
+                - --upstream=http://127.0.0.1:8080/
+                - --logtostderr=true
+                - --v=10
+                image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+                name: kube-rbac-proxy
+                ports:
+                - containerPort: 8443
+                  name: https
+                resources: {}
+              - args:
+                - --metrics-addr=127.0.0.1:8080
+                - --enable-leader-election
+                command:
+                - /manager
+                image: quay.io/akram/jenkins-operator:latest
+                name: manager
+                resources:
+                  limits:
+                    cpu: 100m
+                    memory: 30Mi
+                  requests:
+                    cpu: 100m
+                    memory: 20Mi
+              terminationGracePeriodSeconds: 10
+      permissions:
+      - rules:
+        - apiGroups:
+          - ""
+          resources:
+          - configmaps
+          verbs:
+          - get
+          - list
+          - watch
+          - create
+          - update
+          - patch
+          - delete
+        - apiGroups:
+          - ""
+          resources:
+          - configmaps/status
+          verbs:
+          - get
+          - update
+          - patch
+        - apiGroups:
+          - ""
+          resources:
+          - events
+          verbs:
+          - create
+          - patch
+        serviceAccountName: default
     strategy: deployment
   installModes:
   - supported: true

@@ -80,7 +80,8 @@ func main() {
 
 	// setup Jenkins controller
 	setupJenkinsRenconciler(manager, notificationsChannel)
-	setupJenkinsImageRenconciler(manager)
+	setupJenkinsImageRenconciler(manager, clientSet)
+
 	// start the Cmd
 	setupLog.Info("Starting the Cmd.")
 	runMananger(manager)
@@ -187,18 +188,19 @@ func newJenkinsReconciler(mgr manager.Manager, channel chan e.Event) *controller
 	}
 }
 
-func setupJenkinsImageRenconciler(mgr manager.Manager) {
-	if err := newJenkinsImageRenconciler(mgr).SetupWithManager(mgr); err != nil {
+func setupJenkinsImageRenconciler(mgr manager.Manager, set *kubernetes.Clientset) {
+	if err := newJenkinsImageRenconciler(mgr, set).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Jenkins")
 		os.Exit(1)
 	}
 }
 
-func newJenkinsImageRenconciler(mgr manager.Manager) *controllers.JenkinsImageReconciler {
+func newJenkinsImageRenconciler(mgr manager.Manager, set *kubernetes.Clientset) *controllers.JenkinsImageReconciler {
 	return &controllers.JenkinsImageReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("JenkinsImage"),
-		Scheme: mgr.GetScheme(),
+		Client:    mgr.GetClient(),
+		Log:       ctrl.Log.WithName("controllers").WithName("JenkinsImage"),
+		Scheme:    mgr.GetScheme(),
+		ClientSet: set,
 	}
 }
 
