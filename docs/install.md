@@ -13,7 +13,7 @@ To run Jenkins Operator, you will need:
 
 Install Jenkins Custom Resource Definition:
 
-    ```bash
+    ```
     kubectl apply -f https://raw.githubusercontent.com/jenkinsci/Kubernetes-operator/master/deploy/crds/jenkins_v1alpha2_jenkins_crd.yaml
     ```
 
@@ -23,13 +23,13 @@ There are two ways to deploy the Jenkins Operator:
 
 ### Applying the Yaml manifest
 
-    ```bash
+    ```
     kubectl apply -f https://raw.githubusercontent.com/jenkinsci/Kubernetes-operator/master/deploy/all-in-one-v1alpha2.yaml
     ```
 
 ### Using the helm chart
 
-    ```bash
+    ```
     helm repo add jenkins https://raw.githubusercontent.com/jenkinsci/Kubernetes-operator/master/chart
     helm install jenkins/jenkins-operator
     ```
