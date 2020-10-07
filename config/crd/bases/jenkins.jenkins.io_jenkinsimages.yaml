@@ -119,8 +119,11 @@ spec:
                     type: string
                 type: object
               type: array
+            phase:
+              type: string
           required:
           - builds
+          - phase
           type: object
       type: object
   version: v1alpha2

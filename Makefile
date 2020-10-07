@@ -1,14 +1,7 @@
+include scripts/help.mk
 include scripts/commons.mk
-include scripts/colors.mk
 include scripts/golang-tools.mk
 
-## This makefile is self documented: To set comment, add ## after the target
-help:  ## Display this help message
-	@echo "    ${BLACK}:: ${YELLOW}make${RESET} ${BLACK}::${RESET}"
-	@echo "${YELLOW}-------------------------------------------------------------------------------------------------------${RESET}"
-	@grep -E '^[a-zA-Z_0-9%-]+:.*?## .*$$' $(word 1,$(MAKEFILE_LIST)) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "${TARGET_COLOR}%-30s${RESET} %s\n", $$1, $$2}'
-
-all: manager
 build: manager
 
 test: kubebuilder generate manifests ## Run tests
@@ -17,7 +10,7 @@ test: kubebuilder generate manifests ## Run tests
 manager: generate fmt vet ## Build manager binary
 	go build -o build/_output/bin/jenkins-operator main.go
 
-run: generate fmt vet manifests ## Run against the configured Kubernetes cluster in ~/.kube/config
+run: generate fmt vet manifests ## Run against the configured Kubernetes cluster in ~/.kube/config. Prepend WATCH_NAMESPACE for single namespace mode.
 	go run ./main.go
 
 install: manifests kustomize ## Install CRDs into a cluster
@@ -74,6 +67,6 @@ bundle: manifests ## Generate bundle manifests and metadata, then validate gener
 	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
 	operator-sdk bundle validate ./bundle
 
-
-
+FORCE:
+	@echo ""
 ## Refer to golang-tools.mk include for controller-gen, golangci-install, goimports-install targets

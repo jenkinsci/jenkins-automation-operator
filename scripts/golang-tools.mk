@@ -82,9 +82,7 @@ else
 GOIMPORTS=$(shell which goimports)
 endif
 
-FORCE:
-	@echo ""
-# Set globan env vars, especially needed for go cache
+# Set global env vars, especially needed for go cache
 .EXPORT_ALL_VARIABLES:
 GOLANGCI_LINT_CACHE := $(shell pwd)/build/_output/golangci-lint-cache
 XDG_CACHE_HOME := $(shell pwd)/build/_output/xdgcache

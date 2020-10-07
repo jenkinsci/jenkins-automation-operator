@@ -3,30 +3,35 @@ run:
 linters-settings:
   errcheck:
     check-blank: false
-    ignore: fmt:.*,io/ioutil:^Read.*,Write
+    ignore: fmt:.*,io/ioutil:^Read.*,Write,zz_generated*
 
 linters:
-  enable-all: true
-  disable:
-    - funlen
-    - gocognit
-    - godox
-    - gomnd
-    - gochecknoglobals
-    - gochecknoinits
-    - lll
-    - prealloc
-    - wsl
+  disable-all: true
+  enable:
+    - bodyclose
+    - deadcode
+    - depguard
+    - dogsled
+    - errcheck
+    - exhaustive
+    - goconst
+    - gocritic
     - gocyclo
-    - scopelint
-    - dupl
-    - gosec
-    - maligned
-    - testpackage
-    - goerr113
-    - nakedret
-    - nestif
-    - godot
-    - interfacer
-    - nlreturn
-    - noctx
+    - gofmt
+    - goimports
+    - golint
+    - goprintffuncname
+    - gosimple
+    - govet
+    - ineffassign
+    - misspell
+    - nolintlint
+    - rowserrcheck
+    - structcheck
+    - stylecheck
+    - typecheck
+    - unconvert
+    - unparam
+    - unused
+    - varcheck
+    - whitespace

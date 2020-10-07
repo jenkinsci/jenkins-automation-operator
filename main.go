@@ -49,6 +49,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
+const (
+	watchNamespaceEnvVar = "WATCH_NAMESPACE"
+)
+
 var (
 	scheme   = runtime.NewScheme()
 	setupLog = ctrl.Log.WithName("setup")
@@ -162,6 +166,7 @@ func startManager(metricsAddr string, enableLeaderElection bool) (manager.Manage
 		Port:               9443,
 		LeaderElection:     enableLeaderElection,
 		LeaderElectionID:   "9cf053ac.jenkins.io",
+		Namespace:          getWatchNamespace(), // namespaced-scope when the value is not an empty string
 	}
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), options)
 	if err != nil {
@@ -170,6 +175,15 @@ func startManager(metricsAddr string, enableLeaderElection bool) (manager.Manage
 	}
 
 	return mgr, err
+}
+
+// getWatchNamespace returns the Namespace the operator should be watching for changes
+func getWatchNamespace() string {
+	// WatchNamespaceEnvVar is the constant for env variable WATCH_NAMESPACE
+	// which specifies the Namespace to watch.
+	// An empty value means the operator is running with cluster scope.
+	ns, _ := os.LookupEnv(watchNamespaceEnvVar)
+	return ns
 }
 
 func setupJenkinsRenconciler(mgr manager.Manager, channel chan e.Event) {
