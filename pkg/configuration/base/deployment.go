@@ -5,7 +5,6 @@ import (
 
 	"github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
-	"github.com/jenkinsci/kubernetes-operator/pkg/constants"
 	"github.com/jenkinsci/kubernetes-operator/pkg/notifications/event"
 	"github.com/jenkinsci/kubernetes-operator/pkg/notifications/reason"
 	"github.com/jenkinsci/kubernetes-operator/version"
@@ -22,16 +21,11 @@ func (r *JenkinsReconcilerBaseConfiguration) ensureJenkinsDeploymentIsReady() (c
 		r.logger.Info(fmt.Sprintf("Error while getting Deployment %s: %s", deploymentName, err))
 		return ctrl.Result{Requeue: true}, stackerr.WithStack(err)
 	}
-	status := &r.Jenkins.Status
 	if jenkinsDeployment.Status.AvailableReplicas == 0 {
 		r.logger.Info(fmt.Sprintf("Deployment %s still does not have available replicas", deploymentName))
 		return ctrl.Result{Requeue: true}, err
 	}
-	status.ProvisionStartTime = &jenkinsDeployment.CreationTimestamp
 	r.logger.Info(fmt.Sprintf("Deployment %s exist and has availableReplicas...updating phase and completion time", deploymentName))
-	now := metav1.Now()
-	status.Phase = constants.JenkinsStatusCompleted
-	status.BaseConfigurationCompletedTime = &now
 	r.logger.Info("Jenkins BaseConfiguration Completed after reinitialization")
 	return ctrl.Result{}, nil
 }

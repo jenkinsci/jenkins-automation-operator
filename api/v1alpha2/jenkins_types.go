@@ -1,6 +1,7 @@
 package v1alpha2
 
 import (
+	conditionsv1 "github.com/openshift/custom-resource-status/conditions/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -472,25 +473,15 @@ type JenkinsStatus struct {
 	// +optional
 	OperatorVersion string `json:"operatorVersion,omitempty"`
 
-	// Phase is a simple, high-level summary of where the Jenkins is in its lifecycle.
-	// There are five possible phase values:
-	// Pending: The Jenkins has been accepted by the Kubernetes system, but one or more of the required resources have not been created.
-	// Available: All of the resources for the Jenkins are ready.
-	// Failed: At least one resource has experienced a failure.
-	// Unknown: For some reason the state of the Jenkins phase could not be obtained.
-	Phase string `json:"phase"`
+	// Conditions describes the state of the jenkins resource.
+	// +patchMergeKey=type
+	// +patchStrategy=merge
+	// +optional
+	Conditions []conditionsv1.Condition `json:"conditions,omitempty"  patchStrategy:"merge" patchMergeKey:"type"`
 
 	// ProvisionStartTime is a time when Jenkins master pod has been created
 	// +optional
 	ProvisionStartTime *metav1.Time `json:"provisionStartTime,omitempty"`
-
-	// BaseConfigurationCompletedTime is a time when Jenkins base configuration phase has been completed
-	// +optional
-	BaseConfigurationCompletedTime *metav1.Time `json:"baseConfigurationCompletedTime,omitempty"`
-
-	// UserConfigurationCompletedTime is a time when Jenkins user configuration phase has been completed
-	// +optional
-	UserConfigurationCompletedTime *metav1.Time `json:"userConfigurationCompletedTime,omitempty"`
 
 	// RestoredBackup is the restored backup number after Jenkins master pod restart
 	// +optional
@@ -511,14 +502,6 @@ type JenkinsStatus struct {
 	// UserAndPasswordHash is a SHA256 hash made from user and password
 	// +optional
 	UserAndPasswordHash string `json:"userAndPasswordHash,omitempty"`
-
-	// CreatedSeedJobs contains list of seed job id already created in Jenkins
-	// +optional
-	CreatedSeedJobs []string `json:"createdSeedJobs,omitempty"`
-
-	// AppliedGroovyScripts is a list with all applied groovy scripts in Jenkins by the operator
-	// +optional
-	AppliedGroovyScripts []AppliedGroovyScript `json:"appliedGroovyScripts,omitempty"`
 }
 
 // +genclient
