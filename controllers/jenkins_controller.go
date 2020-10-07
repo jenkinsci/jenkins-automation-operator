@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"k8s.io/apimachinery/pkg/types"
 	"reflect"
 	"strings"
 	"time"
@@ -317,6 +318,21 @@ func (r *JenkinsReconciler) setDefaults(jenkins *v1alpha2.Jenkins) (requeue bool
 	if len(jenkinsContainer.Image) == 0 {
 		jenkinsMasterImage := constants.DefaultJenkinsMasterImage
 		changed = true
+
+		imageRef := jenkins.Spec.JenkinsImageRef
+		if len(imageRef) != 0 {
+			jenkinsImage := &v1alpha2.JenkinsImage{}
+			err = r.Client.Get(context.TODO(), types.NamespacedName{Namespace: jenkins.Namespace, Name: imageRef}, jenkinsImage)
+			if err != nil {
+				return false, errors.Errorf("JenkinsImage '%s' referenced by Jenkins instance '%s' not found", imageRef, jenkins.Name)
+			}
+			if jenkinsImage.Status.Phase == v1alpha2.ImageBuildSuccessful {
+				// Get the latest build otherwise
+				builds := jenkinsImage.Status.Builds
+				jenkinsMasterImage = builds[len(builds)-1].Image
+				changed = true
+			}
+		}
 		if resources.IsRouteAPIAvailable(&r.clientSet) {
 			jenkinsMasterImage = constants.DefaultOpenShiftJenkinsMasterImage
 		}

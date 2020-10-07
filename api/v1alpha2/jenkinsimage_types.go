@@ -47,8 +47,16 @@ type JenkinsImageBuild struct {
 	InstalledPlugins string `json:"installedPlugins,omitempty"`
 }
 
+const (
+	ImageBuildSuccessful JenkinsImagePhase = "ImageBuildSuccessful"
+	ImageBuildPending    JenkinsImagePhase = "ImageBuildPending"
+)
+
+type JenkinsImagePhase string
+
 // JenkinsImageStatus defines the observed state of JenkinsImage
 type JenkinsImageStatus struct {
+	Phase  JenkinsImagePhase   `json:"phase,default:ImageBuildPending"`
 	Builds []JenkinsImageBuild `json:"builds"`
 }
 

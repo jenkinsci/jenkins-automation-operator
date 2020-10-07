@@ -146,6 +146,7 @@ func (r *JenkinsImageReconciler) updateJenkinsImageStatusWhenPodIsCompleted(ctx 
 			if !contains(instance.Status.Builds, build) {
 				instance.Status.Builds = append(instance.Status.Builds, build)
 				r.Log.Info("Updating JenkinsImage with containerStatus from Pod")
+				instance.Status.Phase = jenkinsv1alpha2.ImageBuildSuccessful
 				err = r.Status().Update(ctx, instance)
 				if err != nil {
 					// FIXME We may need go routine error handling using a dedicated channel here
