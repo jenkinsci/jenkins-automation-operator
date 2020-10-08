@@ -63,6 +63,7 @@ spec:
               - name
               type: object
             plugins:
+              description: Plugins list
               items:
                 description: Defines Jenkins Plugin structure
                 properties:
@@ -102,7 +103,6 @@ spec:
               type: object
           required:
           - from
-          - plugins
           - to
           type: object
         status:

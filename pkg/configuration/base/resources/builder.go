@@ -6,7 +6,7 @@ import (
 	jenkinsv1alpha2 "github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -38,17 +38,22 @@ RUN install-plugins.sh %s `
 var log = logf.Log.WithName("controller_jenkinsimage")
 
 // NewBuilderPod returns a busybox pod with the same name/namespace as the cr.
-func NewBuilderPod(cr *jenkinsv1alpha2.JenkinsImage, clientSet *kubernetes.Clientset) *corev1.Pod {
+func NewBuilderPod(client client.Client, cr *jenkinsv1alpha2.JenkinsImage) *corev1.Pod {
 	logger := log.WithName("jenkinsimage_NewBuilderPod")
 	name := fmt.Sprintf(NameWithSuffixFormat, cr.Name, BuilderSuffix)
 	logger.Info(fmt.Sprintf("Creating a new builder pod with name %s", name))
 	builderPodArgs := []string{BuilderReproducibleArg, BuilderDockerfileArg, BuilderContextDirArg, BuilderDigestFileArg}
 	//--no-push, or the destination specified in the CR, or the openshift default registry if we are on OpenShift
-	destinationArg := GetDestinationRepository(cr, clientSet)
+	destinationArg := GetDestinationRepository(cr, client)
 	builderPodArgs = append(builderPodArgs, destinationArg)
-	volumes := getVolumes(cr, clientSet)
-	volumeMounts := getVolumesMounts(cr)
-	p := &corev1.Pod{
+	volumes := getVolumes(cr, client)
+	volumeMounts := getVolumesMounts(cr, client)
+	p := getBuilderPod(name, cr, builderPodArgs, volumeMounts, volumes)
+	return p
+}
+
+func getBuilderPod(name string, cr *jenkinsv1alpha2.JenkinsImage, builderPodArgs []string, volumeMounts []corev1.VolumeMount, volumes []corev1.Volume) *corev1.Pod {
+	return &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: cr.Namespace,
@@ -66,13 +71,11 @@ func NewBuilderPod(cr *jenkinsv1alpha2.JenkinsImage, clientSet *kubernetes.Clien
 			Volumes: volumes,
 		},
 	}
-
-	return p
 }
 
 // GetDestinationRepository returns the destination repository matching To.Repository/To.Name:To.Tag or default to
 // openshift-image-registry if running on openshift or --no-push otherwise
-func GetDestinationRepository(cr *jenkinsv1alpha2.JenkinsImage, clientSet *kubernetes.Clientset) string {
+func GetDestinationRepository(cr *jenkinsv1alpha2.JenkinsImage, clientSet client.Client) string {
 	logger := log.WithName("jenkinsimage_GetDestinationRepository")
 	spec := cr.Spec
 	destination := spec.To
@@ -127,19 +130,21 @@ func getDefaultedBaseImage(cr *jenkinsv1alpha2.JenkinsImage) string {
 	return JenkinsImageDefaultBaseImage
 }
 
-func getVolumes(cr *jenkinsv1alpha2.JenkinsImage, clientSet *kubernetes.Clientset) []corev1.Volume {
+func getVolumes(instance *jenkinsv1alpha2.JenkinsImage, client client.Client) []corev1.Volume {
 	logger := log.WithName("jenkinsimage_getVolumes")
-	logger.Info(fmt.Sprintf("Creating volumes for  cr:  %s ", cr.Name))
-	name := fmt.Sprintf(NameWithSuffixFormat, cr.Name, DockerfileStorageSuffix)
+	volumes := []corev1.Volume{}
+	logger.Info(fmt.Sprintf("Creating volumes for  instance:  %s ", instance.Name))
+	name := fmt.Sprintf(NameWithSuffixFormat, instance.Name, DockerfileStorageSuffix)
 	storage := corev1.Volume{
 		Name: name,
 		VolumeSource: corev1.VolumeSource{
 			EmptyDir: &corev1.EmptyDirVolumeSource{},
 		},
 	}
+	volumes = append(volumes, storage)
 	logger.Info(fmt.Sprintf("Storage volume of type emptyDir and name :  %s created", name))
 
-	configMapVolumeName := GetDockerfileConfigMapName(cr)
+	configMapVolumeName := GetDockerfileConfigMapName(instance)
 	config := corev1.Volume{
 		Name: configMapVolumeName,
 		VolumeSource: corev1.VolumeSource{
@@ -149,19 +154,25 @@ func getVolumes(cr *jenkinsv1alpha2.JenkinsImage, clientSet *kubernetes.Clientse
 		},
 	}
 	logger.Info(fmt.Sprintf("RestConfig volume of type ConfigMap and name :  %s created", name))
-	name = fmt.Sprintf(NameWithSuffixFormat, cr.Name, DockerSecretSuffix)
-	secretName, _ := getPushSecretName(cr, clientSet)
+	volumes = append(volumes, config)
+
+	name = fmt.Sprintf(NameWithSuffixFormat, instance.Name, DockerSecretSuffix)
+	secretName, err := getPushSecretName(instance, client)
 	logger.Info(fmt.Sprintf("Push to registry will be using secret:  %s ", secretName))
-	secret := corev1.Volume{
-		Name: name,
-		VolumeSource: corev1.VolumeSource{
-			Secret: &corev1.SecretVolumeSource{
-				SecretName: secretName,
+	if len(secretName) == 0 || err != nil {
+		logger.Info("No secret found: Secret Volume will not be added")
+	} else {
+		secret := corev1.Volume{
+			Name: name,
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: secretName,
+				},
 			},
-		},
+		}
+		logger.Info(fmt.Sprintf("Secret volume of type Secret using secret %s and name : %s created", instance.Spec.To.Secret, name))
+		volumes = append(volumes, secret)
 	}
-	logger.Info(fmt.Sprintf("Secret volume of type Secret using secret %s and name : %s created", cr.Spec.To.Secret, name))
-	volumes := []corev1.Volume{storage, config, secret}
 	return volumes
 }
 
@@ -170,21 +181,24 @@ func GetDockerfileConfigMapName(cr *jenkinsv1alpha2.JenkinsImage) string {
 	return name
 }
 
-func getPushSecretName(cr *jenkinsv1alpha2.JenkinsImage, clientSet *kubernetes.Clientset) (string, error) {
+func getPushSecretName(cr *jenkinsv1alpha2.JenkinsImage, clientSet client.Client) (string, error) {
 	if len(cr.Spec.To.Secret) != 0 {
 		return cr.Spec.To.Secret, nil
 	}
 	return GetDockerBuilderSecretName(cr.Namespace, clientSet)
 }
 
-func getVolumesMounts(cr *jenkinsv1alpha2.JenkinsImage) []corev1.VolumeMount {
+func getVolumesMounts(cr *jenkinsv1alpha2.JenkinsImage, client client.Client) []corev1.VolumeMount {
 	logger := log.WithName("jenkinsimage_getVolumesMounts")
+	volumeMounts := []corev1.VolumeMount{}
+
 	name := fmt.Sprintf(NameWithSuffixFormat, cr.Name, DockerfileStorageSuffix)
 	mountPath := "/workspace"
 	storage := corev1.VolumeMount{
 		Name:      name,
 		MountPath: mountPath,
 	}
+	volumeMounts = append(volumeMounts, storage)
 	logger.Info(fmt.Sprintf("Volument mount for %s and mountPath : %s created", name, mountPath))
 
 	name = fmt.Sprintf(NameWithSuffixFormat, cr.Name, DockerfileNameSuffix)
@@ -193,16 +207,19 @@ func getVolumesMounts(cr *jenkinsv1alpha2.JenkinsImage) []corev1.VolumeMount {
 		Name:      name,
 		MountPath: mountPath,
 	}
+	volumeMounts = append(volumeMounts, config)
 	logger.Info(fmt.Sprintf("Volument mount for %s and mountPath : %s created", name, mountPath))
 
-	name = fmt.Sprintf(NameWithSuffixFormat, cr.Name, DockerSecretSuffix)
-	mountPath = "/kaniko/.docker/"
-	secret := corev1.VolumeMount{
-		Name:      name,
-		MountPath: mountPath,
+	pushSecretName, err := getPushSecretName(cr, client)
+	if len(pushSecretName) != 0 && err == nil {
+		name = fmt.Sprintf(NameWithSuffixFormat, cr.Name, DockerSecretSuffix)
+		mountPath = "/kaniko/.docker/"
+		secret := corev1.VolumeMount{
+			Name:      name,
+			MountPath: mountPath,
+		}
+		volumeMounts = append(volumeMounts, secret)
+		logger.Info(fmt.Sprintf("Volument mount for %s and mountPath : %s created", name, mountPath))
 	}
-	logger.Info(fmt.Sprintf("Volument mount for %s and mountPath : %s created", name, mountPath))
-
-	volumeMounts := []corev1.VolumeMount{storage, config, secret}
 	return volumeMounts
 }

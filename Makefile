@@ -4,6 +4,9 @@ include scripts/golang-tools.mk
 
 build: manager
 
+e2e: ## Run end-to-end (e2e) tests only
+	ginkgo -v ./...
+
 test: kubebuilder generate manifests ## Run tests
 	go test ./... -coverprofile cover.out
 

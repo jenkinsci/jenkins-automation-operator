@@ -1,8 +1,12 @@
 package resources
 
 import (
+	"context"
+
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/client-go/kubernetes"
+	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -16,19 +20,23 @@ var (
 )
 
 // IsImageRegistryAvailable tells if the openshift image registry is installed and working
-func IsImageRegistryAvailable(clientSet *kubernetes.Clientset) bool {
+func IsImageRegistryAvailable(client client.Client) bool {
 	if imageRegistryAlreadyChecked {
 		return isImageRegistryAvailable
 	}
-	_, err := clientSet.CoreV1().Namespaces().Get(DefaultOpenShiftImageRegistryNamespace, EmptyGetOptions)
+	namespace := &corev1.Namespace{}
+	clusterScope := types.NamespacedName{}
+	err := client.Get(context.TODO(), clusterScope, namespace)
 	if errors.IsNotFound(err) {
 		isImageRegistryAvailable = false
 	} else {
-		svc, err := clientSet.CoreV1().Services(DefaultOpenShiftImageRegistryNamespace).Get(DefaultOpenShiftImageRegistryServiceName, EmptyGetOptions)
+		service := &corev1.Service{}
+		inNamespace := types.NamespacedName{Name: DefaultOpenShiftImageRegistryServiceName, Namespace: DefaultOpenShiftImageRegistryNamespace}
+		err := client.Get(context.TODO(), inNamespace, service)
 		if errors.IsNotFound(err) { // checking that the Service exists
 			isImageRegistryAvailable = false // The service does not exist means the registry is not available
 		} else { // if it exists, checking that it has a cluster IP
-			isImageRegistryAvailable = (len(svc.Spec.ClusterIP) != 0) && svc.Spec.ClusterIP != "None"
+			isImageRegistryAvailable = (len(service.Spec.ClusterIP) != 0) && service.Spec.ClusterIP != "None"
 		}
 	}
 	imageRegistryAlreadyChecked = true // We set this

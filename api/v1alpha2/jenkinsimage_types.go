@@ -6,9 +6,10 @@ import (
 
 // JenkinsImageSpec defines the desired state of JenkinsImage
 type JenkinsImageSpec struct {
-	From    Image           `json:"from"`
-	To      Image           `json:"to"`
-	Plugins []JenkinsPlugin `json:"plugins"` // Plugins list
+	From Image `json:"from"`
+	To   Image `json:"to"`
+	// Plugins list
+	Plugins []JenkinsPlugin `json:"plugins,omitempty"`
 	// DefaultUpdateCenter is a customer update center url from which all plugins will be downloaded.
 	// if not specified, https://updates.jenkins.io/ is used
 	DefaultUpdateCenter string `json:"defaultUpdateCenter,omitempty"`

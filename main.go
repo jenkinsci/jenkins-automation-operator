@@ -36,12 +36,12 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
-	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 
 	// sdkVersion "github.com/operator-framework/operator-sdk/version"
@@ -74,17 +74,17 @@ func main() {
 
 	setupLog.Info("Registering Components.")
 	manager := initManager(metricsAddr, enableLeaderElection)
+	client := manager.GetClient()
 	restClient := getRestClient(debug)
 	eventsRecorder := getEventsRecorder(restClient, debug)
-	clientSet := getKubernetesClientSet(restClient, debug)
-	checkAvailableFeatures(clientSet)
+	checkAvailableFeatures(client)
 
 	notificationsChannel := make(chan e.Event)
-	go notifications.Listen(notificationsChannel, eventsRecorder, manager.GetClient())
+	go notifications.Listen(notificationsChannel, eventsRecorder, client)
 
 	// setup Jenkins controller
 	setupJenkinsRenconciler(manager, notificationsChannel)
-	setupJenkinsImageRenconciler(manager, clientSet)
+	setupJenkinsImageRenconciler(manager)
 
 	// start the Cmd
 	setupLog.Info("Starting the Cmd.")
@@ -92,23 +92,14 @@ func main() {
 	// +kubebuilder:scaffold:builder
 }
 
-func checkAvailableFeatures(clientSet *kubernetes.Clientset) {
-	if resources.IsRouteAPIAvailable(clientSet) {
+func checkAvailableFeatures(client client.Client) {
+	/*if resources.IsRouteAPIAvailable(client) {
 		setupLog.Info("Route API found: Route creation will be performed")
-	}
-	if resources.IsImageRegistryAvailable(clientSet) {
+	}*/
+	if resources.IsImageRegistryAvailable(client) {
 		setupLog.Info("Internal Image Registry found: It is very likely that we are running on OpenShift")
 		setupLog.Info("If JenkinsImages are built without specified destination, they will be pushed into it.")
 	}
-}
-
-func getKubernetesClientSet(restClient *rest.Config, debug *bool) *kubernetes.Clientset {
-	clientSet, err := kubernetes.NewForConfig(restClient)
-	if err != nil {
-		fatal(errors.Wrap(err, "failed to create Kubernetes client set"), *debug)
-	}
-
-	return clientSet
 }
 
 func getEventsRecorder(cfg *rest.Config, debug *bool) event.Recorder {
@@ -202,19 +193,18 @@ func newJenkinsReconciler(mgr manager.Manager, channel chan e.Event) *controller
 	}
 }
 
-func setupJenkinsImageRenconciler(mgr manager.Manager, set *kubernetes.Clientset) {
-	if err := newJenkinsImageRenconciler(mgr, set).SetupWithManager(mgr); err != nil {
+func setupJenkinsImageRenconciler(mgr manager.Manager) {
+	if err := newJenkinsImageRenconciler(mgr).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Jenkins")
 		os.Exit(1)
 	}
 }
 
-func newJenkinsImageRenconciler(mgr manager.Manager, set *kubernetes.Clientset) *controllers.JenkinsImageReconciler {
+func newJenkinsImageRenconciler(mgr manager.Manager) *controllers.JenkinsImageReconciler {
 	return &controllers.JenkinsImageReconciler{
-		Client:    mgr.GetClient(),
-		Log:       ctrl.Log.WithName("controllers").WithName("JenkinsImage"),
-		Scheme:    mgr.GetScheme(),
-		ClientSet: set,
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("JenkinsImage"),
+		Scheme: mgr.GetScheme(),
 	}
 }
 
