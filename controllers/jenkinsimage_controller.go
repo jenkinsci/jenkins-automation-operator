@@ -29,7 +29,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/kubernetes"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -40,9 +39,8 @@ const YamlMultilineDataFieldCutSet = "|\n "
 // JenkinsImageReconciler reconciles a JenkinsImage object
 type JenkinsImageReconciler struct {
 	client.Client
-	ClientSet *kubernetes.Clientset
-	Log       logr.Logger
-	Scheme    *runtime.Scheme
+	Log    logr.Logger
+	Scheme *runtime.Scheme
 }
 
 func (r *JenkinsImageReconciler) SetupWithManager(mgr ctrl.Manager) error {
@@ -102,7 +100,7 @@ func (r *JenkinsImageReconciler) Reconcile(request ctrl.Request) (ctrl.Result, e
 	reqLogger.Info("Skip reconcile: ConfigMap already exists", "ConfigMap.Namespace", foundConfigMap.Namespace, "ConfigMap.Name", foundConfigMap.Name)
 
 	// Define a new Pod object
-	pod := resources.NewBuilderPod(instance, r.ClientSet)
+	pod := resources.NewBuilderPod(r, instance)
 	// Set JenkinsImage instance as the owner and controller
 	if err := controllerutil.SetControllerReference(instance, pod, r.Scheme); err != nil {
 		return ctrl.Result{Requeue: true}, err

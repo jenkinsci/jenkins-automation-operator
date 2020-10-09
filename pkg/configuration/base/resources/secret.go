@@ -36,8 +36,9 @@ const (
 
 // GetDockerBuilderSecretName returns the *first* Docker secret used for pushing images into the openshift registry
 // in the current namespace or empty string
-func GetDockerBuilderSecretName(namespace string, clientSet *kubernetes.Clientset) (string, error) {
-	secrets, err := clientSet.CoreV1().Secrets(namespace).List(EmptyListOptions)
+func GetDockerBuilderSecretName(namespace string, clientSet client.Client) (string, error) {
+	secrets := &corev1.SecretList{}
+	err := clientSet.List(context.TODO(), secrets, client.InNamespace(namespace))
 	if err != nil {
 		logger.V(logx.VDebug).Info(fmt.Sprintf("Error while getting secret for JenkinsImage: %s ", namespace))
 		return "", err

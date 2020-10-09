@@ -17,6 +17,8 @@ limitations under the License.
 package controllers
 
 import (
+	"fmt"
+
 	"path/filepath"
 	"testing"
 
@@ -25,11 +27,13 @@ import (
 	. "github.com/onsi/gomega"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
 // These tests use Ginkgo (BDD-style Go testing framework). Refer to
@@ -43,14 +47,11 @@ var (
 
 func TestAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)
-
-	RunSpecsWithDefaultAndCustomReporters(t,
-		"Controller Suite",
-		[]Reporter{printer.NewlineReporter{}})
+	RunSpecsWithDefaultAndCustomReporters(t, "Controller Suite", []Reporter{printer.NewlineReporter{}})
 }
 
 var _ = BeforeSuite(func(done Done) {
-	logf.SetLogger(zap.LoggerTo(GinkgoWriter, true))
+	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
 
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{
@@ -65,20 +66,69 @@ var _ = BeforeSuite(func(done Done) {
 	err = jenkinsv1alpha2.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
-	err = jenkinsv1alpha2.AddToScheme(scheme.Scheme)
-	Expect(err).NotTo(HaveOccurred())
-
 	// +kubebuilder:scaffold:scheme
 
 	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
 	Expect(err).ToNot(HaveOccurred())
 	Expect(k8sClient).ToNot(BeNil())
 
+	manager, err := getManager()
+	Expect(err).ToNot(HaveOccurred())
+
+	registerJenkinsImageController(manager)
+	// registerJenkinsController(manager)
+
+	go func() {
+		err = manager.Start(ctrl.SetupSignalHandler())
+		if err != nil {
+			Logf("Error while starting manager: %+v", err)
+		}
+		Expect(err).ToNot(HaveOccurred())
+	}()
+
+	k8sClient := manager.GetClient()
+	Expect(k8sClient).ToNot(BeNil())
+
 	close(done)
 }, 60)
+
+func registerJenkinsImageController(manager manager.Manager) {
+	controller := &JenkinsImageReconciler{
+		Client: manager.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("JenkinsImageController"),
+		Scheme: manager.GetScheme(),
+	}
+	err := controller.SetupWithManager(manager)
+	Expect(err).ToNot(HaveOccurred())
+}
+
+/*
+func registerJenkinsController(manager manager.Manager) {
+	//utilruntime.Must(routev1.AddToScheme( manager.GetScheme()))
+	controller := &JenkinsReconciler{
+		Client: manager.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("JenkinsReconciler"),
+		Scheme: manager.GetScheme(),
+	}
+	err := controller.SetupWithManager(manager)
+	Expect(err).ToNot(HaveOccurred())
+}
+*/
+func getManager() (manager.Manager, error) {
+	k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
+		Scheme: scheme.Scheme,
+	})
+	return k8sManager, err
+}
 
 var _ = AfterSuite(func() {
 	By("tearing down the test environment")
 	err := testEnv.Stop()
 	Expect(err).ToNot(HaveOccurred())
 })
+
+// Logf is only inteded to be used for debugging e2e and especially wait functions.
+// instead, use the facilities provided by Context() By() etc...
+func Logf(format string, a ...interface{}) {
+	fmt.Fprintf(GinkgoWriter, "INFO: "+format+"\n", a...)
+}

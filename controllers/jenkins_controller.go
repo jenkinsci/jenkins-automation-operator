@@ -34,7 +34,6 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/notifications/event"
 	"github.com/jenkinsci/kubernetes-operator/pkg/notifications/reason"
 	"github.com/jenkinsci/kubernetes-operator/pkg/plugins"
-	routev1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -83,9 +82,9 @@ func (r *JenkinsReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&v1alpha2.Jenkins{}).
 		Owns(&corev1.Service{}).
 		Owns(&corev1.ConfigMap{}).
-		Owns(&appsv1.Deployment{}).
-		Owns(&routev1.Route{}).
-		Complete(r)
+		Owns(&appsv1.Deployment{}).Complete(r)
+	//	Owns(&routev1.Route{}).
+	//	Complete(r)
 }
 
 // +kubebuilder:rbac:groups=jenkins.jenkins.io,resources=jenkins,verbs=get;list;watch;create;update;patch;delete
@@ -318,7 +317,6 @@ func (r *JenkinsReconciler) setDefaults(jenkins *v1alpha2.Jenkins) (requeue bool
 	if len(jenkinsContainer.Image) == 0 {
 		jenkinsMasterImage := constants.DefaultJenkinsMasterImage
 		changed = true
-
 		imageRef := jenkins.Spec.JenkinsImageRef
 		if len(imageRef) != 0 {
 			jenkinsImage := &v1alpha2.JenkinsImage{}
@@ -333,7 +331,7 @@ func (r *JenkinsReconciler) setDefaults(jenkins *v1alpha2.Jenkins) (requeue bool
 				changed = true
 			}
 		}
-		if resources.IsRouteAPIAvailable(&r.clientSet) {
+		if resources.IsImageRegistryAvailable(r.Client) {
 			jenkinsMasterImage = constants.DefaultOpenShiftJenkinsMasterImage
 		}
 		logger.Info("Setting default Jenkins master image: " + jenkinsMasterImage)
@@ -356,7 +354,7 @@ func (r *JenkinsReconciler) setDefaults(jenkins *v1alpha2.Jenkins) (requeue bool
 		changed = true
 		jenkinsContainer.LivenessProbe = resources.NewProbe(containerProbeURI, containerProbePortName, corev1.URISchemeHTTP, 80, 5, 12)
 	}
-	if len(jenkinsContainer.Command) == 0 && !resources.IsRouteAPIAvailable(&r.clientSet) {
+	if len(jenkinsContainer.Command) == 0 && !resources.IsImageRegistryAvailable(r.Client) {
 		logger.Info("Setting default Jenkins container command")
 		jenkinsContainer.Command = resources.GetJenkinsMasterContainerBaseCommand()
 		changed = true
