@@ -24,7 +24,7 @@ spec:
         displayName: JenkinsImage reference
         path: jenkinsImageRef
         x-descriptors:
-        - urn:alm:descriptor:io.jenkins.jenkins:JenkinsImage
+        - urn:alm:descriptor:io.jenkins:JenkinsImage
       version: v1alpha2
     - description: JenkinsImage is the Schema for the jenkinsimages API
       displayName: Jenkins Image

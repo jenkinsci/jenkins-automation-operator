@@ -20,7 +20,7 @@ const (
 	JenkinsImageName      = "test-jenkinsimage"
 	JenkinsImageNamespace = "default"
 	timeout               = time.Second * 30
-	interval              = time.Millisecond * 1000
+	interval              = time.Millisecond * 250
 	// duration = time.Second * 10
 )
 
@@ -85,25 +85,33 @@ func ByCheckingThatThePodIsRecreatedAfterDeletion(ctx context.Context, jenkinsIm
 	if err != nil {
 		Fail(fmt.Sprintf("Error while trying to get Pod %s", key))
 	}
-	creationTimeStampBefore := before.CreationTimestamp
 
-	Logf("Creation timestamp for Pod before deletion: %s", creationTimeStampBefore)
+	Logf("Pod uuid for Pod before deletion: %s", before.UID)
 	err = k8sClient.Delete(ctx, before)
 	if err != nil {
 		Fail(fmt.Sprintf("Error while trying to delete Pod %s", key))
 	}
+	Logf("Single pod before : %+v", before.UID)
+
 	after := &corev1.Pod{}
+	podList := &corev1.PodList{}
 	actual := func() (*corev1.Pod, error) {
-		err := k8sClient.Get(ctx, key, after)
+		err := k8sClient.List(ctx, podList)
 		if err != nil {
 			return nil, err
 		}
+		pods := podList.Items
+		if len(pods) != 1 {
+			Logf("Multiple pods found....waiting")
+			return nil, fmt.Errorf("multiple pods")
+		}
+		after = &pods[0]
+		Logf("Single pod found...returning it: %+v", after.UID)
 		return after, nil
 	}
 	Eventually(actual, timeout, interval).ShouldNot(BeNil())
-	creationTimeStampAfter := after.CreationTimestamp
-	if !creationTimeStampBefore.Before(&creationTimeStampAfter) {
-		Fail(fmt.Sprintf("Creation timestamp after deletion is not after before: %s / %s", creationTimeStampBefore, creationTimeStampAfter))
+	if before.UID == after.UID {
+		Fail(fmt.Sprintf("Pod after deletion and re-creation have same UID %s , %s", after.UID, before.UID))
 	}
 }
 

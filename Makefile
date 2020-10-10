@@ -10,7 +10,7 @@ e2e: ## Run end-to-end (e2e) tests only
 test: kubebuilder generate manifests ## Run tests
 	go test ./... -coverprofile cover.out
 
-manager: generate fmt vet ## Build manager binary
+manager: generate goimports fmt vet ## Build manager binary
 	go build -o build/_output/bin/jenkins-operator main.go
 
 run: generate fmt vet manifests ## Run against the configured Kubernetes cluster in ~/.kube/config. Prepend WATCH_NAMESPACE for single namespace mode.

@@ -52,6 +52,7 @@ spec:
               - name
               type: object
             plugins:
+              description: Plugins list
               items:
                 description: Defines Jenkins Plugin structure
                 properties:
@@ -86,31 +87,27 @@ spec:
               type: object
           required:
           - from
-          - plugins
           - to
           type: object
         status:
           description: JenkinsImageStatus defines the observed state of JenkinsImage
           properties:
-            image:
-              type: string
-            installedPlugins:
+            builds:
               items:
-                description: Defines Jenkins Plugin structure
                 properties:
-                  name:
+                  image:
                     type: string
-                  updateCenter:
-                    description: UpdateCenter is a specific update center url from which this plugin will be downloaded. If not specified, DefaultUpdateCenter is used.
+                  installedPlugins:
                     type: string
-                  version:
+                  md5sum:
                     type: string
-                required:
-                - name
                 type: object
               type: array
-            md5sum:
+            phase:
               type: string
+          required:
+          - builds
+          - phase
           type: object
       type: object
   version: v1alpha2

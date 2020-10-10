@@ -51,7 +51,7 @@ func (c *Configuration) GetJenkinsMasterPod() (*corev1.Pod, error) {
 
 // GetJenkinsDeployment gets the jenkins master deployment.
 func (c *Configuration) GetJenkinsDeployment() (*appsv1.Deployment, error) {
-	deploymentName := resources.GetJenkinsDeploymentName(c.Jenkins.Name)
+	deploymentName := resources.GetJenkinsDeploymentName(c.Jenkins)
 	logger.V(log.VDebug).Info(fmt.Sprintf("Getting JenkinsDeploymentName for : %+v, querying deployment named: %s", c.Jenkins.Name, deploymentName))
 	jenkinsDeployment := &appsv1.Deployment{}
 	namespacedName := types.NamespacedName{Name: deploymentName, Namespace: c.Jenkins.Namespace}

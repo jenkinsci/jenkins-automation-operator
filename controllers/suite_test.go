@@ -18,9 +18,15 @@ package controllers
 
 import (
 	"fmt"
-
+	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/jenkinsci/kubernetes-operator/pkg/constants"
+	"github.com/jenkinsci/kubernetes-operator/pkg/event"
+	"github.com/jenkinsci/kubernetes-operator/pkg/notifications"
+	e "github.com/jenkinsci/kubernetes-operator/pkg/notifications/event"
+	"github.com/pkg/errors"
 
 	jenkinsv1alpha2 "github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
 	. "github.com/onsi/ginkgo"
@@ -40,9 +46,10 @@ import (
 // http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
 
 var (
-	cfg       *rest.Config
-	k8sClient client.Client
-	testEnv   *envtest.Environment
+	restConfig *rest.Config
+	k8sClient  client.Client
+	testEnv    *envtest.Environment
+	logger     = ctrl.Log.WithName("suite_test.go")
 )
 
 func TestAPIs(t *testing.T) {
@@ -59,16 +66,16 @@ var _ = BeforeSuite(func(done Done) {
 	}
 
 	var err error
-	cfg, err = testEnv.Start()
+	restConfig, err = testEnv.Start()
 	Expect(err).ToNot(HaveOccurred())
-	Expect(cfg).ToNot(BeNil())
+	Expect(restConfig).ToNot(BeNil())
 
 	err = jenkinsv1alpha2.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
 	// +kubebuilder:scaffold:scheme
 
-	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
+	k8sClient, err = client.New(restConfig, client.Options{Scheme: scheme.Scheme})
 	Expect(err).ToNot(HaveOccurred())
 	Expect(k8sClient).ToNot(BeNil())
 
@@ -76,7 +83,7 @@ var _ = BeforeSuite(func(done Done) {
 	Expect(err).ToNot(HaveOccurred())
 
 	registerJenkinsImageController(manager)
-	// registerJenkinsController(manager)
+	registerJenkinsController(manager, restConfig)
 
 	go func() {
 		err = manager.Start(ctrl.SetupSignalHandler())
@@ -102,23 +109,20 @@ func registerJenkinsImageController(manager manager.Manager) {
 	Expect(err).ToNot(HaveOccurred())
 }
 
-/*
-func registerJenkinsController(manager manager.Manager) {
-	//utilruntime.Must(routev1.AddToScheme( manager.GetScheme()))
+func registerJenkinsController(manager manager.Manager, c *rest.Config) {
+	notificationsChannel := make(chan e.Event)
+	eventsRecorder := getEventsRecorder(c)
+	client := manager.GetClient()
+	go notifications.Listen(notificationsChannel, eventsRecorder, client)
+	// utilruntime.Must(routev1.AddToScheme( manager.GetScheme()))
 	controller := &JenkinsReconciler{
-		Client: manager.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("JenkinsReconciler"),
-		Scheme: manager.GetScheme(),
+		Client:             client,
+		Log:                ctrl.Log.WithName("controllers").WithName("JenkinsReconciler"),
+		Scheme:             manager.GetScheme(),
+		NotificationEvents: notificationsChannel,
 	}
 	err := controller.SetupWithManager(manager)
 	Expect(err).ToNot(HaveOccurred())
-}
-*/
-func getManager() (manager.Manager, error) {
-	k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
-		Scheme: scheme.Scheme,
-	})
-	return k8sManager, err
 }
 
 var _ = AfterSuite(func() {
@@ -131,4 +135,25 @@ var _ = AfterSuite(func() {
 // instead, use the facilities provided by Context() By() etc...
 func Logf(format string, a ...interface{}) {
 	fmt.Fprintf(GinkgoWriter, "INFO: "+format+"\n", a...)
+}
+
+func getManager() (manager.Manager, error) {
+	k8sManager, err := ctrl.NewManager(restConfig, ctrl.Options{
+		Scheme: scheme.Scheme,
+	})
+	return k8sManager, err
+}
+
+func getEventsRecorder(cfg *rest.Config) event.Recorder {
+	events, err := event.New(cfg, constants.OperatorName)
+	if err != nil {
+		fatal(errors.Wrap(err, "failed to create manager"))
+	}
+
+	return events
+}
+
+func fatal(err error) {
+	logger.Error(nil, fmt.Sprintf("%+v", err))
+	os.Exit(-1)
 }

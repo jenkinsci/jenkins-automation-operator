@@ -19,6 +19,7 @@ metadata:
             "jenkinsAPISettings": {
               "authorizationStrategy": "serviceAccount"
             },
+            "jenkinsImageRef": "jenkinsimage-sample",
             "master": {
               "containers": [
                 {
@@ -84,6 +85,7 @@ metadata:
             "to": {
               "name": "jenkins-for-jim",
               "registry": "quay.io/akram",
+              "secret": "my-secret",
               "tag": "latest"
             }
           }
@@ -110,7 +112,7 @@ spec:
         displayName: JenkinsImage reference
         path: jenkinsImageRef
         x-descriptors:
-        - urn:alm:descriptor:io.jenkins.jenkins:JenkinsImage
+        - urn:alm:descriptor:io.jenkins:JenkinsImage
       version: v1alpha2
     - description: JenkinsImage is the Schema for the jenkinsimages API
       displayName: Jenkins Image
