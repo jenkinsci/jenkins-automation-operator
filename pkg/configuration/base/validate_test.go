@@ -711,7 +711,7 @@ func TestValidateSecretVolume(t *testing.T) {
 	})
 }
 
-func TestValidateCustomization(t *testing.T) {
+func TestValidateConfiguration(t *testing.T) {
 	secretName := "secretName"
 	configMapName := "configmap-name"
 	jenkins := &v1alpha2.Jenkins{
@@ -809,11 +809,9 @@ func TestValidateCustomization(t *testing.T) {
 		err := fakeClient.Create(context.TODO(), configMap)
 		require.NoError(t, err)
 
-		got, err := baseReconcileLoop.validateConfiguration(customization, "spec.groovyScripts")
+		_, err = baseReconcileLoop.validateConfiguration(customization, "spec.groovyScripts")
 
-		assert.NoError(t, err)
-
-		assert.Equal(t, got, []string{"Secret 'secretName' configured in spec.groovyScripts.secret.name not found"})
+		assert.Error(t, err)
 	})
 	t.Run("secret exists and configmap not exists", func(t *testing.T) {
 		customization := v1alpha2.Configuration{
@@ -834,11 +832,9 @@ func TestValidateCustomization(t *testing.T) {
 		err := fakeClient.Create(context.TODO(), secret)
 		require.NoError(t, err)
 
-		got, err := baseReconcileLoop.validateConfiguration(customization, "spec.groovyScripts")
+		_, err = baseReconcileLoop.validateConfiguration(customization, "spec.groovyScripts")
 
-		assert.NoError(t, err)
-
-		assert.Equal(t, got, []string{"ConfigMap 'configmap-name' configured in spec.groovyScripts.configurations[0] not found"})
+		assert.Error(t, err)
 	})
 }
 

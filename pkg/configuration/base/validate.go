@@ -49,6 +49,12 @@ func (r *JenkinsReconcilerBaseConfiguration) Validate(jenkins *v1alpha2.Jenkins)
 		messages = append(messages, msg...)
 	}
 
+	if msg, err := r.validateConfiguration(jenkins.Spec.ConfigurationAsCode, jenkins.Name); err != nil {
+		return nil, err
+	} else if len(msg) > 0 {
+		messages = append(messages, msg...)
+	}
+
 	if jenkins.Spec.JenkinsAPISettings.AuthorizationStrategy != v1alpha2.CreateUserAuthorizationStrategy && jenkins.Spec.JenkinsAPISettings.AuthorizationStrategy != v1alpha2.ServiceAccountAuthorizationStrategy {
 		messages = append(messages, fmt.Sprintf("unrecognized '%s' spec.jenkinsAPISettings.authorizationStrategy", jenkins.Spec.JenkinsAPISettings.AuthorizationStrategy))
 	}
@@ -360,12 +366,8 @@ func (r *JenkinsReconcilerBaseConfiguration) verifyBasePlugins(requiredBasePlugi
 	return messages
 }
 
-//nolint:unparam
 func (r *JenkinsReconcilerBaseConfiguration) validateConfiguration(configuration v1alpha2.Configuration, name string) ([]string, error) {
 	var messages []string
-	if len(configuration.Secret.Name) == 0 && len(configuration.Configurations) == 0 {
-		return nil, nil
-	}
 	if len(configuration.Secret.Name) > 0 && len(configuration.Configurations) == 0 {
 		messages = append(messages, fmt.Sprintf("%s.secret.name is set but %s.configurations is empty", name, name))
 	}
@@ -373,28 +375,32 @@ func (r *JenkinsReconcilerBaseConfiguration) validateConfiguration(configuration
 	if len(configuration.Secret.Name) > 0 {
 		secret := &corev1.Secret{}
 		err := r.Client.Get(context.TODO(), types.NamespacedName{Name: configuration.Secret.Name, Namespace: r.Configuration.Jenkins.ObjectMeta.Namespace}, secret)
-		if err != nil && apierrors.IsNotFound(err) {
-			messages = append(messages, fmt.Sprintf("Secret '%s' configured in %s.secret.name not found", configuration.Secret.Name, name))
-		} else if err != nil && !apierrors.IsNotFound(err) {
-			return nil, stackerr.WithStack(err)
+		if err != nil {
+			messages = append(messages, fmt.Sprintf("Secret '%s' configured in %s.secret.name but not found", configuration.Secret.Name, name))
+			return messages, stackerr.WithStack(err)
 		}
 	}
 
 	for index, configMapRef := range configuration.Configurations {
 		if len(configMapRef.Name) == 0 {
 			messages = append(messages, fmt.Sprintf("%s.configurations[%d] name is empty", name, index))
-
 			continue
 		}
 
 		configMap := &corev1.ConfigMap{}
 		err := r.Client.Get(context.TODO(), types.NamespacedName{Name: configMapRef.Name, Namespace: r.Configuration.Jenkins.ObjectMeta.Namespace}, configMap)
-		if err != nil && apierrors.IsNotFound(err) {
-			messages = append(messages, fmt.Sprintf("ConfigMap '%s' configured in %s.configurations[%d] not found", configMapRef.Name, name, index))
-		} else if err != nil && !apierrors.IsNotFound(err) {
-			return nil, stackerr.WithStack(err)
+		if err != nil {
+			messages = append(messages, fmt.Sprintf("ConfigMap '%s' configured in %s.configurations[%d] but not found", configMapRef.Name, name, index))
+			return messages, stackerr.WithStack(err)
 		}
 	}
-
+	if configuration.DefaultConfig {
+		configMap := &corev1.ConfigMap{}
+		err := r.Client.Get(context.TODO(), types.NamespacedName{Name: resources.JenkinsDefaultConfigMapName, Namespace: r.Configuration.Jenkins.ObjectMeta.Namespace}, configMap)
+		if err != nil {
+			messages = append(messages, fmt.Sprintf("Default config is enabled but Default ConfigMap '%s' is not found", resources.JenkinsDefaultConfigMapName))
+			return messages, stackerr.WithStack(err)
+		}
+	}
 	return messages, nil
 }
