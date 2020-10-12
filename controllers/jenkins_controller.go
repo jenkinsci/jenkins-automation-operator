@@ -35,7 +35,7 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/notifications/reason"
 	"github.com/jenkinsci/kubernetes-operator/pkg/plugins"
 
-	//routev1 "github.com/openshift/api/route/v1"
+	// routev1 "github.com/openshift/api/route/v1"
 	conditionsv1 "github.com/openshift/custom-resource-status/conditions/v1"
 	"github.com/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
@@ -96,11 +96,11 @@ func (r *JenkinsReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&appsv1.Deployment{}).
 		WithEventFilter(predicate.GenerationChangedPredicate{}).
 		Complete(r)
-	//Owns(&routev1.Route{}).Complete(r)
+	// Owns(&routev1.Route{}).Complete(r)
 }
 
-// +kubebuilder:rbac:groups=jenkins.jenkins.io,resources=jenkins,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=jenkins.jenkins.io,resources=jenkins/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=jenkins.io,resources=jenkins,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=jenkins.io,resources=jenkins/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=route.openshift.io,resources=routes,verbs=get;list;watch;create;update;patch;delete
@@ -136,7 +136,7 @@ func (r *JenkinsReconciler) Reconcile(request ctrl.Request) (ctrl.Result, error)
 		}
 	}
 
-	result, err := r.reconcile(ctx, request, jenkins)
+	result, err := r.reconcile(request, jenkins)
 	if err != nil {
 		conditionsv1.SetStatusCondition(&jenkins.Status.Conditions, conditionsv1.Condition{
 			Type:    conditionsv1.ConditionDegraded,
@@ -180,7 +180,7 @@ func (r *JenkinsReconciler) Reconcile(request ctrl.Request) (ctrl.Result, error)
 
 		if log.Debug {
 			logger.V(log.VWarn).Info(fmt.Sprintf("Reconcile loop failed: %+v", err))
-		} else if err.Error() != fmt.Sprintf("Operation cannot be fulfilled on jenkins.jenkins.io \"%s\": the object has been modified; please apply your changes to the latest version and try again", request.Name) {
+		} else if err.Error() != fmt.Sprintf("Operation cannot be fulfilled on jenkins.io \"%s\": the object has been modified; please apply your changes to the latest version and try again", request.Name) {
 			logger.V(log.VWarn).Info(fmt.Sprintf("Reconcile loop failed: %s", err))
 		}
 
@@ -192,6 +192,20 @@ func (r *JenkinsReconciler) Reconcile(request ctrl.Request) (ctrl.Result, error)
 		return ctrl.Result{Requeue: false}, nil
 	}
 
+	r.setStatusConditions(jenkins)
+
+	err = r.Status().Update(ctx, jenkins)
+	if err != nil {
+		logger.Error(err, "Failed to update Jenkins status")
+		return ctrl.Result{}, err
+	}
+
+	logger.Info("Reconcile loop success !!!")
+
+	return ctrl.Result{}, nil
+}
+
+func (r *JenkinsReconciler) setStatusConditions(jenkins *v1alpha2.Jenkins) {
 	conditionsv1.SetStatusCondition(&jenkins.Status.Conditions, conditionsv1.Condition{
 		Type:    ConditionReconcileComplete,
 		Status:  corev1.ConditionTrue,
@@ -216,19 +230,9 @@ func (r *JenkinsReconciler) Reconcile(request ctrl.Request) (ctrl.Result, error)
 		Reason:  reconcileCompleted,
 		Message: reconcileCompletedMessage,
 	})
-
-	err = r.Status().Update(ctx, jenkins)
-	if err != nil {
-		logger.Error(err, "Failed to update Jenkins status")
-		return ctrl.Result{}, err
-	}
-
-	logger.Info("Reconcile loop success !!!")
-
-	return ctrl.Result{}, nil
 }
 
-func (r *JenkinsReconciler) reconcile(ctx context.Context, request ctrl.Request, jenkins *v1alpha2.Jenkins) (ctrl.Result, error) {
+func (r *JenkinsReconciler) reconcile(request ctrl.Request, jenkins *v1alpha2.Jenkins) (ctrl.Result, error) {
 	logger := r.Log.WithValues("cr", request.Name)
 	var err error
 	var requeue bool
@@ -429,11 +433,6 @@ func (r *JenkinsReconciler) setDefaults(jenkins *v1alpha2.Jenkins) (requeue bool
 				changed = true
 			}
 		}
-	}
-	if len(jenkins.Spec.Backup.ContainerName) > 0 && jenkins.Spec.Backup.Interval == 0 {
-		logger.Info("Setting default backup interval")
-		changed = true
-		jenkins.Spec.Backup.Interval = 30
 	}
 
 	if len(jenkins.Spec.Master.Containers) == 0 || len(jenkins.Spec.Master.Containers) == 1 {

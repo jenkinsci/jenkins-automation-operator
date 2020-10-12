@@ -3,7 +3,7 @@
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
-  name: jenkinsimages.jenkins.io
+  name: backupworkers.jenkins.io
 spec:
   conversion:
     strategy: Webhook

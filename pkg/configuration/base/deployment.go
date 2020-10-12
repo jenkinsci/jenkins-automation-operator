@@ -80,8 +80,6 @@ func (r *JenkinsReconcilerBaseConfiguration) ensureJenkinsDeploymentIsPresent(me
 	status := r.Jenkins.Status
 	status.OperatorVersion = version.Version
 	status.ProvisionStartTime = &creationTimestamp
-	status.LastBackup = jenkins.Status.LastBackup
-	status.PendingBackup = jenkins.Status.LastBackup
 	status.UserAndPasswordHash = userAndPasswordHash
 	r.logger.Info(fmt.Sprintf("Deployment %s exist or has been created without any error", jenkinsDeployment.Name))
 	return ctrl.Result{}, nil

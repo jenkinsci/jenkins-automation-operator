@@ -6,9 +6,9 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.3.0
   creationTimestamp: null
-  name: jenkins.jenkins.jenkins.io
+  name: jenkins.jenkins.io
 spec:
-  group: jenkins.jenkins.io
+  group: jenkins.io
   names:
     kind: Jenkins
     listKind: JenkinsList
@@ -35,49 +35,6 @@ spec:
         spec:
           description: Spec defines the desired state of the Jenkins
           properties:
-            backup:
-              description: 'Backup defines configuration of Jenkins backup More info:
-                https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-backup-and-restore'
-              properties:
-                action:
-                  description: Action defines action which performs backup in backup
-                    container sidecar
-                  properties:
-                    exec:
-                      description: Exec specifies the action to take.
-                      properties:
-                        command:
-                          description: Command is the command line to execute inside
-                            the container, the working directory for the command  is
-                            root ('/') in the container's filesystem. The command
-                            is simply exec'd, it is not run inside a shell, so traditional
-                            shell instructions ('|', etc) won't work. To use a shell,
-                            you need to explicitly call out to that shell. Exit status
-                            of 0 is treated as live/healthy and non-zero is unhealthy.
-                          items:
-                            type: string
-                          type: array
-                      type: object
-                  type: object
-                containerName:
-                  description: ContainerName is the container name responsible for
-                    backup operation
-                  type: string
-                interval:
-                  description: Interval tells how often make backup in seconds Defaults
-                    to 30.
-                  format: int64
-                  type: integer
-                makeBackupBeforePodDeletion:
-                  description: MakeBackupBeforePodDeletion tells operator to make
-                    backup before Jenkins master pod deletion
-                  type: boolean
-              required:
-              - action
-              - containerName
-              - interval
-              - makeBackupBeforePodDeletion
-              type: object
             configurationAsCode:
               description: ConfigurationAsCode defines configuration of Jenkins configuration
                 via Configuration as Code Jenkins plugin
@@ -2693,44 +2650,6 @@ spec:
                 - verbose
                 type: object
               type: array
-            restore:
-              description: 'Backup defines configuration of Jenkins backup restore
-                More info: https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-backup-and-restore'
-              properties:
-                action:
-                  description: Action defines action which performs restore backup
-                    in restore container sidecar
-                  properties:
-                    exec:
-                      description: Exec specifies the action to take.
-                      properties:
-                        command:
-                          description: Command is the command line to execute inside
-                            the container, the working directory for the command  is
-                            root ('/') in the container's filesystem. The command
-                            is simply exec'd, it is not run inside a shell, so traditional
-                            shell instructions ('|', etc) won't work. To use a shell,
-                            you need to explicitly call out to that shell. Exit status
-                            of 0 is treated as live/healthy and non-zero is unhealthy.
-                          items:
-                            type: string
-                          type: array
-                      type: object
-                  type: object
-                containerName:
-                  description: ContainerName is the container name responsible for
-                    restore backup operation
-                  type: string
-                recoveryOnce:
-                  description: RecoveryOnce if want to restore specific backup set
-                    this field and then Jenkins will be restarted and desired backup
-                    will be restored
-                  format: int64
-                  type: integer
-              required:
-              - action
-              - containerName
-              type: object
             roles:
               description: Roles defines list of extra RBAC roles for the Jenkins
                 Master pod service account
@@ -2906,10 +2825,6 @@ spec:
         status:
           description: Status defines the observed state of Jenkins
           properties:
-            backupDoneBeforePodDeletion:
-              description: BackupDoneBeforePodDeletion tells if backup before pod
-                deletion has been made
-              type: boolean
             conditions:
               description: Conditions describes the state of the jenkins resource.
               items:
@@ -2937,28 +2852,15 @@ spec:
                 - type
                 type: object
               type: array
-            lastBackup:
-              description: LastBackup is the latest backup number
-              format: int64
-              type: integer
             operatorVersion:
               description: OperatorVersion is the operator version which manages this
                 CR
               type: string
-            pendingBackup:
-              description: PendingBackup is the pending backup number
-              format: int64
-              type: integer
             provisionStartTime:
               description: ProvisionStartTime is a time when Jenkins master pod has
                 been created
               format: date-time
               type: string
-            restoredBackup:
-              description: RestoredBackup is the restored backup number after Jenkins
-                master pod restart
-              format: int64
-              type: integer
             userAndPasswordHash:
               description: UserAndPasswordHash is a SHA256 hash made from user and
                 password

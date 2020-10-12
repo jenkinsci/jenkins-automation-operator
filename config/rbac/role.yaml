@@ -42,7 +42,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - jenkins.jenkins.io
+  - jenkins.io
   resources:
   - jenkins
   verbs:
@@ -54,7 +54,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - jenkins.jenkins.io
+  - jenkins.io
   resources:
   - jenkins/status
   verbs:
@@ -62,7 +62,7 @@ rules:
   - patch
   - update
 - apiGroups:
-  - jenkins.jenkins.io
+  - jenkins.io
   resources:
   - jenkinsimages
   verbs:
@@ -74,7 +74,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - jenkins.jenkins.io
+  - jenkins.io
   resources:
   - jenkinsimages/status
   verbs:

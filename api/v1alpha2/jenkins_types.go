@@ -44,16 +44,6 @@ type JenkinsSpec struct {
 	// +optional
 	SlaveService Service `json:"slaveService,omitempty"`
 
-	// Backup defines configuration of Jenkins backup
-	// More info: https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-backup-and-restore
-	// +optional
-	Backup Backup `json:"backup,omitempty"`
-
-	// Backup defines configuration of Jenkins backup restore
-	// More info: https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-backup-and-restore
-	// +optional
-	Restore Restore `json:"restore,omitempty"`
-
 	// Roles defines list of extra RBAC roles for the Jenkins Master pod service account
 	// +optional
 	Roles []rbacv1.RoleRef `json:"roles,omitempty"`
@@ -483,22 +473,6 @@ type JenkinsStatus struct {
 	// +optional
 	ProvisionStartTime *metav1.Time `json:"provisionStartTime,omitempty"`
 
-	// RestoredBackup is the restored backup number after Jenkins master pod restart
-	// +optional
-	RestoredBackup uint64 `json:"restoredBackup,omitempty"`
-
-	// LastBackup is the latest backup number
-	// +optional
-	LastBackup uint64 `json:"lastBackup,omitempty"`
-
-	// PendingBackup is the pending backup number
-	// +optional
-	PendingBackup uint64 `json:"pendingBackup,omitempty"`
-
-	// BackupDoneBeforePodDeletion tells if backup before pod deletion has been made
-	// +optional
-	BackupDoneBeforePodDeletion bool `json:"backupDoneBeforePodDeletion,omitempty"`
-
 	// UserAndPasswordHash is a SHA256 hash made from user and password
 	// +optional
 	UserAndPasswordHash string `json:"userAndPasswordHash,omitempty"`
@@ -616,35 +590,6 @@ type SeedJob struct {
 type Handler struct {
 	// Exec specifies the action to take.
 	Exec *corev1.ExecAction `json:"exec,omitempty"`
-}
-
-// Backup defines configuration of Jenkins backup.
-type Backup struct {
-	// ContainerName is the container name responsible for backup operation
-	ContainerName string `json:"containerName"`
-
-	// Action defines action which performs backup in backup container sidecar
-	Action Handler `json:"action"`
-
-	// Interval tells how often make backup in seconds
-	// Defaults to 30.
-	Interval uint64 `json:"interval"`
-
-	// MakeBackupBeforePodDeletion tells operator to make backup before Jenkins master pod deletion
-	MakeBackupBeforePodDeletion bool `json:"makeBackupBeforePodDeletion"`
-}
-
-// Restore defines configuration of Jenkins backup restore operation.
-type Restore struct {
-	// ContainerName is the container name responsible for restore backup operation
-	ContainerName string `json:"containerName"`
-
-	// Action defines action which performs restore backup in restore container sidecar
-	Action Handler `json:"action"`
-
-	// RecoveryOnce if want to restore specific backup set this field and then Jenkins will be restarted and desired backup will be restored
-	// +optional
-	RecoveryOnce uint64 `json:"recoveryOnce,omitempty"`
 }
 
 // AppliedGroovyScript is the applied groovy script in Jenkins by the operator.

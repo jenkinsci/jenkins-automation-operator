@@ -5,7 +5,7 @@ metadata:
   name: jenkins-viewer-role
 rules:
 - apiGroups:
-  - jenkins.jenkins.io
+  - jenkins.io
   resources:
   - jenkins
   verbs:
@@ -13,7 +13,7 @@ rules:
   - list
   - watch
 - apiGroups:
-  - jenkins.jenkins.io
+  - jenkins.io
   resources:
   - jenkins/status
   verbs:

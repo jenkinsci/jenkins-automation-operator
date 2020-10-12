@@ -19,6 +19,139 @@ import (
 
 var dockerImageRegexp = regexp.MustCompile(`^` + docker.TagRegexp.String() + `$`)
 
+var defaultConfigMap = &corev1.ConfigMap{
+	Data: map[string]string{
+		"01-basic-settings.yaml": `
+groovy:
+      - script: >
+          import jenkins.model.Jenkins;
+          import jenkins.model.JenkinsLocationConfiguration;
+          import hudson.model.Node.Mode;
+
+          def jenkins = Jenkins.instance;
+          //Number of jobs that run simultaneously on master.
+          jenkins.setNumExecutors(6);
+          //Jobs must specify that they want to run on master
+          jenkins.setMode(Mode.EXCLUSIVE);
+          jenkins.save();`,
+
+		"02-enable-csrf.yaml": `
+groovy:
+      - script: >
+          import hudson.security.csrf.DefaultCrumbIssuer;
+          import jenkins.model.Jenkins;
+
+          def jenkins = Jenkins.instance;
+
+          if (jenkins.getCrumbIssuer() == null) {
+            jenkins.setCrumbIssuer(new DefaultCrumbIssuer(true));
+            jenkins.save();
+            println('CSRF Protection enabled.');
+          } else {
+              println('CSRF Protection already configured.');
+          }`,
+
+		"03-disable-stats.yaml": `
+groovy:
+      - script: >
+          import jenkins.model.Jenkins;
+
+          def jenkins = Jenkins.instance;
+
+          if (jenkins.isUsageStatisticsCollected()) {
+              jenkins.setNoUsageStatistics(true);
+              jenkins.save();
+              println('Jenkins usage stats submitting disabled.');
+          } else {
+              println('Nothing changed.  Usage stats are not submitted to the Jenkins project.');                                                                              
+          }`,
+
+		"04-enable-master-control.yaml": `
+groovy:
+      - script: >
+          import jenkins.security.s2m.AdminWhitelistRule;
+          import jenkins.model.Jenkins;
+
+          // see https://wiki.jenkins-ci.org/display/JENKINS/Slave+To+Master+Access+Control                                                                                    
+          def jenkins = Jenkins.instance;
+          jenkins.getInjector().getInstance(AdminWhitelistRule.class).setMasterKillSwitch(false); // for real though, false equals enabled..........                           
+          jenkins.save();`,
+
+		"05-disable-insecure.yaml": `
+groovy:
+      - script: >
+          import jenkins.*;
+          import jenkins.model.*;
+          import hudson.model.*;
+          import jenkins.security.s2m.*;
+
+          def jenkins = Jenkins.instance;
+
+          println("Disabling insecure Jenkins features...");
+
+          println("Disabling insecure protocols...");
+          println("Old protocols: [" + jenkins.getAgentProtocols().join(", ") + "]");
+          HashSet<String> newProtocols = new HashSet<>(jenkins.getAgentProtocols());
+          newProtocols.removeAll(Arrays.asList("JNLP3-connect", "JNLP2-connect", "JNLP-connect", "CLI-connect"));                                                              
+          println("New protocols: [" + newProtocols.join(", ") + "]");
+          jenkins.setAgentProtocols(newProtocols);
+
+          println("Disabling CLI access of /cli URL...");
+          def remove = { list ->
+              list.each { item ->
+                  if (item.getClass().name.contains("CLIAction")) {
+                      println("Removing extension ${item.getClass().name}")
+                      list.remove(item)
+                  }
+              }
+          };
+          remove(jenkins.getExtensionList(RootAction.class));
+          remove(jenkins.actions);
+
+          if (jenkins.getDescriptor("jenkins.CLI") != null) {
+              jenkins.getDescriptor("jenkins.CLI").get().setEnabled(false);
+          }
+
+          jenkins.save();`,
+
+		"06-configure-views.yaml": `
+groovy:
+      - script: >
+          import hudson.model.ListView;
+          import jenkins.model.Jenkins;
+
+          def Jenkins jenkins = Jenkins.getInstance();
+
+          def seedViewName = 'seed-jobs';
+          def nonSeedViewName = 'non-seed-jobs';
+
+          if (jenkins.getView(seedViewName) == null) {
+              def seedView = new ListView(seedViewName);
+              seedView.setIncludeRegex('.*job-dsl-seed.*');
+              jenkins.addView(seedView);
+          }
+
+          if (jenkins.getView(nonSeedViewName) == null) {
+              def nonSeedView = new ListView(nonSeedViewName);
+              nonSeedView.setIncludeRegex('((?!seed)(?!jenkins).)*');
+              jenkins.addView(nonSeedView);
+          }
+
+          jenkins.save();`,
+
+		"07-disable-dsl-approval.yaml": `
+groovy:
+      - script: >
+          import jenkins.model.Jenkins;
+          import javaposse.jobdsl.plugin.GlobalJobDslSecurityConfiguration;
+          import jenkins.model.GlobalConfiguration;
+
+          // disable Job DSL script approval
+          GlobalConfiguration.all().get(GlobalJobDslSecurityConfiguration.class).useScriptSecurity=false;                                                                      
+          GlobalConfiguration.all().get(GlobalJobDslSecurityConfiguration.class).save();`,
+	},
+}
+
 // Validate validates Jenkins CR Spec.master section
 func (r *JenkinsReconcilerBaseConfiguration) Validate(jenkins *v1alpha2.Jenkins) ([]string, error) {
 	var messages []string
@@ -372,9 +505,10 @@ func (r *JenkinsReconcilerBaseConfiguration) validateConfiguration(configuration
 		messages = append(messages, fmt.Sprintf("%s.secret.name is set but %s.configurations is empty", name, name))
 	}
 
+	jenkinsInstanceNamespace := r.Configuration.Jenkins.ObjectMeta.Namespace
 	if len(configuration.Secret.Name) > 0 {
 		secret := &corev1.Secret{}
-		err := r.Client.Get(context.TODO(), types.NamespacedName{Name: configuration.Secret.Name, Namespace: r.Configuration.Jenkins.ObjectMeta.Namespace}, secret)
+		err := r.Client.Get(context.TODO(), types.NamespacedName{Name: configuration.Secret.Name, Namespace: jenkinsInstanceNamespace}, secret)
 		if err != nil {
 			messages = append(messages, fmt.Sprintf("Secret '%s' configured in %s.secret.name but not found", configuration.Secret.Name, name))
 			return messages, stackerr.WithStack(err)
@@ -388,7 +522,7 @@ func (r *JenkinsReconcilerBaseConfiguration) validateConfiguration(configuration
 		}
 
 		configMap := &corev1.ConfigMap{}
-		err := r.Client.Get(context.TODO(), types.NamespacedName{Name: configMapRef.Name, Namespace: r.Configuration.Jenkins.ObjectMeta.Namespace}, configMap)
+		err := r.Client.Get(context.TODO(), types.NamespacedName{Name: configMapRef.Name, Namespace: jenkinsInstanceNamespace}, configMap)
 		if err != nil {
 			messages = append(messages, fmt.Sprintf("ConfigMap '%s' configured in %s.configurations[%d] but not found", configMapRef.Name, name, index))
 			return messages, stackerr.WithStack(err)
@@ -396,9 +530,17 @@ func (r *JenkinsReconcilerBaseConfiguration) validateConfiguration(configuration
 	}
 	if configuration.DefaultConfig {
 		configMap := &corev1.ConfigMap{}
-		err := r.Client.Get(context.TODO(), types.NamespacedName{Name: resources.JenkinsDefaultConfigMapName, Namespace: r.Configuration.Jenkins.ObjectMeta.Namespace}, configMap)
+		err := r.Client.Get(context.TODO(), types.NamespacedName{Name: resources.JenkinsDefaultConfigMapName, Namespace: jenkinsInstanceNamespace}, configMap)
 		if err != nil {
-			messages = append(messages, fmt.Sprintf("Default config is enabled but Default ConfigMap '%s' is not found", resources.JenkinsDefaultConfigMapName))
+			if apierrors.IsNotFound(err) {
+				r.logger.Info(fmt.Sprintf("Default config is enabled but Default ConfigMap '%s' is not found, creating Default ConfigMap ", resources.JenkinsDefaultConfigMapName))
+				defaultConfigMap.Namespace = jenkinsInstanceNamespace
+				defaultConfigMap.Name = resources.JenkinsDefaultConfigMapName
+				err = r.Client.Create(context.TODO(), defaultConfigMap)
+				if err != nil {
+					messages = append(messages, fmt.Sprintf("Not able to create Default ConfigMap %s", resources.JenkinsDefaultConfigMapName))
+				}
+			}
 			return messages, stackerr.WithStack(err)
 		}
 	}

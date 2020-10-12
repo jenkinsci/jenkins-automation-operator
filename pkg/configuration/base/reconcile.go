@@ -63,7 +63,7 @@ func (r *JenkinsReconcilerBaseConfiguration) Reconcile(request reconcile.Request
 		r.logger.V(log.VDebug).Info(fmt.Sprintf("Error when ensuring that Deployment is ready %s", err))
 		return reconcile.Result{}, nil, err
 	}
-	r.logger.V(log.VDebug).Info(fmt.Sprintf("Deployment for jenkins.jenkins.io { %s } is ready ", r.Jenkins.Name))
+	r.logger.V(log.VDebug).Info(fmt.Sprintf("Deployment for jenkins.io { %s } is ready ", r.Jenkins.Name))
 
 	jenkinsPod, err := r.Configuration.GetPodByDeployment()
 	if err != nil {

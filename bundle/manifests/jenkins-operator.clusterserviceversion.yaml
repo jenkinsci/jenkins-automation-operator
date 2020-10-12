@@ -5,7 +5,7 @@ metadata:
     alm-examples: |-
       [
         {
-          "apiVersion": "jenkins.jenkins.io/v1alpha2",
+          "apiVersion": "jenkins.io/v1alpha2",
           "kind": "Jenkins",
           "metadata": {
             "name": "jenkins-sample"
@@ -67,7 +67,7 @@ metadata:
           }
         },
         {
-          "apiVersion": "jenkins.jenkins.io/v1alpha2",
+          "apiVersion": "jenkins.io/v1alpha2",
           "kind": "JenkinsImage",
           "metadata": {
             "name": "jenkinsimage-sample"
@@ -102,7 +102,7 @@ spec:
     owned:
     - displayName: Jenkins
       kind: Jenkins
-      name: jenkins.jenkins.jenkins.io
+      name: jenkins.jenkins.io
       specDescriptors:
       - displayName: Enable this configuration
         path: configurationAsCode.enabled
@@ -117,7 +117,7 @@ spec:
     - description: JenkinsImage is the Schema for the jenkinsimages API
       displayName: Jenkins Image
       kind: JenkinsImage
-      name: jenkinsimages.jenkins.jenkins.io
+      name: jenkinsimages.jenkins.io
       specDescriptors:
       - description: The Image name
         displayName: Name
@@ -183,7 +183,7 @@ spec:
           - update
           - watch
         - apiGroups:
-          - jenkins.jenkins.io
+          - jenkins.io
           resources:
           - jenkins
           verbs:
@@ -195,7 +195,7 @@ spec:
           - update
           - watch
         - apiGroups:
-          - jenkins.jenkins.io
+          - jenkins.io
           resources:
           - jenkins/status
           verbs:
@@ -203,7 +203,7 @@ spec:
           - patch
           - update
         - apiGroups:
-          - jenkins.jenkins.io
+          - jenkins.io
           resources:
           - jenkinsimages
           verbs:
@@ -215,7 +215,7 @@ spec:
           - update
           - watch
         - apiGroups:
-          - jenkins.jenkins.io
+          - jenkins.io
           resources:
           - jenkinsimages/status
           verbs:

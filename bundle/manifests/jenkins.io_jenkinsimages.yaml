@@ -1,14 +1,12 @@
-
----
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.3.0
   creationTimestamp: null
-  name: jenkinsimages.jenkins.jenkins.io
+  name: jenkinsimages.jenkins.io
 spec:
-  group: jenkins.jenkins.io
+  group: jenkins.io
   names:
     kind: JenkinsImage
     listKind: JenkinsImageList
@@ -22,14 +20,10 @@ spec:
       description: JenkinsImage is the Schema for the jenkinsimages API
       properties:
         apiVersion:
-          description: 'APIVersion defines the versioned schema of this representation
-            of an object. Servers should convert recognized schemas to the latest
-            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
           type: string
         kind:
-          description: 'Kind is a string value representing the REST resource this
-            object represents. Servers may infer this from the endpoint the client
-            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
           type: string
         metadata:
           type: object
@@ -37,9 +31,7 @@ spec:
           description: JenkinsImageSpec defines the desired state of JenkinsImage
           properties:
             defaultUpdateCenter:
-              description: DefaultUpdateCenter is a customer update center url from
-                which all plugins will be downloaded. if not specified, https://updates.jenkins.io/
-                is used
+              description: DefaultUpdateCenter is a customer update center url from which all plugins will be downloaded. if not specified, https://updates.jenkins.io/ is used
               type: string
             from:
               description: A JenkinsImage definition
@@ -48,13 +40,10 @@ spec:
                   description: The Image name
                   type: string
                 registry:
-                  description: The registry to pull from or push to this image in
-                    the form fully.qdn/myrepository/ Image name will be appended for
-                    push
+                  description: The registry to pull from or push to this image in the form fully.qdn/myrepository/ Image name will be appended for push
                   type: string
                 secret:
-                  description: Secret is an optional reference to a secret in the
-                    same namespace to use for pushing to or pulling from the registry.
+                  description: Secret is an optional reference to a secret in the same namespace to use for pushing to or pulling from the registry.
                   type: string
                 tag:
                   description: The tag name
@@ -70,9 +59,7 @@ spec:
                   name:
                     type: string
                   updateCenter:
-                    description: UpdateCenter is a specific update center url from
-                      which this plugin will be downloaded. If not specified, DefaultUpdateCenter
-                      is used.
+                    description: UpdateCenter is a specific update center url from which this plugin will be downloaded. If not specified, DefaultUpdateCenter is used.
                     type: string
                   version:
                     type: string
@@ -87,13 +74,10 @@ spec:
                   description: The Image name
                   type: string
                 registry:
-                  description: The registry to pull from or push to this image in
-                    the form fully.qdn/myrepository/ Image name will be appended for
-                    push
+                  description: The registry to pull from or push to this image in the form fully.qdn/myrepository/ Image name will be appended for push
                   type: string
                 secret:
-                  description: Secret is an optional reference to a secret in the
-                    same namespace to use for pushing to or pulling from the registry.
+                  description: Secret is an optional reference to a secret in the same namespace to use for pushing to or pulling from the registry.
                   type: string
                 tag:
                   description: The tag name

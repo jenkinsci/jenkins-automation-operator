@@ -1,0 +1,7 @@
+apiVersion: jenkins.io/v1alpha2
+kind: BackupWorker
+metadata:
+  name: backupworker-sample
+spec:
+  # Add fields here
+  foo: bar

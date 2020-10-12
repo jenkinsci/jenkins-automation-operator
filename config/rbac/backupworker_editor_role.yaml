@@ -1,20 +1,24 @@
-# permissions for end users to view jenkinsimages.
+# permissions for end users to edit backupworkers.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: jenkinsimage-viewer-role
+  name: backupworker-editor-role
 rules:
 - apiGroups:
   - jenkins.io
   resources:
-  - jenkinsimages
+  - backupworkers
   verbs:
+  - create
+  - delete
   - get
   - list
+  - patch
+  - update
   - watch
 - apiGroups:
   - jenkins.io
   resources:
-  - jenkinsimages/status
+  - backupworkers/status
   verbs:
   - get
