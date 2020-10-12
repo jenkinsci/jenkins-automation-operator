@@ -34,11 +34,11 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/notifications/event"
 	"github.com/jenkinsci/kubernetes-operator/pkg/notifications/reason"
 	"github.com/jenkinsci/kubernetes-operator/pkg/plugins"
+	conditionsv1 "github.com/openshift/custom-resource-status/conditions/v1"
 	"github.com/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
@@ -57,6 +57,14 @@ const (
 	ConfigMapKind          = "ConfigMap"
 	containerProbeURI      = "login"
 	containerProbePortName = "http"
+
+	reconcileInit             = "Init"
+	reconcileInitMessage      = "Initializing Jenkins operator"
+	reconcileFailed           = "ReconciliationFailed"
+	reconcileCompleted        = "ReconciliationCompleted"
+	reconcileCompletedMessage = "Reconciliation completed successfully"
+
+	ConditionReconcileComplete conditionsv1.ConditionType = "ReconciliationComplete"
 )
 
 // JenkinsReconciler reconciles a Jenkins object
@@ -113,8 +121,29 @@ func (r *JenkinsReconciler) Reconcile(request ctrl.Request) (ctrl.Result, error)
 		// Error reading the object - requeue the request.
 		return ctrl.Result{}, err
 	}
+
+	// setInitialConditions
+	if jenkins.Status.Conditions == nil {
+		r.setInitialConditions(jenkins)
+		err = r.Status().Update(context.TODO(), jenkins)
+		if err != nil {
+			logger.V(log.VWarn).Info(fmt.Sprintf("Failed to add conditions to status: %s", err))
+			return reconcile.Result{}, err
+		}
+	}
+
 	result, err := r.reconcile(ctx, request, jenkins)
 	if err != nil {
+		conditionsv1.SetStatusCondition(&jenkins.Status.Conditions, conditionsv1.Condition{
+			Type:    conditionsv1.ConditionDegraded,
+			Status:  corev1.ConditionTrue,
+			Reason:  reconcileFailed,
+			Message: fmt.Sprintf("Failed reconciliation %v", err),
+		})
+		err = r.Status().Update(context.TODO(), jenkins)
+		if err != nil {
+			logger.V(log.VWarn).Info(fmt.Sprintf("Failed to add conditions to status: %s", err))
+		}
 		return result, err
 	}
 
@@ -199,8 +228,6 @@ func (r *JenkinsReconciler) reconcile(ctx context.Context, request ctrl.Request,
 	if err != nil {
 		if r.isJenkinsPodTerminating(err) {
 			logger.Info(fmt.Sprintf("Jenkins Pod in Terminating state with DeletionTimestamp set detected. Changing Jenkins Phase to %s", constants.JenkinsStatusReinitializing))
-			jenkins.Status.Phase = constants.JenkinsStatusReinitializing
-			jenkins.Status.BaseConfigurationCompletedTime = nil
 			logger.Info("Base configuration reinitialized, jenkins pod restarted")
 			return ctrl.Result{RequeueAfter: 30 * time.Second}, nil
 		}
@@ -223,35 +250,38 @@ func (r *JenkinsReconciler) reconcile(ctx context.Context, request ctrl.Request,
 		r.Log.V(log.VWarn).Info(fmt.Sprintf("Error reading object not found: %s: %+v", request, jenkins))
 		return ctrl.Result{}, errors.WithStack(err)
 	}
-	if jenkins.Status.BaseConfigurationCompletedTime == nil {
-		now := metav1.Now()
-		jenkins.Status.Phase = constants.JenkinsStatusCompleted
-		jenkins.Status.BaseConfigurationCompletedTime = &now
-		deployment, err := baseConfiguration.GetJenkinsDeployment()
-		if err != nil {
-			logger.Info(fmt.Sprintf("Error while getting deployment for jenkins instance: %s  , status: %+v", jenkins.Name, jenkins.Status))
-			return ctrl.Result{Requeue: true}, errors.WithStack(err)
-		}
-		if jenkins.Status.ProvisionStartTime == nil {
-			jenkins.Status.ProvisionStartTime = &deployment.CreationTimestamp
-		}
-		logger.Info(fmt.Sprintf("Base configuration updated: BaseConfigurationCompletedTime: %s", jenkins.Status.BaseConfigurationCompletedTime))
-		if jenkins.Status.ProvisionStartTime == nil {
-			logger.Info(fmt.Sprintf("ProvisionStartTime is nil: requeuing : %s", jenkins.Status.ProvisionStartTime))
-			return ctrl.Result{Requeue: true}, errors.WithStack(err)
-		}
-		time := jenkins.Status.BaseConfigurationCompletedTime.Sub(jenkins.Status.ProvisionStartTime.Time)
-		message := fmt.Sprintf("Base configuration phase is complete, took %s", time)
-		r.sendNewBaseConfigurationCompleteNotification(jenkins, message)
-		// logger.V(log.VWarn).Info(fmt.Sprintf("Comparing old and new status: %+v\n\n%+v", status, jenkins.Status))
-		err = r.Status().Update(ctx, jenkins)
-		if err != nil {
-			logger.Error(err, "Failed to update Jenkins status")
-			return ctrl.Result{}, err
-		}
-		logger.Info("Reconcile loop success !!!")
-		logger.Info(message)
+	conditionsv1.SetStatusCondition(&jenkins.Status.Conditions, conditionsv1.Condition{
+		Type:    ConditionReconcileComplete,
+		Status:  corev1.ConditionTrue,
+		Reason:  reconcileCompleted,
+		Message: reconcileCompletedMessage,
+	})
+	conditionsv1.SetStatusCondition(&jenkins.Status.Conditions, conditionsv1.Condition{
+		Type:    conditionsv1.ConditionAvailable,
+		Status:  corev1.ConditionTrue,
+		Reason:  reconcileCompleted,
+		Message: reconcileCompletedMessage,
+	})
+	conditionsv1.SetStatusCondition(&jenkins.Status.Conditions, conditionsv1.Condition{
+		Type:    conditionsv1.ConditionDegraded,
+		Status:  corev1.ConditionFalse,
+		Reason:  reconcileCompleted,
+		Message: reconcileCompletedMessage,
+	})
+	conditionsv1.SetStatusCondition(&jenkins.Status.Conditions, conditionsv1.Condition{
+		Type:    conditionsv1.ConditionUpgradeable,
+		Status:  corev1.ConditionTrue,
+		Reason:  reconcileCompleted,
+		Message: reconcileCompletedMessage,
+	})
+
+	err = r.Status().Update(ctx, jenkins)
+	if err != nil {
+		logger.Error(err, "Failed to update Jenkins status")
+		return ctrl.Result{}, err
 	}
+
+	logger.Info("Reconcile loop success !!!")
 
 	return ctrl.Result{}, nil
 }
@@ -287,15 +317,6 @@ func (r *JenkinsReconciler) sendNewReconcileLoopFailedNotification(jenkins *v1al
 			reason.OperatorSource,
 			[]string{fmt.Sprintf("Reconcile loop failed %d times with the same error, giving up: %s", reconcileFailLimit, err)},
 		),
-	}
-}
-
-func (r *JenkinsReconciler) sendNewBaseConfigurationCompleteNotification(jenkins *v1alpha2.Jenkins, message string) {
-	r.NotificationEvents <- event.Event{
-		Jenkins: *jenkins,
-		Phase:   event.PhaseBase,
-		Level:   v1alpha2.NotificationLevelInfo,
-		Reason:  reason.NewBaseConfigurationComplete(reason.OperatorSource, []string{message}),
 	}
 }
 
@@ -489,4 +510,37 @@ func basePlugins() (result []v1alpha2.Plugin) {
 
 func (r *JenkinsReconciler) isJenkinsPodTerminating(err error) bool {
 	return strings.Contains(err.Error(), "Terminating state with DeletionTimestamp")
+}
+
+func (r *JenkinsReconciler) setInitialConditions(jenkins *v1alpha2.Jenkins) {
+	conditionsv1.SetStatusCondition(&jenkins.Status.Conditions, conditionsv1.Condition{
+		Type:    ConditionReconcileComplete,
+		Status:  corev1.ConditionUnknown, // we just started trying to reconcile
+		Reason:  reconcileInit,
+		Message: reconcileInitMessage,
+	})
+	conditionsv1.SetStatusCondition(&jenkins.Status.Conditions, conditionsv1.Condition{
+		Type:    conditionsv1.ConditionAvailable,
+		Status:  corev1.ConditionFalse,
+		Reason:  reconcileInit,
+		Message: reconcileInitMessage,
+	})
+	conditionsv1.SetStatusCondition(&jenkins.Status.Conditions, conditionsv1.Condition{
+		Type:    conditionsv1.ConditionProgressing,
+		Status:  corev1.ConditionTrue,
+		Reason:  reconcileInit,
+		Message: reconcileInitMessage,
+	})
+	conditionsv1.SetStatusCondition(&jenkins.Status.Conditions, conditionsv1.Condition{
+		Type:    conditionsv1.ConditionDegraded,
+		Status:  corev1.ConditionFalse,
+		Reason:  reconcileInit,
+		Message: reconcileInitMessage,
+	})
+	conditionsv1.SetStatusCondition(&jenkins.Status.Conditions, conditionsv1.Condition{
+		Type:    conditionsv1.ConditionUpgradeable,
+		Status:  corev1.ConditionUnknown,
+		Reason:  reconcileInit,
+		Message: reconcileInitMessage,
+	})
 }

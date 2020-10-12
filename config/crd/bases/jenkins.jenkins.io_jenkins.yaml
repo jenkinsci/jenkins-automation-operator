@@ -2906,49 +2906,36 @@ spec:
         status:
           description: Status defines the observed state of Jenkins
           properties:
-            appliedGroovyScripts:
-              description: AppliedGroovyScripts is a list with all applied groovy
-                scripts in Jenkins by the operator
-              items:
-                description: AppliedGroovyScript is the applied groovy script in Jenkins
-                  by the operator.
-                properties:
-                  configurationType:
-                    description: ConfigurationType is the name of the configuration
-                      type(base-groovy, user-groovy, user-casc)
-                    type: string
-                  hash:
-                    description: Hash is the hash of the groovy script and secrets
-                      which it uses
-                    type: string
-                  name:
-                    description: Name is the name of the groovy script
-                    type: string
-                  source:
-                    description: Source is the name of source where is located groovy
-                      script
-                    type: string
-                required:
-                - configurationType
-                - hash
-                - name
-                - source
-                type: object
-              type: array
             backupDoneBeforePodDeletion:
               description: BackupDoneBeforePodDeletion tells if backup before pod
                 deletion has been made
               type: boolean
-            baseConfigurationCompletedTime:
-              description: BaseConfigurationCompletedTime is a time when Jenkins base
-                configuration phase has been completed
-              format: date-time
-              type: string
-            createdSeedJobs:
-              description: CreatedSeedJobs contains list of seed job id already created
-                in Jenkins
+            conditions:
+              description: Conditions describes the state of the jenkins resource.
               items:
-                type: string
+                description: Condition represents the state of the operator's reconciliation
+                  functionality.
+                properties:
+                  lastHeartbeatTime:
+                    format: date-time
+                    type: string
+                  lastTransitionTime:
+                    format: date-time
+                    type: string
+                  message:
+                    type: string
+                  reason:
+                    type: string
+                  status:
+                    type: string
+                  type:
+                    description: ConditionType is the state of the operator's reconciliation
+                      functionality.
+                    type: string
+                required:
+                - status
+                - type
+                type: object
               type: array
             lastBackup:
               description: LastBackup is the latest backup number
@@ -2962,15 +2949,6 @@ spec:
               description: PendingBackup is the pending backup number
               format: int64
               type: integer
-            phase:
-              description: 'Phase is a simple, high-level summary of where the Jenkins
-                is in its lifecycle. There are five possible phase values: Pending:
-                The Jenkins has been accepted by the Kubernetes system, but one or
-                more of the required resources have not been created. Available: All
-                of the resources for the Jenkins are ready. Failed: At least one resource
-                has experienced a failure. Unknown: For some reason the state of the
-                Jenkins phase could not be obtained.'
-              type: string
             provisionStartTime:
               description: ProvisionStartTime is a time when Jenkins master pod has
                 been created
@@ -2985,13 +2963,6 @@ spec:
               description: UserAndPasswordHash is a SHA256 hash made from user and
                 password
               type: string
-            userConfigurationCompletedTime:
-              description: UserConfigurationCompletedTime is a time when Jenkins user
-                configuration phase has been completed
-              format: date-time
-              type: string
-          required:
-          - phase
           type: object
       type: object
   version: v1alpha2
