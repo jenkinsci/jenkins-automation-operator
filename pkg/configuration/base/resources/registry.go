@@ -6,6 +6,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -25,7 +26,7 @@ func IsImageRegistryAvailable(client client.Client) bool {
 		return isImageRegistryAvailable
 	}
 	namespace := &corev1.Namespace{}
-	clusterScope := types.NamespacedName{}
+	clusterScope := types.NamespacedName{Name: DefaultOpenShiftImageRegistryNamespace}
 	err := client.Get(context.TODO(), clusterScope, namespace)
 	if errors.IsNotFound(err) {
 		isImageRegistryAvailable = false
@@ -39,6 +40,11 @@ func IsImageRegistryAvailable(client client.Client) bool {
 			isImageRegistryAvailable = (len(service.Spec.ClusterIP) != 0) && service.Spec.ClusterIP != "None"
 		}
 	}
-	imageRegistryAlreadyChecked = true // We set this
+	// Check if cache has started
+	cacheErr := (*cache.ErrCacheNotStarted)(nil)
+	// Based on https://github.com/kubernetes-sigs/controller-runtime/blob/master/pkg/cache/informer_cache.go#L45
+	if err != nil && err.Error() != cacheErr.Error() {
+		imageRegistryAlreadyChecked = true // We set this
+	}
 	return isImageRegistryAvailable
 }
