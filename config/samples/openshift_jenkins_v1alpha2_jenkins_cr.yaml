@@ -1,0 +1,109 @@
+apiVersion: jenkins.jenkins.io/v1alpha2
+kind: Jenkins
+metadata:
+  annotations:
+  name: jenkins
+spec:
+  configurationAsCode:
+    enabled: true
+    defaultConfig: true
+    configurations:
+      - name: user-configuration-1
+      - name: user-configuration-2
+    enableAutoReload: true
+  jenkinsAPIConnectionSettings:
+    useNodePort: true
+  jenkinsAPISettings:
+    authorizationStrategy: serviceAccount
+  roles:
+    - name: admin
+      kind: ClusterRole
+      apiGroup: "rbac.authorization.k8s.io"
+  master:
+    disableCSRFProtection: true
+    basePlugins:
+    - name: kubernetes
+      version: "1.18.3"
+    - name: workflow-job
+      version: "2.34"
+    - name: workflow-aggregator
+      version: "2.6"
+    - name: git
+      version: "3.12.0"
+    - name: job-dsl
+      version: "1.76"
+    - name: configuration-as-code
+      version: "1.29"
+    - name: configuration-as-code-groovy
+      version: "1.1"
+    - name: configuration-as-code-support
+      version: "1.19"
+    - name: kubernetes-credentials-provider
+      version: "0.12.1"
+    containers:
+    - name: jenkins-master
+      command:
+      - /usr/bin/go-init
+      - '-main'
+      - /usr/libexec/s2i/run
+      env:
+      - name: OPENSHIFT_ENABLE_OAUTH
+        value: 'true'
+      - name: OPENSHIFT_ENABLE_REDIRECT_PROMPT
+        value: 'true'
+      - name: DISABLE_ADMINISTRATIVE_MONITORS
+        value: 'false'
+      - name: KUBERNETES_MASTER
+        value: 'https://kubernetes.default:443'
+      - name: KUBERNETES_TRUST_CERTIFICATES
+        value: 'true'
+      - name: JENKINS_SERVICE_NAME
+        value: jenkins-operator-http-jenkins
+      - name: JNLP_SERVICE_NAME
+        value: jenkins-operator-slave-jenkins
+      - name: JENKINS_UC_INSECURE
+        value: 'false'
+      - name: JENKINS_HOME
+        value: /var/lib/jenkins
+      - name: JENKINS_JAVA_OVERRIDES
+        value: >-
+          -XX:+UnlockExperimentalVMOptions -XX:+UnlockExperimentalVMOptions
+          -XX:MaxRAMFraction=1
+          -Djenkins.install.runSetupWizard=false -Djava.awt.headless=true
+          -Dhudson.security.csrf.DefaultCrumbIssuer.EXCLUDE_SESSION_ID=true
+          -Dcasc.reload.token=$(POD_NAME)
+      image: 'quay.io/repository/openshift/origin-jenkins:4.5'
+      imagePullPolicy: Always
+      livenessProbe:
+        httpGet:
+          path: /login
+          port: 8080
+          scheme: HTTP
+        initialDelaySeconds: 420
+        periodSeconds: 360
+        timeoutSeconds: 240
+      readinessProbe:
+        httpGet:
+          path: /login
+          port: 8080
+          scheme: HTTP
+        initialDelaySeconds: 3
+        periodSeconds: 0
+        timeoutSeconds: 240
+      resources:
+        limits:
+          cpu: 600m
+          memory: 4Gi
+        requests:
+          cpu: 500m
+          memory: 3Gi
+  service:
+    port: 8080
+    type: ClusterIP
+  slaveService:
+    port: 50000
+    type: ClusterIP
+  serviceAccount:
+    annotations:
+      serviceaccounts.openshift.io/oauth-redirectreference.jenkins: '{"kind":"OAuthRedirectReference","apiVersion":"v1","reference":{"kind":"Route","name":"jenkins-operator"}}'
+    
