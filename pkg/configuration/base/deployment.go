@@ -34,7 +34,9 @@ func (r *JenkinsReconcilerBaseConfiguration) ensureJenkinsDeploymentIsPresent(me
 	jenkinsDeployment, err := r.GetJenkinsDeployment()
 	jenkins := r.Jenkins
 	namespace := jenkins.Namespace
-	r.logger.Info(fmt.Sprintf("Error while getting GetJenkinsDeployment: %+v", err))
+	if err != nil {
+		r.logger.Info(fmt.Sprintf("Error while getting GetJenkinsDeployment: %+v", err))
+	}
 	if apierrors.IsNotFound(err) {
 		r.logger.Info("Error type is not found: Creating deployment")
 		jenkinsDeployment = resources.NewJenkinsDeployment(meta, jenkins)

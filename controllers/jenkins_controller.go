@@ -34,6 +34,8 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/notifications/event"
 	"github.com/jenkinsci/kubernetes-operator/pkg/notifications/reason"
 	"github.com/jenkinsci/kubernetes-operator/pkg/plugins"
+
+	//routev1 "github.com/openshift/api/route/v1"
 	conditionsv1 "github.com/openshift/custom-resource-status/conditions/v1"
 	"github.com/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
@@ -45,6 +47,7 @@ import (
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	//	"math/rand"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -90,9 +93,10 @@ func (r *JenkinsReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&v1alpha2.Jenkins{}).
 		Owns(&corev1.Service{}).
 		Owns(&corev1.ConfigMap{}).
-		Owns(&appsv1.Deployment{}).Complete(r)
-	//	Owns(&routev1.Route{}).
-	//	Complete(r)
+		Owns(&appsv1.Deployment{}).
+		WithEventFilter(predicate.GenerationChangedPredicate{}).
+		Complete(r)
+	//Owns(&routev1.Route{}).Complete(r)
 }
 
 // +kubebuilder:rbac:groups=jenkins.jenkins.io,resources=jenkins,verbs=get;list;watch;create;update;patch;delete
@@ -188,6 +192,39 @@ func (r *JenkinsReconciler) Reconcile(request ctrl.Request) (ctrl.Result, error)
 		return ctrl.Result{Requeue: false}, nil
 	}
 
+	conditionsv1.SetStatusCondition(&jenkins.Status.Conditions, conditionsv1.Condition{
+		Type:    ConditionReconcileComplete,
+		Status:  corev1.ConditionTrue,
+		Reason:  reconcileCompleted,
+		Message: reconcileCompletedMessage,
+	})
+	conditionsv1.SetStatusCondition(&jenkins.Status.Conditions, conditionsv1.Condition{
+		Type:    conditionsv1.ConditionAvailable,
+		Status:  corev1.ConditionTrue,
+		Reason:  reconcileCompleted,
+		Message: reconcileCompletedMessage,
+	})
+	conditionsv1.SetStatusCondition(&jenkins.Status.Conditions, conditionsv1.Condition{
+		Type:    conditionsv1.ConditionDegraded,
+		Status:  corev1.ConditionFalse,
+		Reason:  reconcileCompleted,
+		Message: reconcileCompletedMessage,
+	})
+	conditionsv1.SetStatusCondition(&jenkins.Status.Conditions, conditionsv1.Condition{
+		Type:    conditionsv1.ConditionUpgradeable,
+		Status:  corev1.ConditionTrue,
+		Reason:  reconcileCompleted,
+		Message: reconcileCompletedMessage,
+	})
+
+	err = r.Status().Update(ctx, jenkins)
+	if err != nil {
+		logger.Error(err, "Failed to update Jenkins status")
+		return ctrl.Result{}, err
+	}
+
+	logger.Info("Reconcile loop success !!!")
+
 	return ctrl.Result{}, nil
 }
 
@@ -250,38 +287,6 @@ func (r *JenkinsReconciler) reconcile(ctx context.Context, request ctrl.Request,
 		r.Log.V(log.VWarn).Info(fmt.Sprintf("Error reading object not found: %s: %+v", request, jenkins))
 		return ctrl.Result{}, errors.WithStack(err)
 	}
-	conditionsv1.SetStatusCondition(&jenkins.Status.Conditions, conditionsv1.Condition{
-		Type:    ConditionReconcileComplete,
-		Status:  corev1.ConditionTrue,
-		Reason:  reconcileCompleted,
-		Message: reconcileCompletedMessage,
-	})
-	conditionsv1.SetStatusCondition(&jenkins.Status.Conditions, conditionsv1.Condition{
-		Type:    conditionsv1.ConditionAvailable,
-		Status:  corev1.ConditionTrue,
-		Reason:  reconcileCompleted,
-		Message: reconcileCompletedMessage,
-	})
-	conditionsv1.SetStatusCondition(&jenkins.Status.Conditions, conditionsv1.Condition{
-		Type:    conditionsv1.ConditionDegraded,
-		Status:  corev1.ConditionFalse,
-		Reason:  reconcileCompleted,
-		Message: reconcileCompletedMessage,
-	})
-	conditionsv1.SetStatusCondition(&jenkins.Status.Conditions, conditionsv1.Condition{
-		Type:    conditionsv1.ConditionUpgradeable,
-		Status:  corev1.ConditionTrue,
-		Reason:  reconcileCompleted,
-		Message: reconcileCompletedMessage,
-	})
-
-	err = r.Status().Update(ctx, jenkins)
-	if err != nil {
-		logger.Error(err, "Failed to update Jenkins status")
-		return ctrl.Result{}, err
-	}
-
-	logger.Info("Reconcile loop success !!!")
 
 	return ctrl.Result{}, nil
 }
@@ -385,7 +390,7 @@ func (r *JenkinsReconciler) setDefaults(jenkins *v1alpha2.Jenkins) (requeue bool
 		changed = true
 		jenkinsContainer.Env = append(jenkinsContainer.Env, corev1.EnvVar{
 			Name:  constants.JavaOpsVariableName,
-			Value: "-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:MaxRAMFraction=1 -Djenkins.install.runSetupWizard=false -Djava.awt.headless=true -Dcasc.reload.token=$(POD_NAME)",
+			Value: "-XX:+UnlockExperimentalVMOptions -XX:MaxRAMFraction=1 -Djenkins.install.runSetupWizard=false -Djava.awt.headless=true -Dhudson.security.csrf.DefaultCrumbIssuer.EXCLUDE_SESSION_ID=true -Dcasc.reload.token=$(POD_NAME)",
 		})
 	}
 	if len(jenkins.Spec.Master.BasePlugins) == 0 {
