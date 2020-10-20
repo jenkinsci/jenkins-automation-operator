@@ -29,38 +29,6 @@ spec:
         spec:
           description: Spec defines the desired state of the Jenkins
           properties:
-            backup:
-              description: 'Backup defines configuration of Jenkins backup More info: https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-backup-and-restore'
-              properties:
-                action:
-                  description: Action defines action which performs backup in backup container sidecar
-                  properties:
-                    exec:
-                      description: Exec specifies the action to take.
-                      properties:
-                        command:
-                          description: Command is the command line to execute inside the container, the working directory for the command  is root ('/') in the container's filesystem. The command is simply exec'd, it is not run inside a shell, so traditional shell instructions ('|', etc) won't work. To use a shell, you need to explicitly call out to that shell. Exit status of 0 is treated as live/healthy and non-zero is unhealthy.
-                          items:
-                            type: string
-                          type: array
-                      type: object
-                  type: object
-                containerName:
-                  description: ContainerName is the container name responsible for backup operation
-                  type: string
-                interval:
-                  description: Interval tells how often make backup in seconds Defaults to 30.
-                  format: int64
-                  type: integer
-                makeBackupBeforePodDeletion:
-                  description: MakeBackupBeforePodDeletion tells operator to make backup before Jenkins master pod deletion
-                  type: boolean
-              required:
-              - action
-              - containerName
-              - interval
-              - makeBackupBeforePodDeletion
-              type: object
             configurationAsCode:
               description: ConfigurationAsCode defines configuration of Jenkins configuration via Configuration as Code Jenkins plugin
               properties:
@@ -728,9 +696,6 @@ spec:
                     - resources
                     type: object
                   type: array
-                disableCSRFProtection:
-                  description: DisableCSRFProtection allows you to toggle CSRF Protection on Jenkins
-                  type: boolean
                 imagePullSecrets:
                   description: 'ImagePullSecrets is an optional list of references to secrets in the same namespace to use for pulling any of the images used by this PodSpec. If specified, these secrets will be passed to individual puller implementations for them to use. For example, in the case of docker, only DockerConfig type secrets are honored. More info: https://kubernetes.io/docs/concepts/containers/images#specifying-imagepullsecrets-on-a-pod'
                   items:
@@ -1674,8 +1639,6 @@ spec:
                     - name
                     type: object
                   type: array
-              required:
-              - disableCSRFProtection
               type: object
             notifications:
               description: Notifications defines list of a services which are used to inform about Jenkins status Can be used to integrate chat services like Slack, Microsoft Teams or Mailgun
@@ -1828,33 +1791,6 @@ spec:
                 - verbose
                 type: object
               type: array
-            restore:
-              description: 'Backup defines configuration of Jenkins backup restore More info: https://github.com/jenkinsci/kubernetes-operator/blob/master/docs/getting-started.md#configure-backup-and-restore'
-              properties:
-                action:
-                  description: Action defines action which performs restore backup in restore container sidecar
-                  properties:
-                    exec:
-                      description: Exec specifies the action to take.
-                      properties:
-                        command:
-                          description: Command is the command line to execute inside the container, the working directory for the command  is root ('/') in the container's filesystem. The command is simply exec'd, it is not run inside a shell, so traditional shell instructions ('|', etc) won't work. To use a shell, you need to explicitly call out to that shell. Exit status of 0 is treated as live/healthy and non-zero is unhealthy.
-                          items:
-                            type: string
-                          type: array
-                      type: object
-                  type: object
-                containerName:
-                  description: ContainerName is the container name responsible for restore backup operation
-                  type: string
-                recoveryOnce:
-                  description: RecoveryOnce if want to restore specific backup set this field and then Jenkins will be restarted and desired backup will be restored
-                  format: int64
-                  type: integer
-              required:
-              - action
-              - containerName
-              type: object
             roles:
               description: Roles defines list of extra RBAC roles for the Jenkins Master pod service account
               items:
@@ -1957,73 +1893,41 @@ spec:
         status:
           description: Status defines the observed state of Jenkins
           properties:
-            appliedGroovyScripts:
-              description: AppliedGroovyScripts is a list with all applied groovy scripts in Jenkins by the operator
+            conditions:
+              description: Conditions describes the state of the jenkins resource.
               items:
-                description: AppliedGroovyScript is the applied groovy script in Jenkins by the operator.
+                description: Condition represents the state of the operator's reconciliation functionality.
                 properties:
-                  configurationType:
-                    description: ConfigurationType is the name of the configuration type(base-groovy, user-groovy, user-casc)
+                  lastHeartbeatTime:
+                    format: date-time
                     type: string
-                  hash:
-                    description: Hash is the hash of the groovy script and secrets which it uses
+                  lastTransitionTime:
+                    format: date-time
                     type: string
-                  name:
-                    description: Name is the name of the groovy script
+                  message:
                     type: string
-                  source:
-                    description: Source is the name of source where is located groovy script
+                  reason:
+                    type: string
+                  status:
+                    type: string
+                  type:
+                    description: ConditionType is the state of the operator's reconciliation functionality.
                     type: string
                 required:
-                - configurationType
-                - hash
-                - name
-                - source
+                - status
+                - type
                 type: object
               type: array
-            backupDoneBeforePodDeletion:
-              description: BackupDoneBeforePodDeletion tells if backup before pod deletion has been made
-              type: boolean
-            baseConfigurationCompletedTime:
-              description: BaseConfigurationCompletedTime is a time when Jenkins base configuration phase has been completed
-              format: date-time
-              type: string
-            createdSeedJobs:
-              description: CreatedSeedJobs contains list of seed job id already created in Jenkins
-              items:
-                type: string
-              type: array
-            lastBackup:
-              description: LastBackup is the latest backup number
-              format: int64
-              type: integer
             operatorVersion:
               description: OperatorVersion is the operator version which manages this CR
-              type: string
-            pendingBackup:
-              description: PendingBackup is the pending backup number
-              format: int64
-              type: integer
-            phase:
-              description: 'Phase is a simple, high-level summary of where the Jenkins is in its lifecycle. There are five possible phase values: Pending: The Jenkins has been accepted by the Kubernetes system, but one or more of the required resources have not been created. Available: All of the resources for the Jenkins are ready. Failed: At least one resource has experienced a failure. Unknown: For some reason the state of the Jenkins phase could not be obtained.'
               type: string
             provisionStartTime:
               description: ProvisionStartTime is a time when Jenkins master pod has been created
               format: date-time
               type: string
-            restoredBackup:
-              description: RestoredBackup is the restored backup number after Jenkins master pod restart
-              format: int64
-              type: integer
             userAndPasswordHash:
               description: UserAndPasswordHash is a SHA256 hash made from user and password
               type: string
-            userConfigurationCompletedTime:
-              description: UserConfigurationCompletedTime is a time when Jenkins user configuration phase has been completed
-              format: date-time
-              type: string
-          required:
-          - phase
           type: object
       type: object
   version: v1alpha2

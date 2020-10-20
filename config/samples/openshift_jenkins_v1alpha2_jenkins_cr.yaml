@@ -5,6 +5,7 @@ metadata:
   name: jenkins
 spec:
   configurationAsCode:
+    configurations: []
     enabled: true
     defaultConfig: true
     enableAutoReload: true
@@ -17,7 +18,6 @@ spec:
       kind: ClusterRole
       apiGroup: "rbac.authorization.k8s.io"
   master:
-    disableCSRFProtection: true
     basePlugins:
     - name: kubernetes
       version: "1.18.3"
