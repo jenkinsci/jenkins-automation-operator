@@ -6,15 +6,25 @@ metadata:
       [
         {
           "apiVersion": "jenkins.io/v1alpha2",
+          "kind": "BackupWorker",
+          "metadata": {
+            "name": "backupworker-sample"
+          },
+          "spec": {
+            "foo": "bar"
+          }
+        },
+        {
+          "apiVersion": "jenkins.io/v1alpha2",
           "kind": "Jenkins",
           "metadata": {
             "name": "jenkins-sample"
           },
           "spec": {
             "configurationAsCode": {
-              "defaultConfig": false,
+              "defaultConfig": true,
               "enableAutoReload": true,
-              "enabled": false
+              "enabled": true
             },
             "jenkinsAPISettings": {
               "authorizationStrategy": "serviceAccount"
@@ -62,7 +72,6 @@ metadata:
                   }
                 }
               ],
-              "disableCSRFProtection": true
             }
           }
         },
@@ -94,12 +103,15 @@ metadata:
     capabilities: Basic Install
     operators.operatorframework.io/builder: operator-sdk-v1.0.1
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v2
-  name: jenkins-operator.v0.0.1
+  name: jenkins-operator.v0.6.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
   customresourcedefinitions:
     owned:
+    - kind: BackupWorker
+      name: backupworkers.jenkins.io
+      version: v1alpha2
     - displayName: Jenkins
       kind: Jenkins
       name: jenkins.jenkins.io
@@ -277,7 +289,7 @@ spec:
                 - --enable-leader-election
                 command:
                 - /manager
-                image: quay.io/akram/jenkins-operator:latest
+                image: quay.io/redhat-developer/openshift-jenkins-operator:0.6.0-a89deb08
                 name: manager
                 resources:
                   limits:
@@ -345,4 +357,5 @@ spec:
   maturity: alpha
   provider:
     name: Red Hat
-  version: 0.0.1
+  replaces: jenkins-operator.v0.0.1
+  version: 0.6.0

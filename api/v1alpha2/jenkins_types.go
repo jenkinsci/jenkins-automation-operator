@@ -383,9 +383,6 @@ type JenkinsMaster struct {
 	// +optional
 	Plugins []Plugin `json:"plugins,omitempty"`
 
-	// DisableCSRFProtection allows you to toggle CSRF Protection on Jenkins
-	DisableCSRFProtection bool `json:"disableCSRFProtection"`
-
 	// PriorityClassName for Jenkins master pod
 	// +optional
 	PriorityClassName string `json:"priorityClassName,omitempty"`

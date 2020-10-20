@@ -4,6 +4,7 @@ metadata:
   name: jenkins-sample
 spec:
   configurationAsCode:
+    configurations: []
     enabled: true
     defaultConfig: true
     enableAutoReload: true
@@ -11,7 +12,6 @@ spec:
     authorizationStrategy: serviceAccount
   jenkinsImageRef: jenkinsimage-sample 
   master:
-    disableCSRFProtection: true
     containers:
     - name: jenkins-master
       image: jenkins/jenkins:lts

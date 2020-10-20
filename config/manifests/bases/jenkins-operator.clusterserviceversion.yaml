@@ -50,6 +50,49 @@ spec:
         displayName: Tag
         path: to.tag
       version: v1alpha2
+    - displayName: Jenkins
+      kind: Jenkins
+      name: jenkins.jenkins.jenkins.io
+      specDescriptors:
+      - displayName: Enable this configuration
+        path: configurationAsCode.enabled
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+      - description: JenkinsImageRef a reference to a JenkinsImage in the current namespace. The JenkinsImage must have status to be "SuccessfullyBuilt" ; then the image target image in JenkinsImage.To will be used as the image of the Master container.
+        displayName: JenkinsImage reference
+        path: jenkinsImageRef
+        x-descriptors:
+        - urn:alm:descriptor:io.jenkins:JenkinsImage
+      version: v1alpha2
+    - description: JenkinsImage is the Schema for the jenkinsimages API
+      displayName: Jenkins Image
+      kind: JenkinsImage
+      name: jenkinsimages.jenkins.jenkins.io
+      specDescriptors:
+      - description: The Image name
+        displayName: Name
+        path: from.name
+      - description: The registry to pull from or push to this image in the form fully.qdn/myrepository/ Image name will be appended for push
+        displayName: Registry
+        path: from.registry
+      - description: The tag name
+        displayName: Tag
+        path: from.tag
+      - description: The Image name
+        displayName: Name
+        path: to.name
+      - description: The registry to pull from or push to this image in the form fully.qdn/myrepository/ Image name will be appended for push
+        displayName: Registry
+        path: to.registry
+      - description: The tag name
+        displayName: Tag
+        path: to.tag
+      version: v1alpha2
+    - description: BackupWorker is the Schema for the backupworkers API
+      displayName: Backup Worker
+      kind: BackupWorker
+      name: backupworkers.jenkins.jenkins.io
+      version: v1alpha2
   description: Manage your Jenkins instances in kubernetes
   displayName: jenkins-operator
   icon:
