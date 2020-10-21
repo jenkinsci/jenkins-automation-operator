@@ -60,6 +60,6 @@ LABEL maintainer "openshift-dev-services+jenkins@redhat.com"
 ENV LANG=en_US.utf8
 ENV GOPATH=/tmp/go
 
-COPY --from=builder /tmp/go/src/github.com/jenkinsci/kubernetes-operator/build/_output/bin/jenkins-operator /usr/local/bin/jenkins-operator
-ENTRYPOINT [ "/usr/local/bin/jenkins-operator" ]
+COPY --from=builder /tmp/go/src/github.com/jenkinsci/kubernetes-operator/build/_output/bin/jenkins-operator /manager
+ENTRYPOINT [ "/manager" ]
 
