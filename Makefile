@@ -27,7 +27,7 @@ deploy: manifests kustomize ## Deploy controller in the configured Kubernetes cl
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
 manifests: controller-gen ## Generate manifests e.g. CRD, RBAC etc.
-	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=jenkins-operator-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
 fmt: ## Run go fmt against code : formats the code
 	go fmt ./...
