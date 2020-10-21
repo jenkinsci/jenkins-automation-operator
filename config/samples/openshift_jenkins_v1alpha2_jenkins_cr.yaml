@@ -13,10 +13,6 @@ spec:
     useNodePort: true
   jenkinsAPISettings:
     authorizationStrategy: serviceAccount
-  roles:
-    - name: admin
-      kind: ClusterRole
-      apiGroup: "rbac.authorization.k8s.io"
   master:
     basePlugins:
     - name: kubernetes
