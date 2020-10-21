@@ -4,14 +4,15 @@ include scripts/golang-tools.mk
 
 build: manager
 
+bin: FORCE ## Builds operator binary
+	go build -o build/_output/bin/jenkins-operator main.go
 e2e: ## Run end-to-end (e2e) tests only
 	ginkgo -v ./...
 
 test: kubebuilder generate manifests ## Run tests
 	go test ./... -coverprofile cover.out
 
-manager: generate goimports fmt vet ## Build manager binary
-	go build -o build/_output/bin/jenkins-operator main.go
+manager: generate goimports fmt vet bin ## Build manager binary
 
 run: generate fmt vet manifests ## Run against the configured Kubernetes cluster in ~/.kube/config. Prepend WATCH_NAMESPACE for single namespace mode.
 	go run ./main.go
