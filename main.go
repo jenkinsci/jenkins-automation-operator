@@ -36,6 +36,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
@@ -78,7 +79,16 @@ func main() {
 	restClient := getRestClient(debug)
 	eventsRecorder := getEventsRecorder(restClient, debug)
 	checkAvailableFeatures(client)
-
+	// get a config to talk to the apiserver
+	cfg, err := config.GetConfig()
+	if err != nil {
+		fatal(errors.Wrap(err, "failed to get config"), *debug)
+	}
+	clientSet, err := kubernetes.NewForConfig(cfg)
+	if err != nil {
+		fatal(errors.Wrap(err, "failed to create Kubernetes client set"), *debug)
+	}
+	checkRouteAPIAvailable(clientSet)
 	notificationsChannel := make(chan e.Event)
 	go notifications.Listen(notificationsChannel, eventsRecorder, client)
 
@@ -93,12 +103,15 @@ func main() {
 }
 
 func checkAvailableFeatures(client client.Client) {
-	/*if resources.IsRouteAPIAvailable(client) {
-		setupLog.Info("Route API found: Route creation will be performed")
-	}*/
 	if resources.IsImageRegistryAvailable(client) {
 		setupLog.Info("Internal Image Registry found: It is very likely that we are running on OpenShift")
 		setupLog.Info("If JenkinsImages are built without specified destination, they will be pushed into it.")
+	}
+}
+
+func checkRouteAPIAvailable(clientSet *kubernetes.Clientset) {
+	if resources.IsRouteAPIAvailable(clientSet) {
+		setupLog.Info("Route API found: Route creation will be performed")
 	}
 }
 

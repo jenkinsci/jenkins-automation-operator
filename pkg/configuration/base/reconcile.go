@@ -139,7 +139,7 @@ func (r *JenkinsReconcilerBaseConfiguration) ensureResourcesRequiredForJenkinsDe
 	}
 	r.logger.V(log.VDebug).Info("Jenkins slave Service is present")
 
-	if resources.IsImageRegistryAvailable(r.Client) {
+	if resources.RouteAPIAvailable {
 		r.logger.V(log.VDebug).Info("Route API is available. Now ensuring route is present")
 		if err := r.createRoute(metaObject, httpServiceName, r.Configuration.Jenkins); err != nil {
 			return err
