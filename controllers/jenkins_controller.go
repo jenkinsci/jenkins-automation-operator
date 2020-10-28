@@ -134,7 +134,7 @@ func (r *JenkinsReconciler) Reconcile(request ctrl.Request) (ctrl.Result, error)
 	// setInitialConditions
 	if jenkins.Status.Conditions == nil {
 		r.setInitialConditions(jenkins)
-		err = r.Status().Update(context.TODO(), jenkins)
+		err = r.Status().Update(ctx, jenkins)
 		if err != nil {
 			logger.V(log.VWarn).Info(fmt.Sprintf("Failed to add conditions to status: %s", err))
 			return reconcile.Result{}, err
@@ -143,13 +143,14 @@ func (r *JenkinsReconciler) Reconcile(request ctrl.Request) (ctrl.Result, error)
 
 	result, err := r.reconcile(request, jenkins)
 	if err != nil {
-		conditionsv1.SetStatusCondition(&jenkins.Status.Conditions, conditionsv1.Condition{
+		reconciliationFailed := conditionsv1.Condition{
 			Type:    conditionsv1.ConditionDegraded,
 			Status:  corev1.ConditionTrue,
 			Reason:  reconcileFailed,
 			Message: fmt.Sprintf("Failed reconciliation %v", err),
-		})
-		err = r.Status().Update(context.TODO(), jenkins)
+		}
+		conditionsv1.SetStatusCondition(&jenkins.Status.Conditions, reconciliationFailed)
+		err = r.Status().Update(ctx, jenkins)
 		if err != nil {
 			logger.V(log.VWarn).Info(fmt.Sprintf("Failed to add conditions to status: %s", err))
 		}
@@ -197,8 +198,7 @@ func (r *JenkinsReconciler) Reconcile(request ctrl.Request) (ctrl.Result, error)
 		return ctrl.Result{Requeue: false}, nil
 	}
 
-	r.setStatusConditions(jenkins)
-
+	//r.setStatusConditions(jenkins)
 	err = r.Status().Update(ctx, jenkins)
 	if err != nil {
 		logger.Error(err, "Failed to update Jenkins status")
@@ -388,11 +388,6 @@ func (r *JenkinsReconciler) setDefaults(jenkins *v1alpha2.Jenkins) (requeue bool
 		logger.Info("Setting default Jenkins livenessProbe")
 		changed = true
 		jenkinsContainer.LivenessProbe = resources.NewProbe(containerProbeURI, containerProbePortName, corev1.URISchemeHTTP, 80, 5, 12)
-	}
-	if len(jenkinsContainer.Command) == 0 && !resources.IsImageRegistryAvailable(r.Client) {
-		logger.Info("Setting default Jenkins container command")
-		jenkinsContainer.Command = resources.GetJenkinsMasterContainerBaseCommand()
-		changed = true
 	}
 	if isJavaOpsVariableNotSet(jenkinsContainer) {
 		logger.Info("Setting default Jenkins container JAVA_OPTS environment variable")

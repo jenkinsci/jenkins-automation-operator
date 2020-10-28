@@ -59,16 +59,6 @@ const (
 	JenkinsSCConfigLabelValue      = "%s-jenkins-config"
 )
 
-// GetJenkinsMasterContainerBaseCommand returns default Jenkins master container command
-func GetJenkinsMasterContainerBaseCommand() []string {
-	return []string{
-		"bash",
-		"-c",
-		fmt.Sprintf("%s/%s && exec /sbin/tini -s -- /usr/local/bin/jenkins.sh",
-			JenkinsScriptsVolumePath, InitScriptName),
-	}
-}
-
 // GetJenkinsMasterContainerBaseEnvs returns Jenkins master pod envs required by operator
 func GetJenkinsMasterContainerBaseEnvs(jenkins *v1alpha2.Jenkins) []corev1.EnvVar {
 	envVars := []corev1.EnvVar{
@@ -288,11 +278,14 @@ func NewJenkinsMasterContainer(jenkins *v1alpha2.Jenkins) corev1.Container {
 		envs = append(envs, jenkinsHomeEnvVar)
 	}
 
-	return corev1.Container{
+	return GetJenkinsContainer(jenkins, jenkinsContainer, envs)
+}
+
+func GetJenkinsContainer(jenkins *v1alpha2.Jenkins, jenkinsContainer v1alpha2.Container, envs []corev1.EnvVar) corev1.Container {
+	container := corev1.Container{
 		Name:            JenkinsMasterContainerName,
 		Image:           jenkinsContainer.Image,
 		ImagePullPolicy: jenkinsContainer.ImagePullPolicy,
-		Command:         jenkinsContainer.Command,
 		LivenessProbe:   jenkinsContainer.LivenessProbe,
 		ReadinessProbe:  jenkinsContainer.ReadinessProbe,
 		Ports: []corev1.ContainerPort{
@@ -312,6 +305,10 @@ func NewJenkinsMasterContainer(jenkins *v1alpha2.Jenkins) corev1.Container {
 		Resources:       jenkinsContainer.Resources,
 		VolumeMounts:    append(GetJenkinsMasterContainerBaseVolumeMounts(jenkins), jenkinsContainer.VolumeMounts...),
 	}
+	if jenkinsContainer.Command != nil {
+		container.Command = jenkinsContainer.Command
+	}
+	return container
 }
 
 // NewJenkinsSCConfigContainer returns Jenkins side container for config reloading

@@ -197,7 +197,7 @@ func (r *JenkinsReconcilerBaseConfiguration) Validate(jenkins *v1alpha2.Jenkins)
 
 func (r *JenkinsReconcilerBaseConfiguration) validateJenkinsMasterContainerCommand() []string {
 	masterContainer := r.Configuration.GetJenkinsMasterContainer()
-	if masterContainer == nil {
+	if masterContainer == nil || masterContainer.Command == nil{
 		return []string{}
 	}
 
@@ -208,9 +208,6 @@ func (r *JenkinsReconcilerBaseConfiguration) validateJenkinsMasterContainerComma
 		fmt.Sprintf("%s<optional-custom-command> && exec <command-which-start-jenkins>", jenkinsOperatorInitScript),
 	}
 	invalidCommandMessage := []string{fmt.Sprintf("spec.master.containers[%s].command is invalid, make sure it looks like '%v', otherwise the operator won't configure default user and install plugins. 'exec' is required to propagate signals to the Jenkins.", masterContainer.Name, correctCommand)}
-	if len(masterContainer.Command) != 3 {
-		return invalidCommandMessage
-	}
 	if masterContainer.Command[0] != correctCommand[0] {
 		return invalidCommandMessage
 	}

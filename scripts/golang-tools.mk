@@ -35,7 +35,7 @@ endif
 
 # find or download kubebuilder
 kubebuilder:
-ifeq (, $(shell stat $$KUBEBUILDER_ASSETS/kubebuilder 2> /dev/null ))
+ifeq (, $(shell which kubebuilder))
 	@{ \
 	set -e ; \
 	KUBEBUILDER_TMP_DIR=$$(mktemp -d) ;\

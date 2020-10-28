@@ -864,7 +864,7 @@ func TestValidateJenkinsMasterContainerCommand(t *testing.T) {
 
 		got := baseReconcileLoop.validateJenkinsMasterContainerCommand()
 
-		assert.Len(t, got, 1)
+		assert.Len(t, got, 0)
 	})
 	t.Run("command has 3 lines but it's values are invalid", func(t *testing.T) {
 		jenkins := &v1alpha2.Jenkins{
@@ -895,8 +895,7 @@ func TestValidateJenkinsMasterContainerCommand(t *testing.T) {
 				Master: v1alpha2.JenkinsMaster{
 					Containers: []v1alpha2.Container{
 						{
-							Name:    resources.JenkinsMasterContainerName,
-							Command: resources.GetJenkinsMasterContainerBaseCommand(),
+							Name: resources.JenkinsMasterContainerName,
 						},
 					},
 				},
