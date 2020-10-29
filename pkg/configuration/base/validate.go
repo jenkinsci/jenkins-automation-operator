@@ -166,7 +166,8 @@ func (r *JenkinsReconcilerBaseConfiguration) Validate(jenkins *v1alpha2.Jenkins)
 		messages = append(messages, msg...)
 	}
 
-	for _, container := range jenkins.Spec.Master.Containers {
+	actualSpec := jenkins.Status.Spec
+	for _, container := range actualSpec.Master.Containers {
 		if msg := r.validateContainer(container); len(msg) > 0 {
 			for _, m := range msg {
 				messages = append(messages, fmt.Sprintf("Container `%s` - %s", container.Name, m))
@@ -174,7 +175,7 @@ func (r *JenkinsReconcilerBaseConfiguration) Validate(jenkins *v1alpha2.Jenkins)
 		}
 	}
 
-	if msg := r.validatePlugins(plugins.BasePlugins(), jenkins.Spec.Master.BasePlugins, jenkins.Spec.Master.Plugins); len(msg) > 0 {
+	if msg := r.validatePlugins(plugins.BasePlugins(), actualSpec.Master.BasePlugins, actualSpec.Master.Plugins); len(msg) > 0 {
 		messages = append(messages, msg...)
 	}
 
@@ -182,14 +183,14 @@ func (r *JenkinsReconcilerBaseConfiguration) Validate(jenkins *v1alpha2.Jenkins)
 		messages = append(messages, msg...)
 	}
 
-	if msg, err := r.validateConfiguration(jenkins.Spec.ConfigurationAsCode, jenkins.Name); err != nil {
+	if msg, err := r.validateConfiguration(actualSpec.ConfigurationAsCode, jenkins.Name); err != nil {
 		return nil, err
 	} else if len(msg) > 0 {
 		messages = append(messages, msg...)
 	}
 
-	if jenkins.Spec.JenkinsAPISettings.AuthorizationStrategy != v1alpha2.CreateUserAuthorizationStrategy && jenkins.Spec.JenkinsAPISettings.AuthorizationStrategy != v1alpha2.ServiceAccountAuthorizationStrategy {
-		messages = append(messages, fmt.Sprintf("unrecognized '%s' spec.jenkinsAPISettings.authorizationStrategy", jenkins.Spec.JenkinsAPISettings.AuthorizationStrategy))
+	if actualSpec.JenkinsAPISettings.AuthorizationStrategy != v1alpha2.CreateUserAuthorizationStrategy && actualSpec.JenkinsAPISettings.AuthorizationStrategy != v1alpha2.ServiceAccountAuthorizationStrategy {
+		messages = append(messages, fmt.Sprintf("unrecognized '%s' spec.jenkinsAPISettings.authorizationStrategy", actualSpec.JenkinsAPISettings.AuthorizationStrategy))
 	}
 
 	return messages, nil
@@ -197,7 +198,7 @@ func (r *JenkinsReconcilerBaseConfiguration) Validate(jenkins *v1alpha2.Jenkins)
 
 func (r *JenkinsReconcilerBaseConfiguration) validateJenkinsMasterContainerCommand() []string {
 	masterContainer := r.Configuration.GetJenkinsMasterContainer()
-	if masterContainer == nil || masterContainer.Command == nil{
+	if masterContainer == nil || masterContainer.Command == nil {
 		return []string{}
 	}
 
@@ -226,7 +227,8 @@ func (r *JenkinsReconcilerBaseConfiguration) validateJenkinsMasterContainerComma
 
 func (r *JenkinsReconcilerBaseConfiguration) validateImagePullSecrets() ([]string, error) {
 	var messages []string
-	for _, sr := range r.Configuration.Jenkins.Spec.Master.ImagePullSecrets {
+	actualSpec := r.Configuration.Jenkins.Status.Spec
+	for _, sr := range actualSpec.Master.ImagePullSecrets {
 		msg, err := r.validateImagePullSecret(sr.Name)
 		if err != nil {
 			return nil, err
@@ -266,7 +268,8 @@ func (r *JenkinsReconcilerBaseConfiguration) validateImagePullSecret(secretName 
 
 func (r *JenkinsReconcilerBaseConfiguration) validateVolumes() ([]string, error) {
 	var messages []string
-	for _, volume := range r.Configuration.Jenkins.Spec.Master.Volumes {
+	actualSpec := r.Configuration.Jenkins.Status.Spec
+	for _, volume := range actualSpec.Master.Volumes {
 		switch {
 		case volume.ConfigMap != nil:
 			if msg, err := r.validateConfigMapVolume(volume); err != nil {
@@ -344,7 +347,8 @@ func (r *JenkinsReconcilerBaseConfiguration) validateReservedVolumes() []string 
 	var messages []string
 
 	for _, baseVolume := range resources.GetJenkinsMasterPodBaseVolumes(r.Configuration.Jenkins) {
-		for _, volume := range r.Configuration.Jenkins.Spec.Master.Volumes {
+		actualSpec := r.Configuration.Jenkins.Status.Spec
+		for _, volume := range actualSpec.Master.Volumes {
 			if baseVolume.Name == volume.Name {
 				messages = append(messages, fmt.Sprintf("Jenkins Master pod volume '%s' is reserved please choose different one", volume.Name))
 			}
@@ -377,7 +381,7 @@ func (r *JenkinsReconcilerBaseConfiguration) validateContainer(container v1alpha
 
 func (r *JenkinsReconcilerBaseConfiguration) validateContainerVolumeMounts(container v1alpha2.Container) []string {
 	var messages []string
-	allVolumes := append(resources.GetJenkinsMasterPodBaseVolumes(r.Configuration.Jenkins), r.Configuration.Jenkins.Spec.Master.Volumes...)
+	allVolumes := append(resources.GetJenkinsMasterPodBaseVolumes(r.Configuration.Jenkins), r.Configuration.Jenkins.Status.Spec.Master.Volumes...)
 
 	for _, volumeMount := range container.VolumeMounts {
 		if len(volumeMount.MountPath) == 0 {
@@ -408,7 +412,8 @@ func (r *JenkinsReconcilerBaseConfiguration) validateJenkinsMasterPodEnvs() []st
 	}
 
 	javaOpts := corev1.EnvVar{}
-	for _, userEnv := range r.Configuration.Jenkins.Spec.Master.Containers[0].Env {
+	actualSpec := r.Configuration.Jenkins.Status.Spec
+	for _, userEnv := range actualSpec.Master.Containers[0].Env {
 		if userEnv.Name == constants.JavaOpsVariableName {
 			javaOpts = userEnv
 		}

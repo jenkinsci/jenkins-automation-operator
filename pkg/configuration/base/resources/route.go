@@ -24,7 +24,7 @@ func UpdateRoute(actual routev1.Route, jenkins *v1alpha2.Jenkins) routev1.Route 
 	if actualTargetService.Name != serviceName {
 		actual.Spec.To.Name = serviceName
 	}
-	port := jenkins.Spec.Service.Port
+	port := jenkins.Status.Spec.Service.Port
 	if actual.Spec.Port.TargetPort.IntVal != port {
 		actual.Spec.Port.TargetPort = intstr.FromInt(int(port))
 	}

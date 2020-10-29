@@ -129,12 +129,12 @@ func (r *JenkinsReconcilerBaseConfiguration) ensureResourcesRequiredForJenkinsDe
 	r.logger.V(log.VDebug).Info("Extra role bindings are present")
 
 	httpServiceName := resources.GetJenkinsHTTPServiceName(r.Configuration.Jenkins)
-	if err := r.createService(metaObject, httpServiceName, r.Configuration.Jenkins.Spec.Service); err != nil {
+	if err := r.createService(metaObject, httpServiceName, r.Configuration.Jenkins.Status.Spec.Service); err != nil {
 		return err
 	}
 	r.logger.V(log.VDebug).Info("Jenkins HTTP Service is present")
 
-	if err := r.createService(metaObject, resources.GetJenkinsJNLPServiceName(r.Configuration.Jenkins), r.Configuration.Jenkins.Spec.SlaveService); err != nil {
+	if err := r.createService(metaObject, resources.GetJenkinsJNLPServiceName(r.Configuration.Jenkins), r.Configuration.Jenkins.Status.Spec.SlaveService); err != nil {
 		return err
 	}
 	r.logger.V(log.VDebug).Info("Jenkins slave Service is present")

@@ -473,6 +473,9 @@ type JenkinsStatus struct {
 	// UserAndPasswordHash is a SHA256 hash made from user and password
 	// +optional
 	UserAndPasswordHash string `json:"userAndPasswordHash,omitempty"`
+
+	// Spec defines the effective state of the Jenkins
+	Spec *JenkinsSpec `json:"spec,omitempty"`
 }
 
 // +genclient
