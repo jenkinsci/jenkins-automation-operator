@@ -105,7 +105,7 @@ func GetJenkinsMasterContainerBaseEnvs(jenkins *v1alpha2.Jenkins) []corev1.EnvVa
 // getJenkinsHomePath fetches the Home Path for Jenkins
 func getJenkinsHomePath(jenkins *v1alpha2.Jenkins) string {
 	defaultJenkinsHomePath := "/var/lib/jenkins"
-	for _, envVar := range jenkins.Spec.Master.Containers[0].Env {
+	for _, envVar := range jenkins.Status.Spec.Master.Containers[0].Env {
 		if envVar.Name == "JENKINS_HOME" {
 			return envVar.Value
 		}
@@ -255,7 +255,7 @@ func GetJenkinsMasterContainerBaseVolumeMounts(jenkins *v1alpha2.Jenkins) []core
 
 // NewJenkinsMasterContainer returns Jenkins master Kubernetes container
 func NewJenkinsMasterContainer(jenkins *v1alpha2.Jenkins) corev1.Container {
-	jenkinsContainer := jenkins.Spec.Master.Containers[0]
+	jenkinsContainer := jenkins.Status.Spec.Master.Containers[0]
 
 	envs := GetJenkinsMasterContainerBaseEnvs(jenkins)
 	envs = append(envs, jenkinsContainer.Env...)
@@ -311,8 +311,8 @@ func GetJenkinsContainer(jenkins *v1alpha2.Jenkins, jenkinsContainer v1alpha2.Co
 	return container
 }
 
-// NewJenkinsSCConfigContainer returns Jenkins side container for config reloading
-func NewJenkinsSCConfigContainer(jenkins *v1alpha2.Jenkins) corev1.Container {
+// NewJenkinsConfigContainer returns Jenkins side container for config reloading
+func NewJenkinsConfigContainer(jenkins *v1alpha2.Jenkins) corev1.Container {
 	envs := map[string]string{
 		"LABEL":             JenkinsSCConfigLabel,
 		"LABEL_VALUE":       fmt.Sprintf(JenkinsSCConfigLabelValue, jenkins.Name),
@@ -446,12 +446,12 @@ func ConvertJenkinsContainerToKubernetesContainer(container v1alpha2.Container) 
 	}
 }
 
-func newContainers(jenkins *v1alpha2.Jenkins) (containers []corev1.Container) {
+func newContainers(jenkins *v1alpha2.Jenkins, spec *v1alpha2.JenkinsSpec) (containers []corev1.Container) {
 	containers = append(containers, NewJenkinsMasterContainer(jenkins))
-	if jenkins.Spec.ConfigurationAsCode.Enabled && jenkins.Spec.ConfigurationAsCode.EnableAutoReload {
-		containers = append(containers, NewJenkinsSCConfigContainer(jenkins))
+	if spec.ConfigurationAsCode.Enabled && jenkins.Spec.ConfigurationAsCode.EnableAutoReload {
+		containers = append(containers, NewJenkinsConfigContainer(jenkins))
 	}
-	for _, container := range jenkins.Spec.Master.Containers[1:] {
+	for _, container := range spec.Master.Containers[1:] {
 		containers = append(containers, ConvertJenkinsContainerToKubernetesContainer(container))
 	}
 

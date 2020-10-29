@@ -228,6 +228,7 @@ func (r *JenkinsReconcilerBaseConfiguration) validateJenkinsMasterContainerComma
 func (r *JenkinsReconcilerBaseConfiguration) validateImagePullSecrets() ([]string, error) {
 	var messages []string
 	actualSpec := r.Configuration.Jenkins.Status.Spec
+
 	for _, sr := range actualSpec.Master.ImagePullSecrets {
 		msg, err := r.validateImagePullSecret(sr.Name)
 		if err != nil {
@@ -262,7 +263,6 @@ func (r *JenkinsReconcilerBaseConfiguration) validateImagePullSecret(secretName 
 	if secret.Data["docker-email"] == nil {
 		messages = append(messages, fmt.Sprintf("Secret '%s' defined in spec.master.imagePullSecrets doesn't have 'docker-email' key.", secretName))
 	}
-
 	return messages, nil
 }
 

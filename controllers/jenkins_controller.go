@@ -241,8 +241,8 @@ func (r *JenkinsReconciler) reconcile(ctx context.Context, request ctrl.Request,
 	logger := r.Log.WithValues("cr", request.Name)
 	var err error
 	var requeue bool
-	requeue, err = r.setDefaults(ctx, jenkins)
-	if err != nil || !requeue {
+	_, err = r.setDefaults(ctx, jenkins)
+	if err != nil {
 		logger.V(log.VDebug).Info(fmt.Sprintf("setDefaults returned an error %s", err))
 		return reconcile.Result{}, err
 	}
@@ -356,9 +356,18 @@ func (r *JenkinsReconciler) getDefaults(ctx context.Context, jenkins *v1alpha2.J
 	var jenkinsContainer v1alpha2.Container
 	requestedSpec := jenkins.Spec
 	actualSpec := requestedSpec.DeepCopy()
+	jenkins.Status.Spec = actualSpec
 
 	if len(requestedSpec.Master.Containers) == 0 {
-		jenkinsContainer = v1alpha2.Container{Name: resources.JenkinsMasterContainerName}
+		image := constants.DefaultJenkinsMasterImage
+		if resources.IsRouteAPIAvailable(&r.clientSet) {
+			image = constants.DefaultOpenShiftJenkinsMasterImage
+		}
+		jenkinsContainer = v1alpha2.Container{
+			Name:  resources.JenkinsMasterContainerName,
+			Image: image,
+		}
+		actualSpec.Master.Containers[0] = jenkinsContainer
 	} else {
 		if requestedSpec.Master.Containers[0].Name != resources.JenkinsMasterContainerName {
 			error := errors.Errorf("first container in spec.master.containers must be Jenkins container with name '%s', please correct CR", resources.JenkinsMasterContainerName)
@@ -489,6 +498,12 @@ func (r *JenkinsReconciler) setDefaultsForContainer(jenkins *v1alpha2.Jenkins, c
 	logger := r.Log.WithValues("cr", jenkins.Name, "container", containerName)
 
 	actualSpec := jenkins.Status.Spec
+	if len(actualSpec.Master.Containers[containerIndex].ImagePullPolicy) == 0 {
+		logger.Info(fmt.Sprintf("Setting default container image pull policy: %s", corev1.PullAlways))
+		changed = true
+		actualSpec.Master.Containers[containerIndex].ImagePullPolicy = corev1.PullAlways
+	}
+
 	if len(actualSpec.Master.Containers[containerIndex].ImagePullPolicy) == 0 {
 		logger.Info(fmt.Sprintf("Setting default container image pull policy: %s", corev1.PullAlways))
 		changed = true

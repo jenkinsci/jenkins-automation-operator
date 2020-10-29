@@ -11,9 +11,9 @@ import (
 )
 
 // NewJenkinsMasterPod builds Jenkins Master Kubernetes Pod resource.
-func NewJenkinsDeployment(objectMeta metav1.ObjectMeta, jenkins *v1alpha2.Jenkins) *appsv1.Deployment {
+func NewJenkinsDeployment(objectMeta metav1.ObjectMeta, jenkins *v1alpha2.Jenkins, jenkinsSpec *v1alpha2.JenkinsSpec) *appsv1.Deployment {
 	serviceAccountName := objectMeta.Name
-	objectMeta.Annotations = jenkins.Spec.Master.Annotations
+	objectMeta.Annotations = jenkinsSpec.Master.Annotations
 	objectMeta.Name = GetJenkinsDeploymentName(jenkins)
 	selector := &metav1.LabelSelector{MatchLabels: objectMeta.Labels}
 	return &appsv1.Deployment{
@@ -29,14 +29,14 @@ func NewJenkinsDeployment(objectMeta metav1.ObjectMeta, jenkins *v1alpha2.Jenkin
 				ObjectMeta: objectMeta,
 				Spec: corev1.PodSpec{
 					ServiceAccountName: serviceAccountName,
-					NodeSelector:       jenkins.Spec.Master.NodeSelector,
+					NodeSelector:       jenkinsSpec.Master.NodeSelector,
 					InitContainers:     newInitContainers(jenkins),
-					Containers:         newContainers(jenkins),
+					Containers:         newContainers(jenkins, jenkinsSpec),
 					Volumes:            append(GetJenkinsMasterPodBaseVolumes(jenkins), jenkins.Spec.Master.Volumes...),
-					SecurityContext:    jenkins.Spec.Master.SecurityContext,
-					ImagePullSecrets:   jenkins.Spec.Master.ImagePullSecrets,
-					Tolerations:        jenkins.Spec.Master.Tolerations,
-					PriorityClassName:  jenkins.Spec.Master.PriorityClassName,
+					SecurityContext:    jenkinsSpec.Master.SecurityContext,
+					ImagePullSecrets:   jenkinsSpec.Master.ImagePullSecrets,
+					Tolerations:        jenkinsSpec.Master.Tolerations,
+					PriorityClassName:  jenkinsSpec.Master.PriorityClassName,
 				},
 			},
 			Selector: selector,

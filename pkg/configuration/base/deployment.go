@@ -39,7 +39,7 @@ func (r *JenkinsReconcilerBaseConfiguration) ensureJenkinsDeploymentIsPresent(me
 	}
 	if apierrors.IsNotFound(err) {
 		r.logger.Info("Error type is not found: Creating deployment")
-		jenkinsDeployment = resources.NewJenkinsDeployment(meta, jenkins)
+		jenkinsDeployment = resources.NewJenkinsDeployment(meta, jenkins, jenkins.Status.Spec)
 		deploymentName := jenkinsDeployment.Name
 		r.logger.Info("Sending notification")
 		r.sendDeploymentCreationNotification()
