@@ -47,7 +47,6 @@ COPY hack/ hack/
 COPY controllers/ controllers/
 COPY pkg/ pkg/
 COPY version/ version/
-COPY internal/ internal/
 COPY config/ config/
 COPY scripts/ scripts/
 COPY go.mod go.sum LICENSE Makefile ./
