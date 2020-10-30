@@ -25,11 +25,6 @@ type JenkinsSpec struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="JenkinsImage reference",xDescriptors="urn:alm:descriptor:io.jenkins:JenkinsImage"
 	JenkinsImageRef string `json:"jenkinsImageRef,omitempty"`
 
-	// Notifications defines list of a services which are used to inform about Jenkins status
-	// Can be used to integrate chat services like Slack, Microsoft Teams or Mailgun
-	// +optional
-	Notifications []Notification `json:"notifications,omitempty"`
-
 	// Service is Kubernetes service of Jenkins master HTTP pod
 	// Defaults to :
 	// port: 8080
@@ -115,48 +110,6 @@ const (
 	// NotificationLevelInfo - Only info
 	NotificationLevelInfo NotificationLevel = "info"
 )
-
-// Notification is a service configuration used to send notifications about Jenkins status.
-type Notification struct {
-	LoggingLevel NotificationLevel `json:"level"`
-	Verbose      bool              `json:"verbose"`
-	Name         string            `json:"name"`
-	Slack        *Slack            `json:"slack,omitempty"`
-	Teams        *MicrosoftTeams   `json:"teams,omitempty"`
-	Mailgun      *Mailgun          `json:"mailgun,omitempty"`
-	SMTP         *SMTP             `json:"smtp,omitempty"`
-}
-
-// Slack is handler for Slack notification channel.
-type Slack struct {
-	// The web hook URL to Slack App
-	WebHookURLSecretKeySelector SecretKeySelector `json:"webHookURLSecretKeySelector"`
-}
-
-// SMTP is handler for sending emails via this protocol.
-type SMTP struct {
-	UsernameSecretKeySelector SecretKeySelector `json:"usernameSecretKeySelector"`
-	PasswordSecretKeySelector SecretKeySelector `json:"passwordSecretKeySelector"`
-	Port                      int               `json:"port"`
-	Server                    string            `json:"server"`
-	TLSInsecureSkipVerify     bool              `json:"tlsInsecureSkipVerify,omitempty"`
-	From                      string            `json:"from"`
-	To                        string            `json:"to"`
-}
-
-// MicrosoftTeams is handler for Microsoft MicrosoftTeams notification channel.
-type MicrosoftTeams struct {
-	// The web hook URL to MicrosoftTeams App
-	WebHookURLSecretKeySelector SecretKeySelector `json:"webHookURLSecretKeySelector"`
-}
-
-// Mailgun is handler for Mailgun email service notification channel.
-type Mailgun struct {
-	Domain                  string            `json:"domain"`
-	APIKeySecretKeySelector SecretKeySelector `json:"apiKeySecretKeySelector"`
-	Recipient               string            `json:"recipient"`
-	From                    string            `json:"from"`
-}
 
 // SecretKeySelector selects a key of a Secret.
 type SecretKeySelector struct {
