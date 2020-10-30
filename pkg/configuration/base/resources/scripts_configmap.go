@@ -5,8 +5,8 @@ import (
 	"text/template"
 
 	"github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
-	"github.com/jenkinsci/kubernetes-operator/internal/render"
 	"github.com/jenkinsci/kubernetes-operator/pkg/constants"
+	"github.com/jenkinsci/kubernetes-operator/pkg/util"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -316,7 +316,7 @@ func buildInitBashScript(jenkins *v1alpha2.Jenkins) (*string, error) {
 		JenkinsScriptsVolumePath: JenkinsScriptsVolumePath,
 	}
 
-	output, err := render.Render(initBashTemplate, data)
+	output, err := util.Render(initBashTemplate, data)
 	if err != nil {
 		return nil, err
 	}
