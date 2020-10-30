@@ -44,19 +44,20 @@ const (
 	// defaut configmap for jenkins configuration
 	JenkinsDefaultConfigMapName = "jenkins-default-configuration"
 
-	// JenkinsSCConfigName is the Jenkins side car container name for reloading config
-	JenkinsSCConfigName            = "jenkins-sc-config"
-	JenkinsSCConfigImage           = "kiwigrid/k8s-sidecar:0.1.144"
-	JenkinsSCConfigImagePullPolicy = "IfNotPresent"
-	JenkinsSCConfigReqURL          = "http://localhost:8080/reload-configuration-as-code/?casc-reload-token=$(POD_NAME)"
-	JenkinsSCConfigReqMethod       = "POST"
-	JenkinsSCConfigReqRetry        = "10"
-	JenkinsSCConfigCPULimit        = "100m"
-	JenkinsSCConfigMEMLimit        = "100Mi"
-	JenkinsSCConfigCPURequest      = "50m"
-	JenkinsSCConfigMEMRequest      = "50Mi"
-	JenkinsSCConfigLabel           = "type"
-	JenkinsSCConfigLabelValue      = "%s-jenkins-config"
+	// JenkinsSidecarContainerConfigName is the Jenkins side car container name for reloading config
+	JenkinsSidecarContainerConfigName = "config"
+	DefaultJenkinsInitContainerName   = "init"
+	JenkinsSCConfigImage              = "kiwigrid/k8s-sidecar:0.1.144"
+	JenkinsSCConfigImagePullPolicy    = "IfNotPresent"
+	JenkinsSCConfigReqURL             = "http://localhost:8080/reload-configuration-as-code/?casc-reload-token=$(POD_NAME)"
+	JenkinsSCConfigReqMethod          = "POST"
+	JenkinsSCConfigReqRetry           = "10"
+	JenkinsSCConfigCPULimit           = "100m"
+	JenkinsSCConfigMEMLimit           = "100Mi"
+	JenkinsSCConfigCPURequest         = "50m"
+	JenkinsSCConfigMEMRequest         = "50Mi"
+	JenkinsSCConfigLabel              = "type"
+	JenkinsSCConfigLabelValue         = "%s-jenkins-config"
 )
 
 // GetJenkinsMasterContainerBaseEnvs returns Jenkins master pod envs required by operator
@@ -361,7 +362,7 @@ func NewJenkinsConfigContainer(jenkins *v1alpha2.Jenkins) corev1.Container {
 	}
 
 	return corev1.Container{
-		Name:            JenkinsSCConfigName,
+		Name:            JenkinsSidecarContainerConfigName,
 		Image:           JenkinsSCConfigImage,
 		ImagePullPolicy: corev1.PullIfNotPresent,
 		Env:             envVars,
@@ -414,7 +415,7 @@ func NewJenkinsInitContainer(jenkins *v1alpha2.Jenkins, spec *v1alpha2.JenkinsSp
 		fmt.Sprintf("if [ `ls %s/casc-* > /dev/null 2>&1; echo $?` -eq 0 ]; then find %s/casc-* -type f -exec cp -fL {} %s \\;; fi", jenkinsPath, jenkinsPath, ConfigurationAsCodeVolumePath),
 	}
 	return corev1.Container{
-		Name:            fmt.Sprintf("init-%s", jenkinsContainer.Name),
+		Name:            DefaultJenkinsInitContainerName,
 		Image:           jenkinsContainer.Image,
 		ImagePullPolicy: jenkinsContainer.ImagePullPolicy,
 		Command:         command,
