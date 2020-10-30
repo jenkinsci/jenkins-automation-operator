@@ -86,7 +86,7 @@ func GetJenkinsTestInstance(name string, namespace string) *v1alpha2.Jenkins {
 			//			JenkinsAPISettings: v1alpha2.JenkinsAPISettings{
 			//				AuthorizationStrategy: v1alpha2.ServiceAccountAuthorizationStrategy,
 			//			},
-			Master: v1alpha2.JenkinsMaster{
+			Master: &v1alpha2.JenkinsMaster{
 				Annotations: annotations,
 				Containers:  getJenkinsContainers(),
 				Plugins:     getJenkinsPlugins(),

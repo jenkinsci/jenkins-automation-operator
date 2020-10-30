@@ -85,20 +85,22 @@ func GetJenkinsMasterContainerBaseEnvs(jenkins *v1alpha2.Jenkins) []corev1.EnvVa
 		},
 	}
 
-	if len(jenkins.Spec.ConfigurationAsCode.Secret.Name) > 0 {
-		envVars = append(envVars, corev1.EnvVar{
-			Name:  "SECRETS",
-			Value: ConfigurationAsCodeSecretVolumePath,
-		})
-	}
+	spec := jenkins.Status.Spec
+	if spec.ConfigurationAsCode != nil {
+		if len(spec.ConfigurationAsCode.Secret.Name) > 0 {
+			envVars = append(envVars, corev1.EnvVar{
+				Name:  "SECRETS",
+				Value: ConfigurationAsCodeSecretVolumePath,
+			})
+		}
 
-	if jenkins.Spec.ConfigurationAsCode.Enabled {
-		envVars = append(envVars, corev1.EnvVar{
-			Name:  "CASC_JENKINS_CONFIG",
-			Value: ConfigurationAsCodeVolumePath,
-		})
+		if spec.ConfigurationAsCode.Enabled {
+			envVars = append(envVars, corev1.EnvVar{
+				Name:  "CASC_JENKINS_CONFIG",
+				Value: ConfigurationAsCodeVolumePath,
+			})
+		}
 	}
-
 	return envVars
 }
 
@@ -157,62 +159,65 @@ func GetJenkinsMasterPodBaseVolumes(jenkins *v1alpha2.Jenkins) []corev1.Volume {
 			},
 		},
 	}
-	if jenkins.Spec.ConfigurationAsCode.Enabled {
-		// target volume for the init container
-		// All casc configmaps will be copied here
-		volumes = append(volumes, corev1.Volume{
-			Name: ConfigurationAsCodeVolumeName,
-			VolumeSource: corev1.VolumeSource{
-				EmptyDir: &corev1.EmptyDirVolumeSource{},
-			},
-		})
-		// volume for default config configmap
-		if jenkins.Spec.ConfigurationAsCode.DefaultConfig {
+	spec := jenkins.Status.Spec
+	if spec != nil && spec.ConfigurationAsCode != nil {
+		configurationAsCode := spec.ConfigurationAsCode
+		if configurationAsCode.Enabled {
+			// target volume for the init container
+			// All casc configmaps will be copied here
 			volumes = append(volumes, corev1.Volume{
-				Name: fmt.Sprintf("casc-default-%s", JenkinsDefaultConfigMapName),
+				Name: ConfigurationAsCodeVolumeName,
 				VolumeSource: corev1.VolumeSource{
-					ConfigMap: &corev1.ConfigMapVolumeSource{
-						DefaultMode: &configMapVolumeSourceDefaultMode,
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: JenkinsDefaultConfigMapName,
+					EmptyDir: &corev1.EmptyDirVolumeSource{},
+				},
+			})
+			// volume for default config configmap
+			if configurationAsCode.DefaultConfig {
+				volumes = append(volumes, corev1.Volume{
+					Name: fmt.Sprintf("casc-default-%s", JenkinsDefaultConfigMapName),
+					VolumeSource: corev1.VolumeSource{
+						ConfigMap: &corev1.ConfigMapVolumeSource{
+							DefaultMode: &configMapVolumeSourceDefaultMode,
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: JenkinsDefaultConfigMapName,
+							},
 						},
 					},
-				},
-			})
-		}
-		// Loop to add all casc configmap volumes
-		for _, cm := range jenkins.Spec.ConfigurationAsCode.Configurations {
-			volumes = append(volumes, corev1.Volume{
-				Name: fmt.Sprintf("casc-init-%s", cm.Name),
-				VolumeSource: corev1.VolumeSource{
-					ConfigMap: &corev1.ConfigMapVolumeSource{
-						DefaultMode: &configMapVolumeSourceDefaultMode,
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: cm.Name,
+				})
+			}
+			// Loop to add all casc configmap volumes
+			for _, cm := range configurationAsCode.Configurations {
+				volumes = append(volumes, corev1.Volume{
+					Name: fmt.Sprintf("casc-init-%s", cm.Name),
+					VolumeSource: corev1.VolumeSource{
+						ConfigMap: &corev1.ConfigMapVolumeSource{
+							DefaultMode: &configMapVolumeSourceDefaultMode,
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: cm.Name,
+							},
 						},
 					},
-				},
-			})
-		}
-		// Add casc secret volume
-		if len(jenkins.Spec.ConfigurationAsCode.Secret.Name) > 0 {
-			volumes = append(volumes, corev1.Volume{
-				Name: ConfigurationAsCodeSecretVolumeName,
-				VolumeSource: corev1.VolumeSource{
-					Secret: &corev1.SecretVolumeSource{
-						DefaultMode: &secretVolumeSourceDefaultMode,
-						SecretName:  jenkins.Spec.ConfigurationAsCode.Secret.Name,
+				})
+			}
+			// Add casc secret volume
+			if len(configurationAsCode.Secret.Name) > 0 {
+				volumes = append(volumes, corev1.Volume{
+					Name: ConfigurationAsCodeSecretVolumeName,
+					VolumeSource: corev1.VolumeSource{
+						Secret: &corev1.SecretVolumeSource{
+							DefaultMode: &secretVolumeSourceDefaultMode,
+							SecretName:  configurationAsCode.Secret.Name,
+						},
 					},
-				},
-			})
+				})
+			}
 		}
 	}
-
 	return volumes
 }
 
 // GetJenkinsMasterContainerBaseVolumeMounts returns Jenkins master pod volume mounts required by operator
-func GetJenkinsMasterContainerBaseVolumeMounts(jenkins *v1alpha2.Jenkins) []corev1.VolumeMount {
+func GetJenkinsMasterContainerBaseVolumeMounts(jenkins *v1alpha2.Jenkins, spec *v1alpha2.JenkinsSpec) []corev1.VolumeMount {
 	volumeMounts := []corev1.VolumeMount{
 		{
 			Name:      JenkinsHomeVolumeName,
@@ -236,18 +241,20 @@ func GetJenkinsMasterContainerBaseVolumeMounts(jenkins *v1alpha2.Jenkins) []core
 		},
 	}
 
-	if jenkins.Spec.ConfigurationAsCode.Enabled {
-		volumeMounts = append(volumeMounts, corev1.VolumeMount{
-			Name:      ConfigurationAsCodeVolumeName,
-			MountPath: ConfigurationAsCodeVolumePath,
-			ReadOnly:  false,
-		})
-		if len(jenkins.Spec.ConfigurationAsCode.Secret.Name) > 0 {
+	if spec.ConfigurationAsCode != nil {
+		if spec.ConfigurationAsCode.Enabled {
 			volumeMounts = append(volumeMounts, corev1.VolumeMount{
-				Name:      ConfigurationAsCodeSecretVolumeName,
-				MountPath: ConfigurationAsCodeSecretVolumePath,
+				Name:      ConfigurationAsCodeVolumeName,
+				MountPath: ConfigurationAsCodeVolumePath,
 				ReadOnly:  false,
 			})
+			if len(spec.ConfigurationAsCode.Secret.Name) > 0 {
+				volumeMounts = append(volumeMounts, corev1.VolumeMount{
+					Name:      ConfigurationAsCodeSecretVolumeName,
+					MountPath: ConfigurationAsCodeSecretVolumePath,
+					ReadOnly:  false,
+				})
+			}
 		}
 	}
 	return volumeMounts
@@ -303,7 +310,7 @@ func GetJenkinsContainer(jenkins *v1alpha2.Jenkins, jenkinsContainer v1alpha2.Co
 		SecurityContext: jenkinsContainer.SecurityContext,
 		Env:             envs,
 		Resources:       jenkinsContainer.Resources,
-		VolumeMounts:    append(GetJenkinsMasterContainerBaseVolumeMounts(jenkins), jenkinsContainer.VolumeMounts...),
+		VolumeMounts:    append(GetJenkinsMasterContainerBaseVolumeMounts(jenkins, jenkins.Status.Spec), jenkinsContainer.VolumeMounts...),
 	}
 	if jenkinsContainer.Command != nil {
 		container.Command = jenkinsContainer.Command
@@ -373,8 +380,8 @@ func NewJenkinsConfigContainer(jenkins *v1alpha2.Jenkins) corev1.Container {
 }
 
 // NewJenkinsInitContainer returns Jenkins init container to copy configmap to make it writable
-func NewJenkinsInitContainer(jenkins *v1alpha2.Jenkins) corev1.Container {
-	jenkinsContainer := jenkins.Spec.Master.Containers[0]
+func NewJenkinsInitContainer(jenkins *v1alpha2.Jenkins, spec *v1alpha2.JenkinsSpec) corev1.Container {
+	jenkinsContainer := spec.Master.Containers[0]
 	volumeMounts := []corev1.VolumeMount{
 		{
 			Name:      ConfigurationAsCodeVolumeName,
@@ -383,7 +390,7 @@ func NewJenkinsInitContainer(jenkins *v1alpha2.Jenkins) corev1.Container {
 		},
 	}
 
-	if jenkins.Spec.ConfigurationAsCode.DefaultConfig {
+	if spec.ConfigurationAsCode == nil || spec.ConfigurationAsCode.DefaultConfig {
 		volumeMounts = append(volumeMounts, corev1.VolumeMount{
 			Name:      fmt.Sprintf("casc-default-%s", JenkinsDefaultConfigMapName),
 			MountPath: jenkinsPath + fmt.Sprintf("/casc-default-%s", JenkinsDefaultConfigMapName),
@@ -391,8 +398,8 @@ func NewJenkinsInitContainer(jenkins *v1alpha2.Jenkins) corev1.Container {
 		})
 	}
 
-	if jenkins.Spec.ConfigurationAsCode.Enabled {
-		for _, cm := range jenkins.Spec.ConfigurationAsCode.Configurations {
+	if spec.ConfigurationAsCode != nil && spec.ConfigurationAsCode.Enabled {
+		for _, cm := range spec.ConfigurationAsCode.Configurations {
 			volumeMounts = append(volumeMounts, corev1.VolumeMount{
 				Name:      fmt.Sprintf("casc-init-%s", cm.Name),
 				MountPath: jenkinsPath + fmt.Sprintf("/casc-init-%s", cm.Name),
@@ -448,21 +455,22 @@ func ConvertJenkinsContainerToKubernetesContainer(container v1alpha2.Container) 
 
 func newContainers(jenkins *v1alpha2.Jenkins, spec *v1alpha2.JenkinsSpec) (containers []corev1.Container) {
 	containers = append(containers, NewJenkinsMasterContainer(jenkins))
-	if spec.ConfigurationAsCode.Enabled && jenkins.Spec.ConfigurationAsCode.EnableAutoReload {
-		containers = append(containers, NewJenkinsConfigContainer(jenkins))
+	if spec.ConfigurationAsCode != nil {
+		if spec.ConfigurationAsCode.Enabled && spec.ConfigurationAsCode.EnableAutoReload {
+			containers = append(containers, NewJenkinsConfigContainer(jenkins))
+		}
+		for _, container := range spec.Master.Containers[1:] {
+			containers = append(containers, ConvertJenkinsContainerToKubernetesContainer(container))
+		}
 	}
-	for _, container := range spec.Master.Containers[1:] {
-		containers = append(containers, ConvertJenkinsContainerToKubernetesContainer(container))
-	}
-
-	return
+	return containers
 }
 
-func newInitContainers(jenkins *v1alpha2.Jenkins) (containers []corev1.Container) {
-	if jenkins.Spec.ConfigurationAsCode.Enabled {
-		containers = append(containers, NewJenkinsInitContainer(jenkins))
+func newInitContainers(jenkins *v1alpha2.Jenkins, spec *v1alpha2.JenkinsSpec) (containers []corev1.Container) {
+	if spec.ConfigurationAsCode == nil || spec.ConfigurationAsCode.Enabled {
+		containers = append(containers, NewJenkinsInitContainer(jenkins, spec))
 	}
-	return
+	return containers
 }
 
 // GetJenkinsMasterPodLabels returns Jenkins pod labels for given CR

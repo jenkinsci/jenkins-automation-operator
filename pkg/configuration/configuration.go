@@ -60,7 +60,6 @@ func (c *Configuration) GetJenkinsDeployment() (*appsv1.Deployment, error) {
 		logger.V(log.VDebug).Info(fmt.Sprintf("No deployment named: %s found: %+v", deploymentName, err))
 		return nil, err
 	}
-
 	return jenkinsDeployment, nil
 }
 
@@ -153,7 +152,7 @@ func (c *Configuration) Exec(podName, containerName string, command []string) (s
 
 // GetJenkinsMasterContainer returns the Jenkins master container from the CR.
 func (c *Configuration) GetJenkinsMasterContainer() *v1alpha2.Container {
-	if len(c.Jenkins.Spec.Master.Containers) > 0 {
+	if &c.Jenkins.Spec != nil && c.Jenkins.Spec.Master != nil && len(c.Jenkins.Spec.Master.Containers) > 0 {
 		// the first container is the Jenkins master, it is forced jenkins_controller.go
 		return &c.Jenkins.Spec.Master.Containers[0]
 	}

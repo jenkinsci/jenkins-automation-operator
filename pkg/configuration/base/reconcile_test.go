@@ -2,7 +2,12 @@ package base
 
 import (
 	"context"
+	"fmt"
+	"reflect"
+	"strings"
 	"testing"
+
+	stackerr "github.com/pkg/errors"
 
 	"github.com/bndr/gojenkins"
 	"github.com/golang/mock/gomock"
@@ -11,6 +16,7 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
+	"github.com/jenkinsci/kubernetes-operator/pkg/plugins"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -96,9 +102,33 @@ func TestCompareContainerVolumeMounts(t *testing.T) {
 	})
 }
 
+// compareVolumes returns true if Jenkins pod and Jenkins CR volumes are the same
+func (r *JenkinsReconcilerBaseConfiguration) compareVolumes(actualPod corev1.Pod) bool {
+	var withoutServiceAccount []corev1.Volume
+	for _, volume := range actualPod.Spec.Volumes {
+		if !strings.HasPrefix(volume.Name, actualPod.Spec.ServiceAccountName) {
+			withoutServiceAccount = append(withoutServiceAccount, volume)
+		}
+	}
+	jenkins := r.Configuration.Jenkins
+	return reflect.DeepEqual(
+		append(resources.GetJenkinsMasterPodBaseVolumes(jenkins), jenkins.Status.Spec.Master.Volumes...),
+		withoutServiceAccount,
+	)
+}
+
 func TestCompareVolumes(t *testing.T) {
 	t.Run("defaults", func(t *testing.T) {
-		jenkins := &v1alpha2.Jenkins{}
+		jenkins := &v1alpha2.Jenkins{
+			Status: v1alpha2.JenkinsStatus{
+				Spec: &v1alpha2.JenkinsSpec{
+					ConfigurationAsCode: &v1alpha2.Configuration{},
+					Master: &v1alpha2.JenkinsMaster{
+						Volumes: []corev1.Volume{},
+					},
+				},
+			},
+		}
 		pod := corev1.Pod{
 			Spec: corev1.PodSpec{
 				ServiceAccountName: "service-account-name",
@@ -113,11 +143,13 @@ func TestCompareVolumes(t *testing.T) {
 	})
 	t.Run("different", func(t *testing.T) {
 		jenkins := &v1alpha2.Jenkins{
-			Spec: v1alpha2.JenkinsSpec{
-				Master: v1alpha2.JenkinsMaster{
-					Volumes: []corev1.Volume{
-						{
+			Status: v1alpha2.JenkinsStatus{
+				Spec: &v1alpha2.JenkinsSpec{
+					ConfigurationAsCode: &v1alpha2.Configuration{},
+					Master: &v1alpha2.JenkinsMaster{
+						Volumes: []corev1.Volume{{
 							Name: "added",
+						},
 						},
 					},
 				},
@@ -137,11 +169,13 @@ func TestCompareVolumes(t *testing.T) {
 	})
 	t.Run("added one volume", func(t *testing.T) {
 		jenkins := &v1alpha2.Jenkins{
-			Spec: v1alpha2.JenkinsSpec{
-				Master: v1alpha2.JenkinsMaster{
-					Volumes: []corev1.Volume{
-						{
+			Status: v1alpha2.JenkinsStatus{
+				Spec: &v1alpha2.JenkinsSpec{
+					ConfigurationAsCode: &v1alpha2.Configuration{},
+					Master: &v1alpha2.JenkinsMaster{
+						Volumes: []corev1.Volume{{
 							Name: "added",
+						},
 						},
 					},
 				},
@@ -165,7 +199,17 @@ func TestJenkinsReconcilerBaseConfiguration_verifyPlugins(t *testing.T) {
 	log.SetupLogger(true)
 
 	t.Run("happy, empty base and user plugins", func(t *testing.T) {
-		jenkins := &v1alpha2.Jenkins{}
+		jenkins := &v1alpha2.Jenkins{
+			Status: v1alpha2.JenkinsStatus{
+				Spec: &v1alpha2.JenkinsSpec{
+					ConfigurationAsCode: &v1alpha2.Configuration{},
+					Master: &v1alpha2.JenkinsMaster{
+						BasePlugins: []v1alpha2.Plugin{},
+						Plugins:     []v1alpha2.Plugin{},
+					},
+				},
+			},
+		}
 		r := JenkinsReconcilerBaseConfiguration{
 			logger: log.Log,
 			Configuration: configuration.Configuration{
@@ -187,10 +231,13 @@ func TestJenkinsReconcilerBaseConfiguration_verifyPlugins(t *testing.T) {
 	})
 	t.Run("happy, not empty base and user plugins", func(t *testing.T) {
 		jenkins := &v1alpha2.Jenkins{
-			Spec: v1alpha2.JenkinsSpec{
-				Master: v1alpha2.JenkinsMaster{
-					BasePlugins: []v1alpha2.Plugin{{Name: "plugin-name1", Version: "0.0.1"}},
-					Plugins:     []v1alpha2.Plugin{{Name: "plugin-name2", Version: "0.0.1"}},
+			Status: v1alpha2.JenkinsStatus{
+				Spec: &v1alpha2.JenkinsSpec{
+					ConfigurationAsCode: &v1alpha2.Configuration{},
+					Master: &v1alpha2.JenkinsMaster{
+						BasePlugins: []v1alpha2.Plugin{{Name: "plugin-name1", Version: "0.0.1"}},
+						Plugins:     []v1alpha2.Plugin{{Name: "plugin-name2", Version: "0.0.1"}},
+					},
 				},
 			},
 		}
@@ -232,9 +279,12 @@ func TestJenkinsReconcilerBaseConfiguration_verifyPlugins(t *testing.T) {
 	})
 	t.Run("happy, not empty base and empty user plugins", func(t *testing.T) {
 		jenkins := &v1alpha2.Jenkins{
-			Spec: v1alpha2.JenkinsSpec{
-				Master: v1alpha2.JenkinsMaster{
-					BasePlugins: []v1alpha2.Plugin{{Name: "plugin-name", Version: "0.0.1"}},
+			Status: v1alpha2.JenkinsStatus{
+				Spec: &v1alpha2.JenkinsSpec{
+					ConfigurationAsCode: &v1alpha2.Configuration{},
+					Master: &v1alpha2.JenkinsMaster{
+						BasePlugins: []v1alpha2.Plugin{{Name: "plugin-name", Version: "0.0.1"}},
+					},
 				},
 			},
 		}
@@ -269,9 +319,12 @@ func TestJenkinsReconcilerBaseConfiguration_verifyPlugins(t *testing.T) {
 	})
 	t.Run("happy, empty base and not empty user plugins", func(t *testing.T) {
 		jenkins := &v1alpha2.Jenkins{
-			Spec: v1alpha2.JenkinsSpec{
-				Master: v1alpha2.JenkinsMaster{
-					Plugins: []v1alpha2.Plugin{{Name: "plugin-name", Version: "0.0.1"}},
+			Status: v1alpha2.JenkinsStatus{
+				Spec: &v1alpha2.JenkinsSpec{
+					ConfigurationAsCode: &v1alpha2.Configuration{},
+					Master: &v1alpha2.JenkinsMaster{
+						Plugins: []v1alpha2.Plugin{{Name: "plugin-name", Version: "0.0.1"}},
+					},
 				},
 			},
 		}
@@ -306,9 +359,12 @@ func TestJenkinsReconcilerBaseConfiguration_verifyPlugins(t *testing.T) {
 	})
 	t.Run("happy, plugin version matter for base plugins", func(t *testing.T) {
 		jenkins := &v1alpha2.Jenkins{
-			Spec: v1alpha2.JenkinsSpec{
-				Master: v1alpha2.JenkinsMaster{
-					BasePlugins: []v1alpha2.Plugin{{Name: "plugin-name", Version: "0.0.1"}},
+			Status: v1alpha2.JenkinsStatus{
+				Spec: &v1alpha2.JenkinsSpec{
+					ConfigurationAsCode: &v1alpha2.Configuration{},
+					Master: &v1alpha2.JenkinsMaster{
+						BasePlugins: []v1alpha2.Plugin{{Name: "plugin-name", Version: "0.0.1"}},
+					},
 				},
 			},
 		}
@@ -343,9 +399,12 @@ func TestJenkinsReconcilerBaseConfiguration_verifyPlugins(t *testing.T) {
 	})
 	t.Run("plugin version matter for user plugins", func(t *testing.T) {
 		jenkins := &v1alpha2.Jenkins{
-			Spec: v1alpha2.JenkinsSpec{
-				Master: v1alpha2.JenkinsMaster{
-					Plugins: []v1alpha2.Plugin{{Name: "plugin-name", Version: "0.0.2"}},
+			Status: v1alpha2.JenkinsStatus{
+				Spec: &v1alpha2.JenkinsSpec{
+					ConfigurationAsCode: &v1alpha2.Configuration{},
+					Master: &v1alpha2.JenkinsMaster{
+						Plugins: []v1alpha2.Plugin{{Name: "plugin-name", Version: "0.0.2"}},
+					},
 				},
 			},
 		}
@@ -380,9 +439,12 @@ func TestJenkinsReconcilerBaseConfiguration_verifyPlugins(t *testing.T) {
 	})
 	t.Run("missing base plugin", func(t *testing.T) {
 		jenkins := &v1alpha2.Jenkins{
-			Spec: v1alpha2.JenkinsSpec{
-				Master: v1alpha2.JenkinsMaster{
-					BasePlugins: []v1alpha2.Plugin{{Name: "plugin-name", Version: "0.0.2"}},
+			Status: v1alpha2.JenkinsStatus{
+				Spec: &v1alpha2.JenkinsSpec{
+					ConfigurationAsCode: &v1alpha2.Configuration{},
+					Master: &v1alpha2.JenkinsMaster{
+						BasePlugins: []v1alpha2.Plugin{{Name: "plugin-name1", Version: "0.0.2"}},
+					},
 				},
 			},
 		}
@@ -409,9 +471,12 @@ func TestJenkinsReconcilerBaseConfiguration_verifyPlugins(t *testing.T) {
 	})
 	t.Run("missing user plugin", func(t *testing.T) {
 		jenkins := &v1alpha2.Jenkins{
-			Spec: v1alpha2.JenkinsSpec{
-				Master: v1alpha2.JenkinsMaster{
-					Plugins: []v1alpha2.Plugin{{Name: "plugin-name", Version: "0.0.2"}},
+			Status: v1alpha2.JenkinsStatus{
+				Spec: &v1alpha2.JenkinsSpec{
+					ConfigurationAsCode: &v1alpha2.Configuration{},
+					Master: &v1alpha2.JenkinsMaster{
+						Plugins: []v1alpha2.Plugin{{Name: "plugin-name", Version: "0.0.2"}},
+					},
 				},
 			},
 		}
@@ -993,4 +1058,48 @@ func TestCompareContainerResources(t *testing.T) {
 
 		assert.False(t, got)
 	})
+}
+
+func (r *JenkinsReconcilerBaseConfiguration) verifyPlugins(jenkinsClient client.Jenkins) (bool, error) {
+	allPluginsInJenkins, err := jenkinsClient.GetPlugins(fetchAllPlugins)
+	if err != nil {
+		return false, stackerr.WithStack(err)
+	}
+
+	var installedPlugins []string
+	for _, jenkinsPlugin := range allPluginsInJenkins.Raw.Plugins {
+		if isValidPlugin(jenkinsPlugin) {
+			installedPlugins = append(installedPlugins, plugins.Plugin{Name: jenkinsPlugin.ShortName, Version: jenkinsPlugin.Version}.String())
+		}
+	}
+	r.logger.V(log.VDebug).Info(fmt.Sprintf("Installed plugins '%+v'", installedPlugins))
+
+	status := true
+	master := r.Configuration.Jenkins.Status.Spec.Master
+	allRequiredPlugins := [][]v1alpha2.Plugin{master.BasePlugins, master.Plugins}
+	for _, requiredPlugins := range allRequiredPlugins {
+		for _, plugin := range requiredPlugins {
+			if _, ok := isPluginInstalled(allPluginsInJenkins, plugin); !ok {
+				r.logger.V(log.VWarn).Info(fmt.Sprintf("Missing plugin '%s'", plugin))
+				status = false
+
+				continue
+			}
+			if found, ok := isPluginVersionCompatible(allPluginsInJenkins, plugin); !ok {
+				r.logger.V(log.VWarn).Info(fmt.Sprintf("Incompatible plugin '%s' version, actual '%+v'", plugin, found.Version))
+				status = false
+			}
+		}
+	}
+
+	return status, nil
+}
+
+func isPluginVersionCompatible(plugins *gojenkins.Plugins, plugin v1alpha2.Plugin) (gojenkins.Plugin, bool) {
+	p := plugins.Contains(plugin.Name)
+	if p == nil {
+		return gojenkins.Plugin{}, false
+	}
+
+	return *p, p.Version == plugin.Version
 }

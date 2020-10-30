@@ -501,12 +501,15 @@ func (r *JenkinsReconcilerBaseConfiguration) verifyBasePlugins(requiredBasePlugi
 	return messages
 }
 
-func (r *JenkinsReconcilerBaseConfiguration) validateConfiguration(configuration v1alpha2.Configuration, name string) ([]string, error) {
+func (r *JenkinsReconcilerBaseConfiguration) validateConfiguration(configuration *v1alpha2.Configuration, name string) ([]string, error) {
 	var messages []string
+	if configuration == nil {
+		return messages, nil
+	}
+
 	if len(configuration.Secret.Name) > 0 && len(configuration.Configurations) == 0 {
 		messages = append(messages, fmt.Sprintf("%s.secret.name is set but %s.configurations is empty", name, name))
 	}
-
 	jenkinsInstanceNamespace := r.Configuration.Jenkins.ObjectMeta.Namespace
 	if len(configuration.Secret.Name) > 0 {
 		secret := &corev1.Secret{}

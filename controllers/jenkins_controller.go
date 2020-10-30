@@ -335,7 +335,7 @@ func (r *JenkinsReconciler) sendNewReconcileLoopFailedNotification(jenkins *v1al
 
 func (r *JenkinsReconciler) setDefaults(ctx context.Context, jenkins *v1alpha2.Jenkins) (requeue bool, err error) {
 	logger := r.Log.WithValues("cr", jenkins.Name)
-	calculatedSpec, err := r.getDefaults(ctx, jenkins)
+	calculatedSpec, err := r.getCalculatedSpec(ctx, jenkins)
 	if err != nil {
 		logger.Info(fmt.Sprintf("Calculating defaulted spec returned an error:  %s", err))
 		return false, err
@@ -351,30 +351,22 @@ func (r *JenkinsReconciler) setDefaults(ctx context.Context, jenkins *v1alpha2.J
 	return false, nil
 }
 
-func (r *JenkinsReconciler) getDefaults(ctx context.Context, jenkins *v1alpha2.Jenkins) (*v1alpha2.JenkinsSpec, error) {
+func (r *JenkinsReconciler) getCalculatedSpec(ctx context.Context, jenkins *v1alpha2.Jenkins) (*v1alpha2.JenkinsSpec, error) {
+	// getCalculatedSpec returns the calculated spec from the requested spec. It returns a JenkinsSpec containing
+	// the requested specs and the defaulted values.
 	logger := r.Log.WithValues("cr", jenkins.Name)
-	var jenkinsContainer v1alpha2.Container
 	requestedSpec := jenkins.Spec
-	actualSpec := requestedSpec.DeepCopy()
-	jenkins.Status.Spec = actualSpec
 
-	if len(requestedSpec.Master.Containers) == 0 {
-		image := constants.DefaultJenkinsMasterImage
-		if resources.IsRouteAPIAvailable(&r.clientSet) {
-			image = constants.DefaultOpenShiftJenkinsMasterImage
-		}
-		jenkinsContainer = v1alpha2.Container{
-			Name:  resources.JenkinsMasterContainerName,
-			Image: image,
-		}
-		actualSpec.Master.Containers[0] = jenkinsContainer
-	} else {
-		if requestedSpec.Master.Containers[0].Name != resources.JenkinsMasterContainerName {
-			error := errors.Errorf("first container in spec.master.containers must be Jenkins container with name '%s', please correct CR", resources.JenkinsMasterContainerName)
-			return nil, error
-		}
-		jenkinsContainer = requestedSpec.Master.Containers[0]
+	// We make a copy of the requested spec, and we will build the actual one then
+	calculatedSpec := requestedSpec.DeepCopy()
+	jenkins.Status.Spec = calculatedSpec
+	jenkinsContainer, err := r.getJenkinsMasterContainer(calculatedSpec)
+	if err != nil {
+		return nil, err
 	}
+
+	jenkinsMaster := r.getCalculatedJenkinsMaster(calculatedSpec, jenkinsContainer)
+	calculatedSpec.Master = jenkinsMaster
 
 	if len(jenkinsContainer.Image) == 0 {
 		jenkinsMasterImage := constants.DefaultJenkinsMasterImage
@@ -418,57 +410,104 @@ func (r *JenkinsReconciler) getDefaults(ctx context.Context, jenkins *v1alpha2.J
 			Value: "-XX:+UnlockExperimentalVMOptions -XX:MaxRAMFraction=1 -Djenkins.install.runSetupWizard=false -Djava.awt.headless=true -Dhudson.security.csrf.DefaultCrumbIssuer.EXCLUDE_SESSION_ID=true -Dcasc.reload.token=$(POD_NAME)",
 		})
 	}
-	if len(requestedSpec.Master.BasePlugins) == 0 {
+	if calculatedSpec.Master.BasePlugins == nil {
+		calculatedSpec.Master.BasePlugins = []v1alpha2.Plugin{}
+	}
+	if len(calculatedSpec.Master.BasePlugins) == 0 {
 		logger.Info("Setting default operator plugins")
-		actualSpec.Master.BasePlugins = basePlugins()
+		calculatedSpec.Master.BasePlugins = basePlugins()
 	}
 	if isResourceRequirementsNotSet(jenkinsContainer.Resources) {
 		logger.Info("Setting default Jenkins master container resource requirements")
 		jenkinsContainer.Resources = resources.NewResourceRequirements("1", "500Mi", "1500m", "3Gi")
 	}
-	if reflect.DeepEqual(actualSpec.Service, v1alpha2.Service{}) {
+	if reflect.DeepEqual(requestedSpec.Service, v1alpha2.Service{}) {
 		logger.Info("Setting default Jenkins master service")
 		serviceType := corev1.ServiceTypeClusterIP
 		if r.jenkinsAPIConnectionSettings.UseNodePort {
 			serviceType = corev1.ServiceTypeNodePort
 		}
-		actualSpec.Service = v1alpha2.Service{
+		calculatedSpec.Service = v1alpha2.Service{
 			Type: serviceType,
 			Port: constants.DefaultHTTPPortInt32,
 		}
 	}
-	if reflect.DeepEqual(actualSpec.SlaveService, v1alpha2.Service{}) {
+	if reflect.DeepEqual(calculatedSpec.SlaveService, v1alpha2.Service{}) {
 		logger.Info("Setting default Jenkins slave service")
-		actualSpec.SlaveService = v1alpha2.Service{
+		calculatedSpec.SlaveService = v1alpha2.Service{
 			Type: corev1.ServiceTypeClusterIP,
 			Port: constants.DefaultJNLPPortInt32,
 		}
 	}
-	if len(actualSpec.Master.Containers) > 1 {
-		for i, container := range actualSpec.Master.Containers[1:] {
+	if len(calculatedSpec.Master.Containers) > 1 {
+		for i, container := range calculatedSpec.Master.Containers[1:] {
 			r.setDefaultsForContainer(jenkins, container.Name, i+1)
 		}
 	}
 
-	if len(requestedSpec.Master.Containers) == 0 || len(requestedSpec.Master.Containers) == 1 {
-		actualSpec.Master.Containers = []v1alpha2.Container{jenkinsContainer}
+	if len(calculatedSpec.Master.Containers) == 0 || len(calculatedSpec.Master.Containers) == 1 {
+		calculatedSpec.Master.Containers = []v1alpha2.Container{jenkinsContainer}
 	} else {
-		noJenkinsContainers := actualSpec.Master.Containers[1:]
+		noJenkinsContainers := calculatedSpec.Master.Containers[1:]
 		containers := []v1alpha2.Container{jenkinsContainer}
 		containers = append(containers, noJenkinsContainers...)
-		actualSpec.Master.Containers = containers
+		calculatedSpec.Master.Containers = containers
 	}
 
-	if reflect.DeepEqual(requestedSpec.JenkinsAPISettings, v1alpha2.JenkinsAPISettings{}) {
+	if reflect.DeepEqual(calculatedSpec.JenkinsAPISettings, v1alpha2.JenkinsAPISettings{}) {
 		logger.Info("Setting default Jenkins API settings")
-		actualSpec.JenkinsAPISettings = v1alpha2.JenkinsAPISettings{AuthorizationStrategy: v1alpha2.CreateUserAuthorizationStrategy}
+		calculatedSpec.JenkinsAPISettings = v1alpha2.JenkinsAPISettings{AuthorizationStrategy: v1alpha2.CreateUserAuthorizationStrategy}
 	}
 
-	if requestedSpec.JenkinsAPISettings.AuthorizationStrategy == "" {
+	if calculatedSpec.JenkinsAPISettings.AuthorizationStrategy == "" {
 		logger.Info("Setting default Jenkins API settings authorization strategy")
-		actualSpec.JenkinsAPISettings.AuthorizationStrategy = v1alpha2.CreateUserAuthorizationStrategy
+		calculatedSpec.JenkinsAPISettings.AuthorizationStrategy = v1alpha2.CreateUserAuthorizationStrategy
 	}
-	return actualSpec, nil
+
+	configurationAsCode := calculatedSpec.ConfigurationAsCode
+	if configurationAsCode == nil {
+		configurationAsCode = &v1alpha2.Configuration{
+			Enabled:          true,
+			DefaultConfig:    true,
+			EnableAutoReload: true,
+		}
+	}
+	calculatedSpec.ConfigurationAsCode = configurationAsCode
+	return calculatedSpec, nil
+}
+
+func (r *JenkinsReconciler) getCalculatedJenkinsMaster(calculatedSpec *v1alpha2.JenkinsSpec, jenkinsContainer v1alpha2.Container) *v1alpha2.JenkinsMaster {
+	var master *v1alpha2.JenkinsMaster
+	if calculatedSpec.Master == nil {
+		master = &v1alpha2.JenkinsMaster{
+			Containers: []v1alpha2.Container{jenkinsContainer},
+		}
+	} else {
+		master = calculatedSpec.Master.DeepCopy()
+		calculatedSpec.Master.Containers[0] = jenkinsContainer
+	}
+	return master
+}
+
+func (r *JenkinsReconciler) getJenkinsMasterContainer(spec *v1alpha2.JenkinsSpec) (v1alpha2.Container, error) {
+	var jenkinsContainer v1alpha2.Container
+	if spec.Master == nil || len(spec.Master.Containers) == 0 {
+		image := constants.DefaultJenkinsMasterImage
+		if resources.IsRouteAPIAvailable(&r.clientSet) {
+			image = constants.DefaultOpenShiftJenkinsMasterImage
+		}
+		jenkinsContainer = v1alpha2.Container{
+			Name:  resources.JenkinsMasterContainerName,
+			Image: image,
+		}
+	} else {
+		if spec.Master.Containers[0].Name != resources.JenkinsMasterContainerName {
+			error := errors.Errorf("first container in spec.master.containers must be Jenkins container with name '%s', please correct CR", resources.JenkinsMasterContainerName)
+			return v1alpha2.Container{}, error
+		}
+		jenkinsContainer = spec.Master.Containers[0]
+	}
+	return jenkinsContainer, nil
 }
 
 func (r *JenkinsReconciler) sendNewGroovyScriptExecutionFailedNotification(jenkins *v1alpha2.Jenkins, groovyErr *jenkinsclient.GroovyScriptExecutionFailed) {

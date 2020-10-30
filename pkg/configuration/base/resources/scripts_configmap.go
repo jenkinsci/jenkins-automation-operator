@@ -310,8 +310,8 @@ func buildInitBashScript(jenkins *v1alpha2.Jenkins) (*string, error) {
 	}{
 		JenkinsHomePath:          getJenkinsHomePath(jenkins),
 		InitConfigurationPath:    jenkinsInitConfigurationVolumePath,
-		BasePlugins:              jenkins.Spec.Master.BasePlugins,
-		UserPlugins:              jenkins.Spec.Master.Plugins,
+		BasePlugins:              jenkins.Status.Spec.Master.BasePlugins,
+		UserPlugins:              jenkins.Status.Spec.Master.Plugins,
 		InstallPluginsCommand:    installPluginsCommand,
 		JenkinsScriptsVolumePath: JenkinsScriptsVolumePath,
 	}

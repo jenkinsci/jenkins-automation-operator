@@ -235,20 +235,6 @@ func CompareContainerVolumeMounts(expected corev1.Container, actual corev1.Conta
 	return reflect.DeepEqual(expected.VolumeMounts, withoutServiceAccount)
 }
 
-// compareVolumes returns true if Jenkins pod and Jenkins CR volumes are the same
-func (r *JenkinsReconcilerBaseConfiguration) compareVolumes(actualPod corev1.Pod) bool {
-	var withoutServiceAccount []corev1.Volume
-	for _, volume := range actualPod.Spec.Volumes {
-		if !strings.HasPrefix(volume.Name, actualPod.Spec.ServiceAccountName) {
-			withoutServiceAccount = append(withoutServiceAccount, volume)
-		}
-	}
-	return reflect.DeepEqual(
-		append(resources.GetJenkinsMasterPodBaseVolumes(r.Configuration.Jenkins), r.Configuration.Jenkins.Spec.Master.Volumes...),
-		withoutServiceAccount,
-	)
-}
-
 func (r *JenkinsReconcilerBaseConfiguration) FilterEvents(source corev1.EventList, jenkinsMasterPod corev1.Pod) []string {
 	events := []string{}
 	for _, eventItem := range source.Items {

@@ -152,7 +152,7 @@ func TestJenkinsReconcilerBaseConfiguration_validateImagePullSecrets(t *testing.
 
 		jenkins := v1alpha2.Jenkins{
 			Spec: v1alpha2.JenkinsSpec{
-				Master: v1alpha2.JenkinsMaster{
+				Master: &v1alpha2.JenkinsMaster{
 					ImagePullSecrets: []corev1.LocalObjectReference{
 						{Name: secret.ObjectMeta.Name},
 					},
@@ -178,7 +178,7 @@ func TestJenkinsReconcilerBaseConfiguration_validateImagePullSecrets(t *testing.
 	t.Run("no secret", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
 			Spec: v1alpha2.JenkinsSpec{
-				Master: v1alpha2.JenkinsMaster{
+				Master: &v1alpha2.JenkinsMaster{
 					ImagePullSecrets: []corev1.LocalObjectReference{
 						{Name: "test-ref"},
 					},
@@ -213,7 +213,7 @@ func TestJenkinsReconcilerBaseConfiguration_validateImagePullSecrets(t *testing.
 
 		jenkins := v1alpha2.Jenkins{
 			Spec: v1alpha2.JenkinsSpec{
-				Master: v1alpha2.JenkinsMaster{
+				Master: &v1alpha2.JenkinsMaster{
 					ImagePullSecrets: []corev1.LocalObjectReference{
 						{Name: secret.ObjectMeta.Name},
 					},
@@ -250,7 +250,7 @@ func TestJenkinsReconcilerBaseConfiguration_validateImagePullSecrets(t *testing.
 
 		jenkins := v1alpha2.Jenkins{
 			Spec: v1alpha2.JenkinsSpec{
-				Master: v1alpha2.JenkinsMaster{
+				Master: &v1alpha2.JenkinsMaster{
 					ImagePullSecrets: []corev1.LocalObjectReference{
 						{Name: secret.ObjectMeta.Name},
 					},
@@ -287,7 +287,7 @@ func TestJenkinsReconcilerBaseConfiguration_validateImagePullSecrets(t *testing.
 
 		jenkins := v1alpha2.Jenkins{
 			Spec: v1alpha2.JenkinsSpec{
-				Master: v1alpha2.JenkinsMaster{
+				Master: &v1alpha2.JenkinsMaster{
 					ImagePullSecrets: []corev1.LocalObjectReference{
 						{Name: secret.ObjectMeta.Name},
 					},
@@ -324,7 +324,7 @@ func TestJenkinsReconcilerBaseConfiguration_validateImagePullSecrets(t *testing.
 
 		jenkins := v1alpha2.Jenkins{
 			Spec: v1alpha2.JenkinsSpec{
-				Master: v1alpha2.JenkinsMaster{
+				Master: &v1alpha2.JenkinsMaster{
 					ImagePullSecrets: []corev1.LocalObjectReference{
 						{Name: secret.ObjectMeta.Name},
 					},
@@ -353,7 +353,7 @@ func TestValidateJenkinsMasterPodEnvs(t *testing.T) {
 	t.Run("happy", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
 			Spec: v1alpha2.JenkinsSpec{
-				Master: v1alpha2.JenkinsMaster{
+				Master: &v1alpha2.JenkinsMaster{
 					Containers: []v1alpha2.Container{
 						{
 							Env: []corev1.EnvVar{
@@ -382,7 +382,7 @@ func TestValidateJenkinsMasterPodEnvs(t *testing.T) {
 	t.Run("missing -Djava.awt.headless=true in JAVA_OPTS env", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
 			Spec: v1alpha2.JenkinsSpec{
-				Master: v1alpha2.JenkinsMaster{
+				Master: &v1alpha2.JenkinsMaster{
 					Containers: []v1alpha2.Container{
 						{
 							Env: []corev1.EnvVar{
@@ -407,7 +407,7 @@ func TestValidateJenkinsMasterPodEnvs(t *testing.T) {
 	t.Run("missing -Djenkins.install.runSetupWizard=false in JAVA_OPTS env", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
 			Spec: v1alpha2.JenkinsSpec{
-				Master: v1alpha2.JenkinsMaster{
+				Master: &v1alpha2.JenkinsMaster{
 					Containers: []v1alpha2.Container{
 						{
 							Env: []corev1.EnvVar{
@@ -435,17 +435,18 @@ func TestValidateJenkinsMasterPodEnvs(t *testing.T) {
 func TestValidateReservedVolumes(t *testing.T) {
 	t.Run("happy", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
-			Spec: v1alpha2.JenkinsSpec{
-				Master: v1alpha2.JenkinsMaster{
-					Volumes: []corev1.Volume{
-						{
-							Name: "not-used-name",
+			Status: v1alpha2.JenkinsStatus{
+				Spec: &v1alpha2.JenkinsSpec{
+					Master: &v1alpha2.JenkinsMaster{
+						Volumes: []corev1.Volume{
+							{
+								Name: "not-used-name",
+							},
 						},
 					},
 				},
 			},
 		}
-		jenkins.Status.Spec = jenkins.Spec.DeepCopy()
 
 		baseReconcileLoop := New(configuration.Configuration{
 			Jenkins: &jenkins,
@@ -456,7 +457,7 @@ func TestValidateReservedVolumes(t *testing.T) {
 	t.Run("used reserved name", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
 			Spec: v1alpha2.JenkinsSpec{
-				Master: v1alpha2.JenkinsMaster{
+				Master: &v1alpha2.JenkinsMaster{
 					Volumes: []corev1.Volume{
 						{
 							Name: resources.JenkinsHomeVolumeName,
@@ -480,7 +481,7 @@ func TestValidateContainerVolumeMounts(t *testing.T) {
 	t.Run("default Jenkins master container", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
 			Spec: v1alpha2.JenkinsSpec{
-				Master: v1alpha2.JenkinsMaster{},
+				Master: &v1alpha2.JenkinsMaster{},
 			},
 		}
 		jenkins.Status.Spec = jenkins.Spec.DeepCopy()
@@ -494,7 +495,7 @@ func TestValidateContainerVolumeMounts(t *testing.T) {
 	t.Run("one extra volume", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
 			Spec: v1alpha2.JenkinsSpec{
-				Master: v1alpha2.JenkinsMaster{
+				Master: &v1alpha2.JenkinsMaster{
 					Volumes: []corev1.Volume{
 						{
 							Name: "example",
@@ -524,7 +525,7 @@ func TestValidateContainerVolumeMounts(t *testing.T) {
 	t.Run("empty mountPath", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
 			Spec: v1alpha2.JenkinsSpec{
-				Master: v1alpha2.JenkinsMaster{
+				Master: &v1alpha2.JenkinsMaster{
 					Volumes: []corev1.Volume{
 						{
 							Name: "example",
@@ -554,7 +555,7 @@ func TestValidateContainerVolumeMounts(t *testing.T) {
 	t.Run("missing volume", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
 			Spec: v1alpha2.JenkinsSpec{
-				Master: v1alpha2.JenkinsMaster{
+				Master: &v1alpha2.JenkinsMaster{
 					Containers: []v1alpha2.Container{
 						{
 							VolumeMounts: []corev1.VolumeMount{
@@ -743,7 +744,7 @@ func TestValidateConfiguration(t *testing.T) {
 		},
 	}
 	t.Run("empty", func(t *testing.T) {
-		customization := v1alpha2.Configuration{}
+		customization := &v1alpha2.Configuration{}
 		fakeClient := fake.NewFakeClient()
 		baseReconcileLoop := New(configuration.Configuration{
 			Jenkins: jenkins,
@@ -774,7 +775,7 @@ func TestValidateConfiguration(t *testing.T) {
 		err := fakeClient.Create(context.TODO(), secret)
 		require.NoError(t, err)
 
-		got, err := baseReconcileLoop.validateConfiguration(customization, "spec.groovyScripts")
+		got, err := baseReconcileLoop.validateConfiguration(&customization, "spec.groovyScripts")
 
 		assert.NoError(t, err)
 
@@ -807,7 +808,7 @@ func TestValidateConfiguration(t *testing.T) {
 		err = fakeClient.Create(context.TODO(), configMap)
 		require.NoError(t, err)
 
-		got, err := baseReconcileLoop.validateConfiguration(customization, "spec.groovyScripts")
+		got, err := baseReconcileLoop.validateConfiguration(&customization, "spec.groovyScripts")
 
 		assert.NoError(t, err)
 		assert.Nil(t, got)
@@ -832,7 +833,7 @@ func TestValidateConfiguration(t *testing.T) {
 		err := fakeClient.Create(context.TODO(), configMap)
 		require.NoError(t, err)
 
-		_, err = baseReconcileLoop.validateConfiguration(customization, "spec.groovyScripts")
+		_, err = baseReconcileLoop.validateConfiguration(&customization, "spec.groovyScripts")
 
 		assert.Error(t, err)
 	})
@@ -855,7 +856,7 @@ func TestValidateConfiguration(t *testing.T) {
 		err := fakeClient.Create(context.TODO(), secret)
 		require.NoError(t, err)
 
-		_, err = baseReconcileLoop.validateConfiguration(customization, "spec.groovyScripts")
+		_, err = baseReconcileLoop.validateConfiguration(&customization, "spec.groovyScripts")
 
 		assert.Error(t, err)
 	})
@@ -874,7 +875,7 @@ func TestValidateJenkinsMasterContainerCommand(t *testing.T) {
 	t.Run("empty command", func(t *testing.T) {
 		jenkins := &v1alpha2.Jenkins{
 			Spec: v1alpha2.JenkinsSpec{
-				Master: v1alpha2.JenkinsMaster{
+				Master: &v1alpha2.JenkinsMaster{
 					Containers: []v1alpha2.Container{
 						{
 							Name: resources.JenkinsMasterContainerName,
@@ -892,7 +893,7 @@ func TestValidateJenkinsMasterContainerCommand(t *testing.T) {
 	t.Run("command has 3 lines but it's values are invalid", func(t *testing.T) {
 		jenkins := &v1alpha2.Jenkins{
 			Spec: v1alpha2.JenkinsSpec{
-				Master: v1alpha2.JenkinsMaster{
+				Master: &v1alpha2.JenkinsMaster{
 					Containers: []v1alpha2.Container{
 						{
 							Name: resources.JenkinsMasterContainerName,
@@ -915,7 +916,7 @@ func TestValidateJenkinsMasterContainerCommand(t *testing.T) {
 	t.Run("valid command", func(t *testing.T) {
 		jenkins := &v1alpha2.Jenkins{
 			Spec: v1alpha2.JenkinsSpec{
-				Master: v1alpha2.JenkinsMaster{
+				Master: &v1alpha2.JenkinsMaster{
 					Containers: []v1alpha2.Container{
 						{
 							Name: resources.JenkinsMasterContainerName,
@@ -933,7 +934,7 @@ func TestValidateJenkinsMasterContainerCommand(t *testing.T) {
 	t.Run("custom valid command", func(t *testing.T) {
 		jenkins := &v1alpha2.Jenkins{
 			Spec: v1alpha2.JenkinsSpec{
-				Master: v1alpha2.JenkinsMaster{
+				Master: &v1alpha2.JenkinsMaster{
 					Containers: []v1alpha2.Container{
 						{
 							Name: resources.JenkinsMasterContainerName,
@@ -957,7 +958,7 @@ func TestValidateJenkinsMasterContainerCommand(t *testing.T) {
 	t.Run("no exec command for the Jenkins", func(t *testing.T) {
 		jenkins := &v1alpha2.Jenkins{
 			Spec: v1alpha2.JenkinsSpec{
-				Master: v1alpha2.JenkinsMaster{
+				Master: &v1alpha2.JenkinsMaster{
 					Containers: []v1alpha2.Container{
 						{
 							Name: resources.JenkinsMasterContainerName,

@@ -12,7 +12,7 @@ func TestGetJenkinsOpts(t *testing.T) {
 	t.Run("JENKINS_OPTS is uninitialized", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
 			Spec: v1alpha2.JenkinsSpec{
-				Master: v1alpha2.JenkinsMaster{
+				Master: &v1alpha2.JenkinsMaster{
 					Containers: []v1alpha2.Container{
 						{
 							Env: []corev1.EnvVar{
@@ -31,7 +31,7 @@ func TestGetJenkinsOpts(t *testing.T) {
 	t.Run("JENKINS_OPTS is empty", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
 			Spec: v1alpha2.JenkinsSpec{
-				Master: v1alpha2.JenkinsMaster{
+				Master: &v1alpha2.JenkinsMaster{
 					Containers: []v1alpha2.Container{
 						{
 							Env: []corev1.EnvVar{
@@ -50,7 +50,7 @@ func TestGetJenkinsOpts(t *testing.T) {
 	t.Run("JENKINS_OPTS have --prefix argument ", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
 			Spec: v1alpha2.JenkinsSpec{
-				Master: v1alpha2.JenkinsMaster{
+				Master: &v1alpha2.JenkinsMaster{
 					Containers: []v1alpha2.Container{
 						{
 							Env: []corev1.EnvVar{
@@ -73,7 +73,7 @@ func TestGetJenkinsOpts(t *testing.T) {
 	t.Run("JENKINS_OPTS have --prefix and --httpPort argument", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
 			Spec: v1alpha2.JenkinsSpec{
-				Master: v1alpha2.JenkinsMaster{
+				Master: &v1alpha2.JenkinsMaster{
 					Containers: []v1alpha2.Container{
 						{
 							Env: []corev1.EnvVar{
@@ -99,7 +99,7 @@ func TestGetJenkinsOpts(t *testing.T) {
 	t.Run("JENKINS_OPTS have --httpPort argument", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
 			Spec: v1alpha2.JenkinsSpec{
-				Master: v1alpha2.JenkinsMaster{
+				Master: &v1alpha2.JenkinsMaster{
 					Containers: []v1alpha2.Container{
 						{
 							Env: []corev1.EnvVar{
@@ -122,7 +122,7 @@ func TestGetJenkinsOpts(t *testing.T) {
 	t.Run("JENKINS_OPTS have --httpPort=--8080 argument", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
 			Spec: v1alpha2.JenkinsSpec{
-				Master: v1alpha2.JenkinsMaster{
+				Master: &v1alpha2.JenkinsMaster{
 					Containers: []v1alpha2.Container{
 						{
 							Env: []corev1.EnvVar{

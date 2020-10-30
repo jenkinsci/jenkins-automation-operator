@@ -13,7 +13,7 @@ import (
 type JenkinsSpec struct {
 	// Master represents Jenkins master pod properties and Jenkins plugins.
 	// Every single change here requires a pod restart.
-	Master JenkinsMaster `json:"master"`
+	Master *JenkinsMaster `json:"master"`
 
 	// WIP: Still need to determine if  a reference to JenkinsImage is sufficient or if we need a
 	// JenkinsImageBuild object to point to a specific build.
@@ -52,7 +52,7 @@ type JenkinsSpec struct {
 
 	// ConfigurationAsCode defines configuration of Jenkins configuration via Configuration as Code Jenkins plugin
 	// +optional
-	ConfigurationAsCode Configuration `json:"configurationAsCode,omitempty"`
+	ConfigurationAsCode *Configuration `json:"configurationAsCode,omitempty"`
 }
 
 // AuthorizationStrategy defines authorization strategy of the operator for the Jenkins API
