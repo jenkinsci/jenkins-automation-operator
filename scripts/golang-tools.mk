@@ -47,6 +47,19 @@ ifeq (, $(shell which kubebuilder))
 	}
 endif
 
+# find or download ginkgo
+install-ginkgo: 
+ifeq (, $(shell which ginkgo))
+	@{ \
+	set -e ;\
+	GINKGO_TMP_DIR=$$(mktemp -d) ;\
+	cd $$GINKGO_TMP_DIR ;\
+	go mod init tmp ;\
+	go get github.com/onsi/ginkgo/ginkgo ;\
+	go get github.com/onsi/gomega/... ;\
+	rm -rf $$GINKGO_TMP_DIR ;\
+	}
+endif
 
 # find or download golangci
 install-golangci:

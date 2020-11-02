@@ -2,52 +2,53 @@ language: go
 os: linux
 go_import_path: github.com/jenkinsci/kubernetes-operator
 
-
 env:
   global:
-    - GO111MODULE=on
-    - CHANGE_MINIKUBE_NONE_USER=true
-    - MINIKUBE_WANTUPDATENOTIFICATION=false
-    - MINIKUBE_WANTREPORTERRORPROMPT=false
-    - MINIKUBE_HOME=$HOME
-    - KUBECONFIG=$HOME/.kube/config
-
+  - GO111MODULE=on
+  - CHANGE_MINIKUBE_NONE_USER=true
+  - MINIKUBE_WANTUPDATENOTIFICATION=false
+  - MINIKUBE_WANTREPORTERRORPROMPT=false
+  - MINIKUBE_HOME=$HOME
+  - KUBECONFIG=$HOME/.kube/config
 go:
-  - 1.14.x
+- 1.14.x
 
 before_install:
-  - |
-    if [ "$TRAVIS_PULL_REQUEST" = "true" ]; then
-      # Pull requests are slightly complicated because $TRAVIS_COMMIT_RANGE
-      # may include more changes than desired if the history is convoluted.
-      # Instead, explicitly fetch the base branch and compare against the
-      # merge-base commit.
-      git fetch -q origin +refs/heads/$TRAVIS_BRANCH
-      changes=$(git diff --name-only HEAD $(git merge-base HEAD FETCH_HEAD))
-    else
-      changes=$(git diff --name-only $TRAVIS_COMMIT_RANGE)
-    fi
-    echo "Files changed:"
-    echo "$changes"
-    if ! echo "$changes" | grep -qvE '(\.md$)|(^(docs|website))/'
-    then
-      echo "Only docs were updated, stopping build process."
-      exit
-    fi
-  - make controller-gen
-  - make kustomize
+- |
+  if [ "$TRAVIS_PULL_REQUEST" = "true" ]; then
+    # Pull requests are slightly complicated because $TRAVIS_COMMIT_RANGE
+    # may include more changes than desired if the history is convoluted.
+    # Instead, explicitly fetch the base branch and compare against the
+    # merge-base commit.
+    git fetch -q origin +refs/heads/$TRAVIS_BRANCH
+    changes=$(git diff --name-only HEAD $(git merge-base HEAD FETCH_HEAD))
+  else
+    changes=$(git diff --name-only $TRAVIS_COMMIT_RANGE)
+  fi
+  echo "Files changed:"
+  echo "$changes"
+  if ! echo "$changes" | grep -qvE '(\.md$)|(^(docs|website))/'
+  then
+    echo "Only docs were updated, stopping build process."
+    exit
+  fi
+- make controller-gen
+- make kustomize
 
 jobs:
   include:
-    - stage: unit
-      name: "Jenkins Operator - unit tests"
-      script:
-        - make test
-
+  - stage: unit
+    name: "Jenkins Operator - unit tests"
+    script:
+    - make test
+  - stage: e2e
+    name: "Jenkins Operator - end-to-end tests"
+    script:
+    - make e2e
 cache:
   directories:
-    - vendor
-    - /home/travis/.minikube/
+  - vendor
+  - /home/travis/.minikube/
 
 notifications:
   slack:

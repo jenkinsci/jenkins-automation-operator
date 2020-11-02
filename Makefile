@@ -9,8 +9,8 @@ verify: fmt vet lint ## Verifies code before commit (fmt, lint, ...)
 bin: FORCE ## Builds operator binary
 	go build -o build/_output/bin/jenkins-operator main.go
 
-e2e: ## Run end-to-end (e2e) tests only
-	ginkgo -v ./...
+e2e: install-ginkgo ## Run end-to-end (e2e) tests only
+	$(GOBIN)/ginkgo -v ./controllers/...
 
 test: kubebuilder generate manifests ## Run tests
 	go test ./... -coverprofile cover.out
