@@ -224,6 +224,12 @@ func (r *JenkinsReconciler) setStatusConditions(jenkins *v1alpha2.Jenkins) {
 		Message: reconcileCompletedMessage,
 	})
 	conditionsv1.SetStatusCondition(&jenkins.Status.Conditions, conditionsv1.Condition{
+		Type:    conditionsv1.ConditionProgressing,
+		Status:  corev1.ConditionFalse,
+		Reason:  reconcileCompleted,
+		Message: reconcileCompletedMessage,
+	})
+	conditionsv1.SetStatusCondition(&jenkins.Status.Conditions, conditionsv1.Condition{
 		Type:    conditionsv1.ConditionDegraded,
 		Status:  corev1.ConditionFalse,
 		Reason:  reconcileCompleted,
