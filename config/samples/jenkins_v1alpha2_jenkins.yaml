@@ -13,7 +13,7 @@ spec:
   jenkinsImageRef: jenkinsimage-sample 
   master:
     containers:
-    - name: jenkins-master
+    - name: jenkins
       image: jenkins/jenkins:lts
       imagePullPolicy: Always
       livenessProbe:

@@ -137,9 +137,12 @@ func Logf(format string, a ...interface{}) {
 	fmt.Fprintf(GinkgoWriter, "INFO: "+format+"\n", a...)
 }
 
+var MetricsBindAddress = ":8888"
+
 func getManager() (manager.Manager, error) {
 	k8sManager, err := ctrl.NewManager(restConfig, ctrl.Options{
-		Scheme: scheme.Scheme,
+		Scheme:             scheme.Scheme,
+		MetricsBindAddress: MetricsBindAddress,
 	})
 	return k8sManager, err
 }
