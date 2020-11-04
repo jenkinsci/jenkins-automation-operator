@@ -113,21 +113,24 @@ func (r *JenkinsReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 func (r *JenkinsReconciler) Reconcile(request ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
-	logger := r.Log.WithValues("jenkins", request.NamespacedName)
+	jenkinsName := request.NamespacedName
+	logger := r.Log.WithValues("jenkins", jenkinsName)
 	reconcileFailLimit := uint64(10)
 	logger.V(log.VDebug).Info(fmt.Sprintf("Got a reconcialition request at: %+v for Jenkins: %s", time.Now(), request.Name))
 
 	// Fetch the Jenkins jenkins
 	jenkins := &v1alpha2.Jenkins{}
-	err := r.Client.Get(ctx, request.NamespacedName, jenkins)
+	err := r.Client.Get(ctx, jenkinsName, jenkins)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
+			logger.V(log.VWarn).Info(fmt.Sprintf("API returned not found error: %s", err))
 			return ctrl.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
+		logger.V(log.VWarn).Info(fmt.Sprintf("Error while trying to get jenkins named:  %s : %s", jenkinsName, err))
 		return ctrl.Result{}, err
 	}
 

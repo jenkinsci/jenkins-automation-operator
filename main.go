@@ -17,9 +17,13 @@ limitations under the License.
 package main
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"flag"
 	"fmt"
+	"io"
 	"os"
+	"path/filepath"
 	currentruntime "runtime"
 
 	jenkinsv1alpha2 "github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
@@ -231,8 +235,24 @@ func fatal(err error, debug bool) {
 }
 
 func printInfo() {
+	version.Version = "0.6.0-rc1"
 	setupLog.Info(fmt.Sprintf("Version: %s", version.Version))
-	setupLog.Info(fmt.Sprintf("Git commit: %s", version.GitCommit))
+	file, _ := filepath.Abs(os.Args[0])
+	setupLog.Info(fmt.Sprintf("MD5 checkcsum: %s", md5sum(file)))
 	setupLog.Info(fmt.Sprintf("Go Version: %s", currentruntime.Version()))
 	setupLog.Info(fmt.Sprintf("Go OS/Arch: %s/%s", currentruntime.GOOS, currentruntime.GOARCH))
+}
+
+func md5sum(filePath string) string {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return ""
+	}
+	defer file.Close()
+	hash := md5.New()
+	if _, err := io.Copy(hash, file); err != nil {
+		return ""
+	}
+	result := hex.EncodeToString(hash.Sum(nil))
+	return result
 }
