@@ -44,20 +44,35 @@ const (
 	// defaut configmap for jenkins configuration
 	JenkinsDefaultConfigMapName = "jenkins-default-configuration"
 
-	// JenkinsSidecarContainerConfigName is the Jenkins side car container name for reloading config
-	JenkinsSidecarContainerConfigName = "config"
-	DefaultJenkinsInitContainerName   = "init"
-	JenkinsSCConfigImage              = "kiwigrid/k8s-sidecar:0.1.144"
-	JenkinsSCConfigImagePullPolicy    = "IfNotPresent"
-	JenkinsSCConfigReqURL             = "http://localhost:8080/reload-configuration-as-code/?casc-reload-token=$(POD_NAME)"
-	JenkinsSCConfigReqMethod          = "POST"
-	JenkinsSCConfigReqRetry           = "10"
-	JenkinsSCConfigCPULimit           = "100m"
-	JenkinsSCConfigMEMLimit           = "100Mi"
-	JenkinsSCConfigCPURequest         = "50m"
-	JenkinsSCConfigMEMRequest         = "50Mi"
-	JenkinsSCConfigLabel              = "type"
-	JenkinsSCConfigLabelValue         = "%s-jenkins-config"
+	// Names of Sidecar and Init Containers
+	ConfigSidecarName       = "config"
+	ConfigInitContainerName = "config-init"
+	BackupSidecarName       = "backup"
+	BackupInitContainerName = "backup-init"
+	// Config Sidecar related variables
+	JenkinsSCConfigImage      = "kiwigrid/k8s-sidecar:0.1.144"
+	JenkinsSCConfigReqURL     = "http://localhost:8080/reload-configuration-as-code/?casc-reload-token=$(POD_NAME)"
+	JenkinsSCConfigReqMethod  = "POST"
+	JenkinsSCConfigReqRetry   = "10"
+	JenkinsSCConfigLabel      = "type"
+	JenkinsSCConfigLabelValue = "%s-jenkins-config"
+	// Backup Sidecar related variables
+	JenkinsBackupVolumeMountName = "backup-pool"
+	JenkinsBackupVolumePath      = "/jenkins-backups"
+	// Helper scripts related variables
+	ScriptsVolumeMountName    = "helper-scripts"
+	ScriptsVolumePath         = "/jenkins-operator-scripts"
+	QuietDownScriptPath       = ScriptsVolumePath + "/quietdown.sh"
+	CancelQuietDownScriptPath = ScriptsVolumePath + "/cancelquietdown.sh"
+	RestartScriptPath         = ScriptsVolumePath + "/restart.sh"
+	SafeRestartScriptPath     = ScriptsVolumePath + "/saferestart.sh"
+	// Common attributes used for Sidecars
+	SidecarCPULimit   = "100m"
+	SidecarMEMLimit   = "100Mi"
+	SidecarCPURequest = "50m"
+	SidecarMEMRequest = "50Mi"
+	// Images
+	UBIMinimalImage = "ubi8/ubi-minimal:latest"
 )
 
 // GetJenkinsMasterContainerBaseEnvs returns Jenkins master pod envs required by operator
@@ -355,33 +370,64 @@ func NewJenkinsConfigContainer(jenkins *v1alpha2.Jenkins) corev1.Container {
 			ReadOnly:  false,
 		},
 		{
-			Name:      "jenkins-home",
+			Name:      JenkinsHomeVolumeName,
 			MountPath: getJenkinsHomePath(jenkins),
 			ReadOnly:  true,
 		},
 	}
 
 	return corev1.Container{
-		Name:            JenkinsSidecarContainerConfigName,
+		Name:            ConfigSidecarName,
 		Image:           JenkinsSCConfigImage,
 		ImagePullPolicy: corev1.PullIfNotPresent,
 		Env:             envVars,
 		Resources: corev1.ResourceRequirements{
 			Requests: corev1.ResourceList{
-				corev1.ResourceCPU:    resource.MustParse(JenkinsSCConfigCPURequest),
-				corev1.ResourceMemory: resource.MustParse(JenkinsSCConfigMEMRequest),
+				corev1.ResourceCPU:    resource.MustParse(SidecarCPURequest),
+				corev1.ResourceMemory: resource.MustParse(SidecarMEMRequest),
 			},
 			Limits: corev1.ResourceList{
-				corev1.ResourceCPU:    resource.MustParse(JenkinsSCConfigCPULimit),
-				corev1.ResourceMemory: resource.MustParse(JenkinsSCConfigMEMLimit),
+				corev1.ResourceCPU:    resource.MustParse(SidecarCPULimit),
+				corev1.ResourceMemory: resource.MustParse(SidecarMEMLimit),
 			},
 		},
 		VolumeMounts: volumeMounts,
 	}
 }
 
-// NewJenkinsInitContainer returns Jenkins init container to copy configmap to make it writable
-func NewJenkinsInitContainer(jenkins *v1alpha2.Jenkins, spec *v1alpha2.JenkinsSpec) corev1.Container {
+func NewJenkinsBackupContainer(jenkins *v1alpha2.Jenkins) corev1.Container {
+	backupContainer := corev1.Container{
+		Name:            BackupSidecarName,
+		Image:           UBIMinimalImage,
+		ImagePullPolicy: corev1.PullIfNotPresent,
+		Command:         []string{"/bin/sh", "-c", "--"},
+		Args:            []string{"while true; do sleep 30; done;"},
+		VolumeMounts: []corev1.VolumeMount{
+			{
+				Name:      JenkinsBackupVolumeMountName,
+				ReadOnly:  false,
+				MountPath: JenkinsBackupVolumePath,
+			},
+			{
+				Name:      ScriptsVolumeMountName,
+				ReadOnly:  false,
+				MountPath: ScriptsVolumePath,
+			},
+			{
+				Name:      JenkinsHomeVolumeName,
+				ReadOnly:  false,
+				MountPath: getJenkinsHomePath(jenkins),
+			},
+		},
+		Stdin: true,
+		TTY:   true,
+	}
+
+	return backupContainer
+}
+
+// NewJenkinsConfigInitContainer returns Jenkins init container to copy configmap to make it writable
+func NewJenkinsConfigInitContainer(spec *v1alpha2.JenkinsSpec) corev1.Container {
 	jenkinsContainer := spec.Master.Containers[0]
 	volumeMounts := []corev1.VolumeMount{
 		{
@@ -412,21 +458,87 @@ func NewJenkinsInitContainer(jenkins *v1alpha2.Jenkins, spec *v1alpha2.JenkinsSp
 	command := []string{
 		"bash",
 		"-c",
-		fmt.Sprintf("if [ `ls %s/casc-* > /dev/null 2>&1; echo $?` -eq 0 ]; then find %s/casc-* -type f -exec cp -fL {} %s \\;; fi", jenkinsPath, jenkinsPath, ConfigurationAsCodeVolumePath),
+		fmt.Sprintf("if [ `ls %s/casc-* > /dev/null 2>&1; echo $?` -eq 0 ]; then find %s/casc-* -type f -exec cp -fL {} %s \\;; fi",
+			jenkinsPath, jenkinsPath, ConfigurationAsCodeVolumePath),
 	}
 	return corev1.Container{
-		Name:            DefaultJenkinsInitContainerName,
+		Name:            ConfigInitContainerName,
 		Image:           jenkinsContainer.Image,
 		ImagePullPolicy: jenkinsContainer.ImagePullPolicy,
 		Command:         command,
 		Resources: corev1.ResourceRequirements{
 			Requests: corev1.ResourceList{
-				corev1.ResourceCPU:    resource.MustParse(JenkinsSCConfigCPURequest),
-				corev1.ResourceMemory: resource.MustParse(JenkinsSCConfigMEMRequest),
+				corev1.ResourceCPU:    resource.MustParse(SidecarCPURequest),
+				corev1.ResourceMemory: resource.MustParse(SidecarMEMRequest),
 			},
 			Limits: corev1.ResourceList{
-				corev1.ResourceCPU:    resource.MustParse(JenkinsSCConfigCPULimit),
-				corev1.ResourceMemory: resource.MustParse(JenkinsSCConfigMEMLimit),
+				corev1.ResourceCPU:    resource.MustParse(SidecarCPULimit),
+				corev1.ResourceMemory: resource.MustParse(SidecarMEMLimit),
+			},
+		},
+		VolumeMounts: volumeMounts,
+	}
+}
+
+// NewJenkinsConfigInitContainer returns Jenkins init container to copy configmap to make it writable
+func NewJenkinsBackupInitContainer(spec *v1alpha2.JenkinsSpec) corev1.Container {
+	jenkinsContainer := spec.Master.Containers[0]
+	volumeMounts := []corev1.VolumeMount{
+		{
+			Name:      JenkinsBackupVolumeMountName,
+			ReadOnly:  false,
+			MountPath: JenkinsBackupVolumePath,
+		},
+		{
+			Name:      ScriptsVolumeMountName,
+			ReadOnly:  false,
+			MountPath: ScriptsVolumePath,
+		},
+	}
+
+	scriptTemplate := `cat > %s << %s
+SERVER=http://localhost:8080
+CRUMB=\$(curl --user \$USER:\$APITOKEN \$SERVER/crumbIssuer/api/xml?xpath=concat\(//crumbRequestField,%%22:%%22,//crumb\)) 
+curl -X POST --user \$USER:\$APITOKEN -H "\$CRUMB" \$SERVER/%s
+%s
+`
+	heredoc := "heredoc"
+	quietDown := "quietDown"
+	cancelQuietDown := "cancelQuietDown"
+	restart := "restart"
+	safeRestart := "safeRestart"
+
+	quietDownHereDoc := quietDown + heredoc
+	cancelQuietDownHereDoc := cancelQuietDown + heredoc
+	restartHereDoc := restart + heredoc
+	safeRestartHereDoc := safeRestart + heredoc
+
+	quietDownScript := fmt.Sprintf(scriptTemplate, QuietDownScriptPath, quietDownHereDoc, quietDown, quietDownHereDoc)
+	cancelQuietDownScript := fmt.Sprintf(scriptTemplate, CancelQuietDownScriptPath, cancelQuietDownHereDoc, cancelQuietDown, cancelQuietDownHereDoc)
+	restartScript := fmt.Sprintf(scriptTemplate, RestartScriptPath, restartHereDoc, restart, restartHereDoc)
+	safeRestartScript := fmt.Sprintf(scriptTemplate, SafeRestartScriptPath, safeRestartHereDoc, safeRestart, safeRestartHereDoc)
+
+	commandString := fmt.Sprintf(`%s
+%s 
+%s
+%s
+`, quietDownScript, cancelQuietDownScript, restartScript, safeRestartScript)
+
+	command := []string{"bash", "-c", commandString}
+
+	return corev1.Container{
+		Name:            BackupInitContainerName,
+		Image:           jenkinsContainer.Image,
+		ImagePullPolicy: jenkinsContainer.ImagePullPolicy,
+		Command:         command,
+		Resources: corev1.ResourceRequirements{
+			Requests: corev1.ResourceList{
+				corev1.ResourceCPU:    resource.MustParse(SidecarCPURequest),
+				corev1.ResourceMemory: resource.MustParse(SidecarMEMRequest),
+			},
+			Limits: corev1.ResourceList{
+				corev1.ResourceCPU:    resource.MustParse(SidecarCPULimit),
+				corev1.ResourceMemory: resource.MustParse(SidecarMEMLimit),
 			},
 		},
 		VolumeMounts: volumeMounts,
@@ -464,28 +576,26 @@ func newContainers(jenkins *v1alpha2.Jenkins, spec *v1alpha2.JenkinsSpec) (conta
 			containers = append(containers, ConvertJenkinsContainerToKubernetesContainer(container))
 		}
 	}
-	return containers
-}
-
-func newInitContainers(jenkins *v1alpha2.Jenkins, spec *v1alpha2.JenkinsSpec) (containers []corev1.Container) {
-	if spec.ConfigurationAsCode == nil || spec.ConfigurationAsCode.Enabled {
-		containers = append(containers, NewJenkinsInitContainer(jenkins, spec))
+	if spec.Backup != nil {
+		if spec.Backup.Enabled {
+			containers = append(containers, NewJenkinsBackupContainer(jenkins))
+		}
 	}
 	return containers
 }
 
-// GetJenkinsMasterPodLabels returns Jenkins pod labels for given CR
-func GetJenkinsMasterPodLabels(jenkins *v1alpha2.Jenkins) map[string]string {
-	var labels map[string]string
-	if jenkins.Spec.Master.Labels == nil {
-		labels = map[string]string{}
-	} else {
-		labels = jenkins.Spec.Master.Labels
+func newInitContainers(jenkinsSpec *v1alpha2.JenkinsSpec) (containers []corev1.Container) {
+	if jenkinsSpec.ConfigurationAsCode == nil || jenkinsSpec.ConfigurationAsCode.Enabled {
+		containers = append(containers, NewJenkinsConfigInitContainer(jenkinsSpec))
 	}
-	for key, value := range BuildResourceLabels(jenkins) {
-		labels[key] = value
+	if jenkinsSpec.Backup != nil && jenkinsSpec.Backup.Enabled {
+		containers = append(containers, NewJenkinsBackupInitContainer(jenkinsSpec))
 	}
-	return labels
+	return containers
+}
+
+func GetJenkinsBackupPVCName(jenkins *v1alpha2.Jenkins) string {
+	return jenkins.Name + "-jenkins-backup"
 }
 
 // return a condition function that indicates whether the given pod is

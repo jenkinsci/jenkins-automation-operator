@@ -12,6 +12,9 @@ resources:
 - group: jenkins
   kind: BackupWorker
   version: v1alpha2
+- group: jenkins
+  kind: Backup
+  version: v1alpha2
 version: 3-alpha
 plugins:
   go.sdk.operatorframework.io/v2-alpha: {}

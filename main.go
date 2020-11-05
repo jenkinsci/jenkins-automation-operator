@@ -26,14 +26,6 @@ import (
 	"path/filepath"
 	currentruntime "runtime"
 
-	jenkinsv1alpha2 "github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
-	"github.com/jenkinsci/kubernetes-operator/controllers"
-	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
-	"github.com/jenkinsci/kubernetes-operator/pkg/constants"
-	"github.com/jenkinsci/kubernetes-operator/pkg/event"
-	"github.com/jenkinsci/kubernetes-operator/pkg/notifications"
-	e "github.com/jenkinsci/kubernetes-operator/pkg/notifications/event"
-	"github.com/jenkinsci/kubernetes-operator/version"
 	routev1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
@@ -48,6 +40,15 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
+
+	jenkinsv1alpha2 "github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
+	"github.com/jenkinsci/kubernetes-operator/controllers"
+	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
+	"github.com/jenkinsci/kubernetes-operator/pkg/constants"
+	"github.com/jenkinsci/kubernetes-operator/pkg/event"
+	"github.com/jenkinsci/kubernetes-operator/pkg/notifications"
+	e "github.com/jenkinsci/kubernetes-operator/pkg/notifications/event"
+	"github.com/jenkinsci/kubernetes-operator/version"
 
 	// sdkVersion "github.com/operator-framework/operator-sdk/version"
 	kzap "sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -74,7 +75,7 @@ func init() {
 func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
-	parsePglags(metricsAddr, enableLeaderElection)
+	parseFlags(metricsAddr, enableLeaderElection)
 	debug := pflag.Bool("debug", false, "Set log level to debug")
 
 	setupLog.Info("Registering Components.")
@@ -99,6 +100,7 @@ func main() {
 	// setup Jenkins controller
 	setupJenkinsRenconciler(manager, notificationsChannel)
 	setupJenkinsImageRenconciler(manager)
+	setupJenkinsBackupRenconciler(manager)
 
 	// start the Cmd
 	setupLog.Info("Starting the Cmd.")
@@ -138,7 +140,7 @@ func getRestClient(debug *bool) *rest.Config {
 	return cfg
 }
 
-func parsePglags(metricsAddr string, enableLeaderElection bool) {
+func parseFlags(metricsAddr string, enableLeaderElection bool) {
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. "+
@@ -221,6 +223,21 @@ func newJenkinsImageRenconciler(mgr manager.Manager) *controllers.JenkinsImageRe
 	return &controllers.JenkinsImageReconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("JenkinsImage"),
+		Scheme: mgr.GetScheme(),
+	}
+}
+
+func setupJenkinsBackupRenconciler(mgr manager.Manager) {
+	if err := newJenkinsBackupRenconciler(mgr).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Backup")
+		os.Exit(1)
+	}
+}
+
+func newJenkinsBackupRenconciler(mgr manager.Manager) *controllers.BackupReconciler {
+	return &controllers.BackupReconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("JenkinsBackup"),
 		Scheme: mgr.GetScheme(),
 	}
 }

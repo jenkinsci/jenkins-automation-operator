@@ -52,7 +52,7 @@ spec:
       version: v1alpha2
     - displayName: Jenkins
       kind: Jenkins
-      name: jenkins.jenkins.jenkins.io
+      name: jenkins.jenkins.io
       specDescriptors:
       - displayName: Enable this configuration
         path: configurationAsCode.enabled
@@ -67,7 +67,7 @@ spec:
     - description: JenkinsImage is the Schema for the jenkinsimages API
       displayName: Jenkins Image
       kind: JenkinsImage
-      name: jenkinsimages.jenkins.jenkins.io
+      name: jenkinsimages.jenkins.io
       specDescriptors:
       - description: The Image name
         displayName: Name
@@ -91,7 +91,7 @@ spec:
     - description: BackupWorker is the Schema for the backupworkers API
       displayName: Backup Worker
       kind: BackupWorker
-      name: backupworkers.jenkins.jenkins.io
+      name: backupworkers.jenkins.io
       version: v1alpha2
   description: Manage your Jenkins instances in kubernetes
   displayName: jenkins-operator

@@ -22,13 +22,13 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/pkg/errors"
+
 	"github.com/jenkinsci/kubernetes-operator/pkg/constants"
 	"github.com/jenkinsci/kubernetes-operator/pkg/event"
 	"github.com/jenkinsci/kubernetes-operator/pkg/notifications"
 	e "github.com/jenkinsci/kubernetes-operator/pkg/notifications/event"
-	"github.com/pkg/errors"
 
-	jenkinsv1alpha2 "github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -40,16 +40,18 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+
+	jenkinsv1alpha2 "github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
 )
 
 // These tests use Ginkgo (BDD-style Go testing framework). Refer to
 // http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
 
 var (
-	restConfig *rest.Config
-	k8sClient  client.Client
-	testEnv    *envtest.Environment
-	logger     = ctrl.Log.WithName("suite_test.go")
+	restConfig      *rest.Config
+	k8sClient       client.Client
+	testEnv         *envtest.Environment
+	suiteTestLogger = ctrl.Log.WithName("suite_test.go")
 )
 
 func TestAPIs(t *testing.T) {
@@ -73,6 +75,9 @@ var _ = BeforeSuite(func(done Done) {
 	err = jenkinsv1alpha2.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
+	err = jenkinsv1alpha2.AddToScheme(scheme.Scheme)
+	Expect(err).NotTo(HaveOccurred())
+
 	// +kubebuilder:scaffold:scheme
 
 	k8sClient, err = client.New(restConfig, client.Options{Scheme: scheme.Scheme})
@@ -82,6 +87,7 @@ var _ = BeforeSuite(func(done Done) {
 	manager, err := getManager()
 	Expect(err).ToNot(HaveOccurred())
 
+	registerJenkinsBackupController(manager)
 	registerJenkinsImageController(manager)
 	registerJenkinsController(manager, restConfig)
 
@@ -98,6 +104,16 @@ var _ = BeforeSuite(func(done Done) {
 
 	close(done)
 }, 60)
+
+func registerJenkinsBackupController(manager manager.Manager) {
+	controller := &BackupReconciler{
+		Client: manager.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("Backup"),
+		Scheme: manager.GetScheme(),
+	}
+	err := controller.SetupWithManager(manager)
+	Expect(err).ToNot(HaveOccurred())
+}
 
 func registerJenkinsImageController(manager manager.Manager) {
 	controller := &JenkinsImageReconciler{
@@ -157,6 +173,6 @@ func getEventsRecorder(cfg *rest.Config) event.Recorder {
 }
 
 func fatal(err error) {
-	logger.Error(nil, fmt.Sprintf("%+v", err))
+	suiteTestLogger.Error(nil, fmt.Sprintf("%+v", err))
 	os.Exit(-1)
 }

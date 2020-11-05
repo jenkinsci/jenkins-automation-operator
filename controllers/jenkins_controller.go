@@ -24,6 +24,8 @@ import (
 	"strings"
 	"time"
 
+	"k8s.io/apimachinery/pkg/api/resource"
+
 	"github.com/go-logr/logr"
 	"github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/client"
@@ -105,6 +107,7 @@ func (r *JenkinsReconciler) SetupWithManager(mgr ctrl.Manager) error {
 // +kubebuilder:rbac:groups=jenkins.io,resources=jenkins,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=jenkins.io,resources=jenkins/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=apps,resources=persistentvolumeclaims,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=core,resources=configmaps,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=core,resources=pods/logs,verbs=get;list;watch;create;update;patch;delete
@@ -277,6 +280,42 @@ func (r *JenkinsReconciler) reconcile(ctx context.Context, request ctrl.Request,
 	if err != nil {
 		logger.V(log.VDebug).Info(fmt.Sprintf("setDefaults returned an error %s", err))
 		return reconcile.Result{}, err
+	}
+
+	if jenkins.Status.Spec.Backup != nil {
+		if jenkins.Status.Spec.Backup.Enabled {
+			pvc := &corev1.PersistentVolumeClaim{}
+			jenkinsBackupPVCName := request.Name + "-jenkins-backup"
+			pvcNamespacedName := types.NamespacedName{
+				Namespace: request.Namespace,
+				Name:      jenkinsBackupPVCName,
+			}
+			err = r.Client.Get(context.TODO(), pvcNamespacedName, pvc)
+			if err != nil {
+				if apierrors.IsNotFound(err) {
+					logger.Info(fmt.Sprintf("Creating PVC %s in Namespace %s for Jenkins instance %s",
+						pvcNamespacedName.Name,
+						pvcNamespacedName.Namespace,
+						jenkinsBackupPVCName))
+					pvc.Name = jenkinsBackupPVCName
+					pvc.Namespace = request.Namespace
+					pvc.Spec = corev1.PersistentVolumeClaimSpec{
+						AccessModes: []corev1.PersistentVolumeAccessMode{
+							corev1.ReadWriteOnce,
+						},
+						Resources: corev1.ResourceRequirements{
+							Requests: corev1.ResourceList{
+								corev1.ResourceStorage: resource.MustParse("2Gi"),
+							},
+						},
+					}
+					err = r.Client.Create(context.TODO(), pvc)
+					if err != nil {
+						return ctrl.Result{}, err
+					}
+				}
+			}
+		}
 	}
 
 	logger.V(log.VDebug).Info(fmt.Sprintf("setDefaults reported a change: %v", requeue))

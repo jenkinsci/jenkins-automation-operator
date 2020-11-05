@@ -30,9 +30,9 @@ func NewJenkinsDeployment(objectMeta metav1.ObjectMeta, jenkins *v1alpha2.Jenkin
 				Spec: corev1.PodSpec{
 					ServiceAccountName: serviceAccountName,
 					NodeSelector:       jenkinsSpec.Master.NodeSelector,
-					InitContainers:     newInitContainers(jenkins, jenkinsSpec),
+					InitContainers:     newInitContainers(jenkinsSpec),
 					Containers:         newContainers(jenkins, jenkinsSpec),
-					Volumes:            append(GetJenkinsMasterPodBaseVolumes(jenkins), jenkinsSpec.Master.Volumes...),
+					Volumes:            getJenkinsVolumes(jenkins, jenkinsSpec),
 					SecurityContext:    jenkinsSpec.Master.SecurityContext,
 					ImagePullSecrets:   jenkinsSpec.Master.ImagePullSecrets,
 					Tolerations:        jenkinsSpec.Master.Tolerations,
@@ -42,6 +42,30 @@ func NewJenkinsDeployment(objectMeta metav1.ObjectMeta, jenkins *v1alpha2.Jenkin
 			Selector: selector,
 		},
 	}
+}
+
+func getJenkinsVolumes(jenkins *v1alpha2.Jenkins, jenkinsSpec *v1alpha2.JenkinsSpec) []corev1.Volume {
+	volumes := append(GetJenkinsMasterPodBaseVolumes(jenkins), jenkinsSpec.Master.Volumes...)
+	if jenkins.Spec.Backup != nil {
+		if jenkins.Spec.Backup.Enabled {
+			backupVolume := corev1.Volume{
+				Name: JenkinsBackupVolumeMountName,
+				VolumeSource: corev1.VolumeSource{
+					PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+						ClaimName: GetJenkinsBackupPVCName(jenkins),
+					},
+				},
+			}
+			backupScriptsVolume := corev1.Volume{
+				Name: ScriptsVolumeMountName,
+				VolumeSource: corev1.VolumeSource{
+					EmptyDir: &corev1.EmptyDirVolumeSource{},
+				},
+			}
+			volumes = append(volumes, backupVolume, backupScriptsVolume)
+		}
+	}
+	return volumes
 }
 
 // GetJenkinsDeploymentName returns Jenkins deployment name for given CR
