@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"os"
 	"reflect"
 	"strings"
 	"time"
@@ -54,6 +55,8 @@ import (
 )
 
 const (
+	DefaultJenkinsImageEnvVar = "DEFAULT_JENKINS_IMAGE"
+
 	APIVersion             = "core/v1"
 	DeploymentKind         = "Deployment"
 	SecretKind             = "Secret"
@@ -378,7 +381,7 @@ func (r *JenkinsReconciler) getCalculatedSpec(ctx context.Context, jenkins *v1al
 	calculatedSpec.Master = jenkinsMaster
 
 	if len(jenkinsContainer.Image) == 0 {
-		jenkinsMasterImage := constants.DefaultJenkinsMasterImage
+		jenkinsMasterImage := r.getDefaultJenkinsImage()
 		imageRef := requestedSpec.JenkinsImageRef
 		if len(imageRef) != 0 {
 			jenkinsImage := &v1alpha2.JenkinsImage{}
@@ -391,9 +394,6 @@ func (r *JenkinsReconciler) getCalculatedSpec(ctx context.Context, jenkins *v1al
 				builds := jenkinsImage.Status.Builds
 				jenkinsMasterImage = builds[len(builds)-1].Image
 			}
-		}
-		if resources.IsImageRegistryAvailable(r.Client) {
-			jenkinsMasterImage = constants.DefaultOpenShiftJenkinsMasterImage
 		}
 		logger.Info("Setting default Jenkins master image: " + jenkinsMasterImage)
 		jenkinsContainer.Image = jenkinsMasterImage
@@ -501,10 +501,7 @@ func (r *JenkinsReconciler) getCalculatedJenkinsMaster(calculatedSpec *v1alpha2.
 func (r *JenkinsReconciler) getJenkinsMasterContainer(spec *v1alpha2.JenkinsSpec) (v1alpha2.Container, error) {
 	var jenkinsContainer v1alpha2.Container
 	if spec.Master == nil || len(spec.Master.Containers) == 0 {
-		image := constants.DefaultJenkinsMasterImage
-		if resources.IsRouteAPIAvailable(&r.clientSet) {
-			image = constants.DefaultOpenShiftJenkinsMasterImage
-		}
+		image := r.getDefaultJenkinsImage()
 		jenkinsContainer = v1alpha2.Container{
 			Name:  resources.JenkinsMasterContainerName,
 			Image: image,
@@ -611,4 +608,16 @@ func (r *JenkinsReconciler) setInitialConditions(jenkins *v1alpha2.Jenkins) {
 		Reason:  reconcileInit,
 		Message: reconcileInitMessage,
 	})
+}
+
+// getDefaultJenkinsImage returns the default jenkins image the operator should be using
+func (r *JenkinsReconciler) getDefaultJenkinsImage() string {
+	jenkinsImage, _ := os.LookupEnv(DefaultJenkinsImageEnvVar)
+	if len(jenkinsImage) == 0 {
+		jenkinsImage = constants.DefaultJenkinsMasterImage
+		if resources.RouteAPIAvailable {
+			jenkinsImage = constants.DefaultOpenShiftJenkinsMasterImage
+		}
+	}
+	return jenkinsImage
 }
