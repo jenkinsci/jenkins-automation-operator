@@ -221,7 +221,14 @@ func (r *JenkinsReconciler) updateJenkinsStatus(jenkins *v1alpha2.Jenkins, jenki
 	err := r.Status().Update(ctx, jenkins)
 	if err != nil {
 		r.Log.Info("Failed to update Jenkins status...reloading")
-		_ = r.Client.Get(ctx, jenkinsName, jenkins)
+		err = r.Client.Get(ctx, jenkinsName, jenkins)
+		if err != nil {
+			r.Log.Info("Failed to get Jenkins twice...")
+			return err
+		}
+		if jenkins.Status == nil {
+			jenkins.Status = &v1alpha2.JenkinsStatus{}
+		}
 		r.setStatusConditions(jenkins)
 		err = r.Status().Update(ctx, jenkins)
 		return err
