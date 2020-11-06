@@ -119,7 +119,7 @@ func (r *JenkinsReconciler) Reconcile(request ctrl.Request) (ctrl.Result, error)
 	jenkinsName := request.NamespacedName
 	logger := r.Log.WithValues("jenkins", jenkinsName)
 	reconcileFailLimit := uint64(10)
-	logger.V(log.VDebug).Info(fmt.Sprintf("Got a reconcialition request at: %+v for Jenkins: %s", time.Now(), request.Name))
+	logger.V(log.VDebug).Info(fmt.Sprintf("Got a reconcialition request at: %+v for Jenkins: %s in namespace: %s", time.Now(), request.Name, request.Namespace))
 
 	// Fetch the Jenkins jenkins
 	jenkins := &v1alpha2.Jenkins{}
@@ -129,21 +129,24 @@ func (r *JenkinsReconciler) Reconcile(request ctrl.Request) (ctrl.Result, error)
 			// Request object not found, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
-			logger.V(log.VWarn).Info(fmt.Sprintf("API returned not found error: %s", err))
+			logger.Info("API returned not found error: Deletion has been performed: %s", request)
 			return ctrl.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
-		logger.V(log.VWarn).Info(fmt.Sprintf("Error while trying to get jenkins named:  %s : %s", jenkinsName, err))
+		logger.Info(fmt.Sprintf("Error while trying to get jenkins named:  %s : %s", jenkinsName, err))
 		return ctrl.Result{}, err
 	}
-
+	logger.Info(fmt.Sprintf("Jenkins instance correctly found: %s", jenkins.UID))
+	if jenkins.Status == nil {
+		jenkins.Status = &v1alpha2.JenkinsStatus{}
+	}
 	// setInitialConditions
 	if jenkins.Status.Conditions == nil {
-		r.setInitialConditions(jenkins)
-		err = r.Status().Update(ctx, jenkins)
+		setInitialConditions(jenkins)
+		err = r.updateJenkinsStatus(jenkins, jenkinsName)
 		if err != nil {
-			logger.V(log.VWarn).Info(fmt.Sprintf("Failed to set initial conditions to status: %s", err))
-			return reconcile.Result{}, err
+			logger.Info(fmt.Sprintf("Failed to set initial conditions to status: %s", err))
+			return ctrl.Result{Requeue: true}, err
 		}
 	}
 
@@ -205,15 +208,25 @@ func (r *JenkinsReconciler) Reconcile(request ctrl.Request) (ctrl.Result, error)
 	}
 
 	r.setStatusConditions(jenkins)
-	err = r.Status().Update(ctx, jenkins)
+	err = r.updateJenkinsStatus(jenkins, jenkinsName)
 	if err != nil {
-		logger.Error(err, "Failed to update Jenkins status")
-		return ctrl.Result{}, err
+		return ctrl.Result{Requeue: true}, err
 	}
-
 	logger.Info("Reconcile loop success !!!")
-
 	return ctrl.Result{}, nil
+}
+
+func (r *JenkinsReconciler) updateJenkinsStatus(jenkins *v1alpha2.Jenkins, jenkinsName types.NamespacedName) error {
+	ctx := context.Background()
+	err := r.Status().Update(ctx, jenkins)
+	if err != nil {
+		r.Log.Info("Failed to update Jenkins status...reloading")
+		_ = r.Client.Get(ctx, jenkinsName, jenkins)
+		r.setStatusConditions(jenkins)
+		err = r.Status().Update(ctx, jenkins)
+		return err
+	}
+	return nil
 }
 
 func (r *JenkinsReconciler) setStatusConditions(jenkins *v1alpha2.Jenkins) {
@@ -357,7 +370,7 @@ func (r *JenkinsReconciler) setDefaults(ctx context.Context, jenkins *v1alpha2.J
 		logger.Info("Current calculated spec is different from the newly calculated: resetting it")
 		jenkins.Status.Spec = calculatedSpec
 		logger.Info("Updating Jenkins status with requested and default values")
-		err = r.Status().Update(ctx, jenkins)
+		err = r.Update(ctx, jenkins)
 		return true, errors.WithStack(err)
 	}
 	return false, nil
@@ -577,7 +590,7 @@ func (r *JenkinsReconciler) isJenkinsPodTerminating(err error) bool {
 	return strings.Contains(err.Error(), "Terminating state with DeletionTimestamp")
 }
 
-func (r *JenkinsReconciler) setInitialConditions(jenkins *v1alpha2.Jenkins) {
+func setInitialConditions(jenkins *v1alpha2.Jenkins) {
 	conditionsv1.SetStatusCondition(&jenkins.Status.Conditions, conditionsv1.Condition{
 		Type:    ConditionReconcileComplete,
 		Status:  corev1.ConditionUnknown, // we just started trying to reconcile

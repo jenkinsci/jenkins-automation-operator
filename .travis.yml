@@ -37,13 +37,10 @@ before_install:
 
 jobs:
   include:
-  - stage: unit
-    name: "Jenkins Operator - unit tests"
+  - stage: tests
+    name: "Jenkins Operator - unit tests and end-to-end tests"
     script:
     - make test
-  - stage: e2e
-    name: "Jenkins Operator - end-to-end tests"
-    script:
     - make e2e
 cache:
   directories:

@@ -159,7 +159,9 @@ func TestJenkinsReconcilerBaseConfiguration_validateImagePullSecrets(t *testing.
 				},
 			},
 		}
+		jenkins.Status = &v1alpha2.JenkinsStatus{}
 		jenkins.Status.Spec = jenkins.Spec.DeepCopy()
+
 		fakeClient := fake.NewFakeClient()
 		err := fakeClient.Create(context.TODO(), secret)
 		assert.NoError(t, err)
@@ -185,6 +187,7 @@ func TestJenkinsReconcilerBaseConfiguration_validateImagePullSecrets(t *testing.
 				},
 			},
 		}
+		jenkins.Status = &v1alpha2.JenkinsStatus{}
 		jenkins.Status.Spec = jenkins.Spec.DeepCopy()
 
 		fakeClient := fake.NewFakeClient()
@@ -220,6 +223,7 @@ func TestJenkinsReconcilerBaseConfiguration_validateImagePullSecrets(t *testing.
 				},
 			},
 		}
+		jenkins.Status = &v1alpha2.JenkinsStatus{}
 		jenkins.Status.Spec = jenkins.Spec.DeepCopy()
 
 		fakeClient := fake.NewFakeClient()
@@ -257,6 +261,7 @@ func TestJenkinsReconcilerBaseConfiguration_validateImagePullSecrets(t *testing.
 				},
 			},
 		}
+		jenkins.Status = &v1alpha2.JenkinsStatus{}
 		jenkins.Status.Spec = jenkins.Spec.DeepCopy()
 
 		fakeClient := fake.NewFakeClient()
@@ -294,6 +299,7 @@ func TestJenkinsReconcilerBaseConfiguration_validateImagePullSecrets(t *testing.
 				},
 			},
 		}
+		jenkins.Status = &v1alpha2.JenkinsStatus{}
 		jenkins.Status.Spec = jenkins.Spec.DeepCopy()
 
 		fakeClient := fake.NewFakeClient()
@@ -331,6 +337,7 @@ func TestJenkinsReconcilerBaseConfiguration_validateImagePullSecrets(t *testing.
 				},
 			},
 		}
+		jenkins.Status = &v1alpha2.JenkinsStatus{}
 		jenkins.Status.Spec = jenkins.Spec.DeepCopy()
 
 		fakeClient := fake.NewFakeClient()
@@ -371,6 +378,7 @@ func TestValidateJenkinsMasterPodEnvs(t *testing.T) {
 				},
 			},
 		}
+		jenkins.Status = &v1alpha2.JenkinsStatus{}
 		jenkins.Status.Spec = jenkins.Spec.DeepCopy()
 
 		baseReconcileLoop := New(configuration.Configuration{
@@ -396,7 +404,9 @@ func TestValidateJenkinsMasterPodEnvs(t *testing.T) {
 				},
 			},
 		}
+		jenkins.Status = &v1alpha2.JenkinsStatus{}
 		jenkins.Status.Spec = jenkins.Spec.DeepCopy()
+
 		baseReconcileLoop := New(configuration.Configuration{
 			Jenkins: &jenkins,
 		}, client.JenkinsAPIConnectionSettings{})
@@ -421,6 +431,7 @@ func TestValidateJenkinsMasterPodEnvs(t *testing.T) {
 				},
 			},
 		}
+		jenkins.Status = &v1alpha2.JenkinsStatus{}
 		jenkins.Status.Spec = jenkins.Spec.DeepCopy()
 
 		baseReconcileLoop := New(configuration.Configuration{
@@ -435,7 +446,7 @@ func TestValidateJenkinsMasterPodEnvs(t *testing.T) {
 func TestValidateReservedVolumes(t *testing.T) {
 	t.Run("happy", func(t *testing.T) {
 		jenkins := v1alpha2.Jenkins{
-			Status: v1alpha2.JenkinsStatus{
+			Status: &v1alpha2.JenkinsStatus{
 				Spec: &v1alpha2.JenkinsSpec{
 					Master: &v1alpha2.JenkinsMaster{
 						Volumes: []corev1.Volume{
@@ -447,7 +458,6 @@ func TestValidateReservedVolumes(t *testing.T) {
 				},
 			},
 		}
-
 		baseReconcileLoop := New(configuration.Configuration{
 			Jenkins: &jenkins,
 		}, client.JenkinsAPIConnectionSettings{})
@@ -466,6 +476,7 @@ func TestValidateReservedVolumes(t *testing.T) {
 				},
 			},
 		}
+		jenkins.Status = &v1alpha2.JenkinsStatus{}
 		jenkins.Status.Spec = jenkins.Spec.DeepCopy()
 
 		baseReconcileLoop := New(configuration.Configuration{
@@ -484,6 +495,7 @@ func TestValidateContainerVolumeMounts(t *testing.T) {
 				Master: &v1alpha2.JenkinsMaster{},
 			},
 		}
+		jenkins.Status = &v1alpha2.JenkinsStatus{}
 		jenkins.Status.Spec = jenkins.Spec.DeepCopy()
 
 		baseReconcileLoop := New(configuration.Configuration{
@@ -514,6 +526,7 @@ func TestValidateContainerVolumeMounts(t *testing.T) {
 				},
 			},
 		}
+		jenkins.Status = &v1alpha2.JenkinsStatus{}
 		jenkins.Status.Spec = jenkins.Spec.DeepCopy()
 
 		baseReconcileLoop := New(configuration.Configuration{
@@ -544,6 +557,7 @@ func TestValidateContainerVolumeMounts(t *testing.T) {
 				},
 			},
 		}
+		jenkins.Status = &v1alpha2.JenkinsStatus{}
 		jenkins.Status.Spec = jenkins.Spec.DeepCopy()
 
 		baseReconcileLoop := New(configuration.Configuration{
@@ -569,7 +583,9 @@ func TestValidateContainerVolumeMounts(t *testing.T) {
 				},
 			},
 		}
+		jenkins.Status = &v1alpha2.JenkinsStatus{}
 		jenkins.Status.Spec = jenkins.Spec.DeepCopy()
+
 		baseReconcileLoop := New(configuration.Configuration{
 			Jenkins: &jenkins,
 		}, client.JenkinsAPIConnectionSettings{})
@@ -617,6 +633,7 @@ func TestValidateConfigMapVolume(t *testing.T) {
 				},
 			},
 		}
+		jenkins.Status = &v1alpha2.JenkinsStatus{}
 		jenkins.Status.Spec = jenkins.Spec.DeepCopy()
 
 		fakeClient := fake.NewFakeClient()

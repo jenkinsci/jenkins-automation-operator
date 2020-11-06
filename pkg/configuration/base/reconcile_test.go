@@ -120,7 +120,7 @@ func (r *JenkinsReconcilerBaseConfiguration) compareVolumes(actualPod corev1.Pod
 func TestCompareVolumes(t *testing.T) {
 	t.Run("defaults", func(t *testing.T) {
 		jenkins := &v1alpha2.Jenkins{
-			Status: v1alpha2.JenkinsStatus{
+			Status: &v1alpha2.JenkinsStatus{
 				Spec: &v1alpha2.JenkinsSpec{
 					ConfigurationAsCode: &v1alpha2.Configuration{},
 					Master: &v1alpha2.JenkinsMaster{
@@ -143,7 +143,7 @@ func TestCompareVolumes(t *testing.T) {
 	})
 	t.Run("different", func(t *testing.T) {
 		jenkins := &v1alpha2.Jenkins{
-			Status: v1alpha2.JenkinsStatus{
+			Status: &v1alpha2.JenkinsStatus{
 				Spec: &v1alpha2.JenkinsSpec{
 					ConfigurationAsCode: &v1alpha2.Configuration{},
 					Master: &v1alpha2.JenkinsMaster{
@@ -169,7 +169,7 @@ func TestCompareVolumes(t *testing.T) {
 	})
 	t.Run("added one volume", func(t *testing.T) {
 		jenkins := &v1alpha2.Jenkins{
-			Status: v1alpha2.JenkinsStatus{
+			Status: &v1alpha2.JenkinsStatus{
 				Spec: &v1alpha2.JenkinsSpec{
 					ConfigurationAsCode: &v1alpha2.Configuration{},
 					Master: &v1alpha2.JenkinsMaster{
@@ -200,7 +200,7 @@ func TestJenkinsReconcilerBaseConfiguration_verifyPlugins(t *testing.T) {
 
 	t.Run("happy, empty base and user plugins", func(t *testing.T) {
 		jenkins := &v1alpha2.Jenkins{
-			Status: v1alpha2.JenkinsStatus{
+			Status: &v1alpha2.JenkinsStatus{
 				Spec: &v1alpha2.JenkinsSpec{
 					ConfigurationAsCode: &v1alpha2.Configuration{},
 					Master: &v1alpha2.JenkinsMaster{
@@ -231,7 +231,7 @@ func TestJenkinsReconcilerBaseConfiguration_verifyPlugins(t *testing.T) {
 	})
 	t.Run("happy, not empty base and user plugins", func(t *testing.T) {
 		jenkins := &v1alpha2.Jenkins{
-			Status: v1alpha2.JenkinsStatus{
+			Status: &v1alpha2.JenkinsStatus{
 				Spec: &v1alpha2.JenkinsSpec{
 					ConfigurationAsCode: &v1alpha2.Configuration{},
 					Master: &v1alpha2.JenkinsMaster{
@@ -279,7 +279,7 @@ func TestJenkinsReconcilerBaseConfiguration_verifyPlugins(t *testing.T) {
 	})
 	t.Run("happy, not empty base and empty user plugins", func(t *testing.T) {
 		jenkins := &v1alpha2.Jenkins{
-			Status: v1alpha2.JenkinsStatus{
+			Status: &v1alpha2.JenkinsStatus{
 				Spec: &v1alpha2.JenkinsSpec{
 					ConfigurationAsCode: &v1alpha2.Configuration{},
 					Master: &v1alpha2.JenkinsMaster{
@@ -319,7 +319,7 @@ func TestJenkinsReconcilerBaseConfiguration_verifyPlugins(t *testing.T) {
 	})
 	t.Run("happy, empty base and not empty user plugins", func(t *testing.T) {
 		jenkins := &v1alpha2.Jenkins{
-			Status: v1alpha2.JenkinsStatus{
+			Status: &v1alpha2.JenkinsStatus{
 				Spec: &v1alpha2.JenkinsSpec{
 					ConfigurationAsCode: &v1alpha2.Configuration{},
 					Master: &v1alpha2.JenkinsMaster{
@@ -359,7 +359,7 @@ func TestJenkinsReconcilerBaseConfiguration_verifyPlugins(t *testing.T) {
 	})
 	t.Run("happy, plugin version matter for base plugins", func(t *testing.T) {
 		jenkins := &v1alpha2.Jenkins{
-			Status: v1alpha2.JenkinsStatus{
+			Status: &v1alpha2.JenkinsStatus{
 				Spec: &v1alpha2.JenkinsSpec{
 					ConfigurationAsCode: &v1alpha2.Configuration{},
 					Master: &v1alpha2.JenkinsMaster{
@@ -399,7 +399,7 @@ func TestJenkinsReconcilerBaseConfiguration_verifyPlugins(t *testing.T) {
 	})
 	t.Run("plugin version matter for user plugins", func(t *testing.T) {
 		jenkins := &v1alpha2.Jenkins{
-			Status: v1alpha2.JenkinsStatus{
+			Status: &v1alpha2.JenkinsStatus{
 				Spec: &v1alpha2.JenkinsSpec{
 					ConfigurationAsCode: &v1alpha2.Configuration{},
 					Master: &v1alpha2.JenkinsMaster{
@@ -439,7 +439,7 @@ func TestJenkinsReconcilerBaseConfiguration_verifyPlugins(t *testing.T) {
 	})
 	t.Run("missing base plugin", func(t *testing.T) {
 		jenkins := &v1alpha2.Jenkins{
-			Status: v1alpha2.JenkinsStatus{
+			Status: &v1alpha2.JenkinsStatus{
 				Spec: &v1alpha2.JenkinsSpec{
 					ConfigurationAsCode: &v1alpha2.Configuration{},
 					Master: &v1alpha2.JenkinsMaster{
@@ -471,7 +471,7 @@ func TestJenkinsReconcilerBaseConfiguration_verifyPlugins(t *testing.T) {
 	})
 	t.Run("missing user plugin", func(t *testing.T) {
 		jenkins := &v1alpha2.Jenkins{
-			Status: v1alpha2.JenkinsStatus{
+			Status: &v1alpha2.JenkinsStatus{
 				Spec: &v1alpha2.JenkinsSpec{
 					ConfigurationAsCode: &v1alpha2.Configuration{},
 					Master: &v1alpha2.JenkinsMaster{

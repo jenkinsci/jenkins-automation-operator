@@ -446,7 +446,7 @@ type Jenkins struct {
 	Spec JenkinsSpec `json:"spec,omitempty"`
 
 	// Status defines the observed state of Jenkins
-	Status JenkinsStatus `json:"status,omitempty"`
+	Status *JenkinsStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true

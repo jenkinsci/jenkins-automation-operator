@@ -160,8 +160,8 @@ func GetJenkinsMasterPodBaseVolumes(jenkins *v1alpha2.Jenkins) []corev1.Volume {
 			},
 		},
 	}
-	spec := jenkins.Status.Spec
-	if spec != nil && spec.ConfigurationAsCode != nil {
+	if jenkins.Status != nil && jenkins.Status.Spec != nil && jenkins.Status.Spec.ConfigurationAsCode != nil {
+		spec := jenkins.Status.Spec
 		configurationAsCode := spec.ConfigurationAsCode
 		if configurationAsCode.Enabled {
 			// target volume for the init container

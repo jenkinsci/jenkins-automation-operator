@@ -22,6 +22,7 @@ metadata:
           },
           "spec": {
             "configurationAsCode": {
+              "configurations": [],
               "defaultConfig": true,
               "enableAutoReload": true,
               "enabled": true
@@ -47,7 +48,7 @@ metadata:
                     "successThreshold": 1,
                     "timeoutSeconds": 5
                   },
-                  "name": "jenkins-master",
+                  "name": "jenkins",
                   "readinessProbe": {
                     "failureThreshold": 3,
                     "httpGet": {
@@ -71,7 +72,7 @@ metadata:
                     }
                   }
                 }
-              ],
+              ]
             }
           }
         },
@@ -160,93 +161,6 @@ spec:
       clusterPermissions:
       - rules:
         - apiGroups:
-          - apps
-          resources:
-          - deployments
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
-          - ""
-          resources:
-          - pods
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-        - apiGroups:
-          - ""
-          resources:
-          - secrets
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
-          - jenkins.io
-          resources:
-          - jenkins
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
-          - jenkins.io
-          resources:
-          - jenkins/status
-          verbs:
-          - get
-          - patch
-          - update
-        - apiGroups:
-          - jenkins.io
-          resources:
-          - jenkinsimages
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
-          - jenkins.io
-          resources:
-          - jenkinsimages/status
-          verbs:
-          - get
-          - patch
-          - update
-        - apiGroups:
-          - route.openshift.io
-          resources:
-          - routes
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
           - authentication.k8s.io
           resources:
           - tokenreviews
@@ -289,7 +203,7 @@ spec:
                 - --enable-leader-election
                 command:
                 - /manager
-                image: quay.io/redhat-developer/openshift-jenkins-operator:0.6.0-a89deb08
+                image: quay.io/redhat-developer/openshift-jenkins-operator:0.6.0-ed03ef27
                 name: manager
                 resources:
                   limits:
@@ -357,5 +271,4 @@ spec:
   maturity: alpha
   provider:
     name: Red Hat
-  replaces: jenkins-operator.v0.0.1
   version: 0.6.0
