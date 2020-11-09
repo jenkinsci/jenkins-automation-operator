@@ -6,6 +6,7 @@ resources:
 - bases/jenkins.io_jenkinsimages.yaml
 - bases/jenkins.io_backupworkers.yaml
 - bases/jenkins.io_backups.yaml
+- bases/jenkins.io_restores.yaml
 # +kubebuilder:scaffold:crdkustomizeresource
 
 patchesStrategicMerge:

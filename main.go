@@ -101,6 +101,7 @@ func main() {
 	setupJenkinsRenconciler(manager, notificationsChannel)
 	setupJenkinsImageRenconciler(manager)
 	setupJenkinsBackupRenconciler(manager)
+	setupJenkinsRestoreRenconciler(manager)
 
 	// start the Cmd
 	setupLog.Info("Starting the Cmd.")
@@ -237,7 +238,22 @@ func setupJenkinsBackupRenconciler(mgr manager.Manager) {
 func newJenkinsBackupRenconciler(mgr manager.Manager) *controllers.BackupReconciler {
 	return &controllers.BackupReconciler{
 		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("JenkinsBackup"),
+		Log:    ctrl.Log.WithName("controllers").WithName("Backup"),
+		Scheme: mgr.GetScheme(),
+	}
+}
+
+func setupJenkinsRestoreRenconciler(mgr manager.Manager) {
+	if err := newJenkinsRestoreRenconciler(mgr).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Restore")
+		os.Exit(1)
+	}
+}
+
+func newJenkinsRestoreRenconciler(mgr manager.Manager) *controllers.RestoreReconciler {
+	return &controllers.RestoreReconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("Restore"),
 		Scheme: mgr.GetScheme(),
 	}
 }

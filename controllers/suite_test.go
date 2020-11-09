@@ -87,6 +87,7 @@ var _ = BeforeSuite(func(done Done) {
 	manager, err := getManager()
 	Expect(err).ToNot(HaveOccurred())
 
+	registerJenkinsRestoreController(manager)
 	registerJenkinsBackupController(manager)
 	registerJenkinsImageController(manager)
 	registerJenkinsController(manager, restConfig)
@@ -104,6 +105,16 @@ var _ = BeforeSuite(func(done Done) {
 
 	close(done)
 }, 60)
+
+func registerJenkinsRestoreController(manager manager.Manager) {
+	controller := &RestoreReconciler{
+		Client: manager.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("Backup"),
+		Scheme: manager.GetScheme(),
+	}
+	err := controller.SetupWithManager(manager)
+	Expect(err).ToNot(HaveOccurred())
+}
 
 func registerJenkinsBackupController(manager manager.Manager) {
 	controller := &BackupReconciler{

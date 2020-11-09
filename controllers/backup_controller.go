@@ -20,9 +20,9 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
+
+	"github.com/jenkinsci/kubernetes-operator/pkg/exec"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
@@ -33,9 +33,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	clientgocorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/remotecommand"
-	"k8s.io/client-go/util/homedir"
 	"k8s.io/kubectl/pkg/scheme"
 
 	"github.com/go-logr/logr"
@@ -61,6 +59,7 @@ var (
 	logx               = log.Log
 	logger             = logx.WithName("backup")
 	defaultJenkinsHome = "/var/lib/jenkins"
+	backupExecClient   = exec.KubeExecClient{}
 )
 
 func (r *BackupReconciler) SetupWithManager(mgr ctrl.Manager) error {
@@ -89,26 +88,6 @@ func (r *BackupReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 	backupLogger.Info("Jenkins Backup with name " + backupInstance.Name + " has been created")
 
-	var clientConfig *rest.Config
-
-	// Use internal config
-	home := homedir.HomeDir()
-	serviceHost := os.Getenv("KUBERNETES_SERVICE_HOST")
-	servicePort := os.Getenv("KUBERNETES_SERVICE_PORT")
-	if serviceHost != "" && servicePort != "" {
-		backupLogger.Info("Using in-cluster configuration")
-		clientConfig, err = clientcmd.BuildConfigFromFlags("", "")
-		if err != nil {
-			return ctrl.Result{}, err
-		}
-	} else if home != "" {
-		backupLogger.Info("Using local kubeconfig")
-		clientConfig, err = clientcmd.BuildConfigFromFlags("", filepath.Join(home, ".kube", "config"))
-		if err != nil {
-			return ctrl.Result{}, err
-		}
-	}
-
 	// Fetch the Jenkins instance
 	jenkinsInstance := &jenkinsv1alpha2.Jenkins{}
 	backupSpec := backupInstance.Spec
@@ -130,6 +109,11 @@ func (r *BackupReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	backupLogger.Info(fmt.Sprintf("Backup in progress for Jenkins instance '%s'", jenkinsInstance.Name))
 	backupLogger.Info(fmt.Sprintf("Jenkins '%s' for Backup '%s' found !", jenkinsInstance.Name, req.Name))
 
+	err = backupExecClient.InitKubeGoClient()
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
 	jenkinsPod, err := r.GetPodByDeployment(jenkinsInstance)
 	if err != nil {
 		return ctrl.Result{}, err
@@ -143,7 +127,7 @@ func (r *BackupReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	// QuietDown
 	if backupSpec.QuietDownDuringBackup {
 		go func() {
-			err = r.execQuietDown(backupInstance, clientConfig, jenkinsPod)
+			err = r.execQuietDown(backupInstance, backupExecClient.Client, jenkinsPod)
 			execErr <- err
 			execComplete <- true
 		}()
@@ -156,7 +140,7 @@ func (r *BackupReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 	// Backup
 	go func() {
-		err = r.execBackup(backupInstance, clientConfig, jenkinsPod)
+		err = r.execBackup(backupInstance, backupExecClient.Client, jenkinsPod)
 		execErr <- err
 		execComplete <- true
 	}()
@@ -170,7 +154,7 @@ func (r *BackupReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	if backupSpec.Restart != nil {
 		if backupSpec.Restart.Enabled && backupSpec.Restart.Safe {
 			go func() {
-				err = r.execSafeRestart(backupInstance, clientConfig, jenkinsPod)
+				err = r.execSafeRestart(backupInstance, backupExecClient.Client, jenkinsPod)
 				execErr <- err
 				execComplete <- true
 			}()
@@ -181,7 +165,7 @@ func (r *BackupReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 			}
 		} else if backupSpec.Restart.Enabled {
 			go func() {
-				err = r.execRestart(backupInstance, clientConfig, jenkinsPod)
+				err = r.execRestart(backupInstance, backupExecClient.Client, jenkinsPod)
 				execErr <- err
 				execComplete <- true
 			}()
@@ -197,9 +181,7 @@ func (r *BackupReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 }
 
 func (r *BackupReconciler) execQuietDown(backupInstance *jenkinsv1alpha2.Backup, clientConfig *rest.Config, jenkinsPod *corev1.Pod) error {
-	// Exec script which will be run
 	execScript := []string{}
-	// QuietDown Script
 	execScript = append(execScript, "sh", resources.QuietDownScriptPath)
 	err := r.makeRequest(clientConfig, jenkinsPod, backupInstance, strings.Join(execScript, " "))
 	if err != nil {
@@ -210,12 +192,9 @@ func (r *BackupReconciler) execQuietDown(backupInstance *jenkinsv1alpha2.Backup,
 }
 
 func (r *BackupReconciler) execBackup(backupInstance *jenkinsv1alpha2.Backup, clientConfig *rest.Config, jenkinsPod *corev1.Pod) error {
-	// Exec script which will be run
 	execScript := []string{}
-	// Backup Script
-	currentBackupLocation := backupInstance.Name + "-" + string(backupInstance.UID)
 	execScript = append(execScript,
-		"cp -r "+defaultJenkinsHome+" "+resources.JenkinsBackupVolumePath+"/"+currentBackupLocation)
+		"cp -r "+defaultJenkinsHome+" "+resources.JenkinsBackupVolumePath+"/"+backupInstance.Name)
 	err := r.makeRequest(clientConfig, jenkinsPod, backupInstance, strings.Join(execScript, " "))
 	if err != nil {
 		logger.Info(fmt.Sprintf("Error while Jenkins backup request %s", err.Error()))
@@ -225,9 +204,7 @@ func (r *BackupReconciler) execBackup(backupInstance *jenkinsv1alpha2.Backup, cl
 }
 
 func (r *BackupReconciler) execRestart(backupInstance *jenkinsv1alpha2.Backup, clientConfig *rest.Config, jenkinsPod *corev1.Pod) error {
-	// Exec script which will be run
 	execScript := []string{}
-	// QuietDown Script
 	execScript = append(execScript, "sh", resources.RestartScriptPath)
 	err := r.makeRequest(clientConfig, jenkinsPod, backupInstance, strings.Join(execScript, " "))
 	if err != nil {
@@ -238,9 +215,7 @@ func (r *BackupReconciler) execRestart(backupInstance *jenkinsv1alpha2.Backup, c
 }
 
 func (r *BackupReconciler) execSafeRestart(backupInstance *jenkinsv1alpha2.Backup, clientConfig *rest.Config, jenkinsPod *corev1.Pod) error {
-	// Exec script which will be run
 	execScript := []string{}
-	// QuietDown Script
 	execScript = append(execScript, "sh", resources.SafeRestartScriptPath)
 	err := r.makeRequest(clientConfig, jenkinsPod, backupInstance, strings.Join(execScript, " "))
 	if err != nil {
