@@ -3,8 +3,4 @@ kind: Backup
 metadata:
   generateName: backupsample-
 spec:
-  # Add fields here
-  jenkinsRef: jenkins-with-backup-sample
-  quietDownDuringBackup: true
-  restart:
-    enabled: true
+  configRef: default

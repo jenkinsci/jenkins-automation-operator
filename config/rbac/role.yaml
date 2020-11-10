@@ -116,6 +116,26 @@ rules:
 - apiGroups:
   - jenkins.io
   resources:
+  - backupconfigs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - jenkins.io
+  resources:
+  - backupconfigs/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - jenkins.io
+  resources:
   - backups
   verbs:
   - create

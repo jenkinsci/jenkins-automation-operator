@@ -25,22 +25,11 @@ import (
 
 // BackupSpec defines the desired state of Backup
 type BackupSpec struct {
-	// JenkinsRef includes the reference of Jenkins Instance on which we would like to initiate Backup
-	JenkinsRef string `json:"jenkinsRef"`
-	// QuietDownDuringBackup will put the Jenkins instance in a QuietDown mode which prevents any new builds from taking place
-	QuietDownDuringBackup bool           `json:"quietDownDuringBackup,omitempty"`
-	Restart               *RestartConfig `json:"restart"`
-}
-
-type RestartConfig struct {
-	Enabled bool `json:"enabled"`
-	Safe    bool `json:"safe,omitempty"`
+	ConfigRef string `json:"configRef,omitempty"`
 }
 
 // BackupStatus defines the observed state of Backup
 type BackupStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
 }
 
 // +kubebuilder:object:root=true

@@ -1,13 +1,13 @@
-# permissions for end users to edit restores.
+# permissions for end users to edit backupconfigs.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: restore-editor-role
+  name: backupconfig-editor-role
 rules:
 - apiGroups:
   - jenkins.io
   resources:
-  - restores
+  - backupconfigs
   verbs:
   - create
   - delete
@@ -19,6 +19,6 @@ rules:
 - apiGroups:
   - jenkins.io
   resources:
-  - restores/status
+  - backupconfigs/status
   verbs:
   - get

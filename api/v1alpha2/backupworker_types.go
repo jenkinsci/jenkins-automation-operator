@@ -25,17 +25,14 @@ import (
 
 // BackupWorkerSpec defines the desired state of BackupWorker
 type BackupWorkerSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of BackupWorker. Edit BackupWorker_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// ConfigRef points to the BackupConfig instance which needs to be used by the BackupWorker
+	ConfigRef string `json:"configRef,omitempty"`
+	// Cron is provided by the user in the form of a crontab formatted schedule string eg: "30 15 1 1 *" means everyday at 1530
+	Cron string `json:"cron"`
 }
 
 // BackupWorkerStatus defines the observed state of BackupWorker
 type BackupWorkerStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
 }
 
 // +kubebuilder:object:root=true

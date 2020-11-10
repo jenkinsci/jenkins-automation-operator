@@ -88,11 +88,33 @@ func (r *BackupReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 	backupLogger.Info("Jenkins Backup with name " + backupInstance.Name + " has been created")
 
+	backupSpec := backupInstance.Spec
+	backupConfig := &jenkinsv1alpha2.BackupConfig{}
+	// Use default BackupConfig if configRef not provided
+	backupConfigName := DefaultBackupConfigName
+	if backupSpec.ConfigRef != "" {
+		backupConfigName = backupSpec.ConfigRef
+	}
+	backupConfigNamespacedName := types.NamespacedName{
+		Namespace: req.Namespace,
+		Name:      backupConfigName,
+	}
+	err = r.Client.Get(ctx, backupConfigNamespacedName, backupConfig)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			// Request object not found, could have been deleted after reconcile request.
+			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
+			// Return and don't requeue
+			return ctrl.Result{}, nil
+		}
+		// Error reading the object - requeue the request.
+		return ctrl.Result{}, err
+	}
+
 	// Fetch the Jenkins instance
 	jenkinsInstance := &jenkinsv1alpha2.Jenkins{}
-	backupSpec := backupInstance.Spec
 	jenkinsNamespacedName := types.NamespacedName{
-		Name:      backupSpec.JenkinsRef,
+		Name:      backupConfig.Spec.JenkinsRef,
 		Namespace: req.Namespace,
 	}
 	err = r.Client.Get(ctx, jenkinsNamespacedName, jenkinsInstance)
@@ -125,65 +147,55 @@ func (r *BackupReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	execErr := make(chan error, 1)
 
 	// QuietDown
-	if backupSpec.QuietDownDuringBackup {
+	if backupConfig.Spec.QuietDownDuringBackup {
 		go func() {
-			err = r.execQuietDown(backupInstance, backupExecClient.Client, jenkinsPod)
+			err = r.execQuietDown(req.Name, backupExecClient.Client, jenkinsPod)
 			execErr <- err
 			execComplete <- true
 		}()
 		<-execComplete
 		err = <-execErr
 		if err != nil {
-			return ctrl.Result{}, err
+			logger.Info(fmt.Sprintf("Backup failed with error %s", err.Error()))
+			return ctrl.Result{}, nil
 		}
 	}
 
 	// Backup
 	go func() {
-		err = r.execBackup(backupInstance, backupExecClient.Client, jenkinsPod)
+		err = r.execBackup(backupInstance, backupConfig, backupExecClient.Client, jenkinsPod)
 		execErr <- err
 		execComplete <- true
 	}()
 	<-execComplete
 	err = <-execErr
 	if err != nil {
-		return ctrl.Result{}, err
+		logger.Info(fmt.Sprintf("Backup failed with error %s", err.Error()))
+		return ctrl.Result{}, nil
 	}
 
-	// Restart
-	if backupSpec.Restart != nil {
-		if backupSpec.Restart.Enabled && backupSpec.Restart.Safe {
-			go func() {
-				err = r.execSafeRestart(backupInstance, backupExecClient.Client, jenkinsPod)
-				execErr <- err
-				execComplete <- true
-			}()
-			<-execComplete
-			err = <-execErr
-			if err != nil {
-				return ctrl.Result{}, err
-			}
-		} else if backupSpec.Restart.Enabled {
-			go func() {
-				err = r.execRestart(backupInstance, backupExecClient.Client, jenkinsPod)
-				execErr <- err
-				execComplete <- true
-			}()
-			<-execComplete
-			err = <-execErr
-			if err != nil {
-				return ctrl.Result{}, err
-			}
+	// CancelQuietDown
+	if backupConfig.Spec.QuietDownDuringBackup {
+		go func() {
+			err = r.execCancelQuietDown(req.Name, backupExecClient.Client, jenkinsPod)
+			execErr <- err
+			execComplete <- true
+		}()
+		<-execComplete
+		err = <-execErr
+		if err != nil {
+			logger.Info(fmt.Sprintf("Backup failed with error %s", err.Error()))
+			return ctrl.Result{}, nil
 		}
 	}
 
 	return ctrl.Result{}, nil
 }
 
-func (r *BackupReconciler) execQuietDown(backupInstance *jenkinsv1alpha2.Backup, clientConfig *rest.Config, jenkinsPod *corev1.Pod) error {
+func (r *BackupReconciler) execQuietDown(backupName string, clientConfig *rest.Config, jenkinsPod *corev1.Pod) error {
 	execScript := []string{}
 	execScript = append(execScript, "sh", resources.QuietDownScriptPath)
-	err := r.makeRequest(clientConfig, jenkinsPod, backupInstance, strings.Join(execScript, " "))
+	err := r.makeRequest(clientConfig, jenkinsPod, backupName, strings.Join(execScript, " "))
 	if err != nil {
 		logger.Info(fmt.Sprintf("Error while Jenkins quietDown request %s", err.Error()))
 		return err
@@ -191,54 +203,60 @@ func (r *BackupReconciler) execQuietDown(backupInstance *jenkinsv1alpha2.Backup,
 	return nil
 }
 
-func (r *BackupReconciler) execBackup(backupInstance *jenkinsv1alpha2.Backup, clientConfig *rest.Config, jenkinsPod *corev1.Pod) error {
+func (r *BackupReconciler) execCancelQuietDown(backupName string, clientConfig *rest.Config, jenkinsPod *corev1.Pod) error {
 	execScript := []string{}
+	execScript = append(execScript, "sh", resources.CancelQuietDownScriptPath)
+	err := r.makeRequest(clientConfig, jenkinsPod, backupName, strings.Join(execScript, " "))
+	if err != nil {
+		logger.Info(fmt.Sprintf("Error while Jenkins cancelQuietDown request %s", err.Error()))
+		return err
+	}
+	return nil
+}
+
+func (r *BackupReconciler) execBackup(backupInstance *jenkinsv1alpha2.Backup, backupConfig *jenkinsv1alpha2.BackupConfig, clientConfig *rest.Config, jenkinsPod *corev1.Pod) error {
+	execScript := []string{}
+	currentBackupLocation := backupInstance.Name
+	toLocation := resources.JenkinsBackupVolumePath + "/" + currentBackupLocation + "/"
+	restoreLogger.Info("Using BackupConfig " + backupConfig.Name)
+	fromLocation := defaultJenkinsHome
+	// fromLocations := []string{}
+	//
+	// if backupConfig.Spec.Options.Config {
+	//	fromLocations = append(fromLocations, "*.xml")
+	// }
+	// if backupConfig.Spec.Options.Jobs {
+	//	fromLocations = append(fromLocations, "jobs")
+	// }
+	// if backupConfig.Spec.Options.Plugins {
+	//	fromLocations = append(fromLocations, "plugins")
+	// }
+	//
+	// fromLocation += "/{" + strings.Join(fromLocations, ",") + "}"
 	execScript = append(execScript,
-		"cp -r "+defaultJenkinsHome+" "+resources.JenkinsBackupVolumePath+"/"+backupInstance.Name)
-	err := r.makeRequest(clientConfig, jenkinsPod, backupInstance, strings.Join(execScript, " "))
+		"cp", "-r", fromLocation, toLocation)
+	err := r.makeRequest(clientConfig, jenkinsPod, backupInstance.Name, strings.Join(execScript, " "))
 	if err != nil {
-		logger.Info(fmt.Sprintf("Error while Jenkins backup request %s", err.Error()))
+		restoreLogger.Info(fmt.Sprintf("Error while Jenkins backup request %s", err.Error()))
 		return err
 	}
 	return nil
 }
 
-func (r *BackupReconciler) execRestart(backupInstance *jenkinsv1alpha2.Backup, clientConfig *rest.Config, jenkinsPod *corev1.Pod) error {
-	execScript := []string{}
-	execScript = append(execScript, "sh", resources.RestartScriptPath)
-	err := r.makeRequest(clientConfig, jenkinsPod, backupInstance, strings.Join(execScript, " "))
+func (r *BackupReconciler) makeRequest(clientConfig *rest.Config, jenkinsPod *corev1.Pod, backupName, script string) error {
+	request, err := r.newScriptRequest(clientConfig, jenkinsPod, script)
 	if err != nil {
-		logger.Info(fmt.Sprintf("Error while Jenkins quietDown request %s", err.Error()))
 		return err
 	}
+	err = r.runPodExec(clientConfig, request, backupName)
+	if err != nil {
+		return err
+	}
+	logger.Info(fmt.Sprintf("Script %s for Jenkins instance %s has been successful", script, backupName))
 	return nil
 }
 
-func (r *BackupReconciler) execSafeRestart(backupInstance *jenkinsv1alpha2.Backup, clientConfig *rest.Config, jenkinsPod *corev1.Pod) error {
-	execScript := []string{}
-	execScript = append(execScript, "sh", resources.SafeRestartScriptPath)
-	err := r.makeRequest(clientConfig, jenkinsPod, backupInstance, strings.Join(execScript, " "))
-	if err != nil {
-		logger.Info(fmt.Sprintf("Error while Jenkins quietDown request %s", err.Error()))
-		return err
-	}
-	return nil
-}
-
-func (r *BackupReconciler) makeRequest(clientConfig *rest.Config, jenkinsPod *corev1.Pod, backupInstance *jenkinsv1alpha2.Backup, script string) error {
-	request, err := r.newScriptRequest(clientConfig, jenkinsPod, backupInstance, script)
-	if err != nil {
-		return err
-	}
-	err = r.runPodExec(clientConfig, request, backupInstance)
-	if err != nil {
-		return err
-	}
-	logger.Info(fmt.Sprintf("Script %s for Jenkins instance %s has been successful", script, backupInstance.Spec.JenkinsRef))
-	return nil
-}
-
-func (r *BackupReconciler) newScriptRequest(clientConfig *rest.Config, jenkinsPod *corev1.Pod, backupInstance *jenkinsv1alpha2.Backup, script string) (*rest.Request, error) {
+func (r *BackupReconciler) newScriptRequest(clientConfig *rest.Config, jenkinsPod *corev1.Pod, script string) (*rest.Request, error) {
 	client, err := clientgocorev1.NewForConfig(clientConfig)
 	if err != nil {
 		return nil, err
@@ -246,7 +264,7 @@ func (r *BackupReconciler) newScriptRequest(clientConfig *rest.Config, jenkinsPo
 
 	podExecRequest := client.RESTClient().Post().Resource("pods").
 		Name(jenkinsPod.Name).
-		Namespace(backupInstance.Namespace).
+		Namespace(jenkinsPod.Namespace).
 		SubResource("exec")
 	podExecOptions := &corev1.PodExecOptions{
 		Stdin:     false,
@@ -266,7 +284,7 @@ func (r *BackupReconciler) newScriptRequest(clientConfig *rest.Config, jenkinsPo
 	return podExecRequest, err
 }
 
-func (r *BackupReconciler) runPodExec(clientConfig *rest.Config, podExecRequest *rest.Request, backupInstance *jenkinsv1alpha2.Backup) error {
+func (r *BackupReconciler) runPodExec(clientConfig *rest.Config, podExecRequest *rest.Request, backupName string) error {
 	stdout := &bytes.Buffer{}
 	stderr := &bytes.Buffer{}
 
@@ -285,14 +303,10 @@ func (r *BackupReconciler) runPodExec(clientConfig *rest.Config, podExecRequest 
 	err = remoteCommand.Stream(streamOptions)
 	if err != nil {
 		logger.Info(fmt.Sprintf("Error while executing backup %s", err.Error()))
+		logger.Info(fmt.Sprintf("Backup '%s' Execution STDERR\n\t%s", backupName, stderr.String()))
 		return err
 	}
-	if stdout.String() != "" {
-		logger.Info(fmt.Sprintf("Backup '%s' in Namespace '%s' Execution STDOUT\n\t%s", backupInstance.Name, backupInstance.Namespace, stdout.String()))
-	}
-	if stderr.String() != "" {
-		logger.Info(fmt.Sprintf("Backup '%s' in Namespace '%s' Execution STDERR\n\t%s", backupInstance.Name, backupInstance.Namespace, stderr.String()))
-	}
+	logger.Info(fmt.Sprintf("Backup '%s' Execution STDOUT\n\t%s", backupName, stdout.String()))
 
 	return err
 }

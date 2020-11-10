@@ -36,26 +36,8 @@ spec:
         spec:
           description: BackupSpec defines the desired state of Backup
           properties:
-            jenkinsRef:
-              description: JenkinsRef includes the reference of Jenkins Instance on
-                which we would like to initiate Backup
+            configRef:
               type: string
-            quietDownDuringBackup:
-              description: QuietDownDuringBackup will put the Jenkins instance in
-                a QuietDown mode which prevents any new builds from taking place
-              type: boolean
-            restart:
-              properties:
-                enabled:
-                  type: boolean
-                safe:
-                  type: boolean
-              required:
-              - enabled
-              type: object
-          required:
-          - jenkinsRef
-          - restart
           type: object
         status:
           description: BackupStatus defines the observed state of Backup

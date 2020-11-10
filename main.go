@@ -102,7 +102,6 @@ func main() {
 	setupJenkinsImageRenconciler(manager)
 	setupJenkinsBackupRenconciler(manager)
 	setupJenkinsRestoreRenconciler(manager)
-
 	// start the Cmd
 	setupLog.Info("Starting the Cmd.")
 	runMananger(manager)

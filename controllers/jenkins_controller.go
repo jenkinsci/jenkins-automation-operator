@@ -73,6 +73,8 @@ const (
 	reconcileCompletedMessage = "Reconciliation completed successfully"
 
 	ConditionReconcileComplete conditionsv1.ConditionType = "ReconciliationComplete"
+
+	DefaultBackupConfigName = "default"
 )
 
 // JenkinsReconciler reconciles a Jenkins object
@@ -106,6 +108,8 @@ func (r *JenkinsReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 // +kubebuilder:rbac:groups=jenkins.io,resources=jenkins,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=jenkins.io,resources=jenkins/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=jenkins.io,resources=backupconfigs,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=jenkins.io,resources=backupconfigs/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=apps,resources=persistentvolumeclaims,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch;create;update;patch;delete
@@ -132,7 +136,7 @@ func (r *JenkinsReconciler) Reconcile(request ctrl.Request) (ctrl.Result, error)
 			// Request object not found, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
-			logger.Info("API returned not found error: Deletion has been performed: %s", request)
+			logger.Info("API returned not found error: Deletion has been performed: " + request.String())
 			return ctrl.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
@@ -282,37 +286,68 @@ func (r *JenkinsReconciler) reconcile(ctx context.Context, request ctrl.Request,
 		return reconcile.Result{}, err
 	}
 
-	if jenkins.Status.Spec.Backup != nil {
-		if jenkins.Status.Spec.Backup.Enabled {
-			pvc := &corev1.PersistentVolumeClaim{}
-			jenkinsBackupPVCName := request.Name + "-jenkins-backup"
-			pvcNamespacedName := types.NamespacedName{
-				Namespace: request.Namespace,
-				Name:      jenkinsBackupPVCName,
+	if jenkins.Status.Spec.BackupEnabled {
+		// Create PVC for Backup VolumeMount
+		pvc := &corev1.PersistentVolumeClaim{}
+		jenkinsBackupPVCName := request.Name + "-jenkins-backup"
+		pvcNamespacedName := types.NamespacedName{
+			Namespace: request.Namespace,
+			Name:      jenkinsBackupPVCName,
+		}
+		err = r.Client.Get(context.TODO(), pvcNamespacedName, pvc)
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				logger.Info(fmt.Sprintf("Creating PVC %s in Namespace %s for Jenkins instance %s",
+					pvcNamespacedName.Name,
+					pvcNamespacedName.Namespace,
+					jenkinsBackupPVCName))
+				pvc.Name = jenkinsBackupPVCName
+				pvc.Namespace = request.Namespace
+				pvc.Spec = corev1.PersistentVolumeClaimSpec{
+					AccessModes: []corev1.PersistentVolumeAccessMode{
+						corev1.ReadWriteOnce,
+					},
+					Resources: corev1.ResourceRequirements{
+						Requests: corev1.ResourceList{
+							corev1.ResourceStorage: resource.MustParse("2Gi"),
+						},
+					},
+				}
+				err = r.Client.Create(context.TODO(), pvc)
+				if err != nil {
+					return ctrl.Result{}, err
+				}
 			}
-			err = r.Client.Get(context.TODO(), pvcNamespacedName, pvc)
-			if err != nil {
-				if apierrors.IsNotFound(err) {
-					logger.Info(fmt.Sprintf("Creating PVC %s in Namespace %s for Jenkins instance %s",
-						pvcNamespacedName.Name,
-						pvcNamespacedName.Namespace,
-						jenkinsBackupPVCName))
-					pvc.Name = jenkinsBackupPVCName
-					pvc.Namespace = request.Namespace
-					pvc.Spec = corev1.PersistentVolumeClaimSpec{
-						AccessModes: []corev1.PersistentVolumeAccessMode{
-							corev1.ReadWriteOnce,
-						},
-						Resources: corev1.ResourceRequirements{
-							Requests: corev1.ResourceList{
-								corev1.ResourceStorage: resource.MustParse("2Gi"),
-							},
-						},
-					}
-					err = r.Client.Create(context.TODO(), pvc)
-					if err != nil {
-						return ctrl.Result{}, err
-					}
+		}
+
+		// Create default BackupConfig
+		defaultBackupConfig := &v1alpha2.BackupConfig{}
+		backupConfigNamespacedName := types.NamespacedName{
+			Namespace: request.Namespace,
+			Name:      DefaultBackupConfigName,
+		}
+		err = r.Client.Get(context.TODO(), backupConfigNamespacedName, defaultBackupConfig)
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				logger.Info(fmt.Sprintf("Creating BackupConfig %s in Namespace %s for Jenkins instance %s",
+					pvcNamespacedName.Name,
+					pvcNamespacedName.Namespace,
+					DefaultBackupConfigName))
+				defaultBackupConfig.Name = DefaultBackupConfigName
+				defaultBackupConfig.Namespace = request.Namespace
+				defaultBackupConfig.Spec.JenkinsRef = jenkins.Name
+				defaultBackupConfig.Spec.Options = v1alpha2.BackupOptions{
+					Jobs:    true,
+					Plugins: true,
+					Config:  true,
+				}
+				defaultBackupConfig.Spec.RestartAfterRestore = v1alpha2.RestartConfig{
+					Enabled: true,
+					Safe:    false,
+				}
+				err = r.Client.Create(context.TODO(), defaultBackupConfig)
+				if err != nil {
+					return ctrl.Result{}, err
 				}
 			}
 		}

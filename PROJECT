@@ -15,6 +15,12 @@ resources:
 - group: jenkins
   kind: Backup
   version: v1alpha2
+- group: jenkins
+  kind: Restore
+  version: v1alpha2
+- group: jenkins
+  kind: BackupConfig
+  version: v1alpha2
 version: 3-alpha
 plugins:
   go.sdk.operatorframework.io/v2-alpha: {}

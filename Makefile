@@ -17,10 +17,10 @@ test: kubebuilder generate manifests ## Run tests
 
 manager: generate goimports fmt vet bin ## Build manager binary
 
-run: fmt vet install ## Run in the configured Kubernetes cluster in ~/.kube/config. Prepend WATCH_NAMESPACE for single namespace mode.
+run: generate fmt vet manifests install ## Run in the configured Kubernetes cluster in ~/.kube/config. Prepend WATCH_NAMESPACE for single namespace mode.
 	go run ./main.go
 
-install: generate manifests kustomize ## Install CRDs into a cluster
+install: manifests kustomize ## Install CRDs into a cluster
 	$(KUSTOMIZE) build config/crd | kubectl apply -f -
 
 uninstall: manifests kustomize ## Uninstall CRDs from a cluster

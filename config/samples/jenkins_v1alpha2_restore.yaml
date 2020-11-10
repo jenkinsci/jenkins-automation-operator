@@ -4,4 +4,5 @@ metadata:
   name: restore-sample
 spec:
   # Add fields here
-  backupRef: backupsample-62lnx
+  backupRef: backupsample-wxhd9
+

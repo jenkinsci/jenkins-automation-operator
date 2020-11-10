@@ -55,7 +55,7 @@ type JenkinsSpec struct {
 	ConfigurationAsCode *Configuration `json:"configurationAsCode,omitempty"`
 
 	// Backup defines configuration of Backup for Jenkins
-	Backup *BackupConfig `json:"backup,omitempty"`
+	BackupEnabled bool `json:"backupEnabled,omitempty"`
 }
 
 // AuthorizationStrategy defines authorization strategy of the operator for the Jenkins API
@@ -91,12 +91,6 @@ type Configuration struct {
 	Secret           SecretRef      `json:"secret,omitempty"`
 	Configurations   []ConfigMapRef `json:"configurations,omitempty"`
 	EnableAutoReload bool           `json:"enableAutoReload"`
-}
-
-// Configuration defines a Jenkins Configuration
-type BackupConfig struct {
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Enable this configuration",xDescriptors="urn:alm:descriptor:com.tectonic.ui:booleanSwitch"
-	Enabled bool `json:"enabled"`
 }
 
 // ServiceAccount defines Kubernetes service account attributes

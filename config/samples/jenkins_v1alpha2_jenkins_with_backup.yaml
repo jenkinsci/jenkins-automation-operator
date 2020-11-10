@@ -3,8 +3,7 @@ kind: Jenkins
 metadata:
   name: jenkins-with-backup-sample
 spec:
-  backup:
-    enabled: true
+  backupEnabled: true
   configurationAsCode:
     configurations: []
     enabled: true

@@ -102,9 +102,31 @@ func (r *RestoreReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 	// Fetch the Jenkins instance
 	jenkinsInstance := &jenkinsv1alpha2.Jenkins{}
+	backupConfig := &jenkinsv1alpha2.BackupConfig{}
 	backupSpec := backupInstance.Spec
+	// Use default BackupConfig if configRef not provided
+	backupConfigName := DefaultBackupConfigName
+	if backupSpec.ConfigRef != "" {
+		backupConfigName = backupSpec.ConfigRef
+	}
+	backupConfigNamespacedName := types.NamespacedName{
+		Namespace: req.Namespace,
+		Name:      backupConfigName,
+	}
+	err = r.Client.Get(ctx, backupConfigNamespacedName, backupConfig)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			// Request object not found, could have been deleted after reconcile request.
+			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
+			// Return and don't requeue
+			return ctrl.Result{}, nil
+		}
+		// Error reading the object - requeue the request.
+		return ctrl.Result{}, err
+	}
+
 	jenkinsNamespacedName := types.NamespacedName{
-		Name:      backupSpec.JenkinsRef,
+		Name:      backupConfig.Spec.JenkinsRef,
 		Namespace: req.Namespace,
 	}
 	err = r.Client.Get(ctx, jenkinsNamespacedName, jenkinsInstance)
@@ -138,14 +160,42 @@ func (r *RestoreReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 	// Restore
 	go func() {
-		err = r.execRestore(restoreInstance, restoreExecClient.Client, jenkinsPod)
+		err = r.execRestore(restoreInstance, backupConfig, restoreExecClient.Client, jenkinsPod)
 		execErr <- err
 		execComplete <- true
 	}()
 	<-execComplete
 	err = <-execErr
 	if err != nil {
-		return ctrl.Result{}, err
+		logger.Info(fmt.Sprintf("Restore failed with error %s", err.Error()))
+		return ctrl.Result{}, nil
+	}
+
+	// Restart
+	restartAfterRestore := backupConfig.Spec.RestartAfterRestore
+
+	if restartAfterRestore.Enabled && restartAfterRestore.Safe {
+		go func() {
+			err = r.execSafeRestart(restoreInstance.Name, restoreExecClient.Client, jenkinsPod)
+			execErr <- err
+			execComplete <- true
+		}()
+		<-execComplete
+		err = <-execErr
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+	} else if restartAfterRestore.Enabled {
+		go func() {
+			err = r.execRestart(restoreInstance.Name, restoreExecClient.Client, jenkinsPod)
+			execErr <- err
+			execComplete <- true
+		}()
+		<-execComplete
+		err = <-execErr
+		if err != nil {
+			return ctrl.Result{}, err
+		}
 	}
 
 	return ctrl.Result{}, nil
@@ -157,12 +207,39 @@ func (r *RestoreReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func (r *RestoreReconciler) execRestore(restoreInstance *jenkinsv1alpha2.Restore, clientConfig *rest.Config, jenkinsPod *corev1.Pod) error {
+func (r *RestoreReconciler) execRestore(restoreInstance *jenkinsv1alpha2.Restore, backupConfig *jenkinsv1alpha2.BackupConfig, clientConfig *rest.Config, jenkinsPod *corev1.Pod) error {
 	execScript := []string{}
 	currentBackupLocation := restoreInstance.Spec.BackupRef
+	// fromLocationConfig := resources.JenkinsBackupVolumePath + "/" + currentBackupLocation + "/" + "*.xml"
+	fromLocationJobs := resources.JenkinsBackupVolumePath + "/" + currentBackupLocation + "/" + "jobs"
+	// fromLocationPlugins := resources.JenkinsBackupVolumePath + "/" + currentBackupLocation + "/" + "plugins/*"
+	toLocation := defaultJenkinsHome
+
+	// toLocationConfigCp := []string{
+	//	"cp", "-r", fromLocationConfig, toLocation + "/*",
+	//}
+	toLocationJobsCp := []string{
+		"\"cp", "-rf", fromLocationJobs, toLocation + "/jobs\"",
+	}
+	// toLocationPluginsCp := []string{
+	//	"cp", "-r", fromLocationPlugins, toLocation + "/plugins/",
+	//}
+
+	cpCommands := []string{}
+	backupOpts := backupConfig.Spec.Options
+	// if backupOpts.Config {
+	//	cpCommands = append(cpCommands, strings.Join(toLocationConfigCp, " "))
+	// }
+	if backupOpts.Jobs {
+		cpCommands = append(cpCommands, strings.Join(toLocationJobsCp, " "))
+	}
+	// if backupOpts.Plugins {
+	//	cpCommands = append(cpCommands, strings.Join(toLocationPluginsCp, " "))
+	// }
+
 	execScript = append(execScript,
-		"cp -r "+resources.JenkinsBackupVolumePath+"/"+currentBackupLocation+"/*"+" "+defaultJenkinsHome)
-	err := r.makeRequest(clientConfig, jenkinsPod, restoreInstance, strings.Join(execScript, " "))
+		strings.Join(cpCommands, " && sh -c "))
+	err := r.makeRequest(clientConfig, jenkinsPod, restoreInstance.Name, strings.Join(execScript, " "))
 	if err != nil {
 		restoreLogger.Info(fmt.Sprintf("Error while Jenkins restore request %s", err.Error()))
 		return err
@@ -170,20 +247,42 @@ func (r *RestoreReconciler) execRestore(restoreInstance *jenkinsv1alpha2.Restore
 	return nil
 }
 
-func (r *RestoreReconciler) makeRequest(clientConfig *rest.Config, jenkinsPod *corev1.Pod, restoreInstance *jenkinsv1alpha2.Restore, script string) error {
-	request, err := r.newScriptRequest(clientConfig, jenkinsPod, restoreInstance, script)
+func (r *RestoreReconciler) execRestart(restoreName string, clientConfig *rest.Config, jenkinsPod *corev1.Pod) error {
+	execScript := []string{}
+	execScript = append(execScript, "sh", resources.RestartScriptPath)
+	err := r.makeRequest(clientConfig, jenkinsPod, restoreName, strings.Join(execScript, " "))
 	if err != nil {
+		logger.Info(fmt.Sprintf("Error while Jenkins quietDown request %s", err.Error()))
 		return err
 	}
-	err = r.runPodExec(clientConfig, request, restoreInstance)
-	if err != nil {
-		return err
-	}
-	logger.Info(fmt.Sprintf("Script %s for Backup instance %s has been successful", script, restoreInstance.Spec.BackupRef))
 	return nil
 }
 
-func (r *RestoreReconciler) newScriptRequest(clientConfig *rest.Config, jenkinsPod *corev1.Pod, restoreInstance *jenkinsv1alpha2.Restore, script string) (*rest.Request, error) {
+func (r *RestoreReconciler) execSafeRestart(restoreName string, clientConfig *rest.Config, jenkinsPod *corev1.Pod) error {
+	execScript := []string{}
+	execScript = append(execScript, "sh", resources.SafeRestartScriptPath)
+	err := r.makeRequest(clientConfig, jenkinsPod, restoreName, strings.Join(execScript, " "))
+	if err != nil {
+		logger.Info(fmt.Sprintf("Error while Jenkins quietDown request %s", err.Error()))
+		return err
+	}
+	return nil
+}
+
+func (r *RestoreReconciler) makeRequest(clientConfig *rest.Config, jenkinsPod *corev1.Pod, restoreName, script string) error {
+	request, err := r.newScriptRequest(clientConfig, jenkinsPod, script)
+	if err != nil {
+		return err
+	}
+	err = r.runPodExec(clientConfig, request, restoreName)
+	if err != nil {
+		return err
+	}
+	logger.Info(fmt.Sprintf("Restore Script %s for Jenkins instance %s has been successful", script, jenkinsPod.Name))
+	return nil
+}
+
+func (r *RestoreReconciler) newScriptRequest(clientConfig *rest.Config, jenkinsPod *corev1.Pod, script string) (*rest.Request, error) {
 	client, err := clientgocorev1.NewForConfig(clientConfig)
 	if err != nil {
 		return nil, err
@@ -191,7 +290,7 @@ func (r *RestoreReconciler) newScriptRequest(clientConfig *rest.Config, jenkinsP
 
 	podExecRequest := client.RESTClient().Post().Resource("pods").
 		Name(jenkinsPod.Name).
-		Namespace(restoreInstance.Namespace).
+		Namespace(jenkinsPod.Namespace).
 		SubResource("exec")
 	podExecOptions := &corev1.PodExecOptions{
 		Stdin:     false,
@@ -211,7 +310,7 @@ func (r *RestoreReconciler) newScriptRequest(clientConfig *rest.Config, jenkinsP
 	return podExecRequest, err
 }
 
-func (r *RestoreReconciler) runPodExec(clientConfig *rest.Config, podExecRequest *rest.Request, restoreInstance *jenkinsv1alpha2.Restore) error {
+func (r *RestoreReconciler) runPodExec(clientConfig *rest.Config, podExecRequest *rest.Request, restoreName string) error {
 	stdout := &bytes.Buffer{}
 	stderr := &bytes.Buffer{}
 
@@ -233,10 +332,10 @@ func (r *RestoreReconciler) runPodExec(clientConfig *rest.Config, podExecRequest
 		return err
 	}
 	if stdout.String() != "" {
-		logger.Info(fmt.Sprintf("Backup '%s' in Namespace '%s' Execution STDOUT\n\t%s", restoreInstance.Name, restoreInstance.Namespace, stdout.String()))
+		logger.Info(fmt.Sprintf("Restore '%s' Execution STDOUT\n\t%s", restoreName, stdout.String()))
 	}
 	if stderr.String() != "" {
-		logger.Info(fmt.Sprintf("Backup '%s' in Namespace '%s' Execution STDERR\n\t%s", restoreInstance.Name, restoreInstance.Namespace, stderr.String()))
+		logger.Info(fmt.Sprintf("Restore '%s' Execution STDERR\n\t%s", restoreName, stderr.String()))
 	}
 
 	return err
