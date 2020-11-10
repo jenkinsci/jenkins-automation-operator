@@ -23,4 +23,6 @@ const (
 	JenkinsStatusReinitializing = "Reinitializing"
 	// DefaultJenkinsMasterContainerName is the Jenkins master container name in pod
 	DefaultJenkinsMasterContainerName = "jenkins"
+	// DefaultJenkinsSideCarImage is the default jenkins sidecar image
+	DefaultJenkinsSideCarImage = "quay.io/redhat-developer/jenkins-kubernetes-sidecar:0.1.144"
 )

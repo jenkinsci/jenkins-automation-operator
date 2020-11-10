@@ -3,6 +3,7 @@ package resources
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
@@ -16,6 +17,8 @@ import (
 )
 
 const (
+	JenkinsSideCarImageEnvVar = "JENKINS_SIDECAR_IMAGE"
+
 	JenkinsMasterContainerName = constants.DefaultJenkinsMasterContainerName
 	// JenkinsHomeVolumeName is the Jenkins home volume name
 	JenkinsHomeVolumeName = "jenkins-home"
@@ -50,7 +53,6 @@ const (
 	BackupSidecarName       = "backup"
 	BackupInitContainerName = "backup-init"
 	// Config Sidecar related variables
-	JenkinsSCConfigImage      = "kiwigrid/k8s-sidecar:0.1.144"
 	JenkinsSCConfigReqURL     = "http://localhost:8080/reload-configuration-as-code/?casc-reload-token=$(POD_NAME)"
 	JenkinsSCConfigReqMethod  = "POST"
 	JenkinsSCConfigReqRetry   = "10"
@@ -378,7 +380,7 @@ func NewJenkinsConfigContainer(jenkins *v1alpha2.Jenkins) corev1.Container {
 
 	return corev1.Container{
 		Name:            ConfigSidecarName,
-		Image:           JenkinsSCConfigImage,
+		Image:           getJenkinsSideCarImage(),
 		ImagePullPolicy: corev1.PullIfNotPresent,
 		Env:             envVars,
 		Resources: corev1.ResourceRequirements{
@@ -646,4 +648,13 @@ func WaitForPodRunning(k8sClient client.Client, podName, namespace string, timeo
 // Returns an error if the pod never enters the running state.
 func WaitForPodIsCompleted(k8sClient client.Client, podName, namespace string) error {
 	return wait.PollUntil(time.Second, isPodCompleted(k8sClient, podName, namespace), nil)
+}
+
+// getJenkinsSideCarImage returns the jenkins sidecar image the operator should be using
+func getJenkinsSideCarImage() string {
+	jenkinsSideCarImage, _ := os.LookupEnv(JenkinsSideCarImageEnvVar)
+	if len(jenkinsSideCarImage) == 0 {
+		jenkinsSideCarImage = constants.DefaultJenkinsSideCarImage
+	}
+	return jenkinsSideCarImage
 }
