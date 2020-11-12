@@ -17,23 +17,17 @@ limitations under the License.
 package controllers
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/exec"
-	"k8s.io/client-go/tools/remotecommand"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
-	clientgocorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
-	"k8s.io/client-go/rest"
-	"k8s.io/kubectl/pkg/scheme"
 
 	"strings"
 
 	"github.com/go-logr/logr"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -45,6 +39,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	jenkinsv1alpha2 "github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 // RestoreReconciler reconciles a Restore object
@@ -55,8 +50,7 @@ type RestoreReconciler struct {
 }
 
 var (
-	restoreLogger     = log.Log.WithName("restore")
-	restoreExecClient = exec.KubeExecClient{}
+	restoreLogger = log.Log.WithName("restore")
 )
 
 // +kubebuilder:rbac:groups=jenkins.io,resources=restores,verbs=get;list;watch;create;update;patch;delete
@@ -65,6 +59,7 @@ var (
 func (r *RestoreReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
 	restoreLogger := r.Log.WithValues("backup", req.NamespacedName)
+	execClient := exec.NewKubeExecClient()
 
 	// Fetch the Restore instance
 	restoreInstance := &jenkinsv1alpha2.Restore{}
@@ -148,53 +143,40 @@ func (r *RestoreReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return ctrl.Result{}, err
 	}
 
-	err = restoreExecClient.InitKubeGoClient()
+	err = execClient.InitKubeGoClient()
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
-	// Running each exec in a goroutine as goclient REST SPDYRExecutor stream does not cancel
-	// https://github.com/kubernetes/client-go/issues/554#issuecomment-578886198
-	execComplete := make(chan bool, 1)
-	execErr := make(chan error, 1)
-
-	// Restore
-	go func() {
-		err = r.execRestore(restoreInstance, backupConfig, restoreExecClient.Client, jenkinsPod)
-		execErr <- err
-		execComplete <- true
-	}()
-	<-execComplete
-	err = <-execErr
-	if err != nil {
-		logger.Info(fmt.Sprintf("Restore failed with error %s", err.Error()))
-		return ctrl.Result{}, nil
+	// Create Restore based on Spec
+	restoreFromLocation := resources.JenkinsBackupVolumePath + "/" + backupInstance.Name
+	restoreToLocation := defaultJenkinsHome
+	restoreToSubLocations := []string{}
+	if backupConfig.Spec.Options.Config {
+		restoreToSubLocations = append(restoreToSubLocations, "*.xml")
 	}
-
-	// Restart
-	restartAfterRestore := backupConfig.Spec.RestartAfterRestore
-
-	if restartAfterRestore.Enabled && restartAfterRestore.Safe {
-		go func() {
-			err = r.execSafeRestart(restoreInstance.Name, restoreExecClient.Client, jenkinsPod)
-			execErr <- err
-			execComplete <- true
-		}()
-		<-execComplete
-		err = <-execErr
-		if err != nil {
-			return ctrl.Result{}, err
-		}
-	} else if restartAfterRestore.Enabled {
-		go func() {
-			err = r.execRestart(restoreInstance.Name, restoreExecClient.Client, jenkinsPod)
-			execErr <- err
-			execComplete <- true
-		}()
-		<-execComplete
-		err = <-execErr
-		if err != nil {
-			return ctrl.Result{}, err
+	if backupConfig.Spec.Options.Jobs {
+		restoreToSubLocations = append(restoreToSubLocations, "jobs")
+	}
+	if backupConfig.Spec.Options.Plugins {
+		restoreToSubLocations = append(restoreToSubLocations, "plugins")
+	}
+	if len(restoreToSubLocations) > 0 {
+		for _, sl := range restoreToSubLocations {
+			// Restore each location in a different request
+			restoreToSublocation := ""
+			if sl == "*.xml" {
+				restoreToSublocation = strings.Join([]string{restoreToLocation, ""}, "/")
+			} else {
+				restoreToSublocation = strings.Join([]string{restoreToLocation, sl}, "/")
+			}
+			restoreFromSublocation := strings.Join([]string{restoreFromLocation, sl}, "/")
+			execRestoreSubLocation := strings.Join([]string{"cp", "-r", restoreFromSublocation, restoreToSublocation}, " ")
+			err = execClient.MakeRequest(jenkinsPod, backupInstance.Name, execRestoreSubLocation)
+			if err != nil {
+				logger.Info(fmt.Sprintf("Failed to restore from %s %s", restoreFromSublocation, err.Error()))
+				return ctrl.Result{}, nil
+			}
 		}
 	}
 
@@ -205,140 +187,6 @@ func (r *RestoreReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&jenkinsv1alpha2.Restore{}).
 		Complete(r)
-}
-
-func (r *RestoreReconciler) execRestore(restoreInstance *jenkinsv1alpha2.Restore, backupConfig *jenkinsv1alpha2.BackupConfig, clientConfig *rest.Config, jenkinsPod *corev1.Pod) error {
-	execScript := []string{}
-	currentBackupLocation := restoreInstance.Spec.BackupRef
-	// fromLocationConfig := resources.JenkinsBackupVolumePath + "/" + currentBackupLocation + "/" + "*.xml"
-	fromLocationJobs := resources.JenkinsBackupVolumePath + "/" + currentBackupLocation + "/" + "jobs"
-	// fromLocationPlugins := resources.JenkinsBackupVolumePath + "/" + currentBackupLocation + "/" + "plugins/*"
-	toLocation := defaultJenkinsHome
-
-	// toLocationConfigCp := []string{
-	//	"cp", "-r", fromLocationConfig, toLocation + "/*",
-	//}
-	toLocationJobsCp := []string{
-		"\"cp", "-rf", fromLocationJobs, toLocation + "/jobs\"",
-	}
-	// toLocationPluginsCp := []string{
-	//	"cp", "-r", fromLocationPlugins, toLocation + "/plugins/",
-	//}
-
-	cpCommands := []string{}
-	backupOpts := backupConfig.Spec.Options
-	// if backupOpts.Config {
-	//	cpCommands = append(cpCommands, strings.Join(toLocationConfigCp, " "))
-	// }
-	if backupOpts.Jobs {
-		cpCommands = append(cpCommands, strings.Join(toLocationJobsCp, " "))
-	}
-	// if backupOpts.Plugins {
-	//	cpCommands = append(cpCommands, strings.Join(toLocationPluginsCp, " "))
-	// }
-
-	execScript = append(execScript,
-		strings.Join(cpCommands, " && sh -c "))
-	err := r.makeRequest(clientConfig, jenkinsPod, restoreInstance.Name, strings.Join(execScript, " "))
-	if err != nil {
-		restoreLogger.Info(fmt.Sprintf("Error while Jenkins restore request %s", err.Error()))
-		return err
-	}
-	return nil
-}
-
-func (r *RestoreReconciler) execRestart(restoreName string, clientConfig *rest.Config, jenkinsPod *corev1.Pod) error {
-	execScript := []string{}
-	execScript = append(execScript, "sh", resources.RestartScriptPath)
-	err := r.makeRequest(clientConfig, jenkinsPod, restoreName, strings.Join(execScript, " "))
-	if err != nil {
-		logger.Info(fmt.Sprintf("Error while Jenkins quietDown request %s", err.Error()))
-		return err
-	}
-	return nil
-}
-
-func (r *RestoreReconciler) execSafeRestart(restoreName string, clientConfig *rest.Config, jenkinsPod *corev1.Pod) error {
-	execScript := []string{}
-	execScript = append(execScript, "sh", resources.SafeRestartScriptPath)
-	err := r.makeRequest(clientConfig, jenkinsPod, restoreName, strings.Join(execScript, " "))
-	if err != nil {
-		logger.Info(fmt.Sprintf("Error while Jenkins quietDown request %s", err.Error()))
-		return err
-	}
-	return nil
-}
-
-func (r *RestoreReconciler) makeRequest(clientConfig *rest.Config, jenkinsPod *corev1.Pod, restoreName, script string) error {
-	request, err := r.newScriptRequest(clientConfig, jenkinsPod, script)
-	if err != nil {
-		return err
-	}
-	err = r.runPodExec(clientConfig, request, restoreName)
-	if err != nil {
-		return err
-	}
-	logger.Info(fmt.Sprintf("Restore Script %s for Jenkins instance %s has been successful", script, jenkinsPod.Name))
-	return nil
-}
-
-func (r *RestoreReconciler) newScriptRequest(clientConfig *rest.Config, jenkinsPod *corev1.Pod, script string) (*rest.Request, error) {
-	client, err := clientgocorev1.NewForConfig(clientConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	podExecRequest := client.RESTClient().Post().Resource("pods").
-		Name(jenkinsPod.Name).
-		Namespace(jenkinsPod.Namespace).
-		SubResource("exec")
-	podExecOptions := &corev1.PodExecOptions{
-		Stdin:     false,
-		Stdout:    true,
-		Stderr:    true,
-		TTY:       true,
-		Container: "backup",
-		Command: []string{
-			"sh", "-c", script,
-		},
-	}
-	logger.Info(strings.Join([]string{
-		"sh", "-c", script,
-	}, " "))
-
-	podExecRequest.VersionedParams(podExecOptions, scheme.ParameterCodec)
-	return podExecRequest, err
-}
-
-func (r *RestoreReconciler) runPodExec(clientConfig *rest.Config, podExecRequest *rest.Request, restoreName string) error {
-	stdout := &bytes.Buffer{}
-	stderr := &bytes.Buffer{}
-
-	remoteCommand, err := remotecommand.NewSPDYExecutor(clientConfig, "POST", podExecRequest.URL())
-	if err != nil {
-		logger.Info(fmt.Sprintf("Error while crerating remote executor for backup %s", err.Error()))
-		return err
-	}
-
-	streamOptions := remotecommand.StreamOptions{
-		Stdin:  nil,
-		Stdout: stdout,
-		Stderr: stderr,
-		Tty:    false,
-	}
-	err = remoteCommand.Stream(streamOptions)
-	if err != nil {
-		logger.Info(fmt.Sprintf("Error while executing backup %s", err.Error()))
-		return err
-	}
-	if stdout.String() != "" {
-		logger.Info(fmt.Sprintf("Restore '%s' Execution STDOUT\n\t%s", restoreName, stdout.String()))
-	}
-	if stderr.String() != "" {
-		logger.Info(fmt.Sprintf("Restore '%s' Execution STDERR\n\t%s", restoreName, stderr.String()))
-	}
-
-	return err
 }
 
 func (r *RestoreReconciler) GetPodByDeployment(jenkins *jenkinsv1alpha2.Jenkins) (*corev1.Pod, error) {

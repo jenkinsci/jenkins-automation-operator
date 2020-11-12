@@ -243,12 +243,12 @@ func (c *Configuration) GetPodByDeployment() (*corev1.Pod, error) {
 
 // GetJenkinsClientFromServiceAccount gets jenkins client from a serviceAccount.
 func (c *Configuration) GetJenkinsClientFromServiceAccount() (jenkinsclient.Jenkins, error) {
-	logger.V(log.VDebug).Info("Creating Jenkins Client from serviceAccount")
+	logger.V(log.VDebug).Info("Creating Jenkins client from serviceAccount")
 	jenkinsAPIUrl, err := c.getJenkinsAPIUrl()
 	if err != nil {
 		return nil, err
 	}
-	logger.V(log.VDebug).Info(fmt.Sprintf("Creating Jenkins Client from serviceAccount with URL: %+v", jenkinsAPIUrl))
+	logger.V(log.VDebug).Info(fmt.Sprintf("Creating Jenkins client from serviceAccount with URL: %+v", jenkinsAPIUrl))
 	masterPod, _ := c.GetPodByDeployment()
 	podName := masterPod.Name
 	logger.V(log.VDebug).Info(fmt.Sprintf("Abot to execute cat command on Pod: %s", podName))
@@ -262,16 +262,16 @@ func (c *Configuration) GetJenkinsClientFromServiceAccount() (jenkinsclient.Jenk
 
 // GetJenkinsClientFromSecret gets jenkins client from a secret.
 func (c *Configuration) GetJenkinsClientFromSecret() (jenkinsclient.Jenkins, error) {
-	logger.V(log.VDebug).Info("Creating Jenkins Client from Secret")
+	logger.V(log.VDebug).Info("Creating Jenkins client from Secret")
 	jenkinsAPIUrl, err := c.getJenkinsAPIUrl()
-	logger.V(log.VDebug).Info(fmt.Sprintf("Creating Jenkins Client from Secret with URL: %+v", jenkinsAPIUrl))
+	logger.V(log.VDebug).Info(fmt.Sprintf("Creating Jenkins client from Secret with URL: %+v", jenkinsAPIUrl))
 	if err != nil {
 		logger.V(log.VDebug).Info(fmt.Sprintf("Error while getJenkinsAPIUrl: %+v", err))
 		return nil, err
 	}
 	credentialsSecret := &corev1.Secret{}
 	secretName := resources.GetOperatorCredentialsSecretName(c.Jenkins)
-	logger.V(log.VDebug).Info(fmt.Sprintf("Jenkins Client will be created using credentials in kuberentes Secret named : %+v", secretName))
+	logger.V(log.VDebug).Info(fmt.Sprintf("Jenkins client will be created using credentials in kuberentes Secret named : %+v", secretName))
 
 	err = c.Client.Get(context.TODO(), types.NamespacedName{Name: secretName, Namespace: c.Jenkins.ObjectMeta.Namespace}, credentialsSecret)
 	if err != nil {
@@ -301,13 +301,13 @@ func (c *Configuration) GetJenkinsClientFromSecret() (jenkinsclient.Jenkins, err
 			userName,
 			string(credentialsSecret.Data[resources.OperatorCredentialsSecretPasswordKey]))
 		if err != nil {
-			logger.V(log.VDebug).Info(fmt.Sprintf("Error while trying to create Jenkins Client with UserAndPasswordAuthorization: %s", err))
+			logger.V(log.VDebug).Info(fmt.Sprintf("Error while trying to create Jenkins client with UserAndPasswordAuthorization: %s", err))
 			return nil, err
 		}
 
 		token, err := jenkinsClient.GenerateToken(userName, "token")
 		if err != nil {
-			logger.V(log.VDebug).Info(fmt.Sprintf("Error while trying to generate token for Jenkins Client with: %s", err))
+			logger.V(log.VDebug).Info(fmt.Sprintf("Error while trying to generate token for Jenkins client with: %s", err))
 			return nil, err
 		}
 
