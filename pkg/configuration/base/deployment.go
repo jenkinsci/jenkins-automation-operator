@@ -14,7 +14,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
-func (r *JenkinsReconcilerBaseConfiguration) ensureJenkinsDeploymentIsReady() (ctrl.Result, error) {
+func (r *JenkinsBaseConfigurationReconciler) ensureJenkinsDeploymentIsReady() (ctrl.Result, error) {
 	jenkinsDeployment, err := r.GetJenkinsDeployment()
 	deploymentName := jenkinsDeployment.Name
 	if err != nil {
@@ -30,7 +30,7 @@ func (r *JenkinsReconcilerBaseConfiguration) ensureJenkinsDeploymentIsReady() (c
 	return ctrl.Result{}, nil
 }
 
-func (r *JenkinsReconcilerBaseConfiguration) ensureJenkinsDeploymentIsPresent(meta metav1.ObjectMeta) (ctrl.Result, error) {
+func (r *JenkinsBaseConfigurationReconciler) ensureJenkinsDeploymentIsPresent(meta metav1.ObjectMeta) (ctrl.Result, error) {
 	jenkinsDeployment, err := r.GetJenkinsDeployment()
 	jenkins := r.Jenkins
 	namespace := jenkins.Namespace
@@ -85,7 +85,7 @@ func (r *JenkinsReconcilerBaseConfiguration) ensureJenkinsDeploymentIsPresent(me
 	return ctrl.Result{}, nil
 }
 
-func (r *JenkinsReconcilerBaseConfiguration) sendSuccessfulDeploymentCreationNotification(deploymentName string) {
+func (r *JenkinsBaseConfigurationReconciler) sendSuccessfulDeploymentCreationNotification(deploymentName string) {
 	shortMessage := fmt.Sprintf("Deployment %s successfully created", deploymentName)
 	*r.Notifications <- event.Event{
 		Jenkins: *r.Jenkins,
@@ -95,7 +95,7 @@ func (r *JenkinsReconcilerBaseConfiguration) sendSuccessfulDeploymentCreationNot
 	}
 }
 
-func (r *JenkinsReconcilerBaseConfiguration) sendDeploymentCreationNotification() {
+func (r *JenkinsBaseConfigurationReconciler) sendDeploymentCreationNotification() {
 	*r.Notifications <- event.Event{
 		Jenkins: *r.Jenkins,
 		Phase:   event.PhaseBase,

@@ -25,16 +25,16 @@ const (
 	fetchAllPlugins = 1
 )
 
-// JenkinsReconcilerBaseConfiguration defines values required for Jenkins base configuration.
-type JenkinsReconcilerBaseConfiguration struct {
+// JenkinsBaseConfigurationReconciler defines values required for Jenkins base configuration.
+type JenkinsBaseConfigurationReconciler struct {
 	configuration.Configuration
 	logger                       logr.Logger
 	jenkinsAPIConnectionSettings jenkinsclient.JenkinsAPIConnectionSettings
 }
 
 // New create structure which takes care of base configuration
-func New(config configuration.Configuration, jenkinsAPIConnectionSettings jenkinsclient.JenkinsAPIConnectionSettings) *JenkinsReconcilerBaseConfiguration {
-	return &JenkinsReconcilerBaseConfiguration{
+func New(config configuration.Configuration, jenkinsAPIConnectionSettings jenkinsclient.JenkinsAPIConnectionSettings) *JenkinsBaseConfigurationReconciler {
+	return &JenkinsBaseConfigurationReconciler{
 		Configuration:                config,
 		logger:                       log.Log.WithName(""),
 		jenkinsAPIConnectionSettings: jenkinsAPIConnectionSettings,
@@ -42,7 +42,7 @@ func New(config configuration.Configuration, jenkinsAPIConnectionSettings jenkin
 }
 
 // Reconcile takes care of base configuration.
-func (r *JenkinsReconcilerBaseConfiguration) Reconcile(request reconcile.Request) (reconcile.Result, jenkinsclient.Jenkins, error) {
+func (r *JenkinsBaseConfigurationReconciler) Reconcile(request reconcile.Request) (reconcile.Result, jenkinsclient.Jenkins, error) {
 	jenkinsConfig := resources.NewResourceObjectMeta(r.Configuration.Jenkins)
 	// Create Necessary Resources
 	err := r.ensureResourcesRequiredForJenkinsDeploymentArePresent(jenkinsConfig)
@@ -83,26 +83,10 @@ func (r *JenkinsReconcilerBaseConfiguration) Reconcile(request reconcile.Request
 		return reconcile.Result{}, nil, err
 	}
 
-	/*_, err2 := r.Configuration.GetJenkinsClient()
-	if err2 != nil {
-		r.logger.V(log.VDebug).Info(fmt.Sprintf("Error when try to configure JenkinsClient: %s", err2))
-		return reconcile.Result{}, nil, err
-	}
-	r.logger.V(log.VDebug).Info("Jenkins API client set")
-	//ok, err := r.verifyPlugins(jenkinsClient)
-	if err != nil {
-		return reconcile.Result{}, nil, err
-	}
-	if !ok {
-		//TODO add what plugins have been changed
-		message := "Some plugins have changed, restarting Jenkins"
-		r.logger.Info(message)
-	}
-	*/
 	return result, nil, err
 }
 
-func (r *JenkinsReconcilerBaseConfiguration) ensureResourcesRequiredForJenkinsDeploymentArePresent(metaObject metav1.ObjectMeta) error {
+func (r *JenkinsBaseConfigurationReconciler) ensureResourcesRequiredForJenkinsDeploymentArePresent(metaObject metav1.ObjectMeta) error {
 	if err := r.createOperatorCredentialsSecret(metaObject); err != nil {
 		return err
 	}
@@ -117,6 +101,16 @@ func (r *JenkinsReconcilerBaseConfiguration) ensureResourcesRequiredForJenkinsDe
 		return err
 	}
 	r.logger.V(log.VDebug).Info("Init configuration config map is present")
+
+	if err := r.createBasePluginsConfigMap(metaObject); err != nil {
+		return err
+	}
+	r.logger.V(log.VDebug).Info("Base plugins config map is present")
+
+	if err := r.createUserPluginsConfigMap(metaObject); err != nil {
+		return err
+	}
+	r.logger.V(log.VDebug).Info("Base plugins config map is present")
 
 	if err := r.createRBAC(metaObject); err != nil {
 		return err
@@ -150,7 +144,7 @@ func (r *JenkinsReconcilerBaseConfiguration) ensureResourcesRequiredForJenkinsDe
 	return nil
 }
 
-func (r *JenkinsReconcilerBaseConfiguration) createOperatorCredentialsSecret(meta metav1.ObjectMeta) error {
+func (r *JenkinsBaseConfigurationReconciler) createOperatorCredentialsSecret(meta metav1.ObjectMeta) error {
 	found := &corev1.Secret{}
 	err := r.Configuration.Client.Get(context.TODO(), types.NamespacedName{Name: resources.GetOperatorCredentialsSecretName(r.Configuration.Jenkins), Namespace: r.Configuration.Jenkins.ObjectMeta.Namespace}, found)
 
@@ -167,7 +161,7 @@ func (r *JenkinsReconcilerBaseConfiguration) createOperatorCredentialsSecret(met
 	return stackerr.WithStack(r.UpdateResource(resources.NewOperatorCredentialsSecret(meta, r.Configuration.Jenkins)))
 }
 
-func (r *JenkinsReconcilerBaseConfiguration) calculateUserAndPasswordHash() (string, error) {
+func (r *JenkinsBaseConfigurationReconciler) calculateUserAndPasswordHash() (string, error) {
 	credentialsSecret := &corev1.Secret{}
 	err := r.Client.Get(context.TODO(), types.NamespacedName{Name: resources.GetOperatorCredentialsSecretName(r.Configuration.Jenkins), Namespace: r.Configuration.Jenkins.ObjectMeta.Namespace}, credentialsSecret)
 	if err != nil {
@@ -235,7 +229,7 @@ func CompareContainerVolumeMounts(expected corev1.Container, actual corev1.Conta
 	return reflect.DeepEqual(expected.VolumeMounts, withoutServiceAccount)
 }
 
-func (r *JenkinsReconcilerBaseConfiguration) FilterEvents(source corev1.EventList, jenkinsMasterPod corev1.Pod) []string {
+func (r *JenkinsBaseConfigurationReconciler) FilterEvents(source corev1.EventList, jenkinsMasterPod corev1.Pod) []string {
 	events := []string{}
 	for _, eventItem := range source.Items {
 		if r.Configuration.Jenkins.Status.ProvisionStartTime.UTC().After(eventItem.LastTimestamp.UTC()) {

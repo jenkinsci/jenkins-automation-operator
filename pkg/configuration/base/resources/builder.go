@@ -97,7 +97,7 @@ func GetDestinationRepository(cr *jenkinsv1alpha2.JenkinsImage, clientSet client
 
 // NewDockerfileConfigMap returns a busybox pod with the same name/namespace as the cr.
 func NewDockerfileConfigMap(cr *jenkinsv1alpha2.JenkinsImage) *corev1.ConfigMap {
-	dockerfileContent := fmt.Sprintf(DockerfileTemplate, getDefaultedBaseImage(cr), getPluginsList(cr))
+	dockerfileContent := fmt.Sprintf(DockerfileTemplate, getDefaultedBaseImage(cr), getJenkinsPluginsList(cr))
 	name := fmt.Sprintf(NameWithSuffixFormat, cr.Name, DockerfileNameSuffix)
 	data := map[string]string{DockerfileName: dockerfileContent}
 	dockerfile := &corev1.ConfigMap{
@@ -111,7 +111,7 @@ func NewDockerfileConfigMap(cr *jenkinsv1alpha2.JenkinsImage) *corev1.ConfigMap 
 	return dockerfile
 }
 
-func getPluginsList(cr *jenkinsv1alpha2.JenkinsImage) string {
+func getJenkinsPluginsList(cr *jenkinsv1alpha2.JenkinsImage) string {
 	logger := log.WithName("jenkinsimage_getPluginsList")
 	plugins := ""
 	for _, v := range cr.Spec.Plugins {

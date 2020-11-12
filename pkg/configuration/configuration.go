@@ -30,7 +30,7 @@ import (
 // Configuration holds required for Jenkins configuration.
 type Configuration struct {
 	Client                       client.Client
-	ClientSet                    kubernetes.Clientset
+	clientSet                    *kubernetes.Clientset
 	RestConfig                   rest.Config
 	JenkinsAPIConnectionSettings jenkinsclient.JenkinsAPIConnectionSettings
 	Jenkins                      *v1alpha2.Jenkins
@@ -118,7 +118,7 @@ func (c *Configuration) CreateOrUpdateResource(obj metav1.Object) error {
 
 // Exec executes command in the given pod and it's container.
 func (c *Configuration) Exec(podName, containerName string, command []string) (stdout, stderr bytes.Buffer, err error) {
-	req := c.ClientSet.CoreV1().RESTClient().Post().
+	req := c.clientSet.CoreV1().RESTClient().Post().
 		Resource("pods").
 		Name(podName).
 		Namespace(c.Jenkins.Namespace).
@@ -131,12 +131,12 @@ func (c *Configuration) Exec(podName, containerName string, command []string) (s
 		Stderr:    true,
 		TTY:       false,
 	}, scheme.ParameterCodec)
-
+	c.RestConfig.TLSClientConfig.Insecure = true
+	c.RestConfig.BearerToken = ""
 	exec, err := remotecommand.NewSPDYExecutor(&c.RestConfig, "POST", req.URL())
 	if err != nil {
 		return stdout, stderr, stackerr.Wrap(err, "pod exec error while creating Executor")
 	}
-
 	err = exec.Stream(remotecommand.StreamOptions{
 		Stdin:  nil,
 		Stdout: &stdout,
@@ -158,23 +158,6 @@ func (c *Configuration) GetJenkinsMasterContainer() *v1alpha2.Container {
 	}
 
 	return nil
-}
-
-// GetJenkinsClient gets jenkins client from a configuration.
-func (c *Configuration) GetJenkinsClient() (jenkinsclient.Jenkins, error) {
-	logger := logx.WithName("")
-	strategy := c.Jenkins.Spec.JenkinsAPISettings.AuthorizationStrategy
-	logger.V(log.VDebug).Info(fmt.Sprintf("Getting JenkinsClient for : %s with AuthorizationStrategy: %s", c.Jenkins.Name, strategy))
-	switch strategy {
-	case v1alpha2.ServiceAccountAuthorizationStrategy:
-		return c.GetJenkinsClientFromServiceAccount()
-	case v1alpha2.CreateUserAuthorizationStrategy:
-		return c.GetJenkinsClientFromSecret()
-	default:
-		errorMessage := fmt.Sprintf("Unrecognized AuthorizationStrategy %s for Jenkins %s: returning nil", c.Jenkins.Name, strategy)
-		logger.V(log.VDebug).Info(errorMessage)
-		return nil, stackerr.New(errorMessage)
-	}
 }
 
 func (c *Configuration) getJenkinsAPIUrl() (string, error) {
@@ -251,7 +234,7 @@ func (c *Configuration) GetJenkinsClientFromServiceAccount() (jenkinsclient.Jenk
 	logger.V(log.VDebug).Info(fmt.Sprintf("Creating Jenkins client from serviceAccount with URL: %+v", jenkinsAPIUrl))
 	masterPod, _ := c.GetPodByDeployment()
 	podName := masterPod.Name
-	logger.V(log.VDebug).Info(fmt.Sprintf("Abot to execute cat command on Pod: %s", podName))
+	logger.V(log.VDebug).Info(fmt.Sprintf("About to execute cat command on Pod: %s", podName))
 	token, _, err := c.Exec(podName, resources.JenkinsMasterContainerName, []string{"cat", "/var/run/secrets/kubernetes.io/serviceaccount/token"})
 	if err != nil {
 		logger.V(log.VDebug).Info(fmt.Sprintf("Error while getJenkinsAPIUrl: %s", err))
@@ -328,7 +311,7 @@ func (c *Configuration) GetJenkinsClientFromSecret() (jenkinsclient.Jenkins, err
 
 // GetJenkinsOpts gets JENKINS_OPTS env parameter, parses it's values and returns it as a map`
 func GetJenkinsOpts(jenkins v1alpha2.Jenkins) map[string]string {
-	envs := jenkins.Spec.Master.Containers[0].Env
+	envs := jenkins.Status.Spec.Master.Containers[0].Env
 	jenkinsOpts := make(map[string]string)
 
 	for key, value := range envs {

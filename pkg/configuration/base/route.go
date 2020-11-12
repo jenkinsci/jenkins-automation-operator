@@ -15,7 +15,7 @@ import (
 )
 
 // createRoute takes the ServiceName and Creates the Route based on it
-func (r *JenkinsReconcilerBaseConfiguration) createRoute(meta metav1.ObjectMeta, serviceName string, jenkins *v1alpha2.Jenkins) error {
+func (r *JenkinsBaseConfigurationReconciler) createRoute(meta metav1.ObjectMeta, serviceName string, jenkins *v1alpha2.Jenkins) error {
 	route := routev1.Route{}
 	name := fmt.Sprintf("jenkins-%s", jenkins.ObjectMeta.Name)
 	err := r.Client.Get(context.TODO(), types.NamespacedName{Name: name, Namespace: meta.Namespace}, &route)

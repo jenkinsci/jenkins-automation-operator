@@ -81,7 +81,7 @@ func main() {
 	setupLog.Info("Registering Components.")
 	manager := initManager(metricsAddr, enableLeaderElection)
 	client := manager.GetClient()
-	restClient := getRestClient(debug)
+	restClient := GetRestClient(debug)
 	eventsRecorder := getEventsRecorder(restClient, debug)
 	checkAvailableFeatures(client)
 	// get a config to talk to the apiserver
@@ -130,7 +130,7 @@ func getEventsRecorder(cfg *rest.Config, debug *bool) event.Recorder {
 	return events
 }
 
-func getRestClient(debug *bool) *rest.Config {
+func GetRestClient(debug *bool) *rest.Config {
 	// get a config to talk to the apiserver
 	cfg, err := config.GetConfig()
 	if err != nil {

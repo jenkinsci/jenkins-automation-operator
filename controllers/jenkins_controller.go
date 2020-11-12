@@ -46,8 +46,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -83,8 +81,6 @@ type JenkinsReconciler struct {
 	Log                          logr.Logger
 	Scheme                       *runtime.Scheme
 	jenkinsAPIConnectionSettings jenkinsclient.JenkinsAPIConnectionSettings
-	clientSet                    kubernetes.Clientset
-	restConfig                   rest.Config
 	NotificationEvents           chan event.Event
 }
 
@@ -417,8 +413,6 @@ func (r *JenkinsReconciler) sendNewBaseConfigurationFailedNotification(jenkins *
 func (r *JenkinsReconciler) newReconcilerConfiguration(jenkins *v1alpha2.Jenkins) configuration.Configuration {
 	config := configuration.Configuration{
 		Client:                       r.Client,
-		ClientSet:                    r.clientSet,
-		RestConfig:                   r.restConfig,
 		JenkinsAPIConnectionSettings: r.jenkinsAPIConnectionSettings,
 		Notifications:                &r.NotificationEvents,
 		Jenkins:                      jenkins,
@@ -559,12 +553,12 @@ func (r *JenkinsReconciler) getCalculatedSpec(ctx context.Context, jenkins *v1al
 
 	if reflect.DeepEqual(calculatedSpec.JenkinsAPISettings, v1alpha2.JenkinsAPISettings{}) {
 		logger.Info("Setting default Jenkins API settings")
-		calculatedSpec.JenkinsAPISettings = v1alpha2.JenkinsAPISettings{AuthorizationStrategy: v1alpha2.CreateUserAuthorizationStrategy}
+		calculatedSpec.JenkinsAPISettings = v1alpha2.JenkinsAPISettings{AuthorizationStrategy: v1alpha2.ServiceAccountAuthorizationStrategy}
 	}
 
 	if calculatedSpec.JenkinsAPISettings.AuthorizationStrategy == "" {
 		logger.Info("Setting default Jenkins API settings authorization strategy")
-		calculatedSpec.JenkinsAPISettings.AuthorizationStrategy = v1alpha2.CreateUserAuthorizationStrategy
+		calculatedSpec.JenkinsAPISettings.AuthorizationStrategy = v1alpha2.ServiceAccountAuthorizationStrategy
 	}
 
 	configurationAsCode := calculatedSpec.ConfigurationAsCode

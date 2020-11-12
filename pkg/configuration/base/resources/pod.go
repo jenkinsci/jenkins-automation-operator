@@ -30,6 +30,16 @@ const (
 	// InitScriptName is the init script name which configures init.groovy.d, scripts and install plugins
 	InitScriptName = "init.sh"
 
+	basePluginsVolumeName = "base-plugins"
+	basePluginsFileName   = "base-plugins"
+	// BasePluginsVolumePath is a path where the base-plugins file is generated
+	BasePluginsVolumePath = jenkinsPath + "/" + basePluginsFileName
+
+	userPluginsVolumeName = "user-plugins"
+	userPluginsFileName   = "user-plugins"
+	// UserPluginsVolumePath is a path where the base-plugins file is generated
+	UserPluginsVolumePath = jenkinsPath + "/" + userPluginsFileName
+
 	jenkinsOperatorCredentialsVolumeName = "operator-credentials"
 	jenkinsOperatorCredentialsVolumePath = jenkinsPath + "/operator-credentials"
 
@@ -48,10 +58,11 @@ const (
 	JenkinsDefaultConfigMapName = "jenkins-default-configuration"
 
 	// Names of Sidecar and Init Containers
-	ConfigSidecarName       = "config"
-	ConfigInitContainerName = "config-init"
-	BackupSidecarName       = "backup"
-	BackupInitContainerName = "backup-init"
+	ConfigSidecarName        = "config"
+	ConfigInitContainerName  = "config-init"
+	PluginsInitContainerName = "plugins-init"
+	BackupSidecarName        = "backup"
+	BackupInitContainerName  = "backup-init"
 	// Config Sidecar related variables
 	JenkinsSCConfigReqURL     = "http://localhost:8080/reload-configuration-as-code/?casc-reload-token=$(POD_NAME)"
 	JenkinsSCConfigReqMethod  = "POST"
@@ -135,99 +146,33 @@ func getJenkinsHomePath(jenkins *v1alpha2.Jenkins) string {
 
 // GetJenkinsMasterPodBaseVolumes returns Jenkins master pod volumes required by operator
 func GetJenkinsMasterPodBaseVolumes(jenkins *v1alpha2.Jenkins) []corev1.Volume {
-	configMapVolumeSourceDefaultMode := corev1.ConfigMapVolumeSourceDefaultMode
-	secretVolumeSourceDefaultMode := corev1.SecretVolumeSourceDefaultMode
-	var scriptsVolumeDefaultMode int32 = 0777
 	volumes := []corev1.Volume{
-		{
-			Name: JenkinsHomeVolumeName,
-			VolumeSource: corev1.VolumeSource{
-				EmptyDir: &corev1.EmptyDirVolumeSource{},
-			},
-		},
-		{
-			Name: jenkinsScriptsVolumeName,
-			VolumeSource: corev1.VolumeSource{
-				ConfigMap: &corev1.ConfigMapVolumeSource{
-					DefaultMode: &scriptsVolumeDefaultMode,
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: getScriptsConfigMapName(jenkins),
-					},
-				},
-			},
-		},
-		{
-			Name: jenkinsInitConfigurationVolumeName,
-			VolumeSource: corev1.VolumeSource{
-				ConfigMap: &corev1.ConfigMapVolumeSource{
-					DefaultMode: &configMapVolumeSourceDefaultMode,
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: GetInitConfigurationConfigMapName(jenkins),
-					},
-				},
-			},
-		},
-		{
-			Name: jenkinsOperatorCredentialsVolumeName,
-			VolumeSource: corev1.VolumeSource{
-				Secret: &corev1.SecretVolumeSource{
-					DefaultMode: &secretVolumeSourceDefaultMode,
-					SecretName:  GetOperatorCredentialsSecretName(jenkins),
-				},
-			},
-		},
+		getEmptyDirVolume(JenkinsHomeVolumeName),
+		getConfigMapVolume(jenkinsScriptsVolumeName, getScriptsConfigMapName(jenkins), 0777),
+		getConfigMapVolume(jenkinsInitConfigurationVolumeName, GetInitConfigurationConfigMapName(jenkins)),
+		getConfigMapVolume(basePluginsVolumeName, GetBasePluginsVolumeNameConfigMapName(jenkins)),
+		getConfigMapVolume(userPluginsVolumeName, GetUserPluginsVolumeNameConfigMapName(jenkins)),
+		getSecretVolume(jenkinsOperatorCredentialsVolumeName, GetOperatorCredentialsSecretName(jenkins)),
 	}
+
 	if jenkins.Status != nil && jenkins.Status.Spec != nil && jenkins.Status.Spec.ConfigurationAsCode != nil {
 		spec := jenkins.Status.Spec
 		configurationAsCode := spec.ConfigurationAsCode
 		if configurationAsCode.Enabled {
 			// target volume for the init container
 			// All casc configmaps will be copied here
-			volumes = append(volumes, corev1.Volume{
-				Name: ConfigurationAsCodeVolumeName,
-				VolumeSource: corev1.VolumeSource{
-					EmptyDir: &corev1.EmptyDirVolumeSource{},
-				},
-			})
+			volumes = append(volumes, getEmptyDirVolume(ConfigurationAsCodeVolumeName))
 			// volume for default config configmap
 			if configurationAsCode.DefaultConfig {
-				volumes = append(volumes, corev1.Volume{
-					Name: fmt.Sprintf("casc-default-%s", JenkinsDefaultConfigMapName),
-					VolumeSource: corev1.VolumeSource{
-						ConfigMap: &corev1.ConfigMapVolumeSource{
-							DefaultMode: &configMapVolumeSourceDefaultMode,
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: JenkinsDefaultConfigMapName,
-							},
-						},
-					},
-				})
+				volumes = append(volumes, getConfigMapVolume(fmt.Sprintf("casc-default-%s", JenkinsDefaultConfigMapName), JenkinsDefaultConfigMapName))
 			}
 			// Loop to add all casc configmap volumes
 			for _, cm := range configurationAsCode.Configurations {
-				volumes = append(volumes, corev1.Volume{
-					Name: fmt.Sprintf("casc-init-%s", cm.Name),
-					VolumeSource: corev1.VolumeSource{
-						ConfigMap: &corev1.ConfigMapVolumeSource{
-							DefaultMode: &configMapVolumeSourceDefaultMode,
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: cm.Name,
-							},
-						},
-					},
-				})
+				volumes = append(volumes, getConfigMapVolume(fmt.Sprintf("casc-init-%s", cm.Name), cm.Name))
 			}
 			// Add casc secret volume
 			if len(configurationAsCode.Secret.Name) > 0 {
-				volumes = append(volumes, corev1.Volume{
-					Name: ConfigurationAsCodeSecretVolumeName,
-					VolumeSource: corev1.VolumeSource{
-						Secret: &corev1.SecretVolumeSource{
-							DefaultMode: &secretVolumeSourceDefaultMode,
-							SecretName:  configurationAsCode.Secret.Name,
-						},
-					},
-				})
+				volumes = append(volumes, getSecretVolume(ConfigurationAsCodeSecretVolumeName, configurationAsCode.Secret.Name))
 			}
 		}
 	}
@@ -237,41 +182,19 @@ func GetJenkinsMasterPodBaseVolumes(jenkins *v1alpha2.Jenkins) []corev1.Volume {
 // GetJenkinsMasterContainerBaseVolumeMounts returns Jenkins master pod volume mounts required by operator
 func GetJenkinsMasterContainerBaseVolumeMounts(jenkins *v1alpha2.Jenkins, spec *v1alpha2.JenkinsSpec) []corev1.VolumeMount {
 	volumeMounts := []corev1.VolumeMount{
-		{
-			Name:      JenkinsHomeVolumeName,
-			MountPath: getJenkinsHomePath(jenkins),
-			ReadOnly:  false,
-		},
-		{
-			Name:      jenkinsScriptsVolumeName,
-			MountPath: JenkinsScriptsVolumePath,
-			ReadOnly:  true,
-		},
-		{
-			Name:      jenkinsInitConfigurationVolumeName,
-			MountPath: jenkinsInitConfigurationVolumePath,
-			ReadOnly:  true,
-		},
-		{
-			Name:      jenkinsOperatorCredentialsVolumeName,
-			MountPath: jenkinsOperatorCredentialsVolumePath,
-			ReadOnly:  true,
-		},
+		getVolumeMount(JenkinsHomeVolumeName, getJenkinsHomePath(jenkins), false),
+		getVolumeMount(jenkinsScriptsVolumeName, JenkinsScriptsVolumePath, true),
+		getVolumeMount(jenkinsInitConfigurationVolumeName, jenkinsInitConfigurationVolumePath, true),
+		getVolumeMount(jenkinsOperatorCredentialsVolumeName, jenkinsOperatorCredentialsVolumePath, true),
+		getSubPathVolumeMount(basePluginsVolumeName, BasePluginsVolumePath, basePluginsFileName, false),
+		getSubPathVolumeMount(userPluginsVolumeName, UserPluginsVolumePath, userPluginsFileName, false),
 	}
 
 	if spec.ConfigurationAsCode != nil {
 		if spec.ConfigurationAsCode.Enabled {
-			volumeMounts = append(volumeMounts, corev1.VolumeMount{
-				Name:      ConfigurationAsCodeVolumeName,
-				MountPath: ConfigurationAsCodeVolumePath,
-				ReadOnly:  false,
-			})
+			volumeMounts = append(volumeMounts, getVolumeMount(ConfigurationAsCodeVolumeName, ConfigurationAsCodeVolumePath, false))
 			if len(spec.ConfigurationAsCode.Secret.Name) > 0 {
-				volumeMounts = append(volumeMounts, corev1.VolumeMount{
-					Name:      ConfigurationAsCodeSecretVolumeName,
-					MountPath: ConfigurationAsCodeSecretVolumePath,
-					ReadOnly:  false,
-				})
+				volumeMounts = append(volumeMounts, getVolumeMount(ConfigurationAsCodeSecretVolumeName, ConfigurationAsCodeSecretVolumePath, false))
 			}
 		}
 	}
@@ -307,12 +230,20 @@ func NewJenkinsMasterContainer(jenkins *v1alpha2.Jenkins) corev1.Container {
 }
 
 func GetJenkinsContainer(jenkins *v1alpha2.Jenkins, jenkinsContainer v1alpha2.Container, envs []corev1.EnvVar) corev1.Container {
+	postStartCommand := []string{"bash", "-c", fmt.Sprintf("%s/%s", JenkinsScriptsVolumePath, InitScriptName)}
 	container := corev1.Container{
 		Name:            JenkinsMasterContainerName,
 		Image:           jenkinsContainer.Image,
 		ImagePullPolicy: jenkinsContainer.ImagePullPolicy,
 		LivenessProbe:   jenkinsContainer.LivenessProbe,
 		ReadinessProbe:  jenkinsContainer.ReadinessProbe,
+		Lifecycle: &corev1.Lifecycle{
+			PostStart: &corev1.Handler{
+				Exec: &corev1.ExecAction{
+					Command: postStartCommand,
+				},
+			},
+		},
 		Ports: []corev1.ContainerPort{
 			{
 				Name:          httpPortName,
@@ -405,21 +336,9 @@ func NewJenkinsBackupContainer(jenkins *v1alpha2.Jenkins) corev1.Container {
 		Command:         []string{"/bin/sh", "-c", "--"},
 		Args:            []string{"while true; do sleep 30; done;"},
 		VolumeMounts: []corev1.VolumeMount{
-			{
-				Name:      JenkinsBackupVolumeMountName,
-				ReadOnly:  false,
-				MountPath: JenkinsBackupVolumePath,
-			},
-			{
-				Name:      ScriptsVolumeMountName,
-				ReadOnly:  false,
-				MountPath: ScriptsVolumePath,
-			},
-			{
-				Name:      JenkinsHomeVolumeName,
-				ReadOnly:  false,
-				MountPath: getJenkinsHomePath(jenkins),
-			},
+			getVolumeMount(JenkinsBackupVolumeMountName, JenkinsBackupVolumePath, false),
+			getVolumeMount(ScriptsVolumeMountName, ScriptsVolumePath, false),
+			getVolumeMount(JenkinsHomeVolumeName, getJenkinsHomePath(jenkins), false),
 		},
 		Stdin: true,
 		TTY:   true,
@@ -428,32 +347,53 @@ func NewJenkinsBackupContainer(jenkins *v1alpha2.Jenkins) corev1.Container {
 	return backupContainer
 }
 
+// NewJenkinsPluginsInitContainer returns Jenkins init container to install required based plugins
+func NewJenkinsPluginsInitContainer(spec *v1alpha2.JenkinsSpec) corev1.Container {
+	jenkinsContainer := spec.Master.Containers[0]
+	volumeMounts := []corev1.VolumeMount{
+		getVolumeMount(jenkinsScriptsVolumeName, JenkinsScriptsVolumePath, false),
+		getVolumeMount(basePluginsVolumeName, BasePluginsVolumePath, false),
+	}
+	command := []string{"bash", "-c", "ls"}
+	// FIXME use init container to install plugins
+	// command := []string{"bash", "-c", fmt.Sprintf("%s/%s", JenkinsScriptsVolumePath, InitScriptName)}
+	return corev1.Container{
+		Name:            PluginsInitContainerName,
+		Image:           jenkinsContainer.Image,
+		ImagePullPolicy: jenkinsContainer.ImagePullPolicy,
+		Command:         command,
+		Resources: corev1.ResourceRequirements{
+			Requests: corev1.ResourceList{
+				corev1.ResourceCPU:    resource.MustParse(SidecarCPURequest),
+				corev1.ResourceMemory: resource.MustParse(SidecarMEMRequest),
+			},
+			Limits: corev1.ResourceList{
+				corev1.ResourceCPU:    resource.MustParse(SidecarCPULimit),
+				corev1.ResourceMemory: resource.MustParse(SidecarMEMLimit),
+			},
+		},
+		VolumeMounts: volumeMounts,
+	}
+}
+
 // NewJenkinsConfigInitContainer returns Jenkins init container to copy configmap to make it writable
 func NewJenkinsConfigInitContainer(spec *v1alpha2.JenkinsSpec) corev1.Container {
 	jenkinsContainer := spec.Master.Containers[0]
 	volumeMounts := []corev1.VolumeMount{
-		{
-			Name:      ConfigurationAsCodeVolumeName,
-			MountPath: ConfigurationAsCodeVolumePath,
-			ReadOnly:  false,
-		},
+		getVolumeMount(ConfigurationAsCodeVolumeName, ConfigurationAsCodeVolumePath, false),
 	}
 
 	if spec.ConfigurationAsCode == nil || spec.ConfigurationAsCode.DefaultConfig {
-		volumeMounts = append(volumeMounts, corev1.VolumeMount{
-			Name:      fmt.Sprintf("casc-default-%s", JenkinsDefaultConfigMapName),
-			MountPath: jenkinsPath + fmt.Sprintf("/casc-default-%s", JenkinsDefaultConfigMapName),
-			ReadOnly:  false,
-		})
+		configurationAsCodeVolumeName := fmt.Sprintf("casc-default-%s", JenkinsDefaultConfigMapName)
+		configurationAsCodeVolumePath := jenkinsPath + fmt.Sprintf("/casc-default-%s", JenkinsDefaultConfigMapName)
+		volumeMounts = append(volumeMounts, getVolumeMount(configurationAsCodeVolumeName, configurationAsCodeVolumePath, false))
 	}
 
 	if spec.ConfigurationAsCode != nil && spec.ConfigurationAsCode.Enabled {
 		for _, cm := range spec.ConfigurationAsCode.Configurations {
-			volumeMounts = append(volumeMounts, corev1.VolumeMount{
-				Name:      fmt.Sprintf("casc-init-%s", cm.Name),
-				MountPath: jenkinsPath + fmt.Sprintf("/casc-init-%s", cm.Name),
-				ReadOnly:  false,
-			})
+			configurationAsCodeInitVolumeName := fmt.Sprintf("casc-init-%s", cm.Name)
+			configurationAsCodeInitVolumePath := jenkinsPath + fmt.Sprintf("/casc-init-%s", cm.Name)
+			volumeMounts = append(volumeMounts, getVolumeMount(configurationAsCodeInitVolumeName, configurationAsCodeInitVolumePath, false))
 		}
 	}
 
@@ -486,16 +426,8 @@ func NewJenkinsConfigInitContainer(spec *v1alpha2.JenkinsSpec) corev1.Container 
 func NewJenkinsBackupInitContainer(spec *v1alpha2.JenkinsSpec) corev1.Container {
 	jenkinsContainer := spec.Master.Containers[0]
 	volumeMounts := []corev1.VolumeMount{
-		{
-			Name:      JenkinsBackupVolumeMountName,
-			ReadOnly:  false,
-			MountPath: JenkinsBackupVolumePath,
-		},
-		{
-			Name:      ScriptsVolumeMountName,
-			ReadOnly:  false,
-			MountPath: ScriptsVolumePath,
-		},
+		getVolumeMount(JenkinsBackupVolumeMountName, JenkinsBackupVolumePath, false),
+		getVolumeMount(ScriptsVolumeMountName, ScriptsVolumePath, false),
 	}
 
 	scriptTemplate := `cat > %s << %s
@@ -547,8 +479,8 @@ curl -X POST --user \$USER:\$APITOKEN -H "\$CRUMB" \$SERVER/%s
 	}
 }
 
-// ConvertJenkinsContainerToKubernetesContainer converts Jenkins container to Kubernetes container
-func ConvertJenkinsContainerToKubernetesContainer(container v1alpha2.Container) corev1.Container {
+// convertJenkinsContainerToKubernetesContainer converts Jenkins container to Kubernetes container
+func convertJenkinsContainerToKubernetesContainer(container v1alpha2.Container) corev1.Container {
 	return corev1.Container{
 		Name:            container.Name,
 		Image:           container.Image,
@@ -575,7 +507,7 @@ func newContainers(jenkins *v1alpha2.Jenkins, spec *v1alpha2.JenkinsSpec) (conta
 			containers = append(containers, NewJenkinsConfigContainer(jenkins))
 		}
 		for _, container := range spec.Master.Containers[1:] {
-			containers = append(containers, ConvertJenkinsContainerToKubernetesContainer(container))
+			containers = append(containers, convertJenkinsContainerToKubernetesContainer(container))
 		}
 	}
 	if spec.BackupEnabled {
@@ -586,6 +518,7 @@ func newContainers(jenkins *v1alpha2.Jenkins, spec *v1alpha2.JenkinsSpec) (conta
 }
 
 func newInitContainers(jenkinsSpec *v1alpha2.JenkinsSpec) (containers []corev1.Container) {
+	containers = append(containers, NewJenkinsPluginsInitContainer(jenkinsSpec))
 	if jenkinsSpec.ConfigurationAsCode == nil || jenkinsSpec.ConfigurationAsCode.Enabled {
 		containers = append(containers, NewJenkinsConfigInitContainer(jenkinsSpec))
 	}
@@ -648,6 +581,63 @@ func WaitForPodRunning(k8sClient client.Client, podName, namespace string, timeo
 // Returns an error if the pod never enters the running state.
 func WaitForPodIsCompleted(k8sClient client.Client, podName, namespace string) error {
 	return wait.PollUntil(time.Second, isPodCompleted(k8sClient, podName, namespace), nil)
+}
+
+func getEmptyDirVolume(volumeName string) corev1.Volume {
+	return corev1.Volume{
+		Name: volumeName,
+		VolumeSource: corev1.VolumeSource{
+			EmptyDir: &corev1.EmptyDirVolumeSource{},
+		},
+	}
+}
+
+func getConfigMapVolume(volumeName string, configMapName string, mode ...int32) corev1.Volume {
+	configMapVolumeSourceDefaultMode := corev1.ConfigMapVolumeSourceDefaultMode
+	if len(mode) != 0 {
+		configMapVolumeSourceDefaultMode = mode[0]
+	}
+	return corev1.Volume{
+		Name: volumeName,
+		VolumeSource: corev1.VolumeSource{
+			ConfigMap: &corev1.ConfigMapVolumeSource{
+				DefaultMode: &configMapVolumeSourceDefaultMode,
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: configMapName,
+				},
+			},
+		},
+	}
+}
+
+func getSecretVolume(volumeName string, secretName string) corev1.Volume {
+	secretVolumeSourceDefaultMode := corev1.SecretVolumeSourceDefaultMode
+	return corev1.Volume{
+		Name: volumeName,
+		VolumeSource: corev1.VolumeSource{
+			Secret: &corev1.SecretVolumeSource{
+				DefaultMode: &secretVolumeSourceDefaultMode,
+				SecretName:  secretName,
+			},
+		},
+	}
+}
+
+func getSubPathVolumeMount(volumeName string, mountPath string, subPath string, readOnly bool) corev1.VolumeMount {
+	return corev1.VolumeMount{
+		Name:      volumeName,
+		MountPath: mountPath,
+		SubPath:   subPath,
+		ReadOnly:  readOnly,
+	}
+}
+
+func getVolumeMount(volumeName string, mountPath string, readOnly bool) corev1.VolumeMount {
+	return corev1.VolumeMount{
+		Name:      volumeName,
+		MountPath: mountPath,
+		ReadOnly:  readOnly,
+	}
 }
 
 // getJenkinsSideCarImage returns the jenkins sidecar image the operator should be using

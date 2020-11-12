@@ -22,7 +22,8 @@ const installPluginsBashFmt = `#!/bin/bash -eu
 # RUN install-plugins.sh docker-slaves github-branch-source
 
 set -o pipefail
-
+echo Waiting 10s to have jenkins container filesystem ready
+sleep 10
 REF_DIR=${REF:-%s/plugins}
 FAILED="$REF_DIR/failed-plugins.txt"
 

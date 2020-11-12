@@ -2,12 +2,9 @@ package base
 
 import (
 	"context"
-	"fmt"
 	"reflect"
 	"strings"
 	"testing"
-
-	stackerr "github.com/pkg/errors"
 
 	"github.com/bndr/gojenkins"
 	"github.com/golang/mock/gomock"
@@ -16,7 +13,6 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
-	"github.com/jenkinsci/kubernetes-operator/pkg/plugins"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -103,7 +99,7 @@ func TestCompareContainerVolumeMounts(t *testing.T) {
 }
 
 // compareVolumes returns true if Jenkins pod and Jenkins CR volumes are the same
-func (r *JenkinsReconcilerBaseConfiguration) compareVolumes(actualPod corev1.Pod) bool {
+func (r *JenkinsBaseConfigurationReconciler) compareVolumes(actualPod corev1.Pod) bool {
 	var withoutServiceAccount []corev1.Volume
 	for _, volume := range actualPod.Spec.Volumes {
 		if !strings.HasPrefix(volume.Name, actualPod.Spec.ServiceAccountName) {
@@ -210,7 +206,7 @@ func TestJenkinsReconcilerBaseConfiguration_verifyPlugins(t *testing.T) {
 				},
 			},
 		}
-		r := JenkinsReconcilerBaseConfiguration{
+		r := JenkinsBaseConfigurationReconciler{
 			logger: log.Log,
 			Configuration: configuration.Configuration{
 				Jenkins: jenkins,
@@ -241,7 +237,7 @@ func TestJenkinsReconcilerBaseConfiguration_verifyPlugins(t *testing.T) {
 				},
 			},
 		}
-		r := JenkinsReconcilerBaseConfiguration{
+		r := JenkinsBaseConfigurationReconciler{
 			logger: log.Log,
 			Configuration: configuration.Configuration{
 				Jenkins: jenkins,
@@ -288,7 +284,7 @@ func TestJenkinsReconcilerBaseConfiguration_verifyPlugins(t *testing.T) {
 				},
 			},
 		}
-		r := JenkinsReconcilerBaseConfiguration{
+		r := JenkinsBaseConfigurationReconciler{
 			logger: log.Log,
 			Configuration: configuration.Configuration{
 				Jenkins: jenkins,
@@ -328,7 +324,7 @@ func TestJenkinsReconcilerBaseConfiguration_verifyPlugins(t *testing.T) {
 				},
 			},
 		}
-		r := JenkinsReconcilerBaseConfiguration{
+		r := JenkinsBaseConfigurationReconciler{
 			logger: log.Log,
 			Configuration: configuration.Configuration{
 				Jenkins: jenkins,
@@ -368,7 +364,7 @@ func TestJenkinsReconcilerBaseConfiguration_verifyPlugins(t *testing.T) {
 				},
 			},
 		}
-		r := JenkinsReconcilerBaseConfiguration{
+		r := JenkinsBaseConfigurationReconciler{
 			logger: log.Log,
 			Configuration: configuration.Configuration{
 				Jenkins: jenkins,
@@ -408,7 +404,7 @@ func TestJenkinsReconcilerBaseConfiguration_verifyPlugins(t *testing.T) {
 				},
 			},
 		}
-		r := JenkinsReconcilerBaseConfiguration{
+		r := JenkinsBaseConfigurationReconciler{
 			logger: log.Log,
 			Configuration: configuration.Configuration{
 				Jenkins: jenkins,
@@ -448,7 +444,7 @@ func TestJenkinsReconcilerBaseConfiguration_verifyPlugins(t *testing.T) {
 				},
 			},
 		}
-		r := JenkinsReconcilerBaseConfiguration{
+		r := JenkinsBaseConfigurationReconciler{
 			logger: log.Log,
 			Configuration: configuration.Configuration{
 				Jenkins: jenkins,
@@ -480,7 +476,7 @@ func TestJenkinsReconcilerBaseConfiguration_verifyPlugins(t *testing.T) {
 				},
 			},
 		}
-		r := JenkinsReconcilerBaseConfiguration{
+		r := JenkinsBaseConfigurationReconciler{
 			logger: log.Log,
 			Configuration: configuration.Configuration{
 				Jenkins: jenkins,
@@ -1058,48 +1054,4 @@ func TestCompareContainerResources(t *testing.T) {
 
 		assert.False(t, got)
 	})
-}
-
-func (r *JenkinsReconcilerBaseConfiguration) verifyPlugins(jenkinsClient client.Jenkins) (bool, error) {
-	allPluginsInJenkins, err := jenkinsClient.GetPlugins(fetchAllPlugins)
-	if err != nil {
-		return false, stackerr.WithStack(err)
-	}
-
-	var installedPlugins []string
-	for _, jenkinsPlugin := range allPluginsInJenkins.Raw.Plugins {
-		if isValidPlugin(jenkinsPlugin) {
-			installedPlugins = append(installedPlugins, plugins.Plugin{Name: jenkinsPlugin.ShortName, Version: jenkinsPlugin.Version}.String())
-		}
-	}
-	r.logger.V(log.VDebug).Info(fmt.Sprintf("Installed plugins '%+v'", installedPlugins))
-
-	status := true
-	master := r.Configuration.Jenkins.Status.Spec.Master
-	allRequiredPlugins := [][]v1alpha2.Plugin{master.BasePlugins, master.Plugins}
-	for _, requiredPlugins := range allRequiredPlugins {
-		for _, plugin := range requiredPlugins {
-			if _, ok := isPluginInstalled(allPluginsInJenkins, plugin); !ok {
-				r.logger.V(log.VWarn).Info(fmt.Sprintf("Missing plugin '%s'", plugin))
-				status = false
-
-				continue
-			}
-			if found, ok := isPluginVersionCompatible(allPluginsInJenkins, plugin); !ok {
-				r.logger.V(log.VWarn).Info(fmt.Sprintf("Incompatible plugin '%s' version, actual '%+v'", plugin, found.Version))
-				status = false
-			}
-		}
-	}
-
-	return status, nil
-}
-
-func isPluginVersionCompatible(plugins *gojenkins.Plugins, plugin v1alpha2.Plugin) (gojenkins.Plugin, bool) {
-	p := plugins.Contains(plugin.Name)
-	if p == nil {
-		return gojenkins.Plugin{}, false
-	}
-
-	return *p, p.Version == plugin.Version
 }

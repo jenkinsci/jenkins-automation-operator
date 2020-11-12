@@ -23,17 +23,17 @@ var defaultConfigMap = &corev1.ConfigMap{
 	Data: map[string]string{
 		"01-basic-settings.yaml": `
 groovy:
-      - script: >
-          import jenkins.model.Jenkins;
-          import jenkins.model.JenkinsLocationConfiguration;
-          import hudson.model.Node.Mode;
+- script: >
+  import jenkins.model.Jenkins;
+  import jenkins.model.JenkinsLocationConfiguration;
+  import hudson.model.Node.Mode;
 
-          def jenkins = Jenkins.instance;
-          //Number of jobs that run simultaneously on master.
-          jenkins.setNumExecutors(6);
-          //Jobs must specify that they want to run on master
-          jenkins.setMode(Mode.EXCLUSIVE);
-          jenkins.save();`,
+  def jenkins = Jenkins.instance;
+  //Number of jobs that run simultaneously on master.
+  jenkins.setNumExecutors(6);
+  //Jobs must specify that they want to run on master
+  jenkins.setMode(Mode.EXCLUSIVE);
+  jenkins.save();`,
 
 		"02-enable-csrf.yaml": `
 groovy:
@@ -153,7 +153,7 @@ groovy:
 }
 
 // Validate validates Jenkins CR Spec.master section
-func (r *JenkinsReconcilerBaseConfiguration) Validate(jenkins *v1alpha2.Jenkins) ([]string, error) {
+func (r *JenkinsBaseConfigurationReconciler) Validate(jenkins *v1alpha2.Jenkins) ([]string, error) {
 	var messages []string
 
 	if msg := r.validateReservedVolumes(); len(msg) > 0 {
@@ -196,7 +196,7 @@ func (r *JenkinsReconcilerBaseConfiguration) Validate(jenkins *v1alpha2.Jenkins)
 	return messages, nil
 }
 
-func (r *JenkinsReconcilerBaseConfiguration) validateJenkinsMasterContainerCommand() []string {
+func (r *JenkinsBaseConfigurationReconciler) validateJenkinsMasterContainerCommand() []string {
 	masterContainer := r.Configuration.GetJenkinsMasterContainer()
 	if masterContainer == nil || masterContainer.Command == nil {
 		return []string{}
@@ -225,7 +225,7 @@ func (r *JenkinsReconcilerBaseConfiguration) validateJenkinsMasterContainerComma
 	return []string{}
 }
 
-func (r *JenkinsReconcilerBaseConfiguration) validateImagePullSecrets() ([]string, error) {
+func (r *JenkinsBaseConfigurationReconciler) validateImagePullSecrets() ([]string, error) {
 	var messages []string
 	actualSpec := r.Configuration.Jenkins.Status.Spec
 
@@ -241,7 +241,7 @@ func (r *JenkinsReconcilerBaseConfiguration) validateImagePullSecrets() ([]strin
 	return messages, nil
 }
 
-func (r *JenkinsReconcilerBaseConfiguration) validateImagePullSecret(secretName string) ([]string, error) {
+func (r *JenkinsBaseConfigurationReconciler) validateImagePullSecret(secretName string) ([]string, error) {
 	var messages []string
 	secret := &corev1.Secret{}
 	err := r.Client.Get(context.TODO(), types.NamespacedName{Name: secretName, Namespace: r.Configuration.Jenkins.ObjectMeta.Namespace}, secret)
@@ -266,7 +266,7 @@ func (r *JenkinsReconcilerBaseConfiguration) validateImagePullSecret(secretName 
 	return messages, nil
 }
 
-func (r *JenkinsReconcilerBaseConfiguration) validateVolumes() ([]string, error) {
+func (r *JenkinsBaseConfigurationReconciler) validateVolumes() ([]string, error) {
 	var messages []string
 	actualSpec := r.Configuration.Jenkins.Status.Spec
 	for _, volume := range actualSpec.Master.Volumes {
@@ -295,7 +295,7 @@ func (r *JenkinsReconcilerBaseConfiguration) validateVolumes() ([]string, error)
 	return messages, nil
 }
 
-func (r *JenkinsReconcilerBaseConfiguration) validatePersistentVolumeClaim(volume corev1.Volume) ([]string, error) {
+func (r *JenkinsBaseConfigurationReconciler) validatePersistentVolumeClaim(volume corev1.Volume) ([]string, error) {
 	var messages []string
 
 	pvc := &corev1.PersistentVolumeClaim{}
@@ -309,7 +309,7 @@ func (r *JenkinsReconcilerBaseConfiguration) validatePersistentVolumeClaim(volum
 	return messages, nil
 }
 
-func (r *JenkinsReconcilerBaseConfiguration) validateConfigMapVolume(volume corev1.Volume) ([]string, error) {
+func (r *JenkinsBaseConfigurationReconciler) validateConfigMapVolume(volume corev1.Volume) ([]string, error) {
 	var messages []string
 	if volume.ConfigMap.Optional != nil && *volume.ConfigMap.Optional {
 		return nil, nil
@@ -326,7 +326,7 @@ func (r *JenkinsReconcilerBaseConfiguration) validateConfigMapVolume(volume core
 	return messages, nil
 }
 
-func (r *JenkinsReconcilerBaseConfiguration) validateSecretVolume(volume corev1.Volume) ([]string, error) {
+func (r *JenkinsBaseConfigurationReconciler) validateSecretVolume(volume corev1.Volume) ([]string, error) {
 	var messages []string
 	if volume.Secret.Optional != nil && *volume.Secret.Optional {
 		return nil, nil
@@ -343,7 +343,7 @@ func (r *JenkinsReconcilerBaseConfiguration) validateSecretVolume(volume corev1.
 	return messages, nil
 }
 
-func (r *JenkinsReconcilerBaseConfiguration) validateReservedVolumes() []string {
+func (r *JenkinsBaseConfigurationReconciler) validateReservedVolumes() []string {
 	var messages []string
 
 	for _, baseVolume := range resources.GetJenkinsMasterPodBaseVolumes(r.Configuration.Jenkins) {
@@ -358,7 +358,7 @@ func (r *JenkinsReconcilerBaseConfiguration) validateReservedVolumes() []string 
 	return messages
 }
 
-func (r *JenkinsReconcilerBaseConfiguration) validateContainer(container v1alpha2.Container) []string {
+func (r *JenkinsBaseConfigurationReconciler) validateContainer(container v1alpha2.Container) []string {
 	var messages []string
 	if container.Image == "" {
 		messages = append(messages, "Image not set")
@@ -379,7 +379,7 @@ func (r *JenkinsReconcilerBaseConfiguration) validateContainer(container v1alpha
 	return messages
 }
 
-func (r *JenkinsReconcilerBaseConfiguration) validateContainerVolumeMounts(container v1alpha2.Container) []string {
+func (r *JenkinsBaseConfigurationReconciler) validateContainerVolumeMounts(container v1alpha2.Container) []string {
 	var messages []string
 	allVolumes := append(resources.GetJenkinsMasterPodBaseVolumes(r.Configuration.Jenkins), r.Configuration.Jenkins.Status.Spec.Master.Volumes...)
 
@@ -403,7 +403,7 @@ func (r *JenkinsReconcilerBaseConfiguration) validateContainerVolumeMounts(conta
 	return messages
 }
 
-func (r *JenkinsReconcilerBaseConfiguration) validateJenkinsMasterPodEnvs() []string {
+func (r *JenkinsBaseConfigurationReconciler) validateJenkinsMasterPodEnvs() []string {
 	var messages []string
 	baseEnvs := resources.GetJenkinsMasterContainerBaseEnvs(r.Configuration.Jenkins)
 	baseEnvNames := map[string]string{}
@@ -444,7 +444,7 @@ func (r *JenkinsReconcilerBaseConfiguration) validateJenkinsMasterPodEnvs() []st
 	return messages
 }
 
-func (r *JenkinsReconcilerBaseConfiguration) validatePlugins(requiredBasePlugins []plugins.Plugin, basePlugins, userPlugins []v1alpha2.Plugin) []string {
+func (r *JenkinsBaseConfigurationReconciler) validatePlugins(requiredBasePlugins []plugins.Plugin, basePlugins, userPlugins []v1alpha2.Plugin) []string {
 	var messages []string
 	allPlugins := map[plugins.Plugin][]plugins.Plugin{}
 
@@ -481,7 +481,7 @@ func (r *JenkinsReconcilerBaseConfiguration) validatePlugins(requiredBasePlugins
 	return messages
 }
 
-func (r *JenkinsReconcilerBaseConfiguration) verifyBasePlugins(requiredBasePlugins []plugins.Plugin, basePlugins []v1alpha2.Plugin) []string {
+func (r *JenkinsBaseConfigurationReconciler) verifyBasePlugins(requiredBasePlugins []plugins.Plugin, basePlugins []v1alpha2.Plugin) []string {
 	var messages []string
 
 	for _, requiredBasePlugin := range requiredBasePlugins {
@@ -501,7 +501,7 @@ func (r *JenkinsReconcilerBaseConfiguration) verifyBasePlugins(requiredBasePlugi
 	return messages
 }
 
-func (r *JenkinsReconcilerBaseConfiguration) validateConfiguration(configuration *v1alpha2.Configuration, name string) ([]string, error) {
+func (r *JenkinsBaseConfigurationReconciler) validateConfiguration(configuration *v1alpha2.Configuration, name string) ([]string, error) {
 	var messages []string
 	if configuration == nil {
 		return messages, nil

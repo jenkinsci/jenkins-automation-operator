@@ -12,7 +12,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func (r *JenkinsReconcilerBaseConfiguration) createRBAC(meta metav1.ObjectMeta) error {
+func (r *JenkinsBaseConfigurationReconciler) createRBAC(meta metav1.ObjectMeta) error {
 	err := r.createServiceAccount(meta)
 	if err != nil {
 		return err
@@ -37,7 +37,7 @@ func (r *JenkinsReconcilerBaseConfiguration) createRBAC(meta metav1.ObjectMeta) 
 	return nil
 }
 
-func (r *JenkinsReconcilerBaseConfiguration) ensureExtraRBAC(meta metav1.ObjectMeta) error {
+func (r *JenkinsBaseConfigurationReconciler) ensureExtraRBAC(meta metav1.ObjectMeta) error {
 	var err error
 	var name string
 	for _, roleRef := range r.Configuration.Jenkins.Spec.Roles {

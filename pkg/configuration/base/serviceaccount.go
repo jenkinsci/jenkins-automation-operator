@@ -18,7 +18,7 @@ const (
 	oauthAnnotationPattern = "{\"kind\":\"OAuthRedirectReference\",\"apiVersion\":\"v1\",\"reference\":{\"kind\":\"Route\",\"name\":\"%s\"}}"
 )
 
-func (r *JenkinsReconcilerBaseConfiguration) createServiceAccount(meta metav1.ObjectMeta) error {
+func (r *JenkinsBaseConfigurationReconciler) createServiceAccount(meta metav1.ObjectMeta) error {
 	serviceAccount := &corev1.ServiceAccount{}
 	err := r.Client.Get(context.TODO(), types.NamespacedName{Name: meta.Name, Namespace: meta.Namespace}, serviceAccount)
 	annotations := r.Configuration.Jenkins.Spec.ServiceAccount.Annotations

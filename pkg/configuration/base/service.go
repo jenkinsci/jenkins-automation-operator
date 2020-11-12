@@ -12,7 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-func (r *JenkinsReconcilerBaseConfiguration) createService(meta metav1.ObjectMeta, name string, config v1alpha2.Service) error {
+func (r *JenkinsBaseConfigurationReconciler) createService(meta metav1.ObjectMeta, name string, config v1alpha2.Service) error {
 	service := corev1.Service{}
 	err := r.Client.Get(context.TODO(), types.NamespacedName{Name: name, Namespace: meta.Namespace}, &service)
 	if err != nil && apierrors.IsNotFound(err) {
