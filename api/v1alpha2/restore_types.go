@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha2
 
 import (
+	"github.com/operator-framework/operator-lib/status"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -30,6 +31,7 @@ type RestoreSpec struct {
 
 // RestoreStatus defines the observed state of Restore
 type RestoreStatus struct {
+	Conditions status.Conditions `json:"conditions"`
 }
 
 // +kubebuilder:object:root=true

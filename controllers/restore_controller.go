@@ -20,6 +20,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/operator-framework/operator-lib/status"
+
 	"github.com/jenkinsci/kubernetes-operator/pkg/exec"
 
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
@@ -51,6 +53,11 @@ type RestoreReconciler struct {
 
 var (
 	restoreLogger = log.Log.WithName("restore")
+	// RestoreInitialized and other Condition Types
+	RestoreInitialized status.ConditionType = "RestoreInitialized"
+	RestoreCompleted   status.ConditionType = "RestoreCompleted"
+	RestartStarted     status.ConditionType = "RestartStarted"
+	SafeRestartStarted status.ConditionType = "SafeRestartStarted"
 )
 
 // +kubebuilder:rbac:groups=jenkins.io,resources=restores,verbs=get;list;watch;create;update;patch;delete
@@ -58,7 +65,7 @@ var (
 
 func (r *RestoreReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
-	restoreLogger := r.Log.WithValues("backup", req.NamespacedName)
+	restoreLogger := r.Log.WithValues("restore", req.NamespacedName)
 	execClient := exec.NewKubeExecClient()
 
 	// Fetch the Restore instance
@@ -74,16 +81,18 @@ func (r *RestoreReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		// Error reading the object - requeue the request.
 		return ctrl.Result{}, err
 	}
-
+	if len(restoreInstance.Status.Conditions) > 0 {
+		return ctrl.Result{}, nil
+	}
 	restoreLogger.Info("Jenkins Restore with name " + restoreInstance.Name + " has been created")
 
 	// Fetch the Backup instance
 	backupInstance := &jenkinsv1alpha2.Backup{}
-	restoreNamespacedName := types.NamespacedName{
+	backupNamespacedName := types.NamespacedName{
 		Name:      restoreInstance.Spec.BackupRef,
 		Namespace: req.Namespace,
 	}
-	err = r.Client.Get(ctx, restoreNamespacedName, backupInstance)
+	err = r.Client.Get(ctx, backupNamespacedName, backupInstance)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
@@ -145,10 +154,97 @@ func (r *RestoreReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 	err = execClient.InitKubeGoClient()
 	if err != nil {
+		restoreInstance.Status.Conditions.SetCondition(status.Condition{
+			Type:   RestoreInitialized,
+			Status: corev1.ConditionFalse,
+			Reason: (status.ConditionReason)(err.Error()),
+		})
+		err = r.Client.Status().Update(ctx, restoreInstance)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+		return ctrl.Result{}, err
+	}
+	restoreInstance.Status.Conditions.SetCondition(status.Condition{
+		Type:   RestoreInitialized,
+		Status: corev1.ConditionTrue,
+	})
+	err = r.Client.Status().Update(ctx, restoreInstance)
+	if err != nil {
 		return ctrl.Result{}, err
 	}
 
-	// Create Restore based on Spec
+	// Restore
+	err = r.performJenkinsRestore(ctx, execClient, jenkinsPod, backupInstance, backupConfig, restoreInstance)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	// Restart
+	if backupConfig.Spec.RestartAfterRestore.Enabled && backupConfig.Spec.RestartAfterRestore.Safe {
+		err := r.performJenkinsSafeRestart(ctx, jenkinsPod, restoreInstance, execClient)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+	} else if backupConfig.Spec.RestartAfterRestore.Enabled {
+		err := r.performJenkinsRestart(ctx, execClient, jenkinsPod, restoreInstance)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+	}
+	err = r.Client.Status().Update(ctx, restoreInstance)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	return ctrl.Result{}, nil
+}
+
+func (r *RestoreReconciler) performJenkinsRestart(ctx context.Context, execClient exec.KubeExecClient, jenkinsPod *corev1.Pod, restoreInstance *jenkinsv1alpha2.Restore) error {
+	execRestart := strings.Join([]string{"sh", resources.RestartScriptPath}, " ")
+	err := execClient.MakeRequest(jenkinsPod, restoreInstance.Name, execRestart)
+	if err != nil {
+		restoreInstance.Status.Conditions.SetCondition(status.Condition{
+			Type:   RestartStarted,
+			Status: corev1.ConditionFalse,
+			Reason: (status.ConditionReason)(fmt.Sprintf("Failed to restart Jenkins %s", err.Error())),
+		})
+		err = r.Client.Status().Update(ctx, restoreInstance)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+	restoreInstance.Status.Conditions.SetCondition(status.Condition{
+		Type:   RestartStarted,
+		Status: corev1.ConditionTrue,
+	})
+	return nil
+}
+
+func (r *RestoreReconciler) performJenkinsSafeRestart(ctx context.Context, jenkinsPod *corev1.Pod, restoreInstance *jenkinsv1alpha2.Restore, execClient exec.KubeExecClient) error {
+	execSafeRestart := strings.Join([]string{"sh", resources.SafeRestartScriptPath}, " ")
+	err := execClient.MakeRequest(jenkinsPod, restoreInstance.Name, execSafeRestart)
+	if err != nil {
+		restoreInstance.Status.Conditions.SetCondition(status.Condition{
+			Type:   SafeRestartStarted,
+			Status: corev1.ConditionFalse,
+			Reason: (status.ConditionReason)(fmt.Sprintf("Failed to safe restart Jenkins %s", err.Error())),
+		})
+		err = r.Client.Status().Update(ctx, restoreInstance)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+	restoreInstance.Status.Conditions.SetCondition(status.Condition{
+		Type:   SafeRestartStarted,
+		Status: corev1.ConditionTrue,
+	})
+	return nil
+}
+
+func (r *RestoreReconciler) performJenkinsRestore(ctx context.Context, execClient exec.KubeExecClient, jenkinsPod *corev1.Pod, backupInstance *jenkinsv1alpha2.Backup, backupConfig *jenkinsv1alpha2.BackupConfig, restoreInstance *jenkinsv1alpha2.Restore) error {
 	restoreFromLocation := resources.JenkinsBackupVolumePath + "/" + backupInstance.Name
 	restoreToLocation := defaultJenkinsHome
 	restoreToSubLocations := []string{}
@@ -164,23 +260,38 @@ func (r *RestoreReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	if len(restoreToSubLocations) > 0 {
 		for _, sl := range restoreToSubLocations {
 			// Restore each location in a different request
-			restoreToSublocation := ""
+			restoreToSubLocation := ""
 			if sl == "*.xml" {
-				restoreToSublocation = strings.Join([]string{restoreToLocation, ""}, "/")
+				restoreToSubLocation = strings.Join([]string{restoreToLocation, ""}, "/")
 			} else {
-				restoreToSublocation = strings.Join([]string{restoreToLocation, sl}, "/")
+				restoreToSubLocation = strings.Join([]string{restoreToLocation, sl}, "/")
 			}
-			restoreFromSublocation := strings.Join([]string{restoreFromLocation, sl}, "/")
-			execRestoreSubLocation := strings.Join([]string{"cp", "-r", restoreFromSublocation, restoreToSublocation}, " ")
-			err = execClient.MakeRequest(jenkinsPod, backupInstance.Name, execRestoreSubLocation)
+			restoreFromSubLocation := strings.Join([]string{restoreFromLocation, sl}, "/")
+			execRestoreSubLocation := strings.Join([]string{"cp", "-r", restoreFromSubLocation, restoreToSubLocation}, " ")
+			err := execClient.MakeRequest(jenkinsPod, restoreInstance.Name, execRestoreSubLocation)
 			if err != nil {
-				logger.Info(fmt.Sprintf("Failed to restore from %s %s", restoreFromSublocation, err.Error()))
-				return ctrl.Result{}, nil
+				restoreInstance.Status.Conditions.SetCondition(status.Condition{
+					Type:   RestoreCompleted,
+					Status: corev1.ConditionFalse,
+					Reason: (status.ConditionReason)(fmt.Sprintf("Failed to restore from %s %s", restoreFromSubLocation, err.Error())),
+				})
+				err = r.Client.Status().Update(ctx, restoreInstance)
+				if err != nil {
+					return err
+				}
+				return nil
 			}
 		}
+		restoreInstance.Status.Conditions.SetCondition(status.Condition{
+			Type:   RestoreCompleted,
+			Status: corev1.ConditionTrue,
+		})
+		err := r.Client.Status().Update(ctx, restoreInstance)
+		if err != nil {
+			return err
+		}
 	}
-
-	return ctrl.Result{}, nil
+	return nil
 }
 
 func (r *RestoreReconciler) SetupWithManager(mgr ctrl.Manager) error {

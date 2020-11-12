@@ -4,5 +4,5 @@ metadata:
   name: restore-sample
 spec:
   # Add fields here
-  backupRef: backupsample-tm4rv
+  backupRef: backup-sample
 

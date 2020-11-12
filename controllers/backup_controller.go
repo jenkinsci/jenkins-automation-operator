@@ -21,6 +21,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/operator-framework/operator-lib/status"
+
 	"github.com/jenkinsci/kubernetes-operator/pkg/exec"
 
 	"github.com/go-logr/logr"
@@ -53,6 +55,11 @@ var (
 	logx               = log.Log
 	logger             = logx.WithName("backup")
 	defaultJenkinsHome = "/var/lib/jenkins"
+	// BackupInitialized and other Condition Types
+	BackupInitialized  status.ConditionType = "BackupInitialized"
+	QuietDownStarted   status.ConditionType = "QuietDownStarted"
+	BackupCompleted    status.ConditionType = "BackupCompleted"
+	QuietDownCancelled status.ConditionType = "QuietDownCancelled"
 )
 
 func (r *BackupReconciler) SetupWithManager(mgr ctrl.Manager) error {
@@ -79,7 +86,9 @@ func (r *BackupReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		// Error reading the object - requeue the request.
 		return ctrl.Result{}, err
 	}
-
+	if len(backupInstance.Status.Conditions) > 0 {
+		return ctrl.Result{}, nil
+	}
 	backupLogger.Info("Jenkins Backup with name " + backupInstance.Name + " has been created")
 
 	backupSpec := backupInstance.Spec
@@ -122,35 +131,108 @@ func (r *BackupReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		// Error reading the object - requeue the request.
 		return ctrl.Result{}, err
 	}
-	backupLogger.Info(fmt.Sprintf("Backup in progress for Jenkins instance '%s'", jenkinsInstance.Name))
+	jenkinsPod, err := r.GetPodByDeployment(jenkinsInstance)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
 	backupLogger.Info(fmt.Sprintf("Jenkins '%s' for Backup '%s' found !", jenkinsInstance.Name, req.Name))
 
 	err = execClient.InitKubeGoClient()
 	if err != nil {
+		backupInstance.Status.Conditions.SetCondition(status.Condition{
+			Type:   BackupInitialized,
+			Status: corev1.ConditionFalse,
+			Reason: (status.ConditionReason)(err.Error()),
+		})
+		err = r.Client.Status().Update(ctx, backupInstance)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
 		return ctrl.Result{}, err
 	}
-
-	jenkinsPod, err := r.GetPodByDeployment(jenkinsInstance)
+	backupInstance.Status.Conditions.SetCondition(status.Condition{
+		Type:   BackupInitialized,
+		Status: corev1.ConditionTrue,
+	})
+	err = r.Client.Status().Update(ctx, backupInstance)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
 	// QuietDown
-	execQuietDown := strings.Join([]string{"sh", resources.QuietDownScriptPath}, " ")
-	err = execClient.MakeRequest(jenkinsPod, backupInstance.Name, execQuietDown)
-	if err != nil {
-		logger.Info(fmt.Sprintf("QuietDown failed with error %s", err.Error()))
-		return ctrl.Result{}, nil
+	if backupConfig.Spec.QuietDownDuringBackup {
+		err := r.performJenkinsQuietDown(ctx, execClient, jenkinsPod, backupInstance)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
 	}
 
 	// Backup
-	// Create Backup Dir
+	err = r.performJenkinsBackup(ctx, execClient, jenkinsPod, backupInstance, backupConfig)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	// CancelQuietDown
+	if backupConfig.Spec.QuietDownDuringBackup {
+		err = r.performJenkinsCancelQuietDown(ctx, execClient, jenkinsPod, backupInstance)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+	}
+	backupInstance.Status.Conditions.SetCondition(status.Condition{
+		Type:   BackupCompleted,
+		Status: corev1.ConditionTrue,
+	})
+	err = r.Client.Status().Update(ctx, backupInstance)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	return ctrl.Result{}, nil
+}
+
+func (r *BackupReconciler) performJenkinsCancelQuietDown(ctx context.Context, execClient exec.KubeExecClient, jenkinsPod *corev1.Pod, backupInstance *jenkinsv1alpha2.Backup) error {
+	execCancelQuietDown := strings.Join([]string{"sh", resources.CancelQuietDownScriptPath}, " ")
+	err := execClient.MakeRequest(jenkinsPod, backupInstance.Name, execCancelQuietDown)
+	if err != nil {
+		backupInstance.Status.Conditions.SetCondition(status.Condition{
+			Type:   QuietDownCancelled,
+			Status: corev1.ConditionFalse,
+			Reason: (status.ConditionReason)(fmt.Sprintf("CancelQuietDown failed with error %s", err.Error())),
+		})
+		err = r.Client.Status().Update(ctx, backupInstance)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+	backupInstance.Status.Conditions.SetCondition(status.Condition{
+		Type:   QuietDownCancelled,
+		Status: corev1.ConditionTrue,
+	})
+	err = r.Client.Status().Update(ctx, backupInstance)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *BackupReconciler) performJenkinsBackup(ctx context.Context, execClient exec.KubeExecClient, jenkinsPod *corev1.Pod, backupInstance *jenkinsv1alpha2.Backup, backupConfig *jenkinsv1alpha2.BackupConfig) error {
 	backupToLocation := resources.JenkinsBackupVolumePath + "/" + backupInstance.Name + "/"
 	execCreateBackupDir := strings.Join([]string{"mkdir", backupToLocation}, " ")
-	err = execClient.MakeRequest(jenkinsPod, backupInstance.Name, execCreateBackupDir)
+	err := execClient.MakeRequest(jenkinsPod, backupInstance.Name, execCreateBackupDir)
 	if err != nil {
-		logger.Info(fmt.Sprintf("Failed to create backup directory %s %s", backupToLocation, err.Error()))
-		return ctrl.Result{}, nil
+		backupInstance.Status.Conditions.SetCondition(status.Condition{
+			Type:   BackupCompleted,
+			Status: corev1.ConditionFalse,
+			Reason: (status.ConditionReason)(fmt.Sprintf("Failed to create backup directory %s %s", backupToLocation, err.Error())),
+		})
+		err = r.Client.Status().Update(ctx, backupInstance)
+		if err != nil {
+			return err
+		}
+		return nil
 	}
 	// Create Backup based on Spec
 	backupFromLocation := defaultJenkinsHome
@@ -171,21 +253,50 @@ func (r *BackupReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 			execBackupSubLocation := strings.Join([]string{"cp", "-r", backupFromSubLocation, backupToLocation}, " ")
 			err = execClient.MakeRequest(jenkinsPod, backupInstance.Name, execBackupSubLocation)
 			if err != nil {
-				logger.Info(fmt.Sprintf("Failed to backup from %s %s", backupFromSubLocation, err.Error()))
-				return ctrl.Result{}, nil
+				backupInstance.Status.Conditions.SetCondition(status.Condition{
+					Type:   BackupCompleted,
+					Status: corev1.ConditionFalse,
+					Reason: (status.ConditionReason)(fmt.Sprintf("Failed to backup from %s %s", backupFromSubLocation, err.Error())),
+				})
+				err = r.Client.Status().Update(ctx, backupInstance)
+				if err != nil {
+					return err
+				}
+				return nil
 			}
 		}
+		err = r.Client.Status().Update(ctx, backupInstance)
+		if err != nil {
+			return err
+		}
 	}
+	return nil
+}
 
-	// CancelQuietDown
-	execCancelQuietDown := strings.Join([]string{"sh", resources.CancelQuietDownScriptPath}, " ")
-	err = execClient.MakeRequest(jenkinsPod, backupInstance.Name, execCancelQuietDown)
+func (r *BackupReconciler) performJenkinsQuietDown(ctx context.Context, execClient exec.KubeExecClient, jenkinsPod *corev1.Pod, backupInstance *jenkinsv1alpha2.Backup) error {
+	execQuietDown := strings.Join([]string{"sh", resources.QuietDownScriptPath}, " ")
+	err := execClient.MakeRequest(jenkinsPod, backupInstance.Name, execQuietDown)
 	if err != nil {
-		logger.Info(fmt.Sprintf("CancelQuietDown failed with error %s", err.Error()))
-		return ctrl.Result{}, nil
+		backupInstance.Status.Conditions.SetCondition(status.Condition{
+			Type:   QuietDownStarted,
+			Status: corev1.ConditionFalse,
+			Reason: (status.ConditionReason)(err.Error()),
+		})
+		err = r.Client.Status().Update(ctx, backupInstance)
+		if err != nil {
+			return err
+		}
+		return nil
 	}
-
-	return ctrl.Result{}, nil
+	backupInstance.Status.Conditions.SetCondition(status.Condition{
+		Type:   QuietDownStarted,
+		Status: corev1.ConditionTrue,
+	})
+	err = r.Client.Status().Update(ctx, backupInstance)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (r *BackupReconciler) GetPodByDeployment(jenkins *jenkinsv1alpha2.Jenkins) (*corev1.Pod, error) {
