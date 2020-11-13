@@ -14,11 +14,6 @@ func GetBasePluginsVolumeNameConfigMapName(jenkins *v1alpha2.Jenkins) string {
 	return fmt.Sprintf("%s-%s-base-plugins", constants.LabelAppValue, jenkins.ObjectMeta.Name)
 }
 
-// GetBasePluginsVolumeNameConfigMapName returns name of Kubernetes config map used to init configuration
-func GetUserPluginsVolumeNameConfigMapName(jenkins *v1alpha2.Jenkins) string {
-	return fmt.Sprintf("%s-%s-user-plugins", constants.LabelAppValue, jenkins.ObjectMeta.Name)
-}
-
 func getPluginsList(plugins []v1alpha2.Plugin) string {
 	logger := log.WithName("jenkinsimage_getPluginsList")
 	pluginsAsText := ""
@@ -37,18 +32,6 @@ func NewBasePluginConfigMap(meta metav1.ObjectMeta, jenkins *v1alpha2.Jenkins) (
 		ObjectMeta: meta,
 		Data: map[string]string{
 			basePluginsFileName: getPluginsList(jenkins.Status.Spec.Master.BasePlugins),
-		},
-	}, nil
-}
-
-// NewInitConfigurationConfigMap builds Kubernetes config map used to init configuration
-func NewUserPluginConfigMap(meta metav1.ObjectMeta, jenkins *v1alpha2.Jenkins) (*corev1.ConfigMap, error) {
-	meta.Name = GetUserPluginsVolumeNameConfigMapName(jenkins)
-	return &corev1.ConfigMap{
-		TypeMeta:   buildConfigMapTypeMeta(),
-		ObjectMeta: meta,
-		Data: map[string]string{
-			userPluginsFileName: getPluginsList(jenkins.Status.Spec.Master.Plugins),
 		},
 	}, nil
 }

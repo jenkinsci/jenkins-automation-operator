@@ -26,7 +26,7 @@ func (r *JenkinsBaseConfigurationReconciler) verifyPlugins(jenkinsClient jenkins
 	r.logger.V(log.VDebug).Info(fmt.Sprintf("Installed plugins '%+v'", installedPlugins))
 
 	status := true
-	allRequiredPlugins := [][]v1alpha2.Plugin{r.Configuration.Jenkins.Status.Spec.Master.BasePlugins, r.Configuration.Jenkins.Status.Spec.Master.Plugins}
+	allRequiredPlugins := [][]v1alpha2.Plugin{r.Configuration.Jenkins.Status.Spec.Master.BasePlugins}
 	for _, requiredPlugins := range allRequiredPlugins {
 		for _, plugin := range requiredPlugins {
 			if _, ok := isPluginInstalled(allPluginsInJenkins, plugin); !ok {

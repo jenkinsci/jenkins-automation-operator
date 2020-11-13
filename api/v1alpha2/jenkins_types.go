@@ -13,7 +13,7 @@ import (
 type JenkinsSpec struct {
 	// Master represents Jenkins master pod properties and Jenkins plugins.
 	// Every single change here requires a pod restart.
-	Master *JenkinsMaster `json:"master"`
+	Master *JenkinsMaster `json:"master,omitempty"`
 
 	// WIP: Still need to determine if  a reference to JenkinsImage is sufficient or if we need a
 	// JenkinsImageBuild object to point to a specific build.
@@ -25,6 +25,13 @@ type JenkinsSpec struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="JenkinsImage reference",xDescriptors="urn:alm:descriptor:io.jenkins:JenkinsImage"
 	JenkinsImageRef string `json:"jenkinsImageRef,omitempty"`
 
+	// ForceBasePluginsInstall forces the installation of the minimum required basePlugins during Jenkins container startup
+	// in a postStart lifecycle.
+	// Defaults to : false
+	// +optional
+
+	ForceBasePluginsInstall bool `json:"forceBasePluginsInstall,omitempty"`
+
 	// Service is Kubernetes service of Jenkins master HTTP pod
 	// Defaults to :
 	// port: 8080
@@ -32,12 +39,12 @@ type JenkinsSpec struct {
 	// +optional
 	Service Service `json:"service,omitempty"`
 
-	// Service is Kubernetes service of Jenkins slave pods
+	// Service is Kubernetes service of Jenkins agent pods
 	// Defaults to :
 	// port: 50000
 	// type: ClusterIP
 	// +optional
-	SlaveService Service `json:"slaveService,omitempty"`
+	JNLPService Service `json:"jnlpService,omitempty"`
 
 	// Roles defines list of extra RBAC roles for the Jenkins Master pod service account
 	// +optional
@@ -48,7 +55,7 @@ type JenkinsSpec struct {
 	ServiceAccount ServiceAccount `json:"serviceAccount,omitempty"`
 
 	// JenkinsAPISettings defines configuration used by the operator to gain admin access to the Jenkins API
-	JenkinsAPISettings JenkinsAPISettings `json:"jenkinsAPISettings"`
+	JenkinsAPISettings JenkinsAPISettings `json:"jenkinsAPISettings,omitempty"`
 
 	// ConfigurationAsCode defines configuration of Jenkins configuration via Configuration as Code Jenkins plugin
 	// +optional
@@ -334,10 +341,6 @@ type JenkinsMaster struct {
 	// - name: kubernetes-credentials-provider
 	// version: 0.12.1
 	BasePlugins []Plugin `json:"basePlugins,omitempty"`
-
-	// Plugins contains plugins required by user
-	// +optional
-	Plugins []Plugin `json:"plugins,omitempty"`
 
 	// PriorityClassName for Jenkins master pod
 	// +optional

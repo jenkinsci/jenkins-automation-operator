@@ -28,109 +28,73 @@ func TestValidatePlugins(t *testing.T) {
 	t.Run("empty", func(t *testing.T) {
 		var requiredBasePlugins []plugins.Plugin
 		var basePlugins []v1alpha2.Plugin
-		var userPlugins []v1alpha2.Plugin
 
-		got := baseReconcileLoop.validatePlugins(requiredBasePlugins, basePlugins, userPlugins)
+		got := baseReconcileLoop.validatePlugins(requiredBasePlugins, basePlugins)
 
 		assert.Nil(t, got)
 	})
 	t.Run("valid user plugin", func(t *testing.T) {
 		var requiredBasePlugins []plugins.Plugin
 		var basePlugins []v1alpha2.Plugin
-		userPlugins := []v1alpha2.Plugin{{Name: "simple-plugin", Version: "0.0.1"}}
 
-		got := baseReconcileLoop.validatePlugins(requiredBasePlugins, basePlugins, userPlugins)
+		got := baseReconcileLoop.validatePlugins(requiredBasePlugins, basePlugins)
 
 		assert.Nil(t, got)
-	})
-	t.Run("invalid user plugin name", func(t *testing.T) {
-		var requiredBasePlugins []plugins.Plugin
-		var basePlugins []v1alpha2.Plugin
-		userPlugins := []v1alpha2.Plugin{{Name: "INVALID?", Version: "0.0.1"}}
-
-		got := baseReconcileLoop.validatePlugins(requiredBasePlugins, basePlugins, userPlugins)
-
-		assert.Equal(t, got, []string{"invalid plugin name 'INVALID?:0.0.1', must follow pattern '" + plugins.NamePattern.String() + "'"})
-	})
-	t.Run("invalid user plugin version", func(t *testing.T) {
-		var requiredBasePlugins []plugins.Plugin
-		var basePlugins []v1alpha2.Plugin
-		userPlugins := []v1alpha2.Plugin{{Name: "simple-plugin", Version: "invalid!"}}
-
-		got := baseReconcileLoop.validatePlugins(requiredBasePlugins, basePlugins, userPlugins)
-
-		assert.Equal(t, got, []string{"invalid plugin version 'simple-plugin:invalid!', must follow pattern '" + plugins.VersionPattern.String() + "'"})
 	})
 	t.Run("valid base plugin", func(t *testing.T) {
 		var requiredBasePlugins []plugins.Plugin
 		basePlugins := []v1alpha2.Plugin{{Name: "simple-plugin", Version: "0.0.1"}}
-		var userPlugins []v1alpha2.Plugin
 
-		got := baseReconcileLoop.validatePlugins(requiredBasePlugins, basePlugins, userPlugins)
+		got := baseReconcileLoop.validatePlugins(requiredBasePlugins, basePlugins)
 
 		assert.Nil(t, got)
 	})
 	t.Run("invalid base plugin name", func(t *testing.T) {
 		var requiredBasePlugins []plugins.Plugin
 		basePlugins := []v1alpha2.Plugin{{Name: "INVALID?", Version: "0.0.1"}}
-		var userPlugins []v1alpha2.Plugin
 
-		got := baseReconcileLoop.validatePlugins(requiredBasePlugins, basePlugins, userPlugins)
+		got := baseReconcileLoop.validatePlugins(requiredBasePlugins, basePlugins)
 
 		assert.Equal(t, got, []string{"invalid plugin name 'INVALID?:0.0.1', must follow pattern '" + plugins.NamePattern.String() + "'"})
 	})
 	t.Run("invalid base plugin version", func(t *testing.T) {
 		var requiredBasePlugins []plugins.Plugin
 		basePlugins := []v1alpha2.Plugin{{Name: "simple-plugin", Version: "invalid!"}}
-		var userPlugins []v1alpha2.Plugin
 
-		got := baseReconcileLoop.validatePlugins(requiredBasePlugins, basePlugins, userPlugins)
+		got := baseReconcileLoop.validatePlugins(requiredBasePlugins, basePlugins)
 
 		assert.Equal(t, got, []string{"invalid plugin version 'simple-plugin:invalid!', must follow pattern '" + plugins.VersionPattern.String() + "'"})
 	})
 	t.Run("valid user and base plugin version", func(t *testing.T) {
 		var requiredBasePlugins []plugins.Plugin
 		basePlugins := []v1alpha2.Plugin{{Name: "simple-plugin", Version: "0.0.1"}}
-		userPlugins := []v1alpha2.Plugin{{Name: "simple-plugin", Version: "0.0.1"}}
 
-		got := baseReconcileLoop.validatePlugins(requiredBasePlugins, basePlugins, userPlugins)
+		got := baseReconcileLoop.validatePlugins(requiredBasePlugins, basePlugins)
 
 		assert.Nil(t, got)
 	})
-	t.Run("invalid user and base plugin version", func(t *testing.T) {
-		var requiredBasePlugins []plugins.Plugin
-		basePlugins := []v1alpha2.Plugin{{Name: "simple-plugin", Version: "0.0.1"}}
-		userPlugins := []v1alpha2.Plugin{{Name: "simple-plugin", Version: "0.0.2"}}
 
-		got := baseReconcileLoop.validatePlugins(requiredBasePlugins, basePlugins, userPlugins)
-
-		assert.Contains(t, got, "Plugin 'simple-plugin:0.0.1' requires version '0.0.1' but plugin 'simple-plugin:0.0.2' requires '0.0.2' for plugin 'simple-plugin'")
-		assert.Contains(t, got, "Plugin 'simple-plugin:0.0.2' requires version '0.0.2' but plugin 'simple-plugin:0.0.1' requires '0.0.1' for plugin 'simple-plugin'")
-	})
 	t.Run("required base plugin set with the same version", func(t *testing.T) {
 		requiredBasePlugins := []plugins.Plugin{{Name: "simple-plugin", Version: "0.0.1"}}
 		basePlugins := []v1alpha2.Plugin{{Name: "simple-plugin", Version: "0.0.1"}}
-		var userPlugins []v1alpha2.Plugin
 
-		got := baseReconcileLoop.validatePlugins(requiredBasePlugins, basePlugins, userPlugins)
+		got := baseReconcileLoop.validatePlugins(requiredBasePlugins, basePlugins)
 
 		assert.Nil(t, got)
 	})
 	t.Run("required base plugin set with different version", func(t *testing.T) {
 		requiredBasePlugins := []plugins.Plugin{{Name: "simple-plugin", Version: "0.0.1"}}
 		basePlugins := []v1alpha2.Plugin{{Name: "simple-plugin", Version: "0.0.2"}}
-		var userPlugins []v1alpha2.Plugin
 
-		got := baseReconcileLoop.validatePlugins(requiredBasePlugins, basePlugins, userPlugins)
+		got := baseReconcileLoop.validatePlugins(requiredBasePlugins, basePlugins)
 
 		assert.Nil(t, got)
 	})
 	t.Run("missing required base plugin", func(t *testing.T) {
 		requiredBasePlugins := []plugins.Plugin{{Name: "simple-plugin", Version: "0.0.1"}}
 		var basePlugins []v1alpha2.Plugin
-		var userPlugins []v1alpha2.Plugin
 
-		got := baseReconcileLoop.validatePlugins(requiredBasePlugins, basePlugins, userPlugins)
+		got := baseReconcileLoop.validatePlugins(requiredBasePlugins, basePlugins)
 
 		assert.Equal(t, got, []string{"Missing plugin 'simple-plugin' in spec.master.basePlugins"})
 	})

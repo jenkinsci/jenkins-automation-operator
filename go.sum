@@ -735,6 +735,7 @@ github.com/operator-framework/api v0.3.7-0.20200602203552-431198de9fc2/go.mod h1
 github.com/operator-framework/api v0.3.12-0.20200731162302-333d0644352a/go.mod h1:Xbje9x0SHmh0nihE21kpesB38vk3cyxnE6JdDS8Jo1Q=
 github.com/operator-framework/api v0.3.13 h1:Rg+6sdgP7KMOUGNP83s+5gPo7IwTH3mZ85ZFml9SPXY=
 github.com/operator-framework/api v0.3.13/go.mod h1:Xbje9x0SHmh0nihE21kpesB38vk3cyxnE6JdDS8Jo1Q=
+github.com/operator-framework/operator-lib v0.1.0 h1:7Qy6v2ZccvCeFLWEkrGnN+U+DkaeIWp0gAZaBM9T3DI=
 github.com/operator-framework/operator-lib v0.1.0/go.mod h1:HLw61JTIEeq0YLeVf4dwYx/zt4DmLGZUVWI1y3Lf5Hg=
 github.com/operator-framework/operator-lifecycle-manager v0.0.0-20200321030439-57b580e57e88/go.mod h1:7Ut8p9jJ8C6RZyyhZfZypmlibCIJwK5Wcc+WZDgLkOA=
 github.com/operator-framework/operator-registry v1.5.3/go.mod h1:agrQlkWOo1q8U1SAaLSS2WQ+Z9vswNT2M2HFib9iuLY=

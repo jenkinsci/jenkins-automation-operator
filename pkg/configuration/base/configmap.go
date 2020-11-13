@@ -34,12 +34,3 @@ func (r *JenkinsBaseConfigurationReconciler) createBasePluginsConfigMap(meta met
 	r.logger.Info(fmt.Sprintf("Creating configMap: %s", configMap.Name))
 	return stackerr.WithStack(r.CreateOrUpdateResource(configMap))
 }
-
-func (r *JenkinsBaseConfigurationReconciler) createUserPluginsConfigMap(meta metav1.ObjectMeta) error {
-	configMap, err := resources.NewUserPluginConfigMap(meta, r.Configuration.Jenkins)
-	if err != nil {
-		return err
-	}
-	r.logger.Info(fmt.Sprintf("Creating configMap: %s", configMap.Name))
-	return stackerr.WithStack(r.CreateOrUpdateResource(configMap))
-}

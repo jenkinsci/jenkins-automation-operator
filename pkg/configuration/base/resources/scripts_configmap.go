@@ -278,19 +278,6 @@ else
   {{ $installPluginsCommand }} {{ .JenkinsHomePath }}/base-plugins
 fi
 echo "Installing plugins required by Operator - end"
-
-echo "Installing plugins required by user - begin"
-cat > {{ .JenkinsHomePath }}/user-plugins << EOF
-{{ range $index, $plugin := .UserPlugins }}
-{{ $plugin.Name }}:{{ $plugin.Version }}{{if $plugin.DownloadURL}}:{{ $plugin.DownloadURL }}{{end}}
-{{ end }}
-EOF
-if [[ -z "${OPENSHIFT_JENKINS_IMAGE_VERSION}" ]]; then
-  {{ $installPluginsCommand }} < {{ .JenkinsHomePath }}/user-plugins
-else
-  {{ $installPluginsCommand }} {{ .JenkinsHomePath }}/user-plugins
-fi
-echo "Installing plugins required by user - end"
 `))
 
 func buildConfigMapTypeMeta() metav1.TypeMeta {
@@ -307,12 +294,10 @@ func buildInitBashScript(jenkins *v1alpha2.Jenkins) (*string, error) {
 		InstallPluginsCommand    string
 		JenkinsScriptsVolumePath string
 		BasePlugins              []v1alpha2.Plugin
-		UserPlugins              []v1alpha2.Plugin
 	}{
 		JenkinsHomePath:          getJenkinsHomePath(jenkins),
 		InitConfigurationPath:    jenkinsInitConfigurationVolumePath,
 		BasePlugins:              jenkins.Status.Spec.Master.BasePlugins,
-		UserPlugins:              jenkins.Status.Spec.Master.Plugins,
 		InstallPluginsCommand:    installPluginsCommand,
 		JenkinsScriptsVolumePath: JenkinsScriptsVolumePath,
 	}

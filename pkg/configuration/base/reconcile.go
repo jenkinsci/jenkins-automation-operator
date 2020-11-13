@@ -107,11 +107,6 @@ func (r *JenkinsBaseConfigurationReconciler) ensureResourcesRequiredForJenkinsDe
 	}
 	r.logger.V(log.VDebug).Info("Base plugins config map is present")
 
-	if err := r.createUserPluginsConfigMap(metaObject); err != nil {
-		return err
-	}
-	r.logger.V(log.VDebug).Info("Base plugins config map is present")
-
 	if err := r.createRBAC(metaObject); err != nil {
 		return err
 	}
@@ -128,10 +123,10 @@ func (r *JenkinsBaseConfigurationReconciler) ensureResourcesRequiredForJenkinsDe
 	}
 	r.logger.V(log.VDebug).Info("Jenkins HTTP Service is present")
 
-	if err := r.createService(metaObject, resources.GetJenkinsJNLPServiceName(r.Configuration.Jenkins), r.Configuration.Jenkins.Status.Spec.SlaveService); err != nil {
+	if err := r.createService(metaObject, resources.GetJenkinsJNLPServiceName(r.Configuration.Jenkins), r.Configuration.Jenkins.Status.Spec.JNLPService); err != nil {
 		return err
 	}
-	r.logger.V(log.VDebug).Info("Jenkins slave Service is present")
+	r.logger.V(log.VDebug).Info("Jenkins JNLP Service is present")
 
 	if resources.RouteAPIAvailable {
 		r.logger.V(log.VDebug).Info("Route API is available. Now ensuring route is present")

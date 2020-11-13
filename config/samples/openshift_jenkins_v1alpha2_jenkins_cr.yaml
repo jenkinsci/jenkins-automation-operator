@@ -53,7 +53,7 @@ spec:
       - name: JENKINS_SERVICE_NAME
         value: jenkins-operator-http-jenkins
       - name: JNLP_SERVICE_NAME
-        value: jenkins-operator-slave-jenkins
+        value: jenkins-operator-jnlp-jenkins
       - name: JENKINS_UC_INSECURE
         value: 'false'
       - name: JENKINS_HOME
@@ -93,7 +93,7 @@ spec:
   service:
     port: 8080
     type: ClusterIP
-  slaveService:
+  jnlpService:
     port: 50000
     type: ClusterIP
   serviceAccount:

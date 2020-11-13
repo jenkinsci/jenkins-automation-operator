@@ -30,9 +30,14 @@ spec:
         spec:
           description: BackupWorkerSpec defines the desired state of BackupWorker
           properties:
-            foo:
-              description: Foo is an example field of BackupWorker. Edit BackupWorker_types.go to remove/update
+            configRef:
+              description: ConfigRef points to the BackupConfig instance which needs to be used by the BackupWorker
               type: string
+            cron:
+              description: 'Cron is provided by the user in the form of a crontab formatted schedule string eg: "30 15 1 1 *" means everyday at 1530'
+              type: string
+          required:
+          - cron
           type: object
         status:
           description: BackupWorkerStatus defines the observed state of BackupWorker

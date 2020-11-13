@@ -71,6 +71,8 @@ spec:
               - enableAutoReload
               - enabled
               type: object
+            forceBasePluginsInstall:
+              type: boolean
             jenkinsAPISettings:
               description: JenkinsAPISettings defines configuration used by the operator
                 to gain admin access to the Jenkins API
@@ -88,6 +90,73 @@ spec:
                 ; then the image target image in JenkinsImage.To will be used as the
                 image of the Master container.
               type: string
+            jnlpService:
+              description: 'Service is Kubernetes service of Jenkins agent pods Defaults
+                to : port: 50000 type: ClusterIP'
+              properties:
+                annotations:
+                  additionalProperties:
+                    type: string
+                  description: 'Annotations is an unstructured key value map stored
+                    with a resource that may be set by external tools to store and
+                    retrieve arbitrary metadata. They are not queryable and should
+                    be preserved when modifying objects. More info: http://kubernetes.io/docs/user-guide/annotations'
+                  type: object
+                labels:
+                  additionalProperties:
+                    type: string
+                  description: 'Route service traffic to pods with label keys and
+                    values matching this selector. If empty or not present, the service
+                    is assumed to have an external process managing its endpoints,
+                    which Kubernetes will not modify. Only applies to types ClusterIP,
+                    NodePort, and LoadBalancer. Ignored if type is ExternalName. More
+                    info: https://kubernetes.io/docs/concepts/services-networking/service/'
+                  type: object
+                loadBalancerIP:
+                  description: 'Only applies to Service Type: LoadBalancer LoadBalancer
+                    will get created with the IP specified in this field. This feature
+                    depends on whether the underlying cloud-provider supports specifying
+                    the loadBalancerIP when a load balancer is created. This field
+                    will be ignored if the cloud-provider does not support the feature.'
+                  type: string
+                loadBalancerSourceRanges:
+                  description: 'If specified and supported by the platform, this will
+                    restrict traffic through the cloud-provider load-balancer will
+                    be restricted to the specified client IPs. This field will be
+                    ignored if the cloud-provider does not support the feature." More
+                    info: https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/'
+                  items:
+                    type: string
+                  type: array
+                nodePort:
+                  description: 'The port on each node on which this service is exposed
+                    when type=NodePort or LoadBalancer. Usually assigned by the system.
+                    If specified, it will be allocated to the service if unused or
+                    else creation of the service will fail. Default is to auto-allocate
+                    a port if the ServiceType of this Service requires one. More info:
+                    https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport'
+                  format: int32
+                  type: integer
+                port:
+                  description: 'The port that are exposed by this service. More info:
+                    https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies'
+                  format: int32
+                  type: integer
+                type:
+                  description: 'Type determines how the Service is exposed. Defaults
+                    to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort,
+                    and LoadBalancer. "ExternalName" maps to the specified externalName.
+                    "ClusterIP" allocates a cluster-internal IP address for load-balancing
+                    to endpoints. Endpoints are determined by the selector or if that
+                    is not specified, by manual construction of an Endpoints object.
+                    If clusterIP is "None", no virtual IP is allocated and the endpoints
+                    are published as a set of endpoints rather than a stable IP. "NodePort"
+                    builds on ClusterIP and allocates a port on every node which routes
+                    to the clusterIP. "LoadBalancer" builds on NodePort and creates
+                    an external load-balancer (if supported in the current cloud)
+                    which routes to the clusterIP. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services---service-types'
+                  type: string
+              type: object
             master:
               description: Master represents Jenkins master pod properties and Jenkins
                 plugins. Every single change here requires a pod restart.
@@ -1056,26 +1125,6 @@ spec:
                     the pod to fit on a node. Selector which must match a node''s
                     labels for the pod to be scheduled on that node. More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/'
                   type: object
-                plugins:
-                  description: Plugins contains plugins required by user
-                  items:
-                    description: Plugin defines Jenkins plugin.
-                    properties:
-                      downloadURL:
-                        description: DownloadURL is the custom url from where plugin
-                          has to be downloaded.
-                        type: string
-                      name:
-                        description: Name is the name of Jenkins plugin
-                        type: string
-                      version:
-                        description: Version is the version of Jenkins plugin
-                        type: string
-                    required:
-                    - name
-                    - version
-                    type: object
-                  type: array
                 priorityClassName:
                   description: PriorityClassName for Jenkins master pod
                   type: string
@@ -2572,76 +2621,6 @@ spec:
                     be preserved when modifying objects. More info: http://kubernetes.io/docs/user-guide/annotations'
                   type: object
               type: object
-            slaveService:
-              description: 'Service is Kubernetes service of Jenkins slave pods Defaults
-                to : port: 50000 type: ClusterIP'
-              properties:
-                annotations:
-                  additionalProperties:
-                    type: string
-                  description: 'Annotations is an unstructured key value map stored
-                    with a resource that may be set by external tools to store and
-                    retrieve arbitrary metadata. They are not queryable and should
-                    be preserved when modifying objects. More info: http://kubernetes.io/docs/user-guide/annotations'
-                  type: object
-                labels:
-                  additionalProperties:
-                    type: string
-                  description: 'Route service traffic to pods with label keys and
-                    values matching this selector. If empty or not present, the service
-                    is assumed to have an external process managing its endpoints,
-                    which Kubernetes will not modify. Only applies to types ClusterIP,
-                    NodePort, and LoadBalancer. Ignored if type is ExternalName. More
-                    info: https://kubernetes.io/docs/concepts/services-networking/service/'
-                  type: object
-                loadBalancerIP:
-                  description: 'Only applies to Service Type: LoadBalancer LoadBalancer
-                    will get created with the IP specified in this field. This feature
-                    depends on whether the underlying cloud-provider supports specifying
-                    the loadBalancerIP when a load balancer is created. This field
-                    will be ignored if the cloud-provider does not support the feature.'
-                  type: string
-                loadBalancerSourceRanges:
-                  description: 'If specified and supported by the platform, this will
-                    restrict traffic through the cloud-provider load-balancer will
-                    be restricted to the specified client IPs. This field will be
-                    ignored if the cloud-provider does not support the feature." More
-                    info: https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/'
-                  items:
-                    type: string
-                  type: array
-                nodePort:
-                  description: 'The port on each node on which this service is exposed
-                    when type=NodePort or LoadBalancer. Usually assigned by the system.
-                    If specified, it will be allocated to the service if unused or
-                    else creation of the service will fail. Default is to auto-allocate
-                    a port if the ServiceType of this Service requires one. More info:
-                    https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport'
-                  format: int32
-                  type: integer
-                port:
-                  description: 'The port that are exposed by this service. More info:
-                    https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies'
-                  format: int32
-                  type: integer
-                type:
-                  description: 'Type determines how the Service is exposed. Defaults
-                    to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort,
-                    and LoadBalancer. "ExternalName" maps to the specified externalName.
-                    "ClusterIP" allocates a cluster-internal IP address for load-balancing
-                    to endpoints. Endpoints are determined by the selector or if that
-                    is not specified, by manual construction of an Endpoints object.
-                    If clusterIP is "None", no virtual IP is allocated and the endpoints
-                    are published as a set of endpoints rather than a stable IP. "NodePort"
-                    builds on ClusterIP and allocates a port on every node which routes
-                    to the clusterIP. "LoadBalancer" builds on NodePort and creates
-                    an external load-balancer (if supported in the current cloud)
-                    which routes to the clusterIP. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services---service-types'
-                  type: string
-              type: object
-          required:
-          - jenkinsAPISettings
-          - master
           type: object
         status:
           description: Status defines the observed state of Jenkins
@@ -2721,6 +2700,8 @@ spec:
                   - enableAutoReload
                   - enabled
                   type: object
+                forceBasePluginsInstall:
+                  type: boolean
                 jenkinsAPISettings:
                   description: JenkinsAPISettings defines configuration used by the
                     operator to gain admin access to the Jenkins API
@@ -2738,6 +2719,75 @@ spec:
                     ; then the image target image in JenkinsImage.To will be used
                     as the image of the Master container.
                   type: string
+                jnlpService:
+                  description: 'Service is Kubernetes service of Jenkins agent pods
+                    Defaults to : port: 50000 type: ClusterIP'
+                  properties:
+                    annotations:
+                      additionalProperties:
+                        type: string
+                      description: 'Annotations is an unstructured key value map stored
+                        with a resource that may be set by external tools to store
+                        and retrieve arbitrary metadata. They are not queryable and
+                        should be preserved when modifying objects. More info: http://kubernetes.io/docs/user-guide/annotations'
+                      type: object
+                    labels:
+                      additionalProperties:
+                        type: string
+                      description: 'Route service traffic to pods with label keys
+                        and values matching this selector. If empty or not present,
+                        the service is assumed to have an external process managing
+                        its endpoints, which Kubernetes will not modify. Only applies
+                        to types ClusterIP, NodePort, and LoadBalancer. Ignored if
+                        type is ExternalName. More info: https://kubernetes.io/docs/concepts/services-networking/service/'
+                      type: object
+                    loadBalancerIP:
+                      description: 'Only applies to Service Type: LoadBalancer LoadBalancer
+                        will get created with the IP specified in this field. This
+                        feature depends on whether the underlying cloud-provider supports
+                        specifying the loadBalancerIP when a load balancer is created.
+                        This field will be ignored if the cloud-provider does not
+                        support the feature.'
+                      type: string
+                    loadBalancerSourceRanges:
+                      description: 'If specified and supported by the platform, this
+                        will restrict traffic through the cloud-provider load-balancer
+                        will be restricted to the specified client IPs. This field
+                        will be ignored if the cloud-provider does not support the
+                        feature." More info: https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/'
+                      items:
+                        type: string
+                      type: array
+                    nodePort:
+                      description: 'The port on each node on which this service is
+                        exposed when type=NodePort or LoadBalancer. Usually assigned
+                        by the system. If specified, it will be allocated to the service
+                        if unused or else creation of the service will fail. Default
+                        is to auto-allocate a port if the ServiceType of this Service
+                        requires one. More info: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport'
+                      format: int32
+                      type: integer
+                    port:
+                      description: 'The port that are exposed by this service. More
+                        info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies'
+                      format: int32
+                      type: integer
+                    type:
+                      description: 'Type determines how the Service is exposed. Defaults
+                        to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort,
+                        and LoadBalancer. "ExternalName" maps to the specified externalName.
+                        "ClusterIP" allocates a cluster-internal IP address for load-balancing
+                        to endpoints. Endpoints are determined by the selector or
+                        if that is not specified, by manual construction of an Endpoints
+                        object. If clusterIP is "None", no virtual IP is allocated
+                        and the endpoints are published as a set of endpoints rather
+                        than a stable IP. "NodePort" builds on ClusterIP and allocates
+                        a port on every node which routes to the clusterIP. "LoadBalancer"
+                        builds on NodePort and creates an external load-balancer (if
+                        supported in the current cloud) which routes to the clusterIP.
+                        More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services---service-types'
+                      type: string
+                  type: object
                 master:
                   description: Master represents Jenkins master pod properties and
                     Jenkins plugins. Every single change here requires a pod restart.
@@ -3735,26 +3785,6 @@ spec:
                         node''s labels for the pod to be scheduled on that node. More
                         info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/'
                       type: object
-                    plugins:
-                      description: Plugins contains plugins required by user
-                      items:
-                        description: Plugin defines Jenkins plugin.
-                        properties:
-                          downloadURL:
-                            description: DownloadURL is the custom url from where
-                              plugin has to be downloaded.
-                            type: string
-                          name:
-                            description: Name is the name of Jenkins plugin
-                            type: string
-                          version:
-                            description: Version is the version of Jenkins plugin
-                            type: string
-                        required:
-                        - name
-                        - version
-                        type: object
-                      type: array
                     priorityClassName:
                       description: PriorityClassName for Jenkins master pod
                       type: string
@@ -5311,78 +5341,6 @@ spec:
                         should be preserved when modifying objects. More info: http://kubernetes.io/docs/user-guide/annotations'
                       type: object
                   type: object
-                slaveService:
-                  description: 'Service is Kubernetes service of Jenkins slave pods
-                    Defaults to : port: 50000 type: ClusterIP'
-                  properties:
-                    annotations:
-                      additionalProperties:
-                        type: string
-                      description: 'Annotations is an unstructured key value map stored
-                        with a resource that may be set by external tools to store
-                        and retrieve arbitrary metadata. They are not queryable and
-                        should be preserved when modifying objects. More info: http://kubernetes.io/docs/user-guide/annotations'
-                      type: object
-                    labels:
-                      additionalProperties:
-                        type: string
-                      description: 'Route service traffic to pods with label keys
-                        and values matching this selector. If empty or not present,
-                        the service is assumed to have an external process managing
-                        its endpoints, which Kubernetes will not modify. Only applies
-                        to types ClusterIP, NodePort, and LoadBalancer. Ignored if
-                        type is ExternalName. More info: https://kubernetes.io/docs/concepts/services-networking/service/'
-                      type: object
-                    loadBalancerIP:
-                      description: 'Only applies to Service Type: LoadBalancer LoadBalancer
-                        will get created with the IP specified in this field. This
-                        feature depends on whether the underlying cloud-provider supports
-                        specifying the loadBalancerIP when a load balancer is created.
-                        This field will be ignored if the cloud-provider does not
-                        support the feature.'
-                      type: string
-                    loadBalancerSourceRanges:
-                      description: 'If specified and supported by the platform, this
-                        will restrict traffic through the cloud-provider load-balancer
-                        will be restricted to the specified client IPs. This field
-                        will be ignored if the cloud-provider does not support the
-                        feature." More info: https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/'
-                      items:
-                        type: string
-                      type: array
-                    nodePort:
-                      description: 'The port on each node on which this service is
-                        exposed when type=NodePort or LoadBalancer. Usually assigned
-                        by the system. If specified, it will be allocated to the service
-                        if unused or else creation of the service will fail. Default
-                        is to auto-allocate a port if the ServiceType of this Service
-                        requires one. More info: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport'
-                      format: int32
-                      type: integer
-                    port:
-                      description: 'The port that are exposed by this service. More
-                        info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies'
-                      format: int32
-                      type: integer
-                    type:
-                      description: 'Type determines how the Service is exposed. Defaults
-                        to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort,
-                        and LoadBalancer. "ExternalName" maps to the specified externalName.
-                        "ClusterIP" allocates a cluster-internal IP address for load-balancing
-                        to endpoints. Endpoints are determined by the selector or
-                        if that is not specified, by manual construction of an Endpoints
-                        object. If clusterIP is "None", no virtual IP is allocated
-                        and the endpoints are published as a set of endpoints rather
-                        than a stable IP. "NodePort" builds on ClusterIP and allocates
-                        a port on every node which routes to the clusterIP. "LoadBalancer"
-                        builds on NodePort and creates an external load-balancer (if
-                        supported in the current cloud) which routes to the clusterIP.
-                        More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services---service-types'
-                      type: string
-                  type: object
-              required:
-              - jenkinsAPISettings
-              - master
               type: object
             userAndPasswordHash:
               description: UserAndPasswordHash is a SHA256 hash made from user and

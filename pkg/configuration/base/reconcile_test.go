@@ -201,7 +201,6 @@ func TestJenkinsReconcilerBaseConfiguration_verifyPlugins(t *testing.T) {
 					ConfigurationAsCode: &v1alpha2.Configuration{},
 					Master: &v1alpha2.JenkinsMaster{
 						BasePlugins: []v1alpha2.Plugin{},
-						Plugins:     []v1alpha2.Plugin{},
 					},
 				},
 			},
@@ -232,7 +231,6 @@ func TestJenkinsReconcilerBaseConfiguration_verifyPlugins(t *testing.T) {
 					ConfigurationAsCode: &v1alpha2.Configuration{},
 					Master: &v1alpha2.JenkinsMaster{
 						BasePlugins: []v1alpha2.Plugin{{Name: "plugin-name1", Version: "0.0.1"}},
-						Plugins:     []v1alpha2.Plugin{{Name: "plugin-name2", Version: "0.0.1"}},
 					},
 				},
 			},
@@ -318,9 +316,7 @@ func TestJenkinsReconcilerBaseConfiguration_verifyPlugins(t *testing.T) {
 			Status: &v1alpha2.JenkinsStatus{
 				Spec: &v1alpha2.JenkinsSpec{
 					ConfigurationAsCode: &v1alpha2.Configuration{},
-					Master: &v1alpha2.JenkinsMaster{
-						Plugins: []v1alpha2.Plugin{{Name: "plugin-name", Version: "0.0.1"}},
-					},
+					Master:              &v1alpha2.JenkinsMaster{},
 				},
 			},
 		}
@@ -393,46 +389,7 @@ func TestJenkinsReconcilerBaseConfiguration_verifyPlugins(t *testing.T) {
 		assert.NoError(t, err)
 		assert.False(t, got)
 	})
-	t.Run("plugin version matter for user plugins", func(t *testing.T) {
-		jenkins := &v1alpha2.Jenkins{
-			Status: &v1alpha2.JenkinsStatus{
-				Spec: &v1alpha2.JenkinsSpec{
-					ConfigurationAsCode: &v1alpha2.Configuration{},
-					Master: &v1alpha2.JenkinsMaster{
-						Plugins: []v1alpha2.Plugin{{Name: "plugin-name", Version: "0.0.2"}},
-					},
-				},
-			},
-		}
-		r := JenkinsBaseConfigurationReconciler{
-			logger: log.Log,
-			Configuration: configuration.Configuration{
-				Jenkins: jenkins,
-			},
-		}
-		pluginsInJenkins := &gojenkins.Plugins{
-			Raw: &gojenkins.PluginResponse{
-				Plugins: []gojenkins.Plugin{
-					{
-						ShortName: "plugin-name",
-						Active:    true,
-						Deleted:   false,
-						Enabled:   true,
-						Version:   "0.0.1",
-					},
-				},
-			},
-		}
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-		jenkinsClient := client.NewMockJenkins(ctrl)
-		jenkinsClient.EXPECT().GetPlugins(fetchAllPlugins).Return(pluginsInJenkins, nil)
 
-		got, err := r.verifyPlugins(jenkinsClient)
-
-		assert.NoError(t, err)
-		assert.False(t, got)
-	})
 	t.Run("missing base plugin", func(t *testing.T) {
 		jenkins := &v1alpha2.Jenkins{
 			Status: &v1alpha2.JenkinsStatus{
@@ -440,38 +397,6 @@ func TestJenkinsReconcilerBaseConfiguration_verifyPlugins(t *testing.T) {
 					ConfigurationAsCode: &v1alpha2.Configuration{},
 					Master: &v1alpha2.JenkinsMaster{
 						BasePlugins: []v1alpha2.Plugin{{Name: "plugin-name1", Version: "0.0.2"}},
-					},
-				},
-			},
-		}
-		r := JenkinsBaseConfigurationReconciler{
-			logger: log.Log,
-			Configuration: configuration.Configuration{
-				Jenkins: jenkins,
-			},
-		}
-		pluginsInJenkins := &gojenkins.Plugins{
-			Raw: &gojenkins.PluginResponse{
-				Plugins: []gojenkins.Plugin{},
-			},
-		}
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-		jenkinsClient := client.NewMockJenkins(ctrl)
-		jenkinsClient.EXPECT().GetPlugins(fetchAllPlugins).Return(pluginsInJenkins, nil)
-
-		got, err := r.verifyPlugins(jenkinsClient)
-
-		assert.NoError(t, err)
-		assert.False(t, got)
-	})
-	t.Run("missing user plugin", func(t *testing.T) {
-		jenkins := &v1alpha2.Jenkins{
-			Status: &v1alpha2.JenkinsStatus{
-				Spec: &v1alpha2.JenkinsSpec{
-					ConfigurationAsCode: &v1alpha2.Configuration{},
-					Master: &v1alpha2.JenkinsMaster{
-						Plugins: []v1alpha2.Plugin{{Name: "plugin-name", Version: "0.0.2"}},
 					},
 				},
 			},

@@ -529,9 +529,9 @@ func (r *JenkinsReconciler) getCalculatedSpec(ctx context.Context, jenkins *v1al
 			Port: constants.DefaultHTTPPortInt32,
 		}
 	}
-	if reflect.DeepEqual(calculatedSpec.SlaveService, v1alpha2.Service{}) {
-		logger.Info("Setting default Jenkins slave service")
-		calculatedSpec.SlaveService = v1alpha2.Service{
+	if reflect.DeepEqual(calculatedSpec.JNLPService, v1alpha2.Service{}) {
+		logger.Info("Setting default Jenkins JNLP service")
+		calculatedSpec.JNLPService = v1alpha2.Service{
 			Type: corev1.ServiceTypeClusterIP,
 			Port: constants.DefaultJNLPPortInt32,
 		}

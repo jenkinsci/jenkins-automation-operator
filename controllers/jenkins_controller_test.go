@@ -89,7 +89,7 @@ func GetJenkinsTestInstance(name string, namespace string) *v1alpha2.Jenkins {
 			Master: &v1alpha2.JenkinsMaster{
 				Annotations: annotations,
 				Containers:  getJenkinsContainers(),
-				Plugins:     getJenkinsPlugins(),
+				BasePlugins: getJenkinsPlugins(),
 				Volumes:     getJenkinsVolumes(),
 			},
 			Service: getJenkinsServices(),

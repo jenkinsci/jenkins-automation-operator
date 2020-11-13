@@ -17,6 +17,18 @@ rules:
   - update
   - watch
 - apiGroups:
+  - apps
+  resources:
+  - persistentvolumeclaims
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
   - build.openshift.io
   resources:
   - buildconfigs
@@ -102,6 +114,46 @@ rules:
 - apiGroups:
   - jenkins.io
   resources:
+  - backupconfigs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - jenkins.io
+  resources:
+  - backupconfigs/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - jenkins.io
+  resources:
+  - backups
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - jenkins.io
+  resources:
+  - backups/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - jenkins.io
+  resources:
   - jenkins
   verbs:
   - create
@@ -135,6 +187,26 @@ rules:
   - jenkins.io
   resources:
   - jenkinsimages/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - jenkins.io
+  resources:
+  - restores
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - jenkins.io
+  resources:
+  - restores/status
   verbs:
   - get
   - patch

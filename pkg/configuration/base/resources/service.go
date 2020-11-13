@@ -39,7 +39,7 @@ func GetJenkinsHTTPServiceName(jenkins *v1alpha2.Jenkins) string {
 	return fmt.Sprintf("%s-%s", constants.LabelAppValue, jenkins.ObjectMeta.Name)
 }
 
-// GetJenkinsJNLPServiceName returns Kubernetes service name used for expose Jenkins slave endpoint
+// GetJenkinsJNLPServiceName returns Kubernetes service name used for expose Jenkins JNLP endpoint
 func GetJenkinsJNLPServiceName(jenkins *v1alpha2.Jenkins) string {
 	return fmt.Sprintf("%s-%s-jnlp", constants.LabelAppValue, jenkins.ObjectMeta.Name)
 }
@@ -54,7 +54,7 @@ func GetJenkinsHTTPServiceFQDN(jenkins *v1alpha2.Jenkins) (string, error) {
 	return fmt.Sprintf("%s-%s.%s.svc.%s", constants.LabelAppValue, jenkins.ObjectMeta.Name, jenkins.ObjectMeta.Namespace, clusterDomain), nil
 }
 
-// GetJenkinsJNLPServiceFQDN returns Kubernetes service FQDN used for expose Jenkins slave endpoint
+// GetJenkinsJNLPServiceFQDN returns Kubernetes service FQDN used for expose Jenkins JNLP endpoint
 func GetJenkinsJNLPServiceFQDN(jenkins *v1alpha2.Jenkins) (string, error) {
 	clusterDomain, err := getClusterDomain()
 	if err != nil {

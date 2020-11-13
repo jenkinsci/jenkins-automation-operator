@@ -35,11 +35,6 @@ const (
 	// BasePluginsVolumePath is a path where the base-plugins file is generated
 	BasePluginsVolumePath = jenkinsPath + "/" + basePluginsFileName
 
-	userPluginsVolumeName = "user-plugins"
-	userPluginsFileName   = "user-plugins"
-	// UserPluginsVolumePath is a path where the base-plugins file is generated
-	UserPluginsVolumePath = jenkinsPath + "/" + userPluginsFileName
-
 	jenkinsOperatorCredentialsVolumeName = "operator-credentials"
 	jenkinsOperatorCredentialsVolumePath = jenkinsPath + "/operator-credentials"
 
@@ -151,7 +146,6 @@ func GetJenkinsMasterPodBaseVolumes(jenkins *v1alpha2.Jenkins) []corev1.Volume {
 		getConfigMapVolume(jenkinsScriptsVolumeName, getScriptsConfigMapName(jenkins), 0777),
 		getConfigMapVolume(jenkinsInitConfigurationVolumeName, GetInitConfigurationConfigMapName(jenkins)),
 		getConfigMapVolume(basePluginsVolumeName, GetBasePluginsVolumeNameConfigMapName(jenkins)),
-		getConfigMapVolume(userPluginsVolumeName, GetUserPluginsVolumeNameConfigMapName(jenkins)),
 		getSecretVolume(jenkinsOperatorCredentialsVolumeName, GetOperatorCredentialsSecretName(jenkins)),
 	}
 
@@ -187,7 +181,6 @@ func GetJenkinsMasterContainerBaseVolumeMounts(jenkins *v1alpha2.Jenkins, spec *
 		getVolumeMount(jenkinsInitConfigurationVolumeName, jenkinsInitConfigurationVolumePath, true),
 		getVolumeMount(jenkinsOperatorCredentialsVolumeName, jenkinsOperatorCredentialsVolumePath, true),
 		getSubPathVolumeMount(basePluginsVolumeName, BasePluginsVolumePath, basePluginsFileName, false),
-		getSubPathVolumeMount(userPluginsVolumeName, UserPluginsVolumePath, userPluginsFileName, false),
 	}
 
 	if spec.ConfigurationAsCode != nil {
@@ -230,31 +223,29 @@ func NewJenkinsMasterContainer(jenkins *v1alpha2.Jenkins) corev1.Container {
 }
 
 func GetJenkinsContainer(jenkins *v1alpha2.Jenkins, jenkinsContainer v1alpha2.Container, envs []corev1.EnvVar) corev1.Container {
-	postStartCommand := []string{"bash", "-c", fmt.Sprintf("%s/%s", JenkinsScriptsVolumePath, InitScriptName)}
-	container := corev1.Container{
-		Name:            JenkinsMasterContainerName,
-		Image:           jenkinsContainer.Image,
-		ImagePullPolicy: jenkinsContainer.ImagePullPolicy,
-		LivenessProbe:   jenkinsContainer.LivenessProbe,
-		ReadinessProbe:  jenkinsContainer.ReadinessProbe,
-		Lifecycle: &corev1.Lifecycle{
+	lifecycle := &corev1.Lifecycle{}
+	logger.Info(fmt.Sprintf("ForceBasePluginsInstall value: %+v", jenkins.Spec.ForceBasePluginsInstall))
+	if jenkins.Spec.ForceBasePluginsInstall {
+		postStartCommand := []string{"bash", "-c", fmt.Sprintf("%s/%s", JenkinsScriptsVolumePath, InitScriptName)}
+		logger.Info(fmt.Sprintf("ForceBasePluginsInstall found: Setting up postStart action: %s ", postStartCommand))
+		lifecycle = &corev1.Lifecycle{
 			PostStart: &corev1.Handler{
 				Exec: &corev1.ExecAction{
 					Command: postStartCommand,
 				},
 			},
-		},
+		}
+	}
+	container := corev1.Container{
+		Name:            JenkinsMasterContainerName,
+		Image:           jenkinsContainer.Image,
+		Lifecycle:       lifecycle,
+		ImagePullPolicy: jenkinsContainer.ImagePullPolicy,
+		LivenessProbe:   jenkinsContainer.LivenessProbe,
+		ReadinessProbe:  jenkinsContainer.ReadinessProbe,
 		Ports: []corev1.ContainerPort{
-			{
-				Name:          httpPortName,
-				ContainerPort: constants.DefaultHTTPPortInt32,
-				Protocol:      corev1.ProtocolTCP,
-			},
-			{
-				Name:          jnlpPortName,
-				ContainerPort: constants.DefaultJNLPPortInt32,
-				Protocol:      corev1.ProtocolTCP,
-			},
+			GetTCPContainerPort(httpPortName, constants.DefaultHTTPPortInt32),
+			GetTCPContainerPort(jnlpPortName, constants.DefaultJNLPPortInt32),
 		},
 		SecurityContext: jenkinsContainer.SecurityContext,
 		Env:             envs,
@@ -264,7 +255,16 @@ func GetJenkinsContainer(jenkins *v1alpha2.Jenkins, jenkinsContainer v1alpha2.Co
 	if jenkinsContainer.Command != nil {
 		container.Command = jenkinsContainer.Command
 	}
+
 	return container
+}
+
+func GetTCPContainerPort(portName string, portNumber int32) corev1.ContainerPort {
+	return corev1.ContainerPort{
+		Name:          portName,
+		ContainerPort: portNumber,
+		Protocol:      corev1.ProtocolTCP,
+	}
 }
 
 // NewJenkinsConfigContainer returns Jenkins side container for config reloading
@@ -297,16 +297,9 @@ func NewJenkinsConfigContainer(jenkins *v1alpha2.Jenkins) corev1.Container {
 	}
 
 	volumeMounts := []corev1.VolumeMount{
-		{
-			Name:      ConfigurationAsCodeVolumeName,
-			MountPath: ConfigurationAsCodeVolumePath,
-			ReadOnly:  false,
-		},
-		{
-			Name:      JenkinsHomeVolumeName,
-			MountPath: getJenkinsHomePath(jenkins),
-			ReadOnly:  true,
-		},
+		getVolumeMount(ConfigurationAsCodeVolumeName, ConfigurationAsCodeSecretVolumePath, false),
+		getVolumeMount(JenkinsHomeVolumeName, getJenkinsHomePath(jenkins), true),
+		getVolumeMount(jenkinsScriptsVolumeName, JenkinsScriptsVolumePath, true),
 	}
 
 	return corev1.Container{
@@ -314,17 +307,22 @@ func NewJenkinsConfigContainer(jenkins *v1alpha2.Jenkins) corev1.Container {
 		Image:           getJenkinsSideCarImage(),
 		ImagePullPolicy: corev1.PullIfNotPresent,
 		Env:             envVars,
-		Resources: corev1.ResourceRequirements{
-			Requests: corev1.ResourceList{
-				corev1.ResourceCPU:    resource.MustParse(SidecarCPURequest),
-				corev1.ResourceMemory: resource.MustParse(SidecarMEMRequest),
-			},
-			Limits: corev1.ResourceList{
-				corev1.ResourceCPU:    resource.MustParse(SidecarCPULimit),
-				corev1.ResourceMemory: resource.MustParse(SidecarMEMLimit),
-			},
-		},
-		VolumeMounts: volumeMounts,
+		Resources:       GetResourceRequirements(SidecarCPURequest, SidecarMEMRequest, SidecarCPULimit, SidecarMEMLimit),
+		VolumeMounts:    volumeMounts,
+	}
+}
+
+func GetResourceRequirements(cpuRequest string, memRequest string, cpuLimit string, memLimit string) corev1.ResourceRequirements {
+	return corev1.ResourceRequirements{
+		Requests: GetResourceList(cpuRequest, memRequest),
+		Limits:   GetResourceList(cpuLimit, memLimit),
+	}
+}
+
+func GetResourceList(cpu string, mem string) corev1.ResourceList {
+	return corev1.ResourceList{
+		corev1.ResourceCPU:    resource.MustParse(cpu),
+		corev1.ResourceMemory: resource.MustParse(mem),
 	}
 }
 
@@ -362,17 +360,8 @@ func NewJenkinsPluginsInitContainer(spec *v1alpha2.JenkinsSpec) corev1.Container
 		Image:           jenkinsContainer.Image,
 		ImagePullPolicy: jenkinsContainer.ImagePullPolicy,
 		Command:         command,
-		Resources: corev1.ResourceRequirements{
-			Requests: corev1.ResourceList{
-				corev1.ResourceCPU:    resource.MustParse(SidecarCPURequest),
-				corev1.ResourceMemory: resource.MustParse(SidecarMEMRequest),
-			},
-			Limits: corev1.ResourceList{
-				corev1.ResourceCPU:    resource.MustParse(SidecarCPULimit),
-				corev1.ResourceMemory: resource.MustParse(SidecarMEMLimit),
-			},
-		},
-		VolumeMounts: volumeMounts,
+		Resources:       GetResourceRequirements(SidecarCPURequest, SidecarMEMRequest, SidecarCPULimit, SidecarMEMLimit),
+		VolumeMounts:    volumeMounts,
 	}
 }
 
@@ -408,17 +397,8 @@ func NewJenkinsConfigInitContainer(spec *v1alpha2.JenkinsSpec) corev1.Container 
 		Image:           jenkinsContainer.Image,
 		ImagePullPolicy: jenkinsContainer.ImagePullPolicy,
 		Command:         command,
-		Resources: corev1.ResourceRequirements{
-			Requests: corev1.ResourceList{
-				corev1.ResourceCPU:    resource.MustParse(SidecarCPURequest),
-				corev1.ResourceMemory: resource.MustParse(SidecarMEMRequest),
-			},
-			Limits: corev1.ResourceList{
-				corev1.ResourceCPU:    resource.MustParse(SidecarCPULimit),
-				corev1.ResourceMemory: resource.MustParse(SidecarMEMLimit),
-			},
-		},
-		VolumeMounts: volumeMounts,
+		Resources:       GetResourceRequirements(SidecarCPURequest, SidecarMEMRequest, SidecarCPULimit, SidecarMEMLimit),
+		VolumeMounts:    volumeMounts,
 	}
 }
 
@@ -465,17 +445,8 @@ curl -X POST --user \$USER:\$APITOKEN -H "\$CRUMB" \$SERVER/%s
 		Image:           jenkinsContainer.Image,
 		ImagePullPolicy: jenkinsContainer.ImagePullPolicy,
 		Command:         command,
-		Resources: corev1.ResourceRequirements{
-			Requests: corev1.ResourceList{
-				corev1.ResourceCPU:    resource.MustParse(SidecarCPURequest),
-				corev1.ResourceMemory: resource.MustParse(SidecarMEMRequest),
-			},
-			Limits: corev1.ResourceList{
-				corev1.ResourceCPU:    resource.MustParse(SidecarCPULimit),
-				corev1.ResourceMemory: resource.MustParse(SidecarMEMLimit),
-			},
-		},
-		VolumeMounts: volumeMounts,
+		Resources:       GetResourceRequirements(SidecarCPURequest, SidecarMEMRequest, SidecarCPULimit, SidecarMEMLimit),
+		VolumeMounts:    volumeMounts,
 	}
 }
 

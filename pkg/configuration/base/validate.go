@@ -175,7 +175,7 @@ func (r *JenkinsBaseConfigurationReconciler) Validate(jenkins *v1alpha2.Jenkins)
 		}
 	}
 
-	if msg := r.validatePlugins(plugins.BasePlugins(), actualSpec.Master.BasePlugins, actualSpec.Master.Plugins); len(msg) > 0 {
+	if msg := r.validatePlugins(plugins.BasePlugins(), actualSpec.Master.BasePlugins); len(msg) > 0 {
 		messages = append(messages, msg...)
 	}
 
@@ -444,22 +444,11 @@ func (r *JenkinsBaseConfigurationReconciler) validateJenkinsMasterPodEnvs() []st
 	return messages
 }
 
-func (r *JenkinsBaseConfigurationReconciler) validatePlugins(requiredBasePlugins []plugins.Plugin, basePlugins, userPlugins []v1alpha2.Plugin) []string {
+func (r *JenkinsBaseConfigurationReconciler) validatePlugins(requiredBasePlugins []plugins.Plugin, basePlugins []v1alpha2.Plugin) []string {
 	var messages []string
 	allPlugins := map[plugins.Plugin][]plugins.Plugin{}
 
 	for _, jenkinsPlugin := range basePlugins {
-		plugin, err := plugins.NewPlugin(jenkinsPlugin.Name, jenkinsPlugin.Version, jenkinsPlugin.DownloadURL)
-		if err != nil {
-			messages = append(messages, err.Error())
-		}
-
-		if plugin != nil {
-			allPlugins[*plugin] = []plugins.Plugin{}
-		}
-	}
-
-	for _, jenkinsPlugin := range userPlugins {
 		plugin, err := plugins.NewPlugin(jenkinsPlugin.Name, jenkinsPlugin.Version, jenkinsPlugin.DownloadURL)
 		if err != nil {
 			messages = append(messages, err.Error())
