@@ -1,5 +1,5 @@
 # Current Operator version
-VERSION ?= 0.6.0
+VERSION ?= 0.7.0
 GIT_COMMIT_ID ?= $(shell git rev-parse --short HEAD)
 # Default bundle image tag
 BUNDLE_IMG ?= quay.io/redhat-developer/openshift-jenkins-operator-bundle:$(VERSION)

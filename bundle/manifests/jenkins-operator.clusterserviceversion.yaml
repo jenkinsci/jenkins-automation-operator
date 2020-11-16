@@ -124,7 +124,7 @@ metadata:
     capabilities: Basic Install
     operators.operatorframework.io/builder: operator-sdk-v1.0.1
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v2
-  name: jenkins-operator.v0.6.0
+  name: jenkins-operator.v0.7.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -234,7 +234,7 @@ spec:
                 - --enable-leader-election
                 command:
                 - /manager
-                image: quay.io/redhat-developer/openshift-jenkins-operator:0.6.0-8e0d2878
+                image: quay.io/redhat-developer/openshift-jenkins-operator:0.7.0-d9d1755f
                 name: manager
                 resources:
                   limits:
@@ -302,4 +302,4 @@ spec:
   maturity: alpha
   provider:
     name: Red Hat
-  version: 0.6.0
+  version: 0.7.0
