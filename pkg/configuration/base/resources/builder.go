@@ -45,7 +45,7 @@ func NewBuilderPod(client client.Client, cr *jenkinsv1alpha2.JenkinsImage) *core
 	logger.Info(fmt.Sprintf("Creating a new builder pod with name %s", name))
 	builderPodArgs := []string{BuilderReproducibleArg, BuilderDockerfileArg, BuilderContextDirArg, BuilderDigestFileArg}
 	//--no-push, or the destination specified in the CR, or the openshift default registry if we are on OpenShift
-	destinationArg := GetDestinationRepository(cr, client)
+	destinationArg := GetDestinationRepository(cr)
 	builderPodArgs = append(builderPodArgs, destinationArg)
 	volumes := getVolumes(cr, client)
 	volumeMounts := getVolumesMounts(cr, client)
@@ -86,13 +86,13 @@ func getJenkinsImageBuilderImage() string {
 
 // GetDestinationRepository returns the destination repository matching To.Repository/To.Name:To.Tag or default to
 // openshift-image-registry if running on openshift or --no-push otherwise
-func GetDestinationRepository(cr *jenkinsv1alpha2.JenkinsImage, clientSet client.Client) string {
+func GetDestinationRepository(cr *jenkinsv1alpha2.JenkinsImage) string {
 	logger := log.WithName("jenkinsimage_GetDestinationRepository")
 	spec := cr.Spec
 	destination := spec.To
 	repositoryArg := ""
 	if len(destination.Registry) == 0 {
-		if IsImageRegistryAvailable(clientSet) { // on OpenShift get the default registry
+		if IsImageRegistryAvailableCached() { // on OpenShift get the default registry
 			repositoryArg = fmt.Sprintf("%s=%s/%s/%s:%s", BuilderDestinationArg, DefaultImageRegistry, cr.Namespace, cr.Name, DefaultImageTag)
 		} else {
 			repositoryArg = BuilderNoPushArg

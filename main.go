@@ -38,7 +38,6 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 
 	jenkinsv1alpha2 "github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
@@ -83,7 +82,7 @@ func main() {
 	client := manager.GetClient()
 	restClient := GetRestClient(debug)
 	eventsRecorder := getEventsRecorder(restClient, debug)
-	checkAvailableFeatures(client)
+	checkAvailableFeatures(manager)
 	// get a config to talk to the apiserver
 	cfg, err := config.GetConfig()
 	if err != nil {
@@ -108,8 +107,8 @@ func main() {
 	// +kubebuilder:scaffold:builder
 }
 
-func checkAvailableFeatures(client client.Client) {
-	if resources.IsImageRegistryAvailable(client) {
+func checkAvailableFeatures(manager manager.Manager) {
+	if resources.IsImageRegistryAvailable(manager) {
 		setupLog.Info("Internal Image Registry found: It is very likely that we are running on OpenShift")
 		setupLog.Info("If JenkinsImages are built without specified destination, they will be pushed into it.")
 	}
