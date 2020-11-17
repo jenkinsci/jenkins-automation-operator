@@ -25,4 +25,6 @@ const (
 	DefaultJenkinsMasterContainerName = "jenkins"
 	// DefaultJenkinsSideCarImage is the default jenkins sidecar image
 	DefaultJenkinsSideCarImage = "quay.io/redhat-developer/jenkins-kubernetes-sidecar:0.1.144"
+	// DefaultJenkinsBackupImage is the default ubi minimal image
+	DefaultJenkinsBackupImage = "ubi8/ubi-minimal:latest"
 )

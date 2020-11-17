@@ -18,6 +18,7 @@ import (
 
 const (
 	JenkinsSideCarImageEnvVar = "JENKINS_SIDECAR_IMAGE"
+	JenkinsBackupImageEnvVar  = "JENKINS_BACKUP_IMAGE"
 
 	JenkinsMasterContainerName = constants.DefaultJenkinsMasterContainerName
 	// JenkinsHomeVolumeName is the Jenkins home volume name
@@ -79,8 +80,6 @@ const (
 	SidecarMEMLimit   = "100Mi"
 	SidecarCPURequest = "50m"
 	SidecarMEMRequest = "50Mi"
-	// Images
-	UBIMinimalImage = "ubi8/ubi-minimal:latest"
 )
 
 // GetJenkinsMasterContainerBaseEnvs returns Jenkins master pod envs required by operator
@@ -329,7 +328,7 @@ func GetResourceList(cpu string, mem string) corev1.ResourceList {
 func NewJenkinsBackupContainer(jenkins *v1alpha2.Jenkins) corev1.Container {
 	backupContainer := corev1.Container{
 		Name:            BackupSidecarName,
-		Image:           UBIMinimalImage,
+		Image:           getJenkinsBackupImage(),
 		ImagePullPolicy: corev1.PullIfNotPresent,
 		Command:         []string{"/bin/sh", "-c", "--"},
 		Args:            []string{"while true; do sleep 30; done;"},
@@ -618,4 +617,13 @@ func getJenkinsSideCarImage() string {
 		jenkinsSideCarImage = constants.DefaultJenkinsSideCarImage
 	}
 	return jenkinsSideCarImage
+}
+
+// getJenkinsBackupImage returns the ubi minimal image
+func getJenkinsBackupImage() string {
+	jenkinsBackupImage, _ := os.LookupEnv(JenkinsBackupImageEnvVar)
+	if len(jenkinsBackupImage) == 0 {
+		jenkinsBackupImage = constants.DefaultJenkinsBackupImage
+	}
+	return jenkinsBackupImage
 }
