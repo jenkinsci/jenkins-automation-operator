@@ -260,13 +260,15 @@ func (r *RestoreReconciler) performJenkinsRestore(ctx context.Context, execClien
 	if len(restoreToSubLocations) > 0 {
 		for _, sl := range restoreToSubLocations {
 			// Restore each location in a different request
+			restoreFromSubLocation := ""
 			restoreToSubLocation := ""
 			if sl == "*.xml" {
+				restoreFromSubLocation = strings.Join([]string{restoreFromLocation, sl}, "/")
 				restoreToSubLocation = strings.Join([]string{restoreToLocation, ""}, "/")
 			} else {
+				restoreFromSubLocation = strings.Join([]string{restoreFromLocation, sl + "/*"}, "/")
 				restoreToSubLocation = strings.Join([]string{restoreToLocation, sl}, "/")
 			}
-			restoreFromSubLocation := strings.Join([]string{restoreFromLocation, sl}, "/")
 			execRestoreSubLocation := strings.Join([]string{"cp", "-r", restoreFromSubLocation, restoreToSubLocation}, " ")
 			err := execClient.MakeRequest(jenkinsPod, restoreInstance.Name, execRestoreSubLocation)
 			if err != nil {
