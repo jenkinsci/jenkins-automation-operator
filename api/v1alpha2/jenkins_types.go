@@ -142,11 +142,11 @@ type Container struct {
 	// Image pull policy.
 	// One of Always, Never, IfNotPresent.
 	// Defaults to Always.
-	ImagePullPolicy corev1.PullPolicy `json:"imagePullPolicy"`
+	ImagePullPolicy corev1.PullPolicy `json:"imagePullPolicy,omitempty"`
 
 	// Compute Resources required by this container.
 	// More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
-	Resources corev1.ResourceRequirements `json:"resources"`
+	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
 
 	// Entrypoint array. Not executed within a shell.
 	// The docker image's ENTRYPOINT is used if this is not provided.
