@@ -454,7 +454,8 @@ func (r *JenkinsReconciler) setDefaults(ctx context.Context, jenkins *v1alpha2.J
 func (r *JenkinsReconciler) getCalculatedSpec(ctx context.Context, jenkins *v1alpha2.Jenkins) (*v1alpha2.JenkinsSpec, error) {
 	// getCalculatedSpec returns the calculated spec from the requested spec. It returns a JenkinsSpec containing
 	// the requested specs and the defaulted values.
-	logger := r.Log.WithValues("cr", jenkins.Name)
+	jenkinsName := jenkins.Name
+	logger := r.Log.WithValues("cr", jenkinsName)
 	requestedSpec := jenkins.Spec
 
 	// We make a copy of the requested spec, and we will build the actual one then
@@ -468,25 +469,28 @@ func (r *JenkinsReconciler) getCalculatedSpec(ctx context.Context, jenkins *v1al
 	jenkinsMaster := r.getCalculatedJenkinsMaster(calculatedSpec, jenkinsContainer)
 	calculatedSpec.Master = jenkinsMaster
 
-	if len(jenkinsContainer.Image) == 0 {
-		jenkinsMasterImage := r.getDefaultJenkinsImage()
-		imageRef := requestedSpec.JenkinsImageRef
-		if len(imageRef) != 0 {
-			jenkinsImage := &v1alpha2.JenkinsImage{}
-			err := r.Client.Get(ctx, types.NamespacedName{Namespace: jenkins.Namespace, Name: imageRef}, jenkinsImage)
-			if err != nil {
-				return nil, errors.Errorf("JenkinsImage '%s' referenced by Jenkins instance '%s' not found", imageRef, jenkins.Name)
-			}
-			if jenkinsImage.Status.Phase == v1alpha2.ImageBuildSuccessful {
-				// Get the latest build otherwise
-				builds := jenkinsImage.Status.Builds
-				jenkinsMasterImage = builds[len(builds)-1].Image
-			}
+	jenkinsMasterImage := r.getDefaultJenkinsImage()
+	imageRef := requestedSpec.JenkinsImageRef
+	if len(imageRef) != 0 {
+		logger.Info(fmt.Sprintf("Jenkins %s has a jenkinsImageRef defined: %s", jenkinsName, imageRef))
+		jenkinsImage := &v1alpha2.JenkinsImage{}
+		err := r.Client.Get(ctx, types.NamespacedName{Namespace: jenkins.Namespace, Name: imageRef}, jenkinsImage)
+		if err != nil {
+			return nil, errors.Errorf("JenkinsImage '%s' referenced by Jenkins instance '%s' not found", imageRef, jenkinsName)
 		}
-		logger.Info("Setting default Jenkins master image: " + jenkinsMasterImage)
-		jenkinsContainer.Image = jenkinsMasterImage
-		jenkinsContainer.ImagePullPolicy = corev1.PullAlways
+		logger.Info(fmt.Sprintf("JenkinsImage found with Status:  %+v", jenkinsImage.Status))
+		if jenkinsImage.Status.Phase == v1alpha2.ImageBuildSuccessful {
+			// Get the latest build otherwise
+			builds := jenkinsImage.Status.Builds
+			imageSHA256 := builds[len(builds)-1].Image
+			jenkinsMasterImage = fmt.Sprintf("%s/%s@%s", jenkinsImage.Spec.To.Registry, jenkinsImage.Spec.To.Name, imageSHA256)
+			logger.Info(fmt.Sprintf("JenkinsImage found with latest build mapping to:  %s", jenkinsMasterImage))
+		}
 	}
+	logger.Info("Setting default Jenkins master image: " + jenkinsMasterImage)
+	jenkinsContainer.Image = jenkinsMasterImage
+	jenkinsContainer.ImagePullPolicy = corev1.PullAlways
+
 	if len(jenkinsContainer.ImagePullPolicy) == 0 {
 		logger.Info(fmt.Sprintf("Setting default Jenkins master image pull policy: %s", corev1.PullAlways))
 		jenkinsContainer.ImagePullPolicy = corev1.PullAlways
