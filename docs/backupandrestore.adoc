@@ -1,0 +1,174 @@
+Backup and Restore
+-------------------
+
+You can backup and restore your Jenkins data related to jobs, plugin or configuration with the Backup and Restore
+feature provided by the Operator.
+
+There are CustomResourceDefinitions available which aid in trigerring the *Backup* and *Restore* given that backup has
+been enabled on a Operator managed *Jenkins* instance.
+
+Enable Backup for your Jenkins instance
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To enable backup for your Jenkins instance set `backupEnabled` to `true` in the Jenkins CR.
+
+```yaml
+apiVersion: jenkins.io/v1alpha2
+kind: Jenkins
+metadata:
+  name: jenkins-with-backup-enabled
+spec:
+  backupEnabled: true
+...
+```
+
+Once the Jenkins instance is created with Backup enabled, a `default` CustomResource of kind *BackupConfig* would be
+created which would house the configuration for *Backup* and *Restore* for that instance. The *BackupConfig* instance
+created would be called `default`.
+
+_Create *Jenkins* with Backup enabled_
+
+```shell
+$ kubectl create -f config/samples/jenkins_v1alpha2_jenkins_with_backup.yaml
+jenkins.jenkins.io/jenkins-with-backup-sample created
+
+```
+_List **BackupConfig**s_
+```shell
+$ kubectl get backupconfig
+NAME      AGE
+default   6s
+
+```
+
+Apart from that, a sidecar container called `backup` is created alongside the rest of the containers in the Pod which
+aid in the backup and restore operations. This sidecar container is backed by a Volume which is mounted at
+`/jenkins-backups` where all the backups are stored.
+
+
+BackupConfig
+~~~~~~~~~~~~
+*BackupConfig* contains the configuration needed by the Backup and Restore controllers to carry out tasks before and
+after a backup/restore job and also what exactly needs to be backed up and restored for a particular *Jenkins* instance.
+
+
+The `default` *BackupConfig* created has everything enabled.
+
+_Get `default` *BackupConfig* definition_
+
+```shell
+$ kubectl get backupconfig default -o yaml
+apiVersion: jenkins.io/v1alpha2
+kind: BackupConfig
+metadata:
+  name: default
+  namespace: jenkins-backup-test
+spec:
+  jenkinsRef: jenkins-with-backup-sample
+  backupOptions:
+    config: true
+    jobs: true
+    plugins: true
+  restartAfterRestore:
+    enabled: true
+    safe: true
+```
+
+A *BackupConfig* can be created by the user and then used for a particular Jenkins instance.
+
+[NOTE]
+====
+To use a *BackupConfig* for a Jenkins instance, it is necessary for the *Jenkins* to have `.spec.backupEnabled` set
+to `true`.
+====
+
+jenkinsRef
+^^^^^^^^^^
+This spec reflects which *Jenkins* instance is a particular *BackupConfig* meant for.
+
+backupOptions
+^^^^^^^^^^^^^
+This spec reflects what should be backed up from the *Jenkins* instance when backup is triggered.
+
+`.spec.backupOptions.config` points to all the `xml` configuration files in the root of the Jenkins Home.
+
+`.spec.backupOptions.jobs` points to the `jobs` directory in the Jenkins Home.
+
+`.spec.backupOptions.plugins` points to the `plugins` directory in the Jenkins Home.
+
+Backup
+~~~~~~~
+
+*Backup* contains the information necessary for triggering a backup for your *Jenkins*.
+
+_Create a **Backup**_
+
+```shell
+$ kubectl create -f config/samples/jenkins_v1alpha2_backup.yaml
+backup.jenkins.io/backup-sample created
+
+```
+_**Backup** `backup-sample` definition_
+
+```yaml
+apiVersion: jenkins.io/v1alpha2
+kind: Backup
+metadata:
+  name: backup-sample
+  namespace: jenkins-backup-test
+spec:
+  configRef: default
+```
+
+A *Backup* is created with a *BackupConfig* in mind (noted in `.spec.configRef`) which contains information on the
+*Jenkins* we are triggering the backup for. This has been done so that, one *Jenkins* instance can have multiple
+**BackupConfig**s as not everytime, the same kind of *Backup* would be done.
+
+Once the backup is complete we should be able to see the backup in the `/jenkins-backups/<backup-name>` directory.
+
+[NOTE]
+====
+Only `.spec.backupOptions` from the *BackupConfig* are used for the *Backup* operations.
+====
+
+
+configRef
+^^^^^^^^^
+This spec reflects the *BackupConfig* which has to be used for performing the backup.
+
+Restore
+~~~~~~~
+*Restore* contains the information necessary for triggering a restore for your *Jenkins* given that a *Backup* already
+exists.
+
+_Create a **Restore**_
+
+```shell
+$ kubectl create -f config/samples/jenkins_v1alpha2_restore.yaml
+restore.jenkins.io/restore-sample created
+
+```
+_**Restore** `restore-sample` definition_
+
+```yaml
+apiVersion: jenkins.io/v1alpha2
+kind: Restore
+metadata:
+  name: restore-sample
+  namespace: jenkins-backup-test
+spec:
+  backupRef: backup-sample
+```
+
+The restore operation would be responsible for moving the necessary files and folders from the backup directory present
+in `/jenkins-backups` to the correct location in Jenkins Home.
+
+[NOTE]
+====
+Only `.spec.restoreAfterRestart` from the *BackupConfig* are used for the *Restore* operations.
+====
+
+backupRef
+^^^^^^^^^
+This spec reflects the *Backup* which would be referenced to figure out the *BackupConfig* in use and which backup needs
+to be restored.

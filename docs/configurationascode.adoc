@@ -1,14 +1,18 @@
-# Configure Jenkins in the Jenkins CR
+Configuration as Code
+---------------------
 
-## How it works
+How it works
+~~~~~~~~~~~~
+
 Wen deploying Jenkins via the operator, you can enable configuration as code for Jenkins.
 When enabled, the operator will add volumeMounts from the configuration configmaps you provide, to the an init container inside the Jenkins pod.
 The role of the init container is to copy the configuration as code files you provide into a target configuration as code volume, mounted to the Jenkins container. This way we have a read write volume on the Jenkins container that holds your configuration as code files.
 Another Sidecar container is also created if you choose to enable autoreload of the configuration as code files. That way, if you change the configmaps for Jenkins configuration, The Jenkins configuration is reloaded.
 
-## Configure Jenkins
+Configure Jenkins
+~~~~~~~~~~~~~~~~~
 The Jenkins CR exposes attributes to configure Jenkins, you can specify the following in the Jenkins CR spec:
-> - enabled: speicifies if the configuration as code will be enabled
+> - enabled: specifies if the configuration as code will be enabled
 > - defaultConfig: specifies if you want the default config for Jenkins. See the the default configmap under deploy/default-config.yaml
 > - configurations: an array of configuration profiles(configmap names used to configure Jenkins)
 > - enableAutoReload: specifies if you want to enable configuration auto reload.
@@ -16,7 +20,7 @@ The Jenkins CR exposes attributes to configure Jenkins, you can specify the foll
 Here is an some example of Jenkins configMaps:
 
 * Simple configmap
-    ```yaml
+```yaml
     apiVersion: v1
     kind: ConfigMap
     metadata:
@@ -25,9 +29,9 @@ Here is an some example of Jenkins configMaps:
       1-system-message.yaml: |
         jenkins:
           systemMessage: "Configuration as Code integration works!!!"
-        ```
+```
 * A configmap with seedjobs definition:
-    ```yaml
+```yaml
     apiVersion: v1
     kind: ConfigMap
     metadata:
@@ -55,11 +59,11 @@ Here is an some example of Jenkins configMaps:
                 }
                 }
             }
-        ```
+```
 
 1. Apply one or multiple configmap for Jenkins configuration.
 2. Configure the Jenkins cr with the following:
-    ```yaml
+```yaml
     spec:
       configurationAsCode:
         enabled: true
@@ -68,5 +72,5 @@ Here is an some example of Jenkins configMaps:
           - name: user-configuration-1
           - name: user-configuration-2
         enableAutoReload: true
-    ```
+```
 3. check on Jenkins to see the configuration is applied

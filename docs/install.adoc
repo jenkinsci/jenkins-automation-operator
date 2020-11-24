@@ -1,0 +1,53 @@
+Installing Jenkins Operator
+---------------------------
+
+This guide explains how to install the Jenkins Operator.
+
+Requirements
+~~~~~~~~~~~~
+To run Jenkins Operator, you will need:
+
+  - access to a Kubernetes cluster version 1.11+
+  - kubectl version 1.11+
+
+Install CRDs
+~~~~~~~~~~~~
+CustomResourceDefinitions are used the scaffold the APIs required for the Jenkins Operator to function.
+
+_Install CRDs_
+```shell
+$ make install
+```
+
+Running the Jenkins Operator
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The Jenkins Operator can be run locally with access to a Kubernetes cluster with all the CRDs in place beforehand which
+can be via the above steps.
+
+_Run locally_
+```shell
+$ make run
+```
+
+Deploy to Cluster
+~~~~~~~~~~~~~~~~~
+
+In production the Operator would be deployed as a Deployment backed by a ServiceAccount with necessary RoleBindings.
+To deploy the Operator, run the following command while logged into your Kubernetes cluster.
+
+_Deploy to cluster_
+```shell
+$ make deploy
+```
+
+The Jenkins Operator be deployed to the `jenkins-operator-system` namespace.
+
+Uninstall from Cluster
+~~~~~~~~~~~~~~~~~~~~~~
+To uninstall the Operator from the cluster including deletion all the resources created in the above step, run the
+following command.
+
+Uninstall the Operator
+```shell
+$ make teardown
+```
