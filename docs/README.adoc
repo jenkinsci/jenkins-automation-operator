@@ -6,7 +6,7 @@ building block for Jenkins intance.
 
 See the following topics to learn how to use the Jenkins operator:
 
-- [Installing the operator](install.adoc)
-- [Configuration as Code](configurationascode.adoc)
-- [Backup and Restore](backupandrestore.adoc)
+- link:install.adoc[Installing the Jenkins Operator]
+- link:configurationascode.adoc[Configuration as Code]
+- link:backupandrestore.adoc[Backup and Restore]
 
