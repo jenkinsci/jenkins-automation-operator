@@ -2,6 +2,7 @@ package resources
 
 import (
 	"fmt"
+
 	"github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/constants"
 	corev1 "k8s.io/api/core/v1"

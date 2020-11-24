@@ -2,8 +2,6 @@ package base
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/base64"
 	"fmt"
 	"reflect"
 	"strings"
@@ -154,19 +152,6 @@ func (r *JenkinsBaseConfigurationReconciler) createOperatorCredentialsSecret(met
 		return nil
 	}
 	return stackerr.WithStack(r.UpdateResource(resources.NewOperatorCredentialsSecret(meta, r.Configuration.Jenkins)))
-}
-
-func (r *JenkinsBaseConfigurationReconciler) calculateUserAndPasswordHash() (string, error) {
-	credentialsSecret := &corev1.Secret{}
-	err := r.Client.Get(context.TODO(), types.NamespacedName{Name: resources.GetOperatorCredentialsSecretName(r.Configuration.Jenkins), Namespace: r.Configuration.Jenkins.ObjectMeta.Namespace}, credentialsSecret)
-	if err != nil {
-		return "", stackerr.WithStack(err)
-	}
-
-	hash := sha256.New()
-	_, _ = hash.Write(credentialsSecret.Data[resources.OperatorCredentialsSecretUserNameKey])
-	_, _ = hash.Write(credentialsSecret.Data[resources.OperatorCredentialsSecretPasswordKey])
-	return base64.StdEncoding.EncodeToString(hash.Sum(nil)), nil
 }
 
 func compareImagePullSecrets(expected, actual []corev1.LocalObjectReference) bool {

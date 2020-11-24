@@ -4,8 +4,8 @@ Backup and Restore
 You can backup and restore your Jenkins data related to jobs, plugin or configuration with the Backup and Restore
 feature provided by the Operator.
 
-There are CustomResourceDefinitions available which aid in trigerring the *Backup* and *Restore* given that backup has
-been enabled on a Operator managed *Jenkins* instance.
+For this, you need, first, to enable the backup feature on the Operator managed Jenkins instance, then,
+Use a *Backup* or *Restore* CustomResourceDefinition to trigger the backup or the restore.
 
 Enable Backup for your Jenkins instance
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

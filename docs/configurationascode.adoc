@@ -13,7 +13,7 @@ Configure Jenkins
 ~~~~~~~~~~~~~~~~~
 The Jenkins CR exposes attributes to configure Jenkins, you can specify the following in the Jenkins CR spec:
 > - enabled: specifies if the configuration as code will be enabled
-> - defaultConfig: specifies if you want the default config for Jenkins. See the the default configmap under deploy/default-config.yaml
+> - defaultConfig: specifies if you want the default config for Jenkins.
 > - configurations: an array of configuration profiles(configmap names used to configure Jenkins)
 > - enableAutoReload: specifies if you want to enable configuration auto reload.
 
