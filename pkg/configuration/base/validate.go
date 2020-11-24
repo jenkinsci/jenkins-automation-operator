@@ -189,10 +189,6 @@ func (r *JenkinsBaseConfigurationReconciler) Validate(jenkins *v1alpha2.Jenkins)
 		messages = append(messages, msg...)
 	}
 
-	if actualSpec.JenkinsAPISettings.AuthorizationStrategy != v1alpha2.CreateUserAuthorizationStrategy && actualSpec.JenkinsAPISettings.AuthorizationStrategy != v1alpha2.ServiceAccountAuthorizationStrategy {
-		messages = append(messages, fmt.Sprintf("unrecognized '%s' spec.jenkinsAPISettings.authorizationStrategy", actualSpec.JenkinsAPISettings.AuthorizationStrategy))
-	}
-
 	return messages, nil
 }
 

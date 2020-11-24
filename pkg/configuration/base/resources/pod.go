@@ -178,7 +178,6 @@ func GetJenkinsMasterContainerBaseVolumeMounts(jenkins *v1alpha2.Jenkins, spec *
 		getVolumeMount(JenkinsHomeVolumeName, getJenkinsHomePath(jenkins), false),
 		getVolumeMount(jenkinsScriptsVolumeName, JenkinsScriptsVolumePath, true),
 		getVolumeMount(jenkinsInitConfigurationVolumeName, jenkinsInitConfigurationVolumePath, true),
-		getVolumeMount(jenkinsOperatorCredentialsVolumeName, jenkinsOperatorCredentialsVolumePath, true),
 		getSubPathVolumeMount(basePluginsVolumeName, BasePluginsVolumePath, basePluginsFileName, false),
 	}
 

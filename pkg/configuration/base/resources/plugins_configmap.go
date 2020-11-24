@@ -24,7 +24,7 @@ func getPluginsList(plugins []v1alpha2.Plugin) string {
 	return pluginsAsText
 }
 
-// NewInitConfigurationConfigMap builds Kubernetes config map used to init configuration
+// NewBasePluginConfigMap builds Kubernetes config map used for base plugins
 func NewBasePluginConfigMap(meta metav1.ObjectMeta, jenkins *v1alpha2.Jenkins) (*corev1.ConfigMap, error) {
 	meta.Name = GetBasePluginsVolumeNameConfigMapName(jenkins)
 	return &corev1.ConfigMap{

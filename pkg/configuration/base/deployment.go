@@ -68,19 +68,9 @@ func (r *JenkinsBaseConfigurationReconciler) ensureJenkinsDeploymentIsPresent(me
 		return ctrl.Result{Requeue: true}, err
 	}
 	r.logger.Info(fmt.Sprintf("Updating Jenkins %s to set UserAndPassword and ProvisionStartTime to %+v", jenkinsName, creationTimestamp))
-	userAndPasswordHash := jenkins.Status.UserAndPasswordHash
-	if len(userAndPasswordHash) == 0 {
-		userAndPasswordHash, err = r.calculateUserAndPasswordHash()
-		if err != nil {
-			r.logger.Info(fmt.Sprintf("Error while calculating userAndPasswordHash for Jenkins %s: %s", jenkinsName, err))
-			return ctrl.Result{}, err
-		}
-	}
 	r.logger.Info(fmt.Sprintf("Setting Jenkins.Status.ProvisionStartTime to deployment %s creationTimestamp: %s : %+v", deploymentName, jenkinsName, creationTimestamp))
 	status := r.Jenkins.Status
 	status.OperatorVersion = version.Version
-	status.ProvisionStartTime = &creationTimestamp
-	status.UserAndPasswordHash = userAndPasswordHash
 	r.logger.Info(fmt.Sprintf("Deployment %s exist or has been created without any error", jenkinsDeployment.Name))
 	return ctrl.Result{}, nil
 }

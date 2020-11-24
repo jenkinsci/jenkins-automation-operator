@@ -21,7 +21,7 @@ rules:
 - apiGroups:
   - apps
   resources:
-  - persistentvolumeclaims
+  - replicasets
   verbs:
   - create
   - delete
@@ -55,9 +55,17 @@ rules:
   - update
   - watch
 - apiGroups:
-  - build.openshift.io
+  - ""
   resources:
-  - imagestreams
+  - '*'
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
   verbs:
   - create
   - delete
@@ -69,7 +77,19 @@ rules:
 - apiGroups:
   - ""
   resources:
-  - configmaps
+  - configmaps/finalizers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - persistentvolumeclaims
   verbs:
   - create
   - delete
@@ -89,10 +109,35 @@ rules:
   - list
   - patch
   - update
+  - watch
 - apiGroups:
   - ""
   resources:
-  - pods/logs
+  - pods/exec
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods/log
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods/portforward
   verbs:
   - create
   - delete
@@ -105,6 +150,54 @@ rules:
   - ""
   resources:
   - secrets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - secrets/finalizers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - serviceaccounts
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - services
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - image.openshift.io
+  resources:
+  - imagestreams
   verbs:
   - create
   - delete
@@ -168,6 +261,18 @@ rules:
 - apiGroups:
   - jenkins.io
   resources:
+  - jenkins/finalizers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - jenkins.io
+  resources:
   - jenkins/status
   verbs:
   - get
@@ -213,6 +318,30 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - rbac.authorization.k8s.io
+  resources:
+  - rolebindings
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - rbac.authorization.k8s.io
+  resources:
+  - roles
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
 - apiGroups:
   - route.openshift.io
   resources:

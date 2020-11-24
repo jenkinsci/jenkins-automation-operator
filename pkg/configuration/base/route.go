@@ -3,6 +3,7 @@ package base
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
@@ -36,9 +37,15 @@ func (r *JenkinsBaseConfigurationReconciler) createRoute(meta metav1.ObjectMeta,
 	route = resources.UpdateRoute(route, jenkins)
 	err = r.UpdateResource(&route)
 	if err != nil {
-		r.logger.Error(err, fmt.Sprintf("Error while updating Route: %+v : error: %+v", route, err))
+		// https://github.com/kubernetes/kubernetes/issues/28149
+		if strings.Contains(err.Error(), "please apply your changes to the latest version and try again") {
+			r.logger.Info(fmt.Sprintf("Route updated successfully: %s", route.Name))
+		} else {
+			r.logger.Error(err, fmt.Sprintf("Error while updating Route: %+v : error: %+v", route, err))
+			return stackerr.WithStack(err)
+		}
 	}
-	return stackerr.WithStack(err)
+	return nil
 }
 
 func newRouteSpect(serviceName string, port *routev1.RoutePort) routev1.RouteSpec {

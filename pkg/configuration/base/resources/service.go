@@ -2,12 +2,8 @@ package resources
 
 import (
 	"fmt"
-	"net"
-	"strings"
-
 	"github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/constants"
-	stackerr "github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -42,39 +38,4 @@ func GetJenkinsHTTPServiceName(jenkins *v1alpha2.Jenkins) string {
 // GetJenkinsJNLPServiceName returns Kubernetes service name used for expose Jenkins JNLP endpoint
 func GetJenkinsJNLPServiceName(jenkins *v1alpha2.Jenkins) string {
 	return fmt.Sprintf("%s-%s-jnlp", constants.LabelAppValue, jenkins.ObjectMeta.Name)
-}
-
-// GetJenkinsHTTPServiceFQDN returns Kubernetes service FQDN used for expose Jenkins HTTP endpoint
-func GetJenkinsHTTPServiceFQDN(jenkins *v1alpha2.Jenkins) (string, error) {
-	clusterDomain, err := getClusterDomain()
-	if err != nil {
-		return "", err
-	}
-
-	return fmt.Sprintf("%s-%s.%s.svc.%s", constants.LabelAppValue, jenkins.ObjectMeta.Name, jenkins.ObjectMeta.Namespace, clusterDomain), nil
-}
-
-// GetJenkinsJNLPServiceFQDN returns Kubernetes service FQDN used for expose Jenkins JNLP endpoint
-func GetJenkinsJNLPServiceFQDN(jenkins *v1alpha2.Jenkins) (string, error) {
-	clusterDomain, err := getClusterDomain()
-	if err != nil {
-		return "", err
-	}
-
-	return fmt.Sprintf("%s-%s-jnlp.%s.svc.%s", constants.LabelAppValue, jenkins.ObjectMeta.Name, jenkins.ObjectMeta.Namespace, clusterDomain), nil
-}
-
-// GetClusterDomain returns Kubernetes cluster domain, default to "cluster.local"
-func getClusterDomain() (string, error) {
-	apiSvc := "kubernetes.default.svc"
-	cname, err := net.LookupCNAME(apiSvc)
-	if err != nil {
-		return "", stackerr.WithStack(err)
-	}
-
-	clusterDomain := strings.TrimPrefix(cname, "kubernetes.default.svc")
-	clusterDomain = strings.TrimPrefix(clusterDomain, ".")
-	clusterDomain = strings.TrimSuffix(clusterDomain, ".")
-
-	return clusterDomain, nil
 }

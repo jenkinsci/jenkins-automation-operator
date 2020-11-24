@@ -58,9 +58,6 @@ const (
 	DefaultJenkinsImageEnvVar = "DEFAULT_JENKINS_IMAGE"
 
 	APIVersion             = "core/v1"
-	DeploymentKind         = "Deployment"
-	SecretKind             = "Secret"
-	ConfigMapKind          = "ConfigMap"
 	containerProbeURI      = "login"
 	containerProbePortName = "http"
 
@@ -103,19 +100,30 @@ func (r *JenkinsReconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 // +kubebuilder:rbac:groups=jenkins.io,resources=jenkins,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=jenkins.io,resources=jenkins/finalizers,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=jenkins.io,resources=jenkins/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=jenkins.io,resources=backupconfigs,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=jenkins.io,resources=backupconfigs/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=apps,resources=persistentvolumeclaims,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=apps,resources=replicasets,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=core,resources=configmaps,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=core,resources=pods/logs,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=core,resources=pods,verbs=get;list
+// +kubebuilder:rbac:groups=core,resources=secrets/finalizers,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=core,resources=configmaps/finalizers,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=core,resources=pods/log,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=core,resources=pods/exec,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=core,resources=pods/portforward,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch
+// +kubebuilder:rbac:groups=core,resources=serviceaccounts,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=core,resources=services,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=core,resources=persistentvolumeclaims,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=core,resources=*,verbs=get;list;watch
+// +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=roles,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=rolebindings,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=route.openshift.io,resources=routes,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=build.openshift.io,resources=builds,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=build.openshift.io,resources=imagestreams,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=build.openshift.io,resources=buildconfigs,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=image.openshift.io,resources=imagestreams,verbs=get;list;watch;create;update;patch;delete
 
 func (r *JenkinsReconciler) Reconcile(request ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
@@ -553,16 +561,6 @@ func (r *JenkinsReconciler) getCalculatedSpec(ctx context.Context, jenkins *v1al
 		containers := []v1alpha2.Container{jenkinsContainer}
 		containers = append(containers, noJenkinsContainers...)
 		calculatedSpec.Master.Containers = containers
-	}
-
-	if reflect.DeepEqual(calculatedSpec.JenkinsAPISettings, v1alpha2.JenkinsAPISettings{}) {
-		logger.Info("Setting default Jenkins API settings")
-		calculatedSpec.JenkinsAPISettings = v1alpha2.JenkinsAPISettings{AuthorizationStrategy: v1alpha2.ServiceAccountAuthorizationStrategy}
-	}
-
-	if calculatedSpec.JenkinsAPISettings.AuthorizationStrategy == "" {
-		logger.Info("Setting default Jenkins API settings authorization strategy")
-		calculatedSpec.JenkinsAPISettings.AuthorizationStrategy = v1alpha2.ServiceAccountAuthorizationStrategy
 	}
 
 	configurationAsCode := calculatedSpec.ConfigurationAsCode

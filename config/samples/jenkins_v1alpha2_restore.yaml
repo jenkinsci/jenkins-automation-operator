@@ -3,6 +3,5 @@ kind: Restore
 metadata:
   name: restore-sample
 spec:
-  # Add fields here
   backupRef: backup-sample
 

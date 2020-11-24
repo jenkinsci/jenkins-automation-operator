@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/client"
@@ -241,72 +240,6 @@ func (c *Configuration) GetJenkinsClientFromServiceAccount() (jenkinsclient.Jenk
 		return nil, err
 	}
 	return jenkinsclient.NewBearerTokenAuthorization(jenkinsAPIUrl, token.String())
-}
-
-// GetJenkinsClientFromSecret gets jenkins client from a secret.
-func (c *Configuration) GetJenkinsClientFromSecret() (jenkinsclient.Jenkins, error) {
-	logger.V(log.VDebug).Info("Creating Jenkins client from Secret")
-	jenkinsAPIUrl, err := c.getJenkinsAPIUrl()
-	logger.V(log.VDebug).Info(fmt.Sprintf("Creating Jenkins client from Secret with URL: %+v", jenkinsAPIUrl))
-	if err != nil {
-		logger.V(log.VDebug).Info(fmt.Sprintf("Error while getJenkinsAPIUrl: %+v", err))
-		return nil, err
-	}
-	credentialsSecret := &corev1.Secret{}
-	secretName := resources.GetOperatorCredentialsSecretName(c.Jenkins)
-	logger.V(log.VDebug).Info(fmt.Sprintf("Jenkins client will be created using credentials in kuberentes Secret named : %+v", secretName))
-
-	err = c.Client.Get(context.TODO(), types.NamespacedName{Name: secretName, Namespace: c.Jenkins.ObjectMeta.Namespace}, credentialsSecret)
-	if err != nil {
-		logger.V(log.VDebug).Info(fmt.Sprintf("Error while trying to get kuberentes Secret named : %+v: %s", secretName, err))
-		return nil, stackerr.WithStack(err)
-	}
-	currentJenkinsMasterPod, err := c.GetJenkinsMasterPod()
-	if err != nil {
-		logger.V(log.VDebug).Info(fmt.Sprintf("Error while trying to get GetJenkinsMasterPod : %s", err))
-		return nil, err
-	}
-	var tokenCreationTime *time.Time
-	tokenCreationTimeBytes := credentialsSecret.Data[resources.OperatorCredentialsSecretTokenCreationKey]
-	if tokenCreationTimeBytes != nil {
-		tokenCreationTime = &time.Time{}
-		err = tokenCreationTime.UnmarshalText(tokenCreationTimeBytes)
-		if err != nil {
-			tokenCreationTime = nil
-		}
-	}
-	if credentialsSecret.Data[resources.OperatorCredentialsSecretTokenKey] == nil ||
-		tokenCreationTimeBytes == nil || tokenCreationTime == nil ||
-		currentJenkinsMasterPod.ObjectMeta.CreationTimestamp.Time.UTC().After(tokenCreationTime.UTC()) {
-		userName := string(credentialsSecret.Data[resources.OperatorCredentialsSecretUserNameKey])
-		jenkinsClient, err := jenkinsclient.NewUserAndPasswordAuthorization(
-			jenkinsAPIUrl,
-			userName,
-			string(credentialsSecret.Data[resources.OperatorCredentialsSecretPasswordKey]))
-		if err != nil {
-			logger.V(log.VDebug).Info(fmt.Sprintf("Error while trying to create Jenkins client with UserAndPasswordAuthorization: %s", err))
-			return nil, err
-		}
-
-		token, err := jenkinsClient.GenerateToken(userName, "token")
-		if err != nil {
-			logger.V(log.VDebug).Info(fmt.Sprintf("Error while trying to generate token for Jenkins client with: %s", err))
-			return nil, err
-		}
-
-		credentialsSecret.Data[resources.OperatorCredentialsSecretTokenKey] = []byte(token.GetToken())
-		now, _ := time.Now().UTC().MarshalText()
-		credentialsSecret.Data[resources.OperatorCredentialsSecretTokenCreationKey] = now
-		err = c.UpdateResource(credentialsSecret)
-		if err != nil {
-			logger.V(log.VDebug).Info(fmt.Sprintf("Error while updating credentialsSecret :%+v: %s", credentialsSecret.Name, err))
-			return nil, stackerr.WithStack(err)
-		}
-	}
-	return jenkinsclient.NewUserAndPasswordAuthorization(
-		jenkinsAPIUrl,
-		string(credentialsSecret.Data[resources.OperatorCredentialsSecretUserNameKey]),
-		string(credentialsSecret.Data[resources.OperatorCredentialsSecretTokenKey]))
 }
 
 // GetJenkinsOpts gets JENKINS_OPTS env parameter, parses it's values and returns it as a map`

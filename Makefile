@@ -30,6 +30,10 @@ deploy: manifests kustomize ## Deploy controller in the configured Kubernetes cl
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
+teardown: manifests kustomize ## Teardown deployed controller in the configured Kubernetes cluster in ~/.kube/config
+	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
+	$(KUSTOMIZE) build config/default | kubectl delete -f -
+
 manifests: controller-gen ## Generate manifests e.g. CRD, RBAC etc.
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=jenkins-operator-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
