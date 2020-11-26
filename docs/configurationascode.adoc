@@ -4,7 +4,7 @@ Configuration as Code
 How it works
 ~~~~~~~~~~~~
 
-Wen deploying Jenkins via the operator, you can enable configuration as code for Jenkins.
+When deploying Jenkins via the operator, you can enable configuration as code for Jenkins.
 When enabled, the operator will add volumeMounts from the configuration configmaps you provide, to the an init container inside the Jenkins pod.
 The role of the init container is to copy the configuration as code files you provide into a target configuration as code volume, mounted to the Jenkins container. This way we have a read write volume on the Jenkins container that holds your configuration as code files.
 Another Sidecar container is also created if you choose to enable autoreload of the configuration as code files. That way, if you change the configmaps for Jenkins configuration, The Jenkins configuration is reloaded.
