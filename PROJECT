@@ -10,9 +10,6 @@ resources:
   kind: JenkinsImage
   version: v1alpha2
 - group: jenkins
-  kind: BackupWorker
-  version: v1alpha2
-- group: jenkins
   kind: Backup
   version: v1alpha2
 - group: jenkins

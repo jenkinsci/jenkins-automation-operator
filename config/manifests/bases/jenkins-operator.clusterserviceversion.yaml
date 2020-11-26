@@ -88,11 +88,6 @@ spec:
         displayName: Tag
         path: to.tag
       version: v1alpha2
-    - description: BackupWorker is the Schema for the backupworkers API
-      displayName: Backup Worker
-      kind: BackupWorker
-      name: backupworkers.jenkins.io
-      version: v1alpha2
     - description: BackupConfig is the Schema for the backupconfigs API
       displayName: Backup Config
       kind: BackupConfig

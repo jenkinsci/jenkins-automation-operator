@@ -26,16 +26,6 @@ metadata:
         },
         {
           "apiVersion": "jenkins.io/v1alpha2",
-          "kind": "BackupWorker",
-          "metadata": {
-            "name": "backupworker-sample"
-          },
-          "spec": {
-            "foo": "bar"
-          }
-        },
-        {
-          "apiVersion": "jenkins.io/v1alpha2",
           "kind": "Jenkins",
           "metadata": {
             "name": "jenkins-sample"
@@ -135,11 +125,6 @@ spec:
       version: v1alpha2
     - kind: Backup
       name: backups.jenkins.io
-      version: v1alpha2
-    - description: BackupWorker is the Schema for the backupworkers API
-      displayName: Backup Worker
-      kind: BackupWorker
-      name: backupworkers.jenkins.io
       version: v1alpha2
     - displayName: Jenkins
       kind: Jenkins

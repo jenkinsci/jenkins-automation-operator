@@ -2,7 +2,6 @@
 resources:
 - jenkins_v1alpha2_jenkins.yaml
 - jenkins_v1alpha2_jenkinsimage.yaml
-- jenkins_v1alpha2_backupworker.yaml
 - jenkins_v1alpha2_backup.yaml
 - jenkins_v1alpha2_backupconfig.yaml
 # +kubebuilder:scaffold:manifestskustomizesamples

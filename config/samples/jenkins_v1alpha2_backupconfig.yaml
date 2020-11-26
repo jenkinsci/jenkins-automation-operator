@@ -3,5 +3,10 @@ kind: BackupConfig
 metadata:
   name: backupconfig-sample
 spec:
-  # Add fields here
-  foo: bar
+  backupOptions:
+    config: true
+    jobs: true
+    plugins: true
+  jenkinsRef: jenkins-with-backup-sample
+  restartAfterRestore:
+    enabled: true
