@@ -25,17 +25,51 @@ const (
 )
 
 var _ = Describe("Jenkins controller", func() {
+	Logf("Starting")
 	Context("When Creating a Jenkins CR", func() {
+		ctx := context.Background()
+		jenkins := GetJenkinsTestInstance(JenkinsName, JenkinsNamespace)
 		It("Deployment Should Be Created", func() {
-			Logf("Starting")
-			ctx := context.Background()
-			jenkins := GetJenkinsTestInstance(JenkinsName, JenkinsNamespace)
 			ByCreatingJenkinsSuccesfully(ctx, jenkins)
 			ByCheckingThatJenkinsExists(ctx, jenkins)
 			ByCheckingThatTheDeploymentExists(ctx, jenkins)
 		})
 	})
+
+	Context("When Creating a Jenkins CR With specified Master.Image", func() {
+		ctx := context.Background()
+		image := "my-image"
+		jenkinsWithImage := "jenkins-with-image"
+		jenkins := GetJenkinsTestInstanceWithMasterImage(jenkinsWithImage, JenkinsNamespace, image)
+		It("Deployment Should Be Created With That Image Name", func() {
+			ByCreatingJenkinsSuccesfully(ctx, jenkins)
+			ByCheckingThatJenkinsExists(ctx, jenkins)
+			ByCheckingThatTheDeploymentExists(ctx, jenkins)
+			ByCheckingThatDeploymentImageIs(ctx, jenkins)
+		})
+	})
 })
+
+func ByCheckingThatDeploymentImageIs(ctx context.Context, jenkins *v1alpha2.Jenkins) {
+	By("By checking that the Jenkins exists")
+	created := &v1alpha2.Jenkins{}
+	expectedName := jenkins.Name
+	key := types.NamespacedName{Namespace: jenkins.Namespace, Name: expectedName}
+	actual := func() (string, error) {
+		err := k8sClient.Get(ctx, key, created)
+		if err != nil {
+			return "", err
+		}
+		return created.Spec.Master.Containers[0].Image, nil
+	}
+	Eventually(actual, timeout, interval).Should(Equal(jenkins.Spec.Master.Containers[0].Image))
+}
+
+func GetJenkinsTestInstanceWithMasterImage(jenkinsName string, namespaceName string, imageName string) *v1alpha2.Jenkins {
+	jenkins := GetJenkinsTestInstance(jenkinsName, namespaceName)
+	jenkins.Spec.Master.Containers[0].Image = imageName
+	return jenkins
+}
 
 func ByCheckingThatJenkinsExists(ctx context.Context, jenkins *v1alpha2.Jenkins) {
 	By("By checking that the Jenkins exists")

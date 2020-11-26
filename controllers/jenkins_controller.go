@@ -473,11 +473,12 @@ func (r *JenkinsReconciler) getCalculatedSpec(ctx context.Context, jenkins *v1al
 	if err != nil {
 		return nil, err
 	}
-
 	jenkinsMaster := r.getCalculatedJenkinsMaster(calculatedSpec, jenkinsContainer)
 	calculatedSpec.Master = jenkinsMaster
-
-	jenkinsMasterImage := r.getDefaultJenkinsImage()
+	jenkinsMasterImage := jenkinsMaster.Containers[0].Image
+	if len(jenkinsMasterImage) == 0 {
+		jenkinsMasterImage = r.getDefaultJenkinsImage()
+	}
 	imageRef := requestedSpec.JenkinsImageRef
 	if len(imageRef) != 0 {
 		logger.Info(fmt.Sprintf("Jenkins %s has a jenkinsImageRef defined: %s", jenkinsName, imageRef))

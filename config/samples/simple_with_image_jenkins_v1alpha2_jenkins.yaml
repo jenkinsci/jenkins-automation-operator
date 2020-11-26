@@ -1,0 +1,10 @@
+apiVersion: jenkins.io/v1alpha2
+kind: Jenkins
+metadata:
+  name: simple-with-image
+spec:
+  forceBasePluginsInstall: false
+  master:
+    containers:
+    - name: jenkins
+      image: 'quay.io/redhat-developer/origin-jenkins:4.7-stable'
