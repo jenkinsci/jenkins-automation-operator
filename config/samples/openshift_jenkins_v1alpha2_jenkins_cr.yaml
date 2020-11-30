@@ -9,6 +9,10 @@ spec:
     enabled: true
     defaultConfig: true
     enableAutoReload: true
+  roles:
+  - name: edit
+    kind: ClusterRole
+    apiGroup: rbac.authorization.k8s.io
   master:
     containers:
     - name: jenkins
@@ -24,9 +28,9 @@ spec:
       - name: KUBERNETES_TRUST_CERTIFICATES
         value: 'true'
       - name: JENKINS_SERVICE_NAME
-        value: jenkins-operator-http-jenkins
+        value: jenkins-jenkins
       - name: JNLP_SERVICE_NAME
-        value: jenkins-operator-jnlp-jenkins
+        value: jenkins-jenkins-jnlp
       - name: JENKINS_UC_INSECURE
         value: 'false'
       - name: JENKINS_HOME
@@ -38,7 +42,7 @@ spec:
           -Djenkins.install.runSetupWizard=false -Djava.awt.headless=true
           -Dhudson.security.csrf.DefaultCrumbIssuer.EXCLUDE_SESSION_ID=true
           -Dcasc.reload.token=$(POD_NAME)
-      image: 'quay.io/openshift/origin-jenkins:4.7'
+      image: 'quay.io/redhat-developer/origin-jenkins@sha256:a8e94991bd42290c51310ad1d34554f1d1604813a9f15f8acf96e18f71ff65c7'
   serviceAccount:
     annotations:
       serviceaccounts.openshift.io/oauth-redirectreference.jenkins: '{"kind":"OAuthRedirectReference","apiVersion":"v1","reference":{"kind":"Route","name":"jenkins-operator"}}'
