@@ -5,6 +5,13 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
+const (
+	DefaultCPURequest    = "50m"
+	DefaultMemoryRequest = "50Mi"
+	DefaultCPULimit      = "100m"
+	DefaultMemoryLimit   = "100Mi"
+)
+
 func NewResourceRequirements(cpuRequest, memoryRequest, cpuLimit, memoryLimit string) corev1.ResourceRequirements {
 	return corev1.ResourceRequirements{
 		Requests: corev1.ResourceList{
@@ -16,4 +23,8 @@ func NewResourceRequirements(cpuRequest, memoryRequest, cpuLimit, memoryLimit st
 			corev1.ResourceMemory: resource.MustParse(memoryLimit),
 		},
 	}
+}
+
+func DefaultResourceRequirement() corev1.ResourceRequirements {
+	return NewResourceRequirements(DefaultCPURequest, DefaultMemoryRequest, DefaultCPULimit, DefaultMemoryLimit)
 }

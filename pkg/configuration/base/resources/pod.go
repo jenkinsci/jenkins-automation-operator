@@ -99,6 +99,15 @@ func GetJenkinsMasterContainerBaseEnvs(jenkins *v1alpha2.Jenkins) []corev1.EnvVa
 			Value: "true",
 		},
 		{
+			Name:  "JENKINS_SERVICE_NAME",
+			Value: GetJenkinsHTTPServiceName(jenkins),
+		},
+		{
+			Name:  "JNLP_SERVICE_NAME",
+			Value: GetJenkinsJNLPServiceName(jenkins),
+		},
+
+		{
 			Name:  "OPENSHIFT_ENABLE_REDIRECT_PROMPT",
 			Value: "true",
 		},

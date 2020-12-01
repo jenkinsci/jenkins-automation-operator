@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
+
 	"github.com/go-logr/logr"
 	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/client"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration"
@@ -42,8 +44,9 @@ func New(config configuration.Configuration, jenkinsAPIConnectionSettings jenkin
 // Reconcile takes care of base configuration.
 func (r *JenkinsBaseConfigurationReconciler) Reconcile(request reconcile.Request) (reconcile.Result, jenkinsclient.Jenkins, error) {
 	jenkinsConfig := resources.NewResourceObjectMeta(r.Configuration.Jenkins)
+
 	// Create Necessary Resources
-	err := r.ensureResourcesRequiredForJenkinsDeploymentArePresent(jenkinsConfig)
+	err := r.ensureResourcesRequiredForJenkinsDeploymentArePresent(r.Configuration.Jenkins)
 	if err != nil {
 		return reconcile.Result{}, nil, err
 	}
@@ -84,7 +87,9 @@ func (r *JenkinsBaseConfigurationReconciler) Reconcile(request reconcile.Request
 	return result, nil, err
 }
 
-func (r *JenkinsBaseConfigurationReconciler) ensureResourcesRequiredForJenkinsDeploymentArePresent(metaObject metav1.ObjectMeta) error {
+func (r *JenkinsBaseConfigurationReconciler) ensureResourcesRequiredForJenkinsDeploymentArePresent(jenkins *v1alpha2.Jenkins) error {
+	metaObject := resources.NewResourceObjectMeta(jenkins)
+
 	if err := r.createOperatorCredentialsSecret(metaObject); err != nil {
 		return err
 	}
@@ -105,12 +110,12 @@ func (r *JenkinsBaseConfigurationReconciler) ensureResourcesRequiredForJenkinsDe
 	}
 	r.logger.V(log.VDebug).Info("Base plugins config map is present")
 
-	if err := r.createRBAC(metaObject); err != nil {
+	if err := r.createRBAC(jenkins); err != nil {
 		return err
 	}
-	r.logger.V(log.VDebug).Info("Service account, role and role binding are present")
+	r.logger.V(log.VDebug).Info("Service account, role and role binding are present or created")
 
-	if err := r.ensureExtraRBAC(metaObject); err != nil {
+	if err := r.ensureExtraRBACArePresent(); err != nil {
 		return err
 	}
 	r.logger.V(log.VDebug).Info("Extra role bindings are present")

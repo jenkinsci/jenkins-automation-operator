@@ -1,6 +1,7 @@
 package resources
 
 import (
+	"github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
 	v1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -25,7 +26,8 @@ const (
 )
 
 // NewRole returns rbac role for jenkins master
-func NewRole(meta metav1.ObjectMeta) *v1.Role {
+func NewRole(jenkins *v1alpha2.Jenkins) *v1.Role {
+	meta := NewResourceObjectMeta(jenkins)
 	rules := NewDefaultPolicyRules()
 	return &v1.Role{
 		TypeMeta: metav1.TypeMeta{
@@ -38,14 +40,18 @@ func NewRole(meta metav1.ObjectMeta) *v1.Role {
 }
 
 // NewRoleBinding returns rbac role binding for jenkins master
-func NewRoleBinding(name, namespace, serviceAccountName string, roleRef v1.RoleRef) *v1.RoleBinding {
+func NewRoleBinding(jenkins *v1alpha2.Jenkins, roleRef v1.RoleRef) *v1.RoleBinding {
+	resourceWithPrefix := NewResourceObjectMeta(jenkins)
+	roleBindingName := GetExtraRoleBindingName(jenkins, roleRef)
+	serviceAccountName := resourceWithPrefix.Name
+	namespace := jenkins.Namespace
 	return &v1.RoleBinding{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "RoleBinding",
 			APIVersion: "rbac.authorization.k8s.io/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
+			Name:      roleBindingName,
 			Namespace: namespace,
 		},
 		RoleRef: roleRef,

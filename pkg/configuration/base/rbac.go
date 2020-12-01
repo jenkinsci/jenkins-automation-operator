@@ -5,30 +5,45 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
+	logx "github.com/jenkinsci/kubernetes-operator/pkg/log"
+	"k8s.io/apimachinery/pkg/types"
+
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
 	stackerr "github.com/pkg/errors"
 	rbacv1 "k8s.io/api/rbac/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func (r *JenkinsBaseConfigurationReconciler) createRBAC(meta metav1.ObjectMeta) error {
-	err := r.createServiceAccount(meta)
+var (
+	logger = logx.Log
+)
+
+const (
+	EditClusterRole       = "edit"
+	AuthorizationAPIGroup = "rbac.authorization.k8s.io"
+)
+
+func (r *JenkinsBaseConfigurationReconciler) createRBAC(jenkins *v1alpha2.Jenkins) error {
+	meta := resources.NewResourceObjectMeta(jenkins)
+	err := r.createServiceAccount(jenkins)
 	if err != nil {
 		return err
 	}
 
-	role := resources.NewRole(meta)
+	role := resources.NewRole(jenkins)
 	err = r.CreateOrUpdateResource(role)
 	if err != nil {
 		return stackerr.WithStack(err)
 	}
 
-	roleBinding := resources.NewRoleBinding(meta.Name, meta.Namespace, meta.Name, rbacv1.RoleRef{
+	jenkinsRole := rbacv1.RoleRef{
 		APIGroup: "rbac.authorization.k8s.io",
 		Kind:     "Role",
 		Name:     meta.Name,
-	})
+	}
+	roleBinding := resources.NewRoleBinding(jenkins, jenkinsRole)
+	roleBinding.Name = meta.Name
 	err = r.CreateOrUpdateResource(roleBinding)
 	if err != nil {
 		return stackerr.WithStack(err)
@@ -37,32 +52,31 @@ func (r *JenkinsBaseConfigurationReconciler) createRBAC(meta metav1.ObjectMeta) 
 	return nil
 }
 
-func (r *JenkinsBaseConfigurationReconciler) ensureExtraRBAC(meta metav1.ObjectMeta) error {
-	var err error
-	var name string
-	for _, roleRef := range r.Configuration.Jenkins.Spec.Roles {
-		name = getExtraRoleBindingName(meta.Name, roleRef)
-		roleBinding := resources.NewRoleBinding(name, meta.Namespace, meta.Name, roleRef)
-		err = r.CreateOrUpdateResource(roleBinding)
+func (r *JenkinsBaseConfigurationReconciler) ensureExtraRBACArePresent() error {
+	roles := r.Configuration.Jenkins.Status.Spec.Roles
+	jenkins := r.Jenkins
+	logger.Info(fmt.Sprintf("jenkins.Roles is %+v", roles))
+	for _, roleRef := range roles {
+		roleBinding := resources.NewRoleBinding(jenkins, roleRef)
+		err := r.CreateOrUpdateResource(roleBinding)
 		if err != nil {
 			return stackerr.WithStack(err)
 		}
 	}
-
 	roleBindings := &rbacv1.RoleBindingList{}
-	err = r.Client.List(context.TODO(), roleBindings, client.InNamespace(r.Configuration.Jenkins.Namespace))
+	err := r.Client.List(context.TODO(), roleBindings, client.InNamespace(r.Configuration.Jenkins.Namespace))
 	if err != nil {
 		return stackerr.WithStack(err)
 	}
 	for _, roleBinding := range roleBindings.Items {
-		if !strings.HasPrefix(roleBinding.Name, getExtraRoleBindingName(meta.Name, rbacv1.RoleRef{Kind: "Role"})) &&
-			!strings.HasPrefix(roleBinding.Name, getExtraRoleBindingName(meta.Name, rbacv1.RoleRef{Kind: "ClusterRole"})) {
+		if !strings.HasPrefix(roleBinding.Name, resources.GetExtraRoleBindingName(jenkins, rbacv1.RoleRef{Kind: "Role"})) &&
+			!strings.HasPrefix(roleBinding.Name, resources.GetExtraRoleBindingName(jenkins, rbacv1.RoleRef{Kind: "ClusterRole"})) {
 			continue
 		}
 
 		found := false
-		for _, roleRef := range r.Configuration.Jenkins.Spec.Roles {
-			name = getExtraRoleBindingName(meta.Name, roleRef)
+		for _, roleRef := range roles {
+			name := resources.GetExtraRoleBindingName(jenkins, roleRef)
 			if roleBinding.Name == name {
 				found = true
 
@@ -76,16 +90,20 @@ func (r *JenkinsBaseConfigurationReconciler) ensureExtraRBAC(meta metav1.ObjectM
 			}
 		}
 	}
-
 	return nil
 }
 
-func getExtraRoleBindingName(serviceAccountName string, roleRef rbacv1.RoleRef) string {
-	var typeName string
-	if roleRef.Kind == "ClusterRole" {
-		typeName = "cr"
-	} else {
-		typeName = "r"
+func (r *JenkinsBaseConfigurationReconciler) GetDefaultRoleBinding(jenkins *v1alpha2.Jenkins) *rbacv1.RoleBinding {
+	editRole := &rbacv1.ClusterRole{}
+	err := r.Client.Get(context.TODO(), types.NamespacedName{Name: "edit"}, editRole)
+	if err != nil {
+		logger.Info("edit ClusterRole not found. Default rolebinding will not be created")
 	}
-	return fmt.Sprintf("%s-%s-%s", serviceAccountName, typeName, roleRef.Name)
+	roleRef := rbacv1.RoleRef{
+		Name:     editRole.GetName(),
+		Kind:     editRole.Kind,
+		APIGroup: "rbac.authorization.k8s.io",
+	}
+	roleBinding := resources.NewRoleBinding(jenkins, roleRef)
+	return roleBinding
 }

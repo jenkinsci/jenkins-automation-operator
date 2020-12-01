@@ -4,12 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
+
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
 	stackerr "github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
 
@@ -18,7 +19,8 @@ const (
 	oauthAnnotationPattern = "{\"kind\":\"OAuthRedirectReference\",\"apiVersion\":\"v1\",\"reference\":{\"kind\":\"Route\",\"name\":\"%s\"}}"
 )
 
-func (r *JenkinsBaseConfigurationReconciler) createServiceAccount(meta metav1.ObjectMeta) error {
+func (r *JenkinsBaseConfigurationReconciler) createServiceAccount(jenkins *v1alpha2.Jenkins) error {
+	meta := resources.NewResourceObjectMeta(jenkins)
 	serviceAccount := &corev1.ServiceAccount{}
 	err := r.Client.Get(context.TODO(), types.NamespacedName{Name: meta.Name, Namespace: meta.Namespace}, serviceAccount)
 	annotations := r.Configuration.Jenkins.Spec.ServiceAccount.Annotations

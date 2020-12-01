@@ -24,6 +24,8 @@ import (
 	"strings"
 	"time"
 
+	v1 "k8s.io/api/rbac/v1"
+
 	"k8s.io/apimachinery/pkg/api/resource"
 
 	"github.com/go-logr/logr"
@@ -57,7 +59,6 @@ import (
 const (
 	DefaultJenkinsImageEnvVar = "DEFAULT_JENKINS_IMAGE"
 
-	APIVersion             = "core/v1"
 	containerProbeURI      = "login"
 	containerProbePortName = "http"
 
@@ -94,6 +95,7 @@ func (r *JenkinsReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&corev1.Service{}).
 		Owns(&corev1.ConfigMap{}).
 		Owns(&appsv1.Deployment{}).
+		Owns(&v1.RoleBinding{}).
 		WithEventFilter(predicate.GenerationChangedPredicate{}).
 		Complete(r)
 	// Owns(&routev1.Route{}).Complete(r)
@@ -479,6 +481,7 @@ func (r *JenkinsReconciler) getCalculatedSpec(ctx context.Context, jenkins *v1al
 	if len(jenkinsMasterImage) == 0 {
 		jenkinsMasterImage = r.getDefaultJenkinsImage()
 	}
+
 	imageRef := requestedSpec.JenkinsImageRef
 	if len(imageRef) != 0 {
 		logger.Info(fmt.Sprintf("Jenkins %s has a jenkinsImageRef defined: %s", jenkinsName, imageRef))
@@ -573,6 +576,17 @@ func (r *JenkinsReconciler) getCalculatedSpec(ctx context.Context, jenkins *v1al
 		}
 	}
 	calculatedSpec.ConfigurationAsCode = configurationAsCode
+
+	roles := requestedSpec.Roles
+	if roles == nil {
+		logger.Info("jenkins.Roles is nil: Adding default role binding edit")
+		defaultRoleBinding := r.GetDefaultRoleBinding(jenkins)
+		if defaultRoleBinding != nil {
+			roles = append(roles, defaultRoleBinding.RoleRef)
+		}
+	}
+	calculatedSpec.Roles = roles
+
 	return calculatedSpec, nil
 }
 
@@ -648,9 +662,27 @@ func (r *JenkinsReconciler) setDefaultsForContainer(jenkins *v1alpha2.Jenkins, c
 	if isResourceRequirementsNotSet(actualSpec.Master.Containers[containerIndex].Resources) {
 		logger.Info("Setting default container resource requirements")
 		changed = true
-		actualSpec.Master.Containers[containerIndex].Resources = resources.NewResourceRequirements("50m", "50Mi", "100m", "100Mi")
+		actualSpec.Master.Containers[containerIndex].Resources = resources.DefaultResourceRequirement()
 	}
 	return changed
+}
+
+func (r *JenkinsReconciler) GetDefaultRoleBinding(jenkins *v1alpha2.Jenkins) *v1.RoleBinding {
+	editRole := &v1.ClusterRole{}
+	err := r.Client.Get(context.TODO(), types.NamespacedName{Name: base.EditClusterRole}, editRole)
+	if err != nil {
+		logger.Info("edit ClusterRole not found. Default rolebinding will not be created")
+		return nil
+	}
+	roleRef := v1.RoleRef{
+		Name:     editRole.GetName(),
+		Kind:     editRole.Kind,
+		APIGroup: base.AuthorizationAPIGroup,
+	}
+	roleBinding := resources.NewRoleBinding(jenkins, roleRef)
+	logger.Info(fmt.Sprintf("Default RoleBinding to add %s", roleBinding))
+
+	return roleBinding
 }
 
 func isResourceRequirementsNotSet(requirements corev1.ResourceRequirements) bool {

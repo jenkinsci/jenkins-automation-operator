@@ -617,18 +617,21 @@ func TestEnsureExtraRBAC(t *testing.T) {
 				Roles: []rbacv1.RoleRef{},
 			},
 		}
+		jenkins.Status = &v1alpha2.JenkinsStatus{
+			Spec: jenkins.Spec.DeepCopy(),
+		}
 		config := configuration.Configuration{
 			Client:  fakeClient,
 			Jenkins: jenkins,
 			Scheme:  scheme.Scheme,
 		}
-		reconciler := New(config, client.JenkinsAPIConnectionSettings{})
+		reconcilier := New(config, client.JenkinsAPIConnectionSettings{})
 		metaObject := resources.NewResourceObjectMeta(jenkins)
 
 		// when
-		err = reconciler.createRBAC(metaObject)
+		err = reconcilier.createRBAC(jenkins)
 		assert.NoError(t, err)
-		err = reconciler.ensureExtraRBAC(metaObject)
+		err = reconcilier.ensureExtraRBACArePresent()
 		assert.NoError(t, err)
 
 		// then
@@ -659,6 +662,9 @@ func TestEnsureExtraRBAC(t *testing.T) {
 				},
 			},
 		}
+		jenkins.Status = &v1alpha2.JenkinsStatus{
+			Spec: jenkins.Spec.DeepCopy(),
+		}
 		config := configuration.Configuration{
 			Client:  fakeClient,
 			Jenkins: jenkins,
@@ -668,9 +674,9 @@ func TestEnsureExtraRBAC(t *testing.T) {
 		metaObject := resources.NewResourceObjectMeta(jenkins)
 
 		// when
-		err = reconciler.createRBAC(metaObject)
+		err = reconciler.createRBAC(jenkins)
 		assert.NoError(t, err)
-		err = reconciler.ensureExtraRBAC(metaObject)
+		err = reconciler.ensureExtraRBACArePresent()
 		assert.NoError(t, err)
 
 		// then
@@ -706,6 +712,9 @@ func TestEnsureExtraRBAC(t *testing.T) {
 				},
 			},
 		}
+		jenkins.Status = &v1alpha2.JenkinsStatus{
+			Spec: jenkins.Spec.DeepCopy(),
+		}
 		config := configuration.Configuration{
 			Client:  fakeClient,
 			Jenkins: jenkins,
@@ -715,9 +724,9 @@ func TestEnsureExtraRBAC(t *testing.T) {
 		metaObject := resources.NewResourceObjectMeta(jenkins)
 
 		// when
-		err = reconciler.createRBAC(metaObject)
+		err = reconciler.createRBAC(jenkins)
 		assert.NoError(t, err)
-		err = reconciler.ensureExtraRBAC(metaObject)
+		err = reconciler.ensureExtraRBACArePresent()
 		assert.NoError(t, err)
 
 		// then
@@ -754,6 +763,9 @@ func TestEnsureExtraRBAC(t *testing.T) {
 				},
 			},
 		}
+		jenkins.Status = &v1alpha2.JenkinsStatus{
+			Spec: jenkins.Spec.DeepCopy(),
+		}
 		config := configuration.Configuration{
 			Client:  fakeClient,
 			Jenkins: jenkins,
@@ -763,16 +775,16 @@ func TestEnsureExtraRBAC(t *testing.T) {
 		metaObject := resources.NewResourceObjectMeta(jenkins)
 
 		// when
-		roleBindingSkipMe := resources.NewRoleBinding("skip-me", namespace, metaObject.Name, rbacv1.RoleRef{
+		roleBindingSkipMe := resources.NewRoleBinding(jenkins, rbacv1.RoleRef{
 			APIGroup: "rbac.authorization.k8s.io",
 			Kind:     clusterRoleKind,
 			Name:     "edit",
 		})
 		err = reconciler.CreateOrUpdateResource(roleBindingSkipMe)
 		assert.NoError(t, err)
-		err = reconciler.createRBAC(metaObject)
+		err = reconciler.createRBAC(jenkins)
 		assert.NoError(t, err)
-		err = reconciler.ensureExtraRBAC(metaObject)
+		err = reconciler.ensureExtraRBACArePresent()
 		assert.NoError(t, err)
 		jenkins.Spec.Roles = []rbacv1.RoleRef{
 			{
@@ -781,7 +793,7 @@ func TestEnsureExtraRBAC(t *testing.T) {
 				Name:     "admin",
 			},
 		}
-		err = reconciler.ensureExtraRBAC(metaObject)
+		err = reconciler.ensureExtraRBACArePresent()
 		assert.NoError(t, err)
 
 		// then
