@@ -8,5 +8,6 @@ See the following topics to learn how to use the Jenkins operator:
 
 - link:install.adoc[Installing the Jenkins Operator]
 - link:configurationascode.adoc[Configuration as Code]
+- link:jenkinsimage.adoc[Build your own Jenkins Image]
 - link:backupandrestore.adoc[Backup and Restore]
 
