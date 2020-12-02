@@ -516,13 +516,10 @@ func (r *JenkinsReconciler) getCalculatedSpec(ctx context.Context, jenkins *v1al
 		logger.Info("Setting default Jenkins livenessProbe")
 		jenkinsContainer.LivenessProbe = resources.NewProbe(containerProbeURI, containerProbePortName, corev1.URISchemeHTTP, 80, 5, 12)
 	}
-	if isJavaOpsVariableNotSet(jenkinsContainer) {
-		logger.Info("Setting default Jenkins container JAVA_OPTS environment variable")
-		jenkinsContainer.Env = append(jenkinsContainer.Env, corev1.EnvVar{
-			Name:  constants.JavaOpsVariableName,
-			Value: "-XX:+UnlockExperimentalVMOptions -XX:MaxRAMFraction=1 -Djenkins.install.runSetupWizard=false -Djava.awt.headless=true -Dhudson.security.csrf.DefaultCrumbIssuer.EXCLUDE_SESSION_ID=true -Dcasc.reload.token=$(POD_NAME)",
-		})
-	}
+
+	setEnvVarIfNotSet(&jenkinsContainer, constants.JavaOptsVariableName, constants.JavaOptsDefaultValue)
+	setEnvVarIfNotSet(&jenkinsContainer, constants.KubernetesTrustCertsVariableName, constants.KubernetesTrustCertsDefaultValue)
+
 	if calculatedSpec.Master.BasePlugins == nil {
 		calculatedSpec.Master.BasePlugins = []v1alpha2.Plugin{}
 	}
@@ -590,6 +587,17 @@ func (r *JenkinsReconciler) getCalculatedSpec(ctx context.Context, jenkins *v1al
 	return calculatedSpec, nil
 }
 
+func setEnvVarIfNotSet(jenkinsContainer *v1alpha2.Container, envVarName string, envVarValue string) {
+	if isEnvVarNotSet(jenkinsContainer, envVarName) {
+		logger.Info(fmt.Sprintf("Setting default Jenkins container %s environment variable", envVarName))
+		javaOptsEnvVar := corev1.EnvVar{
+			Name:  envVarName,
+			Value: envVarValue,
+		}
+		jenkinsContainer.Env = append(jenkinsContainer.Env, javaOptsEnvVar)
+	}
+}
+
 func (r *JenkinsReconciler) getCalculatedJenkinsMaster(calculatedSpec *v1alpha2.JenkinsSpec, jenkinsContainer v1alpha2.Container) *v1alpha2.JenkinsMaster {
 	var master *v1alpha2.JenkinsMaster
 	if calculatedSpec.Master == nil {
@@ -634,9 +642,9 @@ func (r *JenkinsReconciler) sendNewGroovyScriptExecutionFailedNotification(jenki
 	}
 }
 
-func isJavaOpsVariableNotSet(container v1alpha2.Container) bool {
+func isEnvVarNotSet(container *v1alpha2.Container, envVarName string) bool {
 	for _, env := range container.Env {
-		if env.Name == constants.JavaOpsVariableName {
+		if env.Name == envVarName {
 			return false
 		}
 	}

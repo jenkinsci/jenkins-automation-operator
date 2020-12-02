@@ -15,8 +15,17 @@ const (
 	DefaultHTTPPortInt32 = int32(8080)
 	// DefaultJNLPPortInt32 is the default Jenkins port for slaves
 	DefaultJNLPPortInt32 = int32(50000)
-	// JavaOpsVariableName is the name of environment variable which consists Jenkins Java options
-	JavaOpsVariableName = "JAVA_OPTS"
+	// JavaOptsVariableName is the name of environment variable which consists Jenkins Java options
+	JavaOptsVariableName = "JAVA_OPTS"
+	// JavaOptsDefaultValue default value for JAVA_OPTS if not set
+	JavaOptsDefaultValue = "-XX:+UnlockExperimentalVMOptions -XX:MaxRAMFraction=1 -Djenkins.install.runSetupWizard=false -Djava.awt.headless=true -Dhudson.security.csrf.DefaultCrumbIssuer.EXCLUDE_SESSION_ID=true -Dcasc.reload.token=$(POD_NAME)"
+
+	// KubernetesTrustCertsVariableName KUBERNETES_TRUST_CERTIFICATES var name. Tells the kubernetes plugin if it should trust the kubernetes certificate
+	KubernetesTrustCertsVariableName = "KUBERNETES_TRUST_CERTIFICATES"
+
+	// KubernetesTrustCertsDefaultValue Tells the kubernetes plugin if it should trust the kubernetes certificate
+	KubernetesTrustCertsDefaultValue = "true"
+
 	// JenkinsStatusCompleted is the completed status value.
 	JenkinsStatusCompleted = "Completed"
 	// JenkinsStatusReinitializing is the status given if Jenkins instance is being recreated

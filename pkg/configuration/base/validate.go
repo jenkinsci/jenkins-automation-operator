@@ -410,7 +410,7 @@ func (r *JenkinsBaseConfigurationReconciler) validateJenkinsMasterPodEnvs() []st
 	javaOpts := corev1.EnvVar{}
 	actualSpec := r.Configuration.Jenkins.Status.Spec
 	for _, userEnv := range actualSpec.Master.Containers[0].Env {
-		if userEnv.Name == constants.JavaOpsVariableName {
+		if userEnv.Name == constants.JavaOptsVariableName {
 			javaOpts = userEnv
 		}
 		// if _, overriding := baseEnvNames[userEnv.Name]; overriding {
@@ -433,7 +433,7 @@ func (r *JenkinsBaseConfigurationReconciler) validateJenkinsMasterPodEnvs() []st
 	}
 	for requiredFlag, set := range requiredFlags {
 		if !set {
-			messages = append(messages, fmt.Sprintf("Jenkins Master container env '%s' doesn't have required flag '%s'", constants.JavaOpsVariableName, requiredFlag))
+			messages = append(messages, fmt.Sprintf("Jenkins Master container env '%s' doesn't have required flag '%s'", constants.JavaOptsVariableName, requiredFlag))
 		}
 	}
 

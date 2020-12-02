@@ -333,7 +333,7 @@ func TestValidateJenkinsMasterPodEnvs(t *testing.T) {
 									Value: "",
 								},
 								{
-									Name:  constants.JavaOpsVariableName,
+									Name:  constants.JavaOptsVariableName,
 									Value: validJenkinsOps,
 								},
 							},
@@ -359,7 +359,7 @@ func TestValidateJenkinsMasterPodEnvs(t *testing.T) {
 						{
 							Env: []corev1.EnvVar{
 								{
-									Name:  constants.JavaOpsVariableName,
+									Name:  constants.JavaOptsVariableName,
 									Value: "-Djenkins.install.runSetupWizard=false",
 								},
 							},
@@ -386,7 +386,7 @@ func TestValidateJenkinsMasterPodEnvs(t *testing.T) {
 						{
 							Env: []corev1.EnvVar{
 								{
-									Name:  constants.JavaOpsVariableName,
+									Name:  constants.JavaOptsVariableName,
 									Value: "-Djava.awt.headless=true",
 								},
 							},
