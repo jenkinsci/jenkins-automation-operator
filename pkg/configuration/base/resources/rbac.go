@@ -18,8 +18,8 @@ const (
 	// EmptyAPIGroup short hand for the empty API group while defining policies
 	EmptyAPIGroup = ""
 
-	// OpenshiftAPIGroup the openshift api group name
-	OpenshiftAPIGroup = "image.openshift.io"
+	// ImageAPIGroup the openshift api group name for images
+	ImageAPIGroup = "image.openshift.io"
 
 	// BuildAPIGroup  the openshift api group name for builds
 	BuildAPIGroup = "build.openshift.io"
@@ -80,7 +80,7 @@ func NewDefaultPolicyRules() []v1.PolicyRule {
 	rules = append(rules, NewPolicyRule(EmptyAPIGroup, "secrets", Default))
 	rules = append(rules, NewPolicyRule(EmptyAPIGroup, "events", watch))
 
-	rules = append(rules, NewOpenShiftPolicyRule(OpenshiftAPIGroup, "imagestreams", Default))
+	rules = append(rules, NewOpenShiftPolicyRule(ImageAPIGroup, "imagestreams", Default))
 	rules = append(rules, NewOpenShiftPolicyRule(BuildAPIGroup, "buildconfigs", Default))
 	rules = append(rules, NewOpenShiftPolicyRule(BuildAPIGroup, "builds", Default))
 
