@@ -52,10 +52,7 @@ func (r *JenkinsImageReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-// +kubebuilder:rbac:groups=jenkins.io,resources=jenkinsimages,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=jenkins.io,resources=jenkinsimages/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;create;update;patch;delete
+// +kubebuilder:rbac:groups=jenkins.io,resources=jenkinsimages;jenkinsimages/status,verbs=*
 
 func (r *JenkinsImageReconciler) Reconcile(request ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()

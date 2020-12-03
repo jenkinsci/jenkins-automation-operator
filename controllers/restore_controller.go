@@ -60,8 +60,7 @@ var (
 	SafeRestartStarted status.ConditionType = "SafeRestartStarted"
 )
 
-// +kubebuilder:rbac:groups=jenkins.io,resources=restores,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=jenkins.io,resources=restores/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=jenkins.io,resources=restores;restores/status,verbs=*
 
 func (r *RestoreReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()

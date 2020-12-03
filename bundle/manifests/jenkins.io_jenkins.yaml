@@ -729,9 +729,7 @@ spec:
                         type: string
                     required:
                     - image
-                    - imagePullPolicy
                     - name
-                    - resources
                     type: object
                   type: array
                 imagePullSecrets:
@@ -2460,9 +2458,7 @@ spec:
                             type: string
                         required:
                         - image
-                        - imagePullPolicy
                         - name
-                        - resources
                         type: object
                       type: array
                     imagePullSecrets:

@@ -21,7 +21,15 @@ metadata:
             "name": "backupconfig-sample"
           },
           "spec": {
-            "foo": "bar"
+            "backupOptions": {
+              "config": true,
+              "jobs": true,
+              "plugins": true
+            },
+            "jenkinsRef": "jenkins-with-backup-sample",
+            "restartAfterRestore": {
+              "enabled": true
+            }
           }
         },
         {
@@ -177,6 +185,43 @@ spec:
       clusterPermissions:
       - rules:
         - apiGroups:
+          - apps
+          - apps.openshift.io
+          - batch
+          - ""
+          - extensionsnetworking.k8s.io
+          - packages.operators.coreos.com
+          - policy
+          - project.openshift.io
+          - quota.openshift.io
+          - rbac.authorization.k8s.io
+          - template.openshift.io
+          resources:
+          - '*'
+          verbs:
+          - '*'
+        - apiGroups:
+          - jenkins.io
+          resources:
+          - backups
+          - backups/status
+          verbs:
+          - '*'
+        - apiGroups:
+          - jenkins.io
+          resources:
+          - jenkinsimages
+          - jenkinsimages/status
+          verbs:
+          - '*'
+        - apiGroups:
+          - jenkins.io
+          resources:
+          - restores
+          - restores/status
+          verbs:
+          - '*'
+        - apiGroups:
           - authentication.k8s.io
           resources:
           - tokenreviews
@@ -219,15 +264,10 @@ spec:
                 - --enable-leader-election
                 command:
                 - /manager
-                image: quay.io/redhat-developer/openshift-jenkins-operator:0.7.0-d9d1755f
+                image: quay.io/redhat-developer/openshift-jenkins-operator:0.7.0-29ad9a59
+                imagePullPolicy: Always
                 name: manager
-                resources:
-                  limits:
-                    cpu: 100m
-                    memory: 30Mi
-                  requests:
-                    cpu: 100m
-                    memory: 20Mi
+                resources: {}
               terminationGracePeriodSeconds: 10
       permissions:
       - rules:

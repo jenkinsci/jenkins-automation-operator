@@ -48,8 +48,7 @@ type BackupReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-// +kubebuilder:rbac:groups=jenkins.io,resources=backups,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=jenkins.io,resources=backups/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=jenkins.io,resources=backups;backups/status,verbs=*
 
 var (
 	logx               = log.Log
