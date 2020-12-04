@@ -12,23 +12,24 @@ import (
 const ServiceKind = "Service"
 
 // UpdateService returns new service with override fields from config
-func UpdateService(actual corev1.Service, config v1alpha2.Service) corev1.Service {
-	actual.ObjectMeta.Annotations = config.Annotations
-	for key, value := range config.Labels {
-		actual.ObjectMeta.Labels[key] = value
+func UpdateService(current corev1.Service, desired v1alpha2.Service) corev1.Service {
+	current.ObjectMeta.Annotations = desired.Annotations
+	for key, value := range desired.Labels {
+		current.ObjectMeta.Labels[key] = value
 	}
-	actual.Spec.Type = config.Type
-	actual.Spec.LoadBalancerIP = config.LoadBalancerIP
-	actual.Spec.LoadBalancerSourceRanges = config.LoadBalancerSourceRanges
-	if len(actual.Spec.Ports) == 0 {
-		actual.Spec.Ports = []corev1.ServicePort{{}}
+	current.Spec.Type = desired.Type
+	current.Spec.LoadBalancerIP = desired.LoadBalancerIP
+	current.Spec.LoadBalancerSourceRanges = desired.LoadBalancerSourceRanges
+	if len(current.Spec.Ports) == 0 {
+		current.Spec.Ports = []corev1.ServicePort{{}}
 	}
-	actual.Spec.Ports[0].Port = config.Port
-	if config.NodePort != 0 {
-		actual.Spec.Ports[0].NodePort = config.NodePort
+	current.Spec.Ports[0].Port = desired.Port
+	current.Spec.Ports[0].Name = desired.PortName
+	if desired.NodePort != 0 {
+		current.Spec.Ports[0].NodePort = desired.NodePort
 	}
 
-	return actual
+	return current
 }
 
 // GetJenkinsHTTPServiceName returns Kubernetes service name used for expose Jenkins HTTP endpoint

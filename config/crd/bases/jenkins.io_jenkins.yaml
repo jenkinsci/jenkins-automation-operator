@@ -36,7 +36,7 @@ spec:
           description: Spec defines the desired state of the Jenkins
           properties:
             backupEnabled:
-              description: Backup defines configuration of Backup for Jenkins
+              description: BackupEnabled defines whether backup feature is enabled
               type: boolean
             configurationAsCode:
               description: ConfigurationAsCode defines configuration of Jenkins configuration
@@ -142,6 +142,10 @@ spec:
                     https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies'
                   format: int32
                   type: integer
+                portName:
+                  description: 'The PortName that are exposed by this service. More
+                    info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies'
+                  type: string
                 type:
                   description: 'Type determines how the Service is exposed. Defaults
                     to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort,
@@ -2528,6 +2532,9 @@ spec:
                 volumeSize:
                   type: string
               type: object
+            metricsEnabled:
+              description: MetricsEnabled defines whether prometheus metrics are enabled
+              type: boolean
             roles:
               description: Roles defines list of extra RBAC roles for the Jenkins
                 Master pod service account
@@ -2602,6 +2609,10 @@ spec:
                     https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies'
                   format: int32
                   type: integer
+                portName:
+                  description: 'The PortName that are exposed by this service. More
+                    info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies'
+                  type: string
                 type:
                   description: 'Type determines how the Service is exposed. Defaults
                     to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort,
@@ -2673,7 +2684,7 @@ spec:
               description: Spec defines the effective state of the Jenkins
               properties:
                 backupEnabled:
-                  description: Backup defines configuration of Backup for Jenkins
+                  description: BackupEnabled defines whether backup feature is enabled
                   type: boolean
                 configurationAsCode:
                   description: ConfigurationAsCode defines configuration of Jenkins
@@ -2780,6 +2791,10 @@ spec:
                         info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies'
                       format: int32
                       type: integer
+                    portName:
+                      description: 'The PortName that are exposed by this service.
+                        More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies'
+                      type: string
                     type:
                       description: 'Type determines how the Service is exposed. Defaults
                         to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort,
@@ -5252,6 +5267,10 @@ spec:
                     volumeSize:
                       type: string
                   type: object
+                metricsEnabled:
+                  description: MetricsEnabled defines whether prometheus metrics are
+                    enabled
+                  type: boolean
                 roles:
                   description: Roles defines list of extra RBAC roles for the Jenkins
                     Master pod service account
@@ -5328,6 +5347,10 @@ spec:
                         info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies'
                       format: int32
                       type: integer
+                    portName:
+                      description: 'The PortName that are exposed by this service.
+                        More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies'
+                      type: string
                     type:
                       description: 'Type determines how the Service is exposed. Defaults
                         to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort,
