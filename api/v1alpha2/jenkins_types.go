@@ -61,8 +61,11 @@ type JenkinsSpec struct {
 	// +optional
 	ConfigurationAsCode *Configuration `json:"configurationAsCode,omitempty"`
 
-	// Backup defines configuration of Backup for Jenkins
+	// BackupEnabled defines whether backup feature is enabled
 	BackupEnabled bool `json:"backupEnabled,omitempty"`
+
+	// MetricsEnabled defines whether prometheus metrics are enabled
+	MetricsEnabled bool `json:"metricsEnabled,omitempty"`
 }
 
 // AuthorizationStrategy defines authorization strategy of the operator for the Jenkins API
@@ -385,6 +388,10 @@ type Service struct {
 	// The port that are exposed by this service.
 	// More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies
 	Port int32 `json:"port,omitempty"`
+
+	// The PortName that are exposed by this service.
+	// More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies
+	PortName string `json:"portName,omitempty"`
 
 	// The port on each node on which this service is exposed when type=NodePort or LoadBalancer.
 	// Usually assigned by the system. If specified, it will be allocated to the service

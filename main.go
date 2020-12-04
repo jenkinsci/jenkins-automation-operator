@@ -50,6 +50,7 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/version"
 
 	// sdkVersion "github.com/operator-framework/operator-sdk/version"
+	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
 	kzap "sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
@@ -68,6 +69,7 @@ func init() {
 	utilruntime.Must(jenkinsv1alpha2.AddToScheme(scheme))
 	utilruntime.Must(routev1.AddToScheme(scheme))
 	utilruntime.Must(corev1.AddToScheme(scheme))
+	utilruntime.Must(monitoringv1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 
