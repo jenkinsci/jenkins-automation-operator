@@ -4,6 +4,7 @@ go 1.13
 
 require (
 	github.com/bndr/gojenkins v0.0.0-20181125150310-de43c03cf849
+	github.com/coreos/prometheus-operator v0.0.0-00010101000000-000000000000
 	github.com/daixiang0/gci v0.2.4 // indirect
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/elazarl/goproxy v0.0.0-20190711103511-473e67f1d7d2 // indirect

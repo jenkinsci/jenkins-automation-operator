@@ -41,6 +41,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 
 	// routev1 "github.com/openshift/api/route/v1"
+	// monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
 	conditionsv1 "github.com/openshift/custom-resource-status/conditions/v1"
 	"github.com/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
@@ -560,15 +561,17 @@ func (r *JenkinsReconciler) getCalculatedSpec(ctx context.Context, jenkins *v1al
 			serviceType = corev1.ServiceTypeNodePort
 		}
 		calculatedSpec.Service = v1alpha2.Service{
-			Type: serviceType,
-			Port: constants.DefaultHTTPPortInt32,
+			Type:     serviceType,
+			Port:     constants.DefaultHTTPPortInt32,
+			PortName: "web",
 		}
 	}
 	if reflect.DeepEqual(calculatedSpec.JNLPService, v1alpha2.Service{}) {
 		logger.Info("Setting default Jenkins JNLP service")
 		calculatedSpec.JNLPService = v1alpha2.Service{
-			Type: corev1.ServiceTypeClusterIP,
-			Port: constants.DefaultJNLPPortInt32,
+			Type:     corev1.ServiceTypeClusterIP,
+			Port:     constants.DefaultJNLPPortInt32,
+			PortName: "jnlp",
 		}
 	}
 	if len(calculatedSpec.Master.Containers) > 1 {
