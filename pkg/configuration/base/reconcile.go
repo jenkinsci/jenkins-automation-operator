@@ -93,50 +93,57 @@ func (r *JenkinsBaseConfigurationReconciler) ensureResourcesRequiredForJenkinsDe
 	if err := r.createOperatorCredentialsSecret(metaObject); err != nil {
 		return err
 	}
-	r.logger.V(log.VDebug).Info("Operator credentials secret is present")
+	r.logger.V(log.VDebug).Info("Operator credentials secret is ready")
 
 	if err := r.createScriptsConfigMap(metaObject); err != nil {
 		return err
 	}
-	r.logger.V(log.VDebug).Info("Scripts config map is present")
+	r.logger.V(log.VDebug).Info("Scripts config map is ready")
 
 	if err := r.createInitConfigurationConfigMap(metaObject); err != nil {
 		return err
 	}
-	r.logger.V(log.VDebug).Info("Init configuration config map is present")
+	r.logger.V(log.VDebug).Info("Init configuration config map is ready")
 
 	if err := r.createBasePluginsConfigMap(metaObject); err != nil {
 		return err
 	}
-	r.logger.V(log.VDebug).Info("Base plugins config map is present")
+	r.logger.V(log.VDebug).Info("Base plugins config map is ready")
 
 	if err := r.createRBAC(jenkins); err != nil {
 		return err
 	}
-	r.logger.V(log.VDebug).Info("Service account, role and role binding are present or created")
+	r.logger.V(log.VDebug).Info("Service account, role and role binding are ready")
 
 	if err := r.ensureExtraRBACArePresent(); err != nil {
 		return err
 	}
-	r.logger.V(log.VDebug).Info("Extra role bindings are present")
+	r.logger.V(log.VDebug).Info("Extra role bindings are ready")
 
 	httpServiceName := resources.GetJenkinsHTTPServiceName(r.Configuration.Jenkins)
 	if err := r.createService(metaObject, httpServiceName, r.Configuration.Jenkins.Status.Spec.Service); err != nil {
 		return err
 	}
-	r.logger.V(log.VDebug).Info("Jenkins HTTP Service is present")
+	r.logger.V(log.VDebug).Info("Jenkins HTTP Service is ready")
 
 	if err := r.createService(metaObject, resources.GetJenkinsJNLPServiceName(r.Configuration.Jenkins), r.Configuration.Jenkins.Status.Spec.JNLPService); err != nil {
 		return err
 	}
-	r.logger.V(log.VDebug).Info("Jenkins JNLP Service is present")
+	r.logger.V(log.VDebug).Info("Jenkins JNLP Service is ready")
+
+	if r.Configuration.Jenkins.Spec.MetricsEnabled {
+		if err := r.createServiceMonitor(r.Configuration.Jenkins); err != nil {
+			return err
+		}
+	}
+	r.logger.V(log.VDebug).Info("Prometheus service monitor for jenkins is ready")
 
 	if resources.RouteAPIAvailable {
-		r.logger.V(log.VDebug).Info("Route API is available. Now ensuring route is present")
+		r.logger.V(log.VDebug).Info("Route API is available. Now ensuring route is ready")
 		if err := r.createRoute(metaObject, httpServiceName, r.Configuration.Jenkins); err != nil {
 			return err
 		}
-		r.logger.V(log.VDebug).Info("Jenkins Route is present")
+		r.logger.V(log.VDebug).Info("Jenkins Route is ready")
 	}
 
 	return nil

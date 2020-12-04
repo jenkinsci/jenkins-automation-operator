@@ -96,6 +96,7 @@ var _ = BeforeSuite(func(done Done) {
 	registerJenkinsController(manager, restConfig)
 
 	go func() {
+		// defer GinkgoRecover()
 		err = manager.Start(ctrl.SetupSignalHandler())
 		if err != nil {
 			Logf("Error while starting manager: %+v", err)
@@ -144,7 +145,6 @@ func registerJenkinsController(manager manager.Manager, c *rest.Config) {
 	eventsRecorder := getEventsRecorder(c)
 	client := manager.GetClient()
 	go notifications.Listen(notificationsChannel, eventsRecorder, client)
-	// utilruntime.Must(routev1.AddToScheme( manager.GetScheme()))
 	controller := &JenkinsReconciler{
 		Client:             client,
 		Log:                ctrl.Log.WithName("controllers").WithName("JenkinsReconciler"),
