@@ -21,13 +21,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/operator-framework/operator-lib/status"
-
-	"github.com/jenkinsci/kubernetes-operator/pkg/exec"
-
 	"github.com/go-logr/logr"
+	jenkinsv1alpha2 "github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
+	"github.com/jenkinsci/kubernetes-operator/pkg/exec"
 	"github.com/jenkinsci/kubernetes-operator/pkg/log"
+	"github.com/operator-framework/operator-lib/status"
 	stackerr "github.com/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -37,8 +36,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	jenkinsv1alpha2 "github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
 )
 
 // BackupReconciler reconciles a Backup object
@@ -48,7 +45,7 @@ type BackupReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-// +kubebuilder:rbac:groups=jenkins.io,resources=backups;backups/status,verbs=*
+// +kubebuilder:rbac:groups=jenkins.io,resources=backups;backups/status;backupconfigs;backupconfigs/status,verbs=*
 
 var (
 	logx               = log.Log

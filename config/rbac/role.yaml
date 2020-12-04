@@ -32,14 +32,18 @@ rules:
 - apiGroups:
   - jenkins.io
   resources:
-  - '*'
+  - backupconfigs
+  - backupconfigs/status
+  - backups
+  - backups/status
   verbs:
   - '*'
 - apiGroups:
   - jenkins.io
   resources:
-  - backups
-  - backups/status
+  - jenkins
+  - jenkins/finalizers
+  - jenkins/status
   verbs:
   - '*'
 - apiGroups:

@@ -24,9 +24,7 @@ import (
 	"strings"
 	"time"
 
-	v1 "k8s.io/api/rbac/v1"
-
-	"k8s.io/apimachinery/pkg/api/resource"
+	//	"math/rand"
 
 	"github.com/go-logr/logr"
 	"github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
@@ -39,6 +37,8 @@ import (
 	"github.com/jenkinsci/kubernetes-operator/pkg/notifications/event"
 	"github.com/jenkinsci/kubernetes-operator/pkg/notifications/reason"
 	"github.com/jenkinsci/kubernetes-operator/pkg/plugins"
+	v1 "k8s.io/api/rbac/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 
 	// routev1 "github.com/openshift/api/route/v1"
 	conditionsv1 "github.com/openshift/custom-resource-status/conditions/v1"
@@ -51,8 +51,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
-
-	//	"math/rand"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -102,8 +100,8 @@ func (r *JenkinsReconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 // +kubebuilder:rbac:groups=apps;batch;core;extensionsnetworking.k8s.io;packages.operators.coreos.com;policy;rbac.authorization.k8s.io,resources=*,verbs=*
-// +kubebuilder:rbac:groups=apps.openshift.io;core;project.openshift.io;quota.openshift.io;route.openshift.io;template.openshift.io,resources=*,verbs=*
-// +kubebuilder:rbac:groups=jenkins.io,resources=*,verbs=*
+// +kubebuilder:rbac:groups=apps.openshift.io;core;project.openshift.io;quota.openshift.io;template.openshift.io;route.openshift.io,resources=*,verbs=*
+// +kubebuilder:rbac:groups=jenkins.io,resources=jenkins;jenkins/status;jenkins/finalizers,verbs=*
 
 func (r *JenkinsReconciler) Reconcile(request ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
