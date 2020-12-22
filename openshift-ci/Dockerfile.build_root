@@ -1,6 +1,6 @@
 FROM registry.access.redhat.com/ubi8/ubi:latest
 
-ARG GO_PACKAGE_PATH=github.com/jenkinsci/jenkins-operator
+ARG GO_PACKAGE_PATH=github.com/jenkinsci/jenkins-automation-operator
 
 # Basics
 ENV GIT_COMMITTER_NAME="OpenShift Developer Sevices"

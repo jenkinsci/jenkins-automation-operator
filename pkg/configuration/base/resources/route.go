@@ -1,7 +1,7 @@
 package resources
 
 import (
-	"github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
+	"github.com/jenkinsci/jenkins-automation-operator/api/v1alpha2"
 	routev1 "github.com/openshift/api/route/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/intstr"

@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/jenkinsci/kubernetes-operator/pkg/log"
+	"github.com/jenkinsci/jenkins-automation-operator/pkg/log"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"

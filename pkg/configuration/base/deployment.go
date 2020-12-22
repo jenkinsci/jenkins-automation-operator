@@ -3,11 +3,11 @@ package base
 import (
 	"fmt"
 
-	"github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
-	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
-	"github.com/jenkinsci/kubernetes-operator/pkg/notifications/event"
-	"github.com/jenkinsci/kubernetes-operator/pkg/notifications/reason"
-	"github.com/jenkinsci/kubernetes-operator/version"
+	"github.com/jenkinsci/jenkins-automation-operator/api/v1alpha2"
+	"github.com/jenkinsci/jenkins-automation-operator/pkg/configuration/base/resources"
+	"github.com/jenkinsci/jenkins-automation-operator/pkg/notifications/event"
+	"github.com/jenkinsci/jenkins-automation-operator/pkg/notifications/reason"
+	"github.com/jenkinsci/jenkins-automation-operator/version"
 	stackerr "github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

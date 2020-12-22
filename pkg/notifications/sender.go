@@ -4,10 +4,10 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
-	k8sevent "github.com/jenkinsci/kubernetes-operator/pkg/event"
-	"github.com/jenkinsci/kubernetes-operator/pkg/log"
-	"github.com/jenkinsci/kubernetes-operator/pkg/notifications/event"
+	"github.com/jenkinsci/jenkins-automation-operator/api/v1alpha2"
+	k8sevent "github.com/jenkinsci/jenkins-automation-operator/pkg/event"
+	"github.com/jenkinsci/jenkins-automation-operator/pkg/log"
+	"github.com/jenkinsci/jenkins-automation-operator/pkg/notifications/event"
 	k8sclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 

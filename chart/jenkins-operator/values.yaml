@@ -40,7 +40,7 @@ jenkins:
 
   # disableCSRFProtection can enable or disable operator built-in CSRF protection
   # Set it to true if you are using OpenShift Jenkins Plugin
-  # See https://github.com/jenkinsci/kubernetes-operator/pull/193 for more info
+  # See https://github.com/jenkinsci/jenkins-automation-operator/pull/193 for more info
   disableCSRFProtection: false
 
   # imagePullSecrets is used if you want to pull images from private repository
@@ -150,10 +150,10 @@ jenkins:
     fsGroup: 1000
 
   # http Jenkins service
-  # See https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/schema/#github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Service for details
+  # See https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/schema/#github.com/jenkinsci/jenkins-automation-operator/pkg/apis/jenkins/v1alpha2.Service for details
   #service:
   # slave Jenkins service
-  # See https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/schema/#github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Service for details
+  # See https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/schema/#github.com/jenkinsci/jenkins-automation-operator/pkg/apis/jenkins/v1alpha2.Service for details
   #slaveService:
 
   # backup is section for configuring operator's backup feature

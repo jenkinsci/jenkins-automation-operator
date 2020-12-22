@@ -23,8 +23,8 @@ import (
 	"strings"
 
 	"github.com/go-logr/logr"
-	jenkinsv1alpha2 "github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
-	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
+	jenkinsv1alpha2 "github.com/jenkinsci/jenkins-automation-operator/api/v1alpha2"
+	"github.com/jenkinsci/jenkins-automation-operator/pkg/configuration/base/resources"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
