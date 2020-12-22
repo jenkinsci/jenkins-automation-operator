@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	logx "github.com/jenkinsci/kubernetes-operator/pkg/log"
+	logx "github.com/jenkinsci/jenkins-automation-operator/pkg/log"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"

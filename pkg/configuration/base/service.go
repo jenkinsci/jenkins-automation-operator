@@ -3,8 +3,8 @@ package base
 import (
 	"context"
 
-	"github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
-	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
+	"github.com/jenkinsci/jenkins-automation-operator/api/v1alpha2"
+	"github.com/jenkinsci/jenkins-automation-operator/pkg/configuration/base/resources"
 	stackerr "github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"

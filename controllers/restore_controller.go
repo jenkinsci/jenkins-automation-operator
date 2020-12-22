@@ -22,10 +22,10 @@ import (
 
 	"github.com/operator-framework/operator-lib/status"
 
-	"github.com/jenkinsci/kubernetes-operator/pkg/exec"
+	"github.com/jenkinsci/jenkins-automation-operator/pkg/exec"
 
-	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
-	"github.com/jenkinsci/kubernetes-operator/pkg/log"
+	"github.com/jenkinsci/jenkins-automation-operator/pkg/configuration/base/resources"
+	"github.com/jenkinsci/jenkins-automation-operator/pkg/log"
 
 	"strings"
 
@@ -40,7 +40,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	jenkinsv1alpha2 "github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
+	jenkinsv1alpha2 "github.com/jenkinsci/jenkins-automation-operator/api/v1alpha2"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 

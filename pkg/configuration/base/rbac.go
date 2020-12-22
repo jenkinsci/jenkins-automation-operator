@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
-	logx "github.com/jenkinsci/kubernetes-operator/pkg/log"
+	"github.com/jenkinsci/jenkins-automation-operator/api/v1alpha2"
+	logx "github.com/jenkinsci/jenkins-automation-operator/pkg/log"
 	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
+	"github.com/jenkinsci/jenkins-automation-operator/pkg/configuration/base/resources"
 	stackerr "github.com/pkg/errors"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"

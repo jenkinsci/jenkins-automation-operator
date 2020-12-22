@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
-	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
+	"github.com/jenkinsci/jenkins-automation-operator/api/v1alpha2"
+	"github.com/jenkinsci/jenkins-automation-operator/pkg/configuration/base/resources"
 	routev1 "github.com/openshift/api/route/v1"
 	stackerr "github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"

@@ -3,7 +3,7 @@ package configuration
 import (
 	"testing"
 
-	"github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
+	"github.com/jenkinsci/jenkins-automation-operator/api/v1alpha2"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 )
