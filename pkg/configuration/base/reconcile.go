@@ -6,13 +6,13 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
+	"github.com/jenkinsci/jenkins-automation-operator/api/v1alpha2"
 
 	"github.com/go-logr/logr"
-	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/client"
-	"github.com/jenkinsci/kubernetes-operator/pkg/configuration"
-	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
-	"github.com/jenkinsci/kubernetes-operator/pkg/log"
+	jenkinsclient "github.com/jenkinsci/jenkins-automation-operator/pkg/client"
+	"github.com/jenkinsci/jenkins-automation-operator/pkg/configuration"
+	"github.com/jenkinsci/jenkins-automation-operator/pkg/configuration/base/resources"
+	"github.com/jenkinsci/jenkins-automation-operator/pkg/log"
 	stackerr "github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"

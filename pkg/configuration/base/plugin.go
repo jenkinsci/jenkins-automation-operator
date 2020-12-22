@@ -4,10 +4,10 @@ import (
 	"fmt"
 
 	"github.com/bndr/gojenkins"
-	"github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
-	jenkinsclient "github.com/jenkinsci/kubernetes-operator/pkg/client"
-	"github.com/jenkinsci/kubernetes-operator/pkg/log"
-	"github.com/jenkinsci/kubernetes-operator/pkg/plugins"
+	"github.com/jenkinsci/jenkins-automation-operator/api/v1alpha2"
+	jenkinsclient "github.com/jenkinsci/jenkins-automation-operator/pkg/client"
+	"github.com/jenkinsci/jenkins-automation-operator/pkg/log"
+	"github.com/jenkinsci/jenkins-automation-operator/pkg/plugins"
 	stackerr "github.com/pkg/errors"
 )
 

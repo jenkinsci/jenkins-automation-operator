@@ -3,7 +3,7 @@ package plugins
 import (
 	"testing"
 
-	"github.com/jenkinsci/kubernetes-operator/pkg/log"
+	"github.com/jenkinsci/jenkins-automation-operator/pkg/log"
 	"github.com/stretchr/testify/assert"
 )
 
