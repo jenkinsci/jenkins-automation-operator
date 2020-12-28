@@ -3,8 +3,6 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"time"
-
 	"github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
 	. "github.com/onsi/ginkgo"
@@ -18,9 +16,6 @@ import (
 const (
 	// Name                  = "test-image"
 	JenkinsImageName      = "test-jenkinsimage"
-	JenkinsImageNamespace = "default"
-	timeout               = time.Second * 30
-	interval              = time.Millisecond * 250
 	// duration = time.Second * 10
 )
 
@@ -31,7 +26,7 @@ var _ = Describe("JenkinsImage controller", func() {
 		It("The Pod should be recreated", func() {
 			Logf("Starting")
 			ctx := context.Background()
-			jenkinsImage := GetJenkinsImageTestInstance(JenkinsImageName, JenkinsImageNamespace)
+			jenkinsImage := GetJenkinsImageTestInstance(JenkinsImageName, JenkinsTestNamespace)
 			ByCreatingJenkinsImageSuccesfully(ctx, jenkinsImage)
 			ByCheckingThatJenkinsImageExists(ctx, jenkinsImage)
 			ByCheckingThatThePodExists(ctx, jenkinsImage)

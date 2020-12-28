@@ -17,6 +17,7 @@ limitations under the License.
 package controllers
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -156,6 +157,9 @@ func registerJenkinsController(manager manager.Manager, c *rest.Config) {
 }
 
 var _ = AfterSuite(func() {
+	By("Remove all Namespaces")
+	Expect(k8sClient.Delete(context.Background(), jenkinsControllerTestNamespace)).Should(Succeed())
+
 	By("tearing down the test environment")
 	err := testEnv.Stop()
 	Expect(err).ToNot(HaveOccurred())
