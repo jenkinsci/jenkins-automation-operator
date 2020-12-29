@@ -158,7 +158,7 @@ func registerJenkinsController(manager manager.Manager, c *rest.Config) {
 
 var _ = AfterSuite(func() {
 	By("Remove all Namespaces")
-	Expect(k8sClient.Delete(context.Background(), jenkinsControllerTestNamespace)).Should(Succeed())
+	_ = k8sClient.Delete(context.Background(), jenkinsControllerTestNamespace)
 
 	By("tearing down the test environment")
 	err := testEnv.Stop()

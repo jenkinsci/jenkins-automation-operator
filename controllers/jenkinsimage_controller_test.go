@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+
 	"github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
 	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
 	. "github.com/onsi/ginkgo"
@@ -15,7 +16,7 @@ import (
 // Define utility constants for object names and testing timeouts/durations and intervals.
 const (
 	// Name                  = "test-image"
-	JenkinsImageName      = "test-jenkinsimage"
+	JenkinsImageName = "test-jenkinsimage"
 	// duration = time.Second * 10
 )
 

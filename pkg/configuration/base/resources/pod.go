@@ -150,11 +150,17 @@ func getJenkinsHomePath(jenkins *v1alpha2.Jenkins) string {
 // GetJenkinsMasterPodBaseVolumes returns Jenkins master pod volumes required by operator
 func GetJenkinsMasterPodBaseVolumes(jenkins *v1alpha2.Jenkins) []corev1.Volume {
 	volumes := []corev1.Volume{
-		getEmptyDirVolume(JenkinsHomeVolumeName),
 		getConfigMapVolume(jenkinsScriptsVolumeName, getScriptsConfigMapName(jenkins), 0777),
 		getConfigMapVolume(jenkinsInitConfigurationVolumeName, GetInitConfigurationConfigMapName(jenkins)),
 		getConfigMapVolume(basePluginsVolumeName, GetBasePluginsVolumeNameConfigMapName(jenkins)),
 		getSecretVolume(jenkinsOperatorCredentialsVolumeName, GetOperatorCredentialsSecretName(jenkins)),
+	}
+
+	// Add Volume for Persistence
+	if jenkins.Spec.PersistentSpec.Enabled {
+		volumes = append(volumes, getPVCVolume(JenkinsHomeVolumeName, jenkins.Name))
+	} else {
+		volumes = append(volumes, getEmptyDirVolume(JenkinsHomeVolumeName))
 	}
 
 	if jenkins.Status != nil && jenkins.Status.Spec != nil && jenkins.Status.Spec.ConfigurationAsCode != nil {
@@ -596,6 +602,18 @@ func getSecretVolume(volumeName string, secretName string) corev1.Volume {
 			Secret: &corev1.SecretVolumeSource{
 				DefaultMode: &secretVolumeSourceDefaultMode,
 				SecretName:  secretName,
+			},
+		},
+	}
+}
+
+func getPVCVolume(volumeName, claimName string) corev1.Volume {
+	return corev1.Volume{
+		Name: volumeName,
+		VolumeSource: corev1.VolumeSource{
+			PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+				ClaimName: claimName,
+				ReadOnly:  false,
 			},
 		},
 	}

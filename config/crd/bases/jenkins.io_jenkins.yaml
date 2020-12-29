@@ -2518,6 +2518,16 @@ spec:
                     type: object
                   type: array
               type: object
+            persistentSpec:
+              description: PersistentSpec
+              properties:
+                enabled:
+                  type: boolean
+                storageClassName:
+                  type: string
+                volumeSize:
+                  type: string
+              type: object
             roles:
               description: Roles defines list of extra RBAC roles for the Jenkins
                 Master pod service account
@@ -5231,6 +5241,16 @@ spec:
                         - name
                         type: object
                       type: array
+                  type: object
+                persistentSpec:
+                  description: PersistentSpec
+                  properties:
+                    enabled:
+                      type: boolean
+                    storageClassName:
+                      type: string
+                    volumeSize:
+                      type: string
                   type: object
                 roles:
                   description: Roles defines list of extra RBAC roles for the Jenkins

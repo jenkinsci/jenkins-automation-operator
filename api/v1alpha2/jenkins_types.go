@@ -63,6 +63,15 @@ type JenkinsSpec struct {
 
 	// Backup defines configuration of Backup for Jenkins
 	BackupEnabled bool `json:"backupEnabled,omitempty"`
+
+	// PersistentSpec
+	PersistentSpec JenkinsPersistentSpec `json:"persistentSpec,omitempty"`
+}
+
+type JenkinsPersistentSpec struct {
+	Enabled          bool   `json:"enabled,omitempty"`
+	StorageClassName string `json:"storageClassName,omitempty"`
+	VolumeSize       string `json:"volumeSize,omitempty"`
 }
 
 // AuthorizationStrategy defines authorization strategy of the operator for the Jenkins API
