@@ -1,5 +1,6 @@
 name: E2E Tests
 on: [push, workflow_dispatch, pull_request]￼
+
 jobs:
   test-and-build:
     name: Test+Build
@@ -26,5 +27,5 @@ jobs:
         run: make test 
       - name: Suite Test with Cluster
         run: make test USE_EXISTING_CLUSTER=true
-      - name: 
+      - name: Upload CodeCov
         run: bash <(curl -s https://codecov.io/bash) 
