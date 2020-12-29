@@ -94,7 +94,7 @@ func CreateEditClusterRole(ctx context.Context) {
 	}
 }
 
-func ByCreatingNamespaceIsPresent(ctx context.Context, namespaceName string){
+func ByCreatingNamespaceIsPresent(ctx context.Context, namespaceName string) {
 	By("Check if namespace exists")
 	jenkinsControllerTestNamespace = &corev1.Namespace{}
 	key := types.NamespacedName{Name: namespaceName}
@@ -109,7 +109,6 @@ func ByCreatingNamespaceIsPresent(ctx context.Context, namespaceName string){
 		}
 		Expect(k8sClient.Create(ctx, ns)).Should(Succeed())
 	}
-
 }
 
 func ByCheckingThatDeploymentImageIs(ctx context.Context, jenkins *v1alpha2.Jenkins) {
