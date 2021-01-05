@@ -4,14 +4,44 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/coreos/prometheus-operator/pkg/apis/monitoring"
 	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
-	"github.com/jenkinsci/kubernetes-operator/api/v1alpha2"
-	"github.com/jenkinsci/kubernetes-operator/pkg/configuration/base/resources"
+	"github.com/jenkinsci/jenkins-automation-operator/api/v1alpha2"
+	"github.com/jenkinsci/jenkins-automation-operator/pkg/configuration/base/resources"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/util/retry"
 )
+
+var (
+	PrometheusAPIAvailable = false
+	PrometheusAPIChecked   = false
+)
+
+// IsPrometheusAPIAvailable tells if the Prometheus API is installed and discoverable
+func IsPrometheusAPIAvailable(clientSet *kubernetes.Clientset) bool {
+	if PrometheusAPIChecked {
+		return PrometheusAPIAvailable
+	}
+	gv := schema.GroupVersion{
+		Group:   monitoring.GroupName,
+		Version: monitoringv1.Version,
+	}
+	if err := discovery.ServerSupportsVersion(clientSet, gv); err != nil {
+		// error, API not available
+		PrometheusAPIChecked = true
+		PrometheusAPIAvailable = false
+	} else {
+		// API Exists
+		PrometheusAPIChecked = true
+		PrometheusAPIAvailable = true
+	}
+	return PrometheusAPIAvailable
+}
 
 // NewServiceMonitor returns a prometheus service monitor
 func NewServiceMonitor(serviceMonitorName, namespace string) *monitoringv1.ServiceMonitor {
