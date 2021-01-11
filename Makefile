@@ -17,7 +17,19 @@ test: kubebuilder generate manifests ## Run tests
 
 manager: generate goimports fmt vet bin ## Build manager binary
 
-run: generate fmt vet manifests install ## Run in the configured Kubernetes cluster in ~/.kube/config. Prepend WATCH_NAMESPACE for single namespace mode.
+copy-crds-to-chart:
+	cp ./config/crd/bases/jenkins.io_* ./helm/jenkins-automation-operator/crds/
+
+copy-rbac-to-chart:
+	cp ./config/rbac/role* ./helm/jenkins-automation-operator/templates/
+
+copy-manager-to-chart:
+	$(KUSTOMIZE) build ./config/manager > ./helm/jenkins-automation-operator/templates/manager.yaml 
+
+# We do not copy manager to chart as we use helm templating on the manager there
+copy-resources-to-chart: copy-crds-to-chart copy-rbac-to-chart
+
+run: generate fmt vet manifests install copy-resources-to-chart ## Run in the configured Kubernetes cluster in ~/.kube/config. Prepend WATCH_NAMESPACE for single namespace mode.
 	go run ./main.go
 
 install: manifests kustomize ## Install CRDs into a cluster
