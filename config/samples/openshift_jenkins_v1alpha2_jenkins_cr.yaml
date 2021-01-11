@@ -28,10 +28,6 @@ spec:
         value: 'https://kubernetes.default:443'
       - name: KUBERNETES_TRUST_CERTIFICATES
         value: 'true'
-      - name: JENKINS_SERVICE_NAME
-        value: jenkins-jenkins
-      - name: JNLP_SERVICE_NAME
-        value: jenkins-jenkins-jnlp
       - name: JENKINS_UC_INSECURE
         value: 'false'
       - name: JENKINS_HOME
