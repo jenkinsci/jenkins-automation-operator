@@ -2523,6 +2523,9 @@ spec:
                     type: object
                   type: array
               type: object
+            metricsEnabled:
+              description: MetricsEnabled defines whether prometheus metrics are enabled
+              type: boolean
             persistentSpec:
               description: PersistentSpec
               properties:
@@ -2533,9 +2536,6 @@ spec:
                 volumeSize:
                   type: string
               type: object
-            metricsEnabled:
-              description: MetricsEnabled defines whether prometheus metrics are enabled
-              type: boolean
             roles:
               description: Roles defines list of extra RBAC roles for the Jenkins
                 Master pod service account
@@ -5258,6 +5258,10 @@ spec:
                         type: object
                       type: array
                   type: object
+                metricsEnabled:
+                  description: MetricsEnabled defines whether prometheus metrics are
+                    enabled
+                  type: boolean
                 persistentSpec:
                   description: PersistentSpec
                   properties:
@@ -5268,10 +5272,6 @@ spec:
                     volumeSize:
                       type: string
                   type: object
-                metricsEnabled:
-                  description: MetricsEnabled defines whether prometheus metrics are
-                    enabled
-                  type: boolean
                 roles:
                   description: Roles defines list of extra RBAC roles for the Jenkins
                     Master pod service account
