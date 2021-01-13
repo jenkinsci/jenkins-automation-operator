@@ -50,6 +50,7 @@ rules:
   - jenkins.io
   resources:
   - jenkinsimages
+  - jenkinsimages/finalizers
   - jenkinsimages/status
   verbs:
   - '*'

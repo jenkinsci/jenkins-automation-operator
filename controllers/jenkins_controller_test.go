@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"time"
 
 	"github.com/jenkinsci/jenkins-automation-operator/api/v1alpha2"
 	"github.com/jenkinsci/jenkins-automation-operator/pkg/configuration/base"
@@ -20,18 +21,30 @@ import (
 // +kubebuilder:docs-gen:collapse=Imports
 
 const (
-	// Name                  = "test-image"
-	JenkinsName        = "test-jenkins"
-	MinimalJenkinsName = "minimal-jenkins"
-	JenkinsNamespace   = "default"
+	JenkinsName          = "test-jenkins"
+	MinimalJenkinsName   = "minimal-jenkins"
+	JenkinsTestNamespace = "jenkins-operator-test"
+	timeout              = time.Second * 30
+	interval             = time.Millisecond * 250
+)
+
+var (
+	jenkinsControllerTestNamespace *corev1.Namespace
 )
 
 var _ = Describe("Jenkins controller", func() {
-	Logf("Starting")
+	Logf("Starting test for Jenkins Controller")
+
+	Context("When Checking the Namespace for testing the Jenkins Controller", func() {
+		ctx := context.Background()
+		It("Test Namespace Should Be Present", func() {
+			ByCreatingNamespaceIsPresent(ctx, JenkinsTestNamespace)
+		})
+	})
 
 	Context("When Creating a Minimal Jenkins Instance", func() {
 		ctx := context.Background()
-		jenkins := GetMinimalJenkinsTestInstance(MinimalJenkinsName, JenkinsNamespace)
+		jenkins := GetMinimalJenkinsTestInstance(MinimalJenkinsName, JenkinsTestNamespace)
 		It("Deployment Should Be Created", func() {
 			CreateEditClusterRole(ctx)
 			ByCreatingJenkinsSuccesfully(ctx, jenkins)
@@ -43,7 +56,7 @@ var _ = Describe("Jenkins controller", func() {
 
 	Context("When Creating a Jenkins CR", func() {
 		ctx := context.Background()
-		jenkins := GetJenkinsTestInstance(JenkinsName, JenkinsNamespace)
+		jenkins := GetJenkinsTestInstance(JenkinsName, JenkinsTestNamespace)
 		It("Deployment Should Be Created", func() {
 			ByCreatingJenkinsSuccesfully(ctx, jenkins)
 			ByCheckingThatJenkinsExists(ctx, jenkins)
@@ -55,7 +68,7 @@ var _ = Describe("Jenkins controller", func() {
 		ctx := context.Background()
 		image := "my-image"
 		jenkinsWithImage := "jenkins-with-image"
-		jenkins := GetJenkinsTestInstanceWithMasterImage(jenkinsWithImage, JenkinsNamespace, image)
+		jenkins := GetJenkinsTestInstanceWithMasterImage(jenkinsWithImage, JenkinsTestNamespace, image)
 		It("Deployment Should Be Created With That Image Name", func() {
 			ByCreatingJenkinsSuccesfully(ctx, jenkins)
 			ByCheckingThatJenkinsExists(ctx, jenkins)
@@ -66,14 +79,36 @@ var _ = Describe("Jenkins controller", func() {
 })
 
 func CreateEditClusterRole(ctx context.Context) {
-	editClusterRole := &rbacv1.ClusterRole{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      base.EditClusterRole,
-			Namespace: JenkinsNamespace,
-		},
-		Rules: resources.NewDefaultPolicyRules(),
+	editClusterRole := &rbacv1.ClusterRole{}
+	nn := types.NamespacedName{Name: base.EditClusterRole, Namespace: JenkinsTestNamespace}
+	err := k8sClient.Get(ctx, nn, editClusterRole)
+	if err != nil {
+		editClusterRole = &rbacv1.ClusterRole{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      nn.Name,
+				Namespace: nn.Namespace,
+			},
+			Rules: resources.NewDefaultPolicyRules(),
+		}
+		Expect(k8sClient.Create(ctx, editClusterRole)).Should(Succeed())
 	}
-	Expect(k8sClient.Create(ctx, editClusterRole)).Should(Succeed())
+}
+
+func ByCreatingNamespaceIsPresent(ctx context.Context, namespaceName string) {
+	By("Check if namespace exists")
+	jenkinsControllerTestNamespace = &corev1.Namespace{}
+	key := types.NamespacedName{Name: namespaceName}
+	err := k8sClient.Get(ctx, key, jenkinsControllerTestNamespace)
+
+	if err != nil {
+		By("Create Namespace")
+		ns := &corev1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: namespaceName,
+			},
+		}
+		Expect(k8sClient.Create(ctx, ns)).Should(Succeed())
+	}
 }
 
 func ByCheckingThatDeploymentImageIs(ctx context.Context, jenkins *v1alpha2.Jenkins) {

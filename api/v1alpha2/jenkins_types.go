@@ -66,6 +66,15 @@ type JenkinsSpec struct {
 
 	// MetricsEnabled defines whether prometheus metrics are enabled
 	MetricsEnabled bool `json:"metricsEnabled,omitempty"`
+
+	// PersistentSpec
+	PersistentSpec JenkinsPersistentSpec `json:"persistentSpec,omitempty"`
+}
+
+type JenkinsPersistentSpec struct {
+	Enabled          bool   `json:"enabled,omitempty"`
+	StorageClassName string `json:"storageClassName,omitempty"`
+	VolumeSize       string `json:"volumeSize,omitempty"`
 }
 
 // AuthorizationStrategy defines authorization strategy of the operator for the Jenkins API
@@ -450,7 +459,6 @@ type JenkinsStatus struct {
 // +k8s:openapi-gen=true
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-
 type Jenkins struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

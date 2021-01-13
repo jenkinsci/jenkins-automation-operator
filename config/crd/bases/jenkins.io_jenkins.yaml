@@ -19,6 +19,7 @@ spec:
     status: {}
   validation:
     openAPIV3Schema:
+      description: Jenkins is the Schema for the jenkins API
       properties:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation
@@ -2521,6 +2522,16 @@ spec:
                     - name
                     type: object
                   type: array
+              type: object
+            persistentSpec:
+              description: PersistentSpec
+              properties:
+                enabled:
+                  type: boolean
+                storageClassName:
+                  type: string
+                volumeSize:
+                  type: string
               type: object
             metricsEnabled:
               description: MetricsEnabled defines whether prometheus metrics are enabled
@@ -5246,6 +5257,16 @@ spec:
                         - name
                         type: object
                       type: array
+                  type: object
+                persistentSpec:
+                  description: PersistentSpec
+                  properties:
+                    enabled:
+                      type: boolean
+                    storageClassName:
+                      type: string
+                    volumeSize:
+                      type: string
                   type: object
                 metricsEnabled:
                   description: MetricsEnabled defines whether prometheus metrics are

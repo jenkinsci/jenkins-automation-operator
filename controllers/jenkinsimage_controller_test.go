@@ -3,7 +3,6 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/jenkinsci/jenkins-automation-operator/api/v1alpha2"
 	"github.com/jenkinsci/jenkins-automation-operator/pkg/configuration/base/resources"
@@ -17,10 +16,7 @@ import (
 // Define utility constants for object names and testing timeouts/durations and intervals.
 const (
 	// Name                  = "test-image"
-	JenkinsImageName      = "test-jenkinsimage"
-	JenkinsImageNamespace = "default"
-	timeout               = time.Second * 30
-	interval              = time.Millisecond * 250
+	JenkinsImageName = "test-jenkinsimage"
 	// duration = time.Second * 10
 )
 
@@ -31,7 +27,7 @@ var _ = Describe("JenkinsImage controller", func() {
 		It("The Pod should be recreated", func() {
 			Logf("Starting")
 			ctx := context.Background()
-			jenkinsImage := GetJenkinsImageTestInstance(JenkinsImageName, JenkinsImageNamespace)
+			jenkinsImage := GetJenkinsImageTestInstance(JenkinsImageName, JenkinsTestNamespace)
 			ByCreatingJenkinsImageSuccesfully(ctx, jenkinsImage)
 			ByCheckingThatJenkinsImageExists(ctx, jenkinsImage)
 			ByCheckingThatThePodExists(ctx, jenkinsImage)
