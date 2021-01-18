@@ -42,6 +42,7 @@ import (
 
 	jenkinsv1alpha2 "github.com/jenkinsci/jenkins-automation-operator/api/v1alpha2"
 	"github.com/jenkinsci/jenkins-automation-operator/controllers"
+	"github.com/jenkinsci/jenkins-automation-operator/pkg/configuration/base"
 	"github.com/jenkinsci/jenkins-automation-operator/pkg/configuration/base/resources"
 	"github.com/jenkinsci/jenkins-automation-operator/pkg/constants"
 	"github.com/jenkinsci/jenkins-automation-operator/pkg/event"
@@ -95,6 +96,7 @@ func main() {
 		fatal(errors.Wrap(err, "failed to create Kubernetes client set"), *debug)
 	}
 	checkRouteAPIAvailable(clientSet)
+	checkPrometheusAPIAvailable(clientSet)
 	notificationsChannel := make(chan e.Event)
 	go notifications.Listen(notificationsChannel, eventsRecorder, client)
 
@@ -119,6 +121,12 @@ func checkAvailableFeatures(manager manager.Manager) {
 func checkRouteAPIAvailable(clientSet *kubernetes.Clientset) {
 	if resources.IsRouteAPIAvailable(clientSet) {
 		setupLog.Info("Route API found: Route creation will be performed")
+	}
+}
+
+func checkPrometheusAPIAvailable(clientSet *kubernetes.Clientset) {
+	if base.IsPrometheusAPIAvailable(clientSet) {
+		setupLog.Info("Prometheus API found: ServiceMonitor creation will be performed")
 	}
 }
 
