@@ -19,6 +19,7 @@ spec:
     status: {}
   validation:
     openAPIV3Schema:
+      description: Jenkins is the Schema for the jenkins API
       properties:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation
@@ -2525,6 +2526,16 @@ spec:
             metricsEnabled:
               description: MetricsEnabled defines whether prometheus metrics are enabled
               type: boolean
+            persistentSpec:
+              description: PersistentSpec
+              properties:
+                enabled:
+                  type: boolean
+                storageClassName:
+                  type: string
+                volumeSize:
+                  type: string
+              type: object
             roles:
               description: Roles defines list of extra RBAC roles for the Jenkins
                 Master pod service account
@@ -5251,6 +5262,16 @@ spec:
                   description: MetricsEnabled defines whether prometheus metrics are
                     enabled
                   type: boolean
+                persistentSpec:
+                  description: PersistentSpec
+                  properties:
+                    enabled:
+                      type: boolean
+                    storageClassName:
+                      type: string
+                    volumeSize:
+                      type: string
+                  type: object
                 roles:
                   description: Roles defines list of extra RBAC roles for the Jenkins
                     Master pod service account

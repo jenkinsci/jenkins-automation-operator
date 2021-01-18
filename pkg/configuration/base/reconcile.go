@@ -132,8 +132,12 @@ func (r *JenkinsBaseConfigurationReconciler) ensureResourcesRequiredForJenkinsDe
 	r.logger.V(log.VDebug).Info("Jenkins JNLP Service is ready")
 
 	if r.Configuration.Jenkins.Spec.MetricsEnabled {
-		if err := r.createServiceMonitor(r.Configuration.Jenkins); err != nil {
-			return err
+		if PrometheusAPIAvailable {
+			if err := r.createServiceMonitor(r.Configuration.Jenkins); err != nil {
+				return err
+			}
+		} else {
+			r.logger.V(log.VDebug).Info("Prometheus api is not available")
 		}
 	}
 	r.logger.V(log.VDebug).Info("Prometheus service monitor for jenkins is ready")

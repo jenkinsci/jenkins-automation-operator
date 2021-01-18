@@ -336,6 +336,52 @@ func (r *JenkinsReconciler) reconcile(ctx context.Context, request ctrl.Request,
 		}
 	}
 
+	persistentSpec := jenkins.Status.Spec.PersistentSpec
+	if persistentSpec.Enabled {
+		storageClassName := "standard"
+		volumeSize := "1Gi"
+
+		if len(persistentSpec.StorageClassName) > 0 {
+			storageClassName = persistentSpec.StorageClassName
+		}
+		if len(persistentSpec.VolumeSize) > 0 {
+			volumeSize = persistentSpec.VolumeSize
+		}
+
+		jenkinsPVCName := request.Name + "-jenkins"
+		pvcNamespacedName := types.NamespacedName{
+			Namespace: request.Namespace,
+			Name:      jenkinsPVCName,
+		}
+
+		jenkinsPVC := &corev1.PersistentVolumeClaim{}
+		err = r.Client.Get(context.TODO(), request.NamespacedName, jenkinsPVC)
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				logger.Info(fmt.Sprintf("Creating BackupConfig %s in Namespace %s for Jenkins instance %s",
+					pvcNamespacedName.Name,
+					pvcNamespacedName.Namespace,
+					request.Name))
+				jenkinsPVC.Name = request.Name
+				jenkinsPVC.Namespace = request.Namespace
+				jenkinsPVC.Spec.StorageClassName = &storageClassName
+				jenkinsPVC.Spec.AccessModes = []corev1.PersistentVolumeAccessMode{
+					corev1.ReadWriteOnce,
+				}
+				jenkinsPVC.Spec.Resources = corev1.ResourceRequirements{
+					Requests: corev1.ResourceList{
+						corev1.ResourceStorage: resource.MustParse(volumeSize),
+					},
+				}
+
+				err = r.Client.Create(context.TODO(), jenkinsPVC)
+				if err != nil {
+					return ctrl.Result{}, err
+				}
+			}
+		}
+	}
+
 	logger.V(log.VDebug).Info(fmt.Sprintf("setDefaults reported a change: %v", requeue))
 	config := r.newReconcilerConfiguration(jenkins)
 	// Reconcile base configuration
