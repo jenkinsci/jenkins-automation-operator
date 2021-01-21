@@ -17,7 +17,6 @@ limitations under the License.
 package controllers
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -114,7 +113,7 @@ var _ = BeforeSuite(func(done Done) {
 func registerJenkinsRestoreController(manager manager.Manager) {
 	controller := &RestoreReconciler{
 		Client: manager.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("Backup"),
+		Log:    ctrl.Log.WithName("controllers").WithName("Restore"),
 		Scheme: manager.GetScheme(),
 	}
 	err := controller.SetupWithManager(manager)
@@ -157,9 +156,6 @@ func registerJenkinsController(manager manager.Manager, c *rest.Config) {
 }
 
 var _ = AfterSuite(func() {
-	By("Remove all Namespaces")
-	_ = k8sClient.Delete(context.Background(), jenkinsControllerTestNamespace)
-
 	By("tearing down the test environment")
 	err := testEnv.Stop()
 	Expect(err).ToNot(HaveOccurred())
