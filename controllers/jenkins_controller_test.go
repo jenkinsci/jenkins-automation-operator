@@ -2,12 +2,12 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/jenkinsci/jenkins-automation-operator/api/v1alpha2"
 	"github.com/jenkinsci/jenkins-automation-operator/pkg/configuration/base"
 	"github.com/jenkinsci/jenkins-automation-operator/pkg/configuration/base/resources"
-	"github.com/jenkinsci/jenkins-automation-operator/pkg/constants"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	appsv1 "k8s.io/api/apps/v1"
@@ -15,14 +15,11 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 // +kubebuilder:docs-gen:collapse=Imports
 
 const (
-	JenkinsName          = "test-jenkins"
-	MinimalJenkinsName   = "minimal-jenkins"
 	JenkinsTestNamespace = "jenkins-operator-test"
 	timeout              = time.Second * 30
 	interval             = time.Millisecond * 250
@@ -35,50 +32,59 @@ var (
 var _ = Describe("Jenkins controller", func() {
 	Logf("Starting test for Jenkins Controller")
 
-	Context("When Checking the Namespace for testing the Jenkins Controller", func() {
+	// Test creation of Jenkins with simple casc configuration
+	Context("When Creating a Jenkins Instance with Default CASC Config", func() {
 		ctx := context.Background()
-		It("Test Namespace Should Be Present", func() {
-			ByCreatingNamespaceIsPresent(ctx, JenkinsTestNamespace)
-		})
-	})
+		jenkinsName := "jenkins-with-all"
+		jenkins := GetJenkinsTestInstance(jenkinsName, JenkinsTestNamespace)
 
-	Context("When Creating a Minimal Jenkins Instance", func() {
-		ctx := context.Background()
-		jenkins := GetMinimalJenkinsTestInstance(MinimalJenkinsName, JenkinsTestNamespace)
-		It("Deployment Should Be Created", func() {
-			CreateEditClusterRole(ctx)
+		It(fmt.Sprintf("Jenkins Should Be Created (%s)", jenkinsName), func() {
+			// Create Namespace for testing if not present
+			CreateNamespaceIfNotPresent(ctx, JenkinsTestNamespace)
+			// Create Edit Cluster Role if not in Openshift
+			CreateEditClusterRoleIfNotPresent(ctx)
+		})
+
+		It(fmt.Sprintf("Jenkins Should Be Created (%s)", jenkinsName), func() {
+			// Create Jenkins instance
 			ByCreatingJenkinsSuccesfully(ctx, jenkins)
+			// Check if CR is created for Jenkins
 			ByCheckingThatJenkinsExists(ctx, jenkins)
+		})
+
+		It(fmt.Sprintf("Default RoleBinding Should Be Created (%s)", jenkinsName), func() {
+			// Check if default RoleBinding is created for Jenkins
 			ByCheckingThatDefaultRoleBindingIsCreated(ctx, jenkins)
+		})
+
+		It(fmt.Sprintf("Deployment Should Be Created (%s)", jenkinsName), func() {
+			// Check if Jenkins Deployment has been created
 			ByCheckingThatTheDeploymentExists(ctx, jenkins)
 		})
-	})
 
-	Context("When Creating a Jenkins CR", func() {
-		ctx := context.Background()
-		jenkins := GetJenkinsTestInstance(JenkinsName, JenkinsTestNamespace)
-		It("Deployment Should Be Created", func() {
-			ByCreatingJenkinsSuccesfully(ctx, jenkins)
-			ByCheckingThatJenkinsExists(ctx, jenkins)
-			ByCheckingThatTheDeploymentExists(ctx, jenkins)
+		It(fmt.Sprintf(" Default CasC ConfigMap Should Be Created (%s)", jenkinsName), func() {
+			// Check if Default CasC configuration is present for Jenkins
+			ByCheckingThatConfigMapIsCreated(ctx, resources.JenkinsDefaultConfigMapName, JenkinsTestNamespace)
 		})
-	})
 
-	Context("When Creating a Jenkins CR With specified Master.Image", func() {
-		ctx := context.Background()
-		image := "my-image"
-		jenkinsWithImage := "jenkins-with-image"
-		jenkins := GetJenkinsTestInstanceWithMasterImage(jenkinsWithImage, JenkinsTestNamespace, image)
-		It("Deployment Should Be Created With That Image Name", func() {
-			ByCreatingJenkinsSuccesfully(ctx, jenkins)
-			ByCheckingThatJenkinsExists(ctx, jenkins)
-			ByCheckingThatTheDeploymentExists(ctx, jenkins)
-			ByCheckingThatDeploymentImageIs(ctx, jenkins)
+		It(fmt.Sprintf("Jenkins PVC for persistence Should Be Created (%s)", jenkinsName), func() {
+			// Check if PVC is present for Jenkins
+			ByCheckingThatPVCIsCreated(ctx, jenkinsName, JenkinsTestNamespace)
+		})
+
+		// It(fmt.Sprintf("ServiceMonitor Should Be Created (%s)", jenkinsName), func() {
+		//	// Check if ServiceMonitor is present for Jenkins
+		//	ByCheckingThatServiceMonitorIsCreated(ctx, jenkinsName+"-monitored", JenkinsTestNamespace)
+		// })
+
+		It(fmt.Sprintf("Namespace should be deleted (%s)", jenkinsName), func() {
+			// Cleanup
+			DeleteNamespaceIfPresent(ctx, JenkinsTestNamespace)
 		})
 	})
 })
 
-func CreateEditClusterRole(ctx context.Context) {
+func CreateEditClusterRoleIfNotPresent(ctx context.Context) {
 	editClusterRole := &rbacv1.ClusterRole{}
 	nn := types.NamespacedName{Name: base.EditClusterRole, Namespace: JenkinsTestNamespace}
 	err := k8sClient.Get(ctx, nn, editClusterRole)
@@ -94,12 +100,11 @@ func CreateEditClusterRole(ctx context.Context) {
 	}
 }
 
-func ByCreatingNamespaceIsPresent(ctx context.Context, namespaceName string) {
-	By("Check if namespace exists")
+func CreateNamespaceIfNotPresent(ctx context.Context, namespaceName string) {
+	By("Creating Namespace if it does not exist")
 	jenkinsControllerTestNamespace = &corev1.Namespace{}
 	key := types.NamespacedName{Name: namespaceName}
 	err := k8sClient.Get(ctx, key, jenkinsControllerTestNamespace)
-
 	if err != nil {
 		By("Create Namespace")
 		ns := &corev1.Namespace{
@@ -111,33 +116,65 @@ func ByCreatingNamespaceIsPresent(ctx context.Context, namespaceName string) {
 	}
 }
 
-func ByCheckingThatDeploymentImageIs(ctx context.Context, jenkins *v1alpha2.Jenkins) {
-	By("By checking that the Jenkins exists")
-	created := &v1alpha2.Jenkins{}
-	expectedName := jenkins.Name
-	key := types.NamespacedName{Namespace: jenkins.Namespace, Name: expectedName}
-	actual := func() (string, error) {
-		err := k8sClient.Get(ctx, key, created)
-		if err != nil {
-			return "", err
-		}
-		return created.Spec.Master.Containers[0].Image, nil
+func DeleteNamespaceIfPresent(ctx context.Context, namespaceName string) {
+	By("Deleting Namespace if it is present")
+	jenkinsControllerTestNamespace = &corev1.Namespace{}
+	key := types.NamespacedName{Name: namespaceName}
+	err := k8sClient.Get(ctx, key, jenkinsControllerTestNamespace)
+	if err != nil {
+		Fail(fmt.Sprintf("Error while deleting Namespace %s", namespaceName))
 	}
-	Eventually(actual, timeout, interval).Should(Equal(jenkins.Spec.Master.Containers[0].Image))
-}
-
-func GetJenkinsTestInstanceWithMasterImage(jenkinsName string, namespaceName string, imageName string) *v1alpha2.Jenkins {
-	jenkins := GetJenkinsTestInstance(jenkinsName, namespaceName)
-	jenkins.Spec.Master.Containers[0].Image = imageName
-	return jenkins
+	Expect(k8sClient.Delete(ctx, jenkinsControllerTestNamespace)).Should(Succeed())
 }
 
 func ByCheckingThatJenkinsExists(ctx context.Context, jenkins *v1alpha2.Jenkins) {
-	By("By checking that the Jenkins exists")
+	By("Checking that the Jenkins CR exists")
 	created := &v1alpha2.Jenkins{}
 	expectedName := jenkins.Name
 	key := types.NamespacedName{Namespace: jenkins.Namespace, Name: expectedName}
 	actual := func() (*v1alpha2.Jenkins, error) {
+		err := k8sClient.Get(ctx, key, created)
+		if err != nil {
+			return nil, err
+		}
+		return created, nil
+	}
+	Eventually(actual, timeout, interval).Should(Equal(created))
+}
+
+// func ByCheckingThatServiceMonitorIsCreated(ctx context.Context, name, namespace string) {
+//	By("Checking that ServiceMonitor is created")
+//	created := &monitoringv1.ServiceMonitor{}
+//	key := types.NamespacedName{Namespace: namespace, Name: name}
+//	actual := func() (*monitoringv1.ServiceMonitor, error) {
+//		err := k8sClient.Get(ctx, key, created)
+//		if err != nil {
+//			return nil, err
+//		}
+//		return created, nil
+//	}
+//	Eventually(actual, timeout, interval).Should(Equal(created))
+// }
+
+func ByCheckingThatPVCIsCreated(ctx context.Context, name, namespace string) {
+	By("Checking that PVC is created")
+	created := &corev1.PersistentVolumeClaim{}
+	key := types.NamespacedName{Namespace: namespace, Name: name}
+	actual := func() (*corev1.PersistentVolumeClaim, error) {
+		err := k8sClient.Get(ctx, key, created)
+		if err != nil {
+			return nil, err
+		}
+		return created, nil
+	}
+	Eventually(actual, timeout, interval).Should(Equal(created))
+}
+
+func ByCheckingThatConfigMapIsCreated(ctx context.Context, name, namespace string) {
+	By("Checking that ConfigMap is created")
+	created := &corev1.ConfigMap{}
+	key := types.NamespacedName{Namespace: namespace, Name: name}
+	actual := func() (*corev1.ConfigMap, error) {
 		err := k8sClient.Get(ctx, key, created)
 		if err != nil {
 			return nil, err
@@ -186,119 +223,22 @@ func ByCreatingJenkinsSuccesfully(ctx context.Context, jenkins *v1alpha2.Jenkins
 }
 
 func GetJenkinsTestInstance(name string, namespace string) *v1alpha2.Jenkins {
-	// TODO fix e2e to use deployment instead of pod
-	annotations := map[string]string{"test": "label"}
-	jenkins := &v1alpha2.Jenkins{
-		TypeMeta: v1alpha2.JenkinsTypeMeta(),
-		ObjectMeta: metav1.ObjectMeta{
-			Name:        name,
-			Namespace:   namespace,
-			Annotations: annotations,
-		},
-		Spec: v1alpha2.JenkinsSpec{
-			//			JenkinsAPISettings: v1alpha2.JenkinsAPISettings{
-			//				AuthorizationStrategy: v1alpha2.ServiceAccountAuthorizationStrategy,
-			//			},
-			Master: &v1alpha2.JenkinsMaster{
-				Annotations: annotations,
-				Containers:  getJenkinsContainers(),
-				BasePlugins: getJenkinsPlugins(),
-				Volumes:     getJenkinsVolumes(),
-			},
-			Service: getJenkinsServices(),
-			Roles:   getJenkinsRoles(name),
-		},
-	}
-	return jenkins
-}
-
-func GetMinimalJenkinsTestInstance(name string, namespace string) *v1alpha2.Jenkins {
 	jenkins := &v1alpha2.Jenkins{
 		TypeMeta: v1alpha2.JenkinsTypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
 		},
+		Spec: v1alpha2.JenkinsSpec{
+			ConfigurationAsCode: &v1alpha2.Configuration{
+				Enabled:       true,
+				DefaultConfig: true,
+			},
+			PersistentSpec: v1alpha2.JenkinsPersistentSpec{
+				Enabled: true,
+			},
+			// MetricsEnabled: true,
+		},
 	}
 	return jenkins
-}
-
-func getJenkinsRoles(resourceName string) []rbacv1.RoleRef {
-	return []rbacv1.RoleRef{
-		{
-			APIGroup: "rbac.authorization.k8s.io",
-			Kind:     "Role",
-			Name:     resourceName,
-		},
-	}
-}
-
-func getJenkinsServices() v1alpha2.Service {
-	return v1alpha2.Service{
-		Type: corev1.ServiceTypeNodePort,
-		Port: constants.DefaultHTTPPortInt32,
-	}
-}
-
-func getJenkinsVolumes() []corev1.Volume {
-	return []corev1.Volume{
-		{
-			Name: "plugins-cache",
-			VolumeSource: corev1.VolumeSource{
-				EmptyDir: &corev1.EmptyDirVolumeSource{},
-			},
-		},
-	}
-}
-
-func getJenkinsContainers() []v1alpha2.Container {
-	return []v1alpha2.Container{
-		{
-			Name:           resources.JenkinsMasterContainerName,
-			ReadinessProbe: getJenkinsProbe(),
-			LivenessProbe:  getJenkinsProbe(),
-			VolumeMounts:   getJenkinsVolumeMounts(),
-		},
-		{
-			Name:  "envoyproxy",
-			Image: "envoyproxy/envoy-alpine:v1.14.1",
-		},
-	}
-}
-
-func getJenkinsVolumeMounts() []corev1.VolumeMount {
-	return []corev1.VolumeMount{
-		{
-			Name:      "plugins-cache",
-			MountPath: "/usr/share/jenkins/ref/plugins",
-		},
-	}
-}
-
-func getJenkinsProbe() *corev1.Probe {
-	return &corev1.Probe{
-		Handler: corev1.Handler{
-			HTTPGet: &corev1.HTTPGetAction{
-				Path:   "/login",
-				Port:   intstr.FromString("http"),
-				Scheme: corev1.URISchemeHTTP,
-			},
-		},
-		InitialDelaySeconds: int32(80),
-		TimeoutSeconds:      int32(4),
-		FailureThreshold:    int32(10),
-	}
-}
-
-func getJenkinsPlugins() []v1alpha2.Plugin {
-	return []v1alpha2.Plugin{
-		{Name: "configuration-as-code", Version: "1.42"},
-		{Name: "configuration-as-code-groovy", Version: "1.1"},
-		{Name: "git", Version: "4.2.2"},
-		{Name: "job-dsl", Version: "1.77"},
-		{Name: "kubernetes-credentials-provider", Version: "0.13"},
-		{Name: "kubernetes", Version: "1.25.2"},
-		{Name: "workflow-aggregator", Version: "2.6"},
-		{Name: "workflow-job", Version: "2.40"},
-	}
 }
