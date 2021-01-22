@@ -3,6 +3,9 @@ package constants
 const (
 	// OperatorName is a operator name
 	OperatorName = "jenkins-operator"
+	// ServiceName
+	DefaultService = "jenkins-jenkins-with-all"
+	DefaultJnlpService = "jenkins-jenkins-with-all-jnlp"
 	// DefaultAmountOfExecutors is the default amount of Jenkins executors
 	DefaultAmountOfExecutors = 0
 	// SeedJobSuffix is a suffix added for all seed jobs
