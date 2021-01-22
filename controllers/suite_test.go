@@ -114,7 +114,7 @@ var _ = BeforeSuite(func(done Done) {
 func registerJenkinsRestoreController(manager manager.Manager) {
 	controller := &RestoreReconciler{
 		Client: manager.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("Backup"),
+		Log:    ctrl.Log.WithName("controllers").WithName("Restore"),
 		Scheme: manager.GetScheme(),
 	}
 	err := controller.SetupWithManager(manager)

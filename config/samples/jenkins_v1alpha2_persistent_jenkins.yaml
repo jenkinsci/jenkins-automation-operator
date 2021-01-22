@@ -5,6 +5,7 @@ metadata:
 spec:
   persistentSpec:
     enabled: true
+    storageClassName: gp2
   configurationAsCode:
     configurations: []
     enabled: true

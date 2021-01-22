@@ -5,4 +5,4 @@ kind: Kustomization
 images:
 - name: controller
   newName: quay.io/redhat-developer/openshift-jenkins-operator
-  newTag: 0.7.0-0c0d7a71
+  newTag: 0.7.0-ad97eb11
