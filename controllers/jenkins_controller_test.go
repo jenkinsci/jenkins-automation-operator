@@ -8,6 +8,7 @@ import (
 	"github.com/jenkinsci/jenkins-automation-operator/api/v1alpha2"
 	"github.com/jenkinsci/jenkins-automation-operator/pkg/configuration/base"
 	"github.com/jenkinsci/jenkins-automation-operator/pkg/configuration/base/resources"
+	"github.com/jenkinsci/jenkins-automation-operator/pkg/constants"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	appsv1 "k8s.io/api/apps/v1"
@@ -60,6 +61,16 @@ var _ = Describe("Jenkins controller", func() {
 		It(fmt.Sprintf("Deployment Should Be Created (%s)", jenkinsName), func() {
 			// Check if Jenkins Deployment has been created
 			ByCheckingThatTheDeploymentExists(ctx, jenkins)
+		})
+
+		It(fmt.Sprintf("Example Service Should Be Created (%s)", constants.DefaultService), func() {
+			// Check if Jenkins Example Services is created
+			ByCheckingThatServiceIsCreated(ctx, constants.DefaultService , JenkinsTestNamespace)
+		})
+
+		It(fmt.Sprintf("Example-Jnlp Service Should Be Created (%s)", constants.DefaultJnlpService), func() {
+			// Check if Jenkins Jnlp Service is created
+			ByCheckingThatServiceIsCreated(ctx, constants.DefaultJnlpService , JenkinsTestNamespace)
 		})
 
 		It(fmt.Sprintf(" Default CasC ConfigMap Should Be Created (%s)", jenkinsName), func() {
@@ -170,6 +181,20 @@ func ByCheckingThatPVCIsCreated(ctx context.Context, name, namespace string) {
 	Eventually(actual, timeout, interval).Should(Equal(created))
 }
 
+func ByCheckingThatServiceIsCreated(ctx context.Context, name, namespace string) {
+	By("Checking that Service is created")
+	created := &corev1.Service{}
+	key := types.NamespacedName{Namespace: namespace, Name: name}
+	actual := func() (*corev1.Service, error) {
+		err := k8sClient.Get(ctx, key, created)
+		if err != nil {
+			return nil, err
+		}
+		return created, nil
+	}
+	Eventually(actual, timeout, interval).Should(Equal(created))
+}
+
 func ByCheckingThatConfigMapIsCreated(ctx context.Context, name, namespace string) {
 	By("Checking that ConfigMap is created")
 	created := &corev1.ConfigMap{}
@@ -237,6 +262,7 @@ func GetJenkinsTestInstance(name string, namespace string) *v1alpha2.Jenkins {
 			PersistentSpec: v1alpha2.JenkinsPersistentSpec{
 				Enabled: true,
 			},
+			BackupEnabled: true,
 			// MetricsEnabled: true,
 		},
 	}
