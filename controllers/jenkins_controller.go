@@ -102,6 +102,7 @@ func (r *JenkinsReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 // +kubebuilder:rbac:groups=apps;batch;core;extensionsnetworking.k8s.io;packages.operators.coreos.com;policy;rbac.authorization.k8s.io,resources=*,verbs=*
 // +kubebuilder:rbac:groups=apps.openshift.io;core;project.openshift.io;quota.openshift.io;template.openshift.io;route.openshift.io,resources=*,verbs=*
+// +kubebuilder:rbac:groups=security.openshift.io,resources=securitycontextconstraints,verbs=use
 // +kubebuilder:rbac:groups=jenkins.io,resources=jenkins;jenkins/status;jenkins/finalizers,verbs=*
 
 func (r *JenkinsReconciler) Reconcile(request ctrl.Request) (ctrl.Result, error) {
@@ -490,6 +491,7 @@ func (r *JenkinsReconciler) getCalculatedSpec(ctx context.Context, jenkins *v1al
 	jenkinsName := jenkins.Name
 	logger := r.Log.WithValues("cr", jenkinsName)
 	requestedSpec := jenkins.Spec
+	zero := int64(0)
 
 	// We make a copy of the requested spec, and we will build the actual one then
 	calculatedSpec := requestedSpec.DeepCopy()
@@ -538,6 +540,13 @@ func (r *JenkinsReconciler) getCalculatedSpec(ctx context.Context, jenkins *v1al
 	if jenkinsContainer.LivenessProbe == nil {
 		logger.Info("Setting default Jenkins livenessProbe")
 		jenkinsContainer.LivenessProbe = resources.NewProbe(containerProbeURI, containerProbePortName, corev1.URISchemeHTTP, 80, 5, 12)
+	}
+
+	if jenkinsContainer.SecurityContext == nil {
+		logger.Info(fmt.Sprintf("Setting default Jenkins security context: %d", zero))
+		jenkinsContainer.SecurityContext = &corev1.SecurityContext{
+			RunAsUser: &zero,
+		}
 	}
 
 	setEnvVarIfNotSet(&jenkinsContainer, constants.JavaOptsVariableName, constants.JavaOptsDefaultValue)

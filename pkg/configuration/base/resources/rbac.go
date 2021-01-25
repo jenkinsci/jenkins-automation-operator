@@ -14,6 +14,7 @@ const (
 	watchVerb  = "watch"
 	patchVerb  = "patch"
 	updateVerb = "update"
+	useVerb    = "use"
 
 	// EmptyAPIGroup short hand for the empty API group while defining policies
 	EmptyAPIGroup = ""
@@ -23,6 +24,9 @@ const (
 
 	// BuildAPIGroup  the openshift api group name for builds
 	BuildAPIGroup = "build.openshift.io"
+
+	// SecurityAPIGroup  the openshift api group name for security
+	SecurityAPIGroup = "security.openshift.io"
 )
 
 // NewRole returns rbac role for jenkins master
@@ -71,33 +75,31 @@ func NewDefaultPolicyRules() []v1.PolicyRule {
 	Default := []string{createVerb, deleteVerb, getVerb, listVerb, patchVerb, updateVerb, watchVerb}
 	create := []string{createVerb}
 	watch := []string{watchVerb}
+	use := []string{useVerb}
 
-	rules = append(rules, NewPolicyRule(EmptyAPIGroup, "pods/portforward", create))
-	rules = append(rules, NewPolicyRule(EmptyAPIGroup, "pods", Default))
-	rules = append(rules, NewPolicyRule(EmptyAPIGroup, "pods/exec", Default))
-	rules = append(rules, NewPolicyRule(EmptyAPIGroup, "configmaps", Default))
-	rules = append(rules, NewPolicyRule(EmptyAPIGroup, "pods/log", Default))
-	rules = append(rules, NewPolicyRule(EmptyAPIGroup, "secrets", Default))
-	rules = append(rules, NewPolicyRule(EmptyAPIGroup, "events", watch))
+	rules = append(rules, NewPolicyRule(EmptyAPIGroup, "pods/portforward", "", create))
+	rules = append(rules, NewPolicyRule(EmptyAPIGroup, "pods", "", Default))
+	rules = append(rules, NewPolicyRule(EmptyAPIGroup, "pods/exec", "", Default))
+	rules = append(rules, NewPolicyRule(EmptyAPIGroup, "configmaps", "", Default))
+	rules = append(rules, NewPolicyRule(EmptyAPIGroup, "pods/log", "", Default))
+	rules = append(rules, NewPolicyRule(EmptyAPIGroup, "secrets", "", Default))
+	rules = append(rules, NewPolicyRule(EmptyAPIGroup, "events", "", watch))
 
-	rules = append(rules, NewOpenShiftPolicyRule(ImageAPIGroup, "imagestreams", Default))
-	rules = append(rules, NewOpenShiftPolicyRule(BuildAPIGroup, "buildconfigs", Default))
-	rules = append(rules, NewOpenShiftPolicyRule(BuildAPIGroup, "builds", Default))
+	rules = append(rules, NewPolicyRule(ImageAPIGroup, "imagestreams", "", Default))
+	rules = append(rules, NewPolicyRule(BuildAPIGroup, "buildconfigs", "", Default))
+	rules = append(rules, NewPolicyRule(BuildAPIGroup, "builds", "", Default))
+	rules = append(rules, NewPolicyRule(SecurityAPIGroup, "securitycontextconstraints", "anyuid", use))
 
 	return rules
 }
 
 // NewPolicyRule returns a policyRule allowing verbs on resources
-func NewPolicyRule(apiGroup string, resource string, verbs []string) v1.PolicyRule {
+func NewPolicyRule(apiGroup string, resource, resourceName string, verbs []string) v1.PolicyRule {
 	rule := v1.PolicyRule{
-		APIGroups: []string{apiGroup},
-		Resources: []string{resource},
-		Verbs:     verbs,
+		APIGroups:     []string{apiGroup},
+		Resources:     []string{resource},
+		ResourceNames: []string{resourceName},
+		Verbs:         verbs,
 	}
 	return rule
-}
-
-// NewOpenShiftPolicyRule returns a policyRule allowing verbs on resources
-func NewOpenShiftPolicyRule(apiGroup string, resource string, verbs []string) v1.PolicyRule {
-	return NewPolicyRule(apiGroup, resource, verbs)
 }
