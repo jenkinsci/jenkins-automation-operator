@@ -491,7 +491,6 @@ func (r *JenkinsReconciler) getCalculatedSpec(ctx context.Context, jenkins *v1al
 	jenkinsName := jenkins.Name
 	logger := r.Log.WithValues("cr", jenkinsName)
 	requestedSpec := jenkins.Spec
-	zero := int64(0)
 
 	// We make a copy of the requested spec, and we will build the actual one then
 	calculatedSpec := requestedSpec.DeepCopy()
@@ -540,13 +539,6 @@ func (r *JenkinsReconciler) getCalculatedSpec(ctx context.Context, jenkins *v1al
 	if jenkinsContainer.LivenessProbe == nil {
 		logger.Info("Setting default Jenkins livenessProbe")
 		jenkinsContainer.LivenessProbe = resources.NewProbe(containerProbeURI, containerProbePortName, corev1.URISchemeHTTP, 80, 5, 12)
-	}
-
-	if jenkinsContainer.SecurityContext == nil {
-		logger.Info(fmt.Sprintf("Setting default Jenkins security context: %d", zero))
-		jenkinsContainer.SecurityContext = &corev1.SecurityContext{
-			RunAsUser: &zero,
-		}
 	}
 
 	setEnvVarIfNotSet(&jenkinsContainer, constants.JavaOptsVariableName, constants.JavaOptsDefaultValue)
