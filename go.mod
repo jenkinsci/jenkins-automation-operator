@@ -21,7 +21,7 @@ require (
 	github.com/onsi/gomega v1.10.2
 	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible
 	github.com/openshift/custom-resource-status v0.0.0-20200602122900-c002fd1547ca
-	github.com/operator-framework/api v0.3.13
+	github.com/operator-framework/api v0.3.13 // indirect
 	github.com/operator-framework/operator-lib v0.1.0
 	github.com/operator-framework/operator-sdk v1.0.1 // indirect
 	github.com/pkg/errors v0.9.1
