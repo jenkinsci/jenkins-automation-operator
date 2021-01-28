@@ -276,7 +276,7 @@ func fatal(err error, debug bool) {
 }
 
 func printInfo() {
-	version.Version = "0.7.0"
+	version.Version = "0.7.1"
 	setupLog.Info(fmt.Sprintf("Version: %s", version.Version))
 	file, _ := filepath.Abs(os.Args[0])
 	setupLog.Info(fmt.Sprintf("MD5 checkcsum: %s", md5sum(file)))
