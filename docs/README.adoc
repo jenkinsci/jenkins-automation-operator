@@ -1,13 +1,17 @@
 # Jenkins Operator
 
-The easiest way to deploy, manage and upgrade Jenkins on Kubernetes.
-This operator is typically installed from the Operator Lifecycle Manager (OLM), and defines Jenkins CustomResourcesDefinition (CRDs) that act as
-building block for Jenkins intance.
+Jenkins Operator provides the easiest way to deploy, manage and upgrade Jenkins on Kubernetes and OpenShift.
+Jenkins Operator is typically installed from the Operator Lifecycle Manager (OLM), and defines Jenkins CustomResourcesDefinition (CRDs) that act as
+building block for Jenkins intances.
 
-See the following topics to learn how to use the Jenkins operator:
+This documentation covers the following topics and explains how to use the Jenkins operator:
 
-- link:install.adoc[Installing the Jenkins Operator]
+- link:overview.adoc[Jenkins Operator Overview]
+- link:install.adoc[Installing the Jenkins Operator on OpenShift]
+- link:kubernetes_install.adoc[Installing the Jenkins Operator on Kubernetes]
+- link:jenkins_instance.adoc[Jenkins Instance Specification and Configuration]
 - link:configurationascode.adoc[Configuration as Code]
 - link:jenkinsimage.adoc[Build your own Jenkins Image]
-- link:backupandrestore.adoc[Backup and Restore]
+- link:backupandrestore.adoc[Backup and Restore Jenkins Instances]
+
 
