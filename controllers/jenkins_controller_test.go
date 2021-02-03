@@ -65,12 +65,12 @@ var _ = Describe("Jenkins controller", func() {
 
 		It(fmt.Sprintf("Example Service Should Be Created (%s)", constants.DefaultService), func() {
 			// Check if Jenkins Example Services is created
-			ByCheckingThatServiceIsCreated(ctx, constants.DefaultService , JenkinsTestNamespace)
+			ByCheckingThatServiceIsCreated(ctx, constants.DefaultService, JenkinsTestNamespace)
 		})
 
 		It(fmt.Sprintf("Example-Jnlp Service Should Be Created (%s)", constants.DefaultJnlpService), func() {
 			// Check if Jenkins Jnlp Service is created
-			ByCheckingThatServiceIsCreated(ctx, constants.DefaultJnlpService , JenkinsTestNamespace)
+			ByCheckingThatServiceIsCreated(ctx, constants.DefaultJnlpService, JenkinsTestNamespace)
 		})
 
 		It(fmt.Sprintf(" Default CasC ConfigMap Should Be Created (%s)", jenkinsName), func() {
