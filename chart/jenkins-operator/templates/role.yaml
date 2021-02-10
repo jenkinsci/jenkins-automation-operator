@@ -1,0 +1,69 @@
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: jenkins-operator-role
+rules:
+- apiGroups:
+  - apps
+  - batch
+  - ""
+  - extensionsnetworking.k8s.io
+  - packages.operators.coreos.com
+  - policy
+  - rbac.authorization.k8s.io
+  resources:
+  - '*'
+  verbs:
+  - '*'
+- apiGroups:
+  - apps.openshift.io
+  - ""
+  - project.openshift.io
+  - quota.openshift.io
+  - route.openshift.io
+  - template.openshift.io
+  resources:
+  - '*'
+  verbs:
+  - '*'
+- apiGroups:
+  - jenkins.io
+  resources:
+  - backupconfigs
+  - backupconfigs/status
+  - backups
+  - backups/status
+  verbs:
+  - '*'
+- apiGroups:
+  - jenkins.io
+  resources:
+  - jenkins
+  - jenkins/finalizers
+  - jenkins/status
+  verbs:
+  - '*'
+- apiGroups:
+  - jenkins.io
+  resources:
+  - jenkinsimages
+  - jenkinsimages/finalizers
+  - jenkinsimages/status
+  verbs:
+  - '*'
+- apiGroups:
+  - jenkins.io
+  resources:
+  - restores
+  - restores/status
+  verbs:
+  - '*'
+- apiGroups:
+  - security.openshift.io
+  resources:
+  - securitycontextconstraints
+  verbs:
+  - use
