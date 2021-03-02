@@ -25,7 +25,7 @@ spec:
       serviceAccountName: jenkins-operator
       containers:
       - command:
-        - /manager
+        - /jenkins-operator
         args:
         - --enable-leader-election
         image: controller:latest

@@ -49,6 +49,7 @@ import (
 	"github.com/jenkinsci/jenkins-automation-operator/pkg/notifications"
 	e "github.com/jenkinsci/jenkins-automation-operator/pkg/notifications/event"
 	"github.com/jenkinsci/jenkins-automation-operator/version"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 
 	// sdkVersion "github.com/operator-framework/operator-sdk/version"
 	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
@@ -71,6 +72,8 @@ func init() {
 	utilruntime.Must(routev1.AddToScheme(scheme))
 	utilruntime.Must(corev1.AddToScheme(scheme))
 	utilruntime.Must(monitoringv1.AddToScheme(scheme))
+	utilruntime.Must(apiextensionsv1.AddToScheme(scheme))
+
 	// +kubebuilder:scaffold:scheme
 }
 

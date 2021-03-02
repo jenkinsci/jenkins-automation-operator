@@ -17,6 +17,7 @@ spec:
     status: {}
   validation:
     openAPIV3Schema:
+      description: Jenkins is the Schema for the jenkins API
       properties:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
@@ -30,7 +31,7 @@ spec:
           description: Spec defines the desired state of the Jenkins
           properties:
             backupEnabled:
-              description: Backup defines configuration of Backup for Jenkins
+              description: BackupEnabled defines whether backup feature is enabled
               type: boolean
             configurationAsCode:
               description: ConfigurationAsCode defines configuration of Jenkins configuration via Configuration as Code Jenkins plugin
@@ -107,6 +108,9 @@ spec:
                   description: 'The port that are exposed by this service. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies'
                   format: int32
                   type: integer
+                portName:
+                  description: 'The PortName that are exposed by this service. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies'
+                  type: string
                 type:
                   description: 'Type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. "ExternalName" maps to the specified externalName. "ClusterIP" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object. If clusterIP is "None", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a stable IP. "NodePort" builds on ClusterIP and allocates a port on every node which routes to the clusterIP. "LoadBalancer" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the clusterIP. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services---service-types'
                   type: string
@@ -1657,6 +1661,19 @@ spec:
                     type: object
                   type: array
               type: object
+            metricsEnabled:
+              description: MetricsEnabled defines whether prometheus metrics are enabled
+              type: boolean
+            persistentSpec:
+              description: PersistentSpec
+              properties:
+                enabled:
+                  type: boolean
+                storageClassName:
+                  type: string
+                volumeSize:
+                  type: string
+              type: object
             roles:
               description: Roles defines list of extra RBAC roles for the Jenkins Master pod service account
               items:
@@ -1706,6 +1723,9 @@ spec:
                   description: 'The port that are exposed by this service. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies'
                   format: int32
                   type: integer
+                portName:
+                  description: 'The PortName that are exposed by this service. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies'
+                  type: string
                 type:
                   description: 'Type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. "ExternalName" maps to the specified externalName. "ClusterIP" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object. If clusterIP is "None", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a stable IP. "NodePort" builds on ClusterIP and allocates a port on every node which routes to the clusterIP. "LoadBalancer" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the clusterIP. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services---service-types'
                   type: string
@@ -1759,7 +1779,7 @@ spec:
               description: Spec defines the effective state of the Jenkins
               properties:
                 backupEnabled:
-                  description: Backup defines configuration of Backup for Jenkins
+                  description: BackupEnabled defines whether backup feature is enabled
                   type: boolean
                 configurationAsCode:
                   description: ConfigurationAsCode defines configuration of Jenkins configuration via Configuration as Code Jenkins plugin
@@ -1836,6 +1856,9 @@ spec:
                       description: 'The port that are exposed by this service. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies'
                       format: int32
                       type: integer
+                    portName:
+                      description: 'The PortName that are exposed by this service. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies'
+                      type: string
                     type:
                       description: 'Type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. "ExternalName" maps to the specified externalName. "ClusterIP" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object. If clusterIP is "None", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a stable IP. "NodePort" builds on ClusterIP and allocates a port on every node which routes to the clusterIP. "LoadBalancer" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the clusterIP. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services---service-types'
                       type: string
@@ -3386,6 +3409,19 @@ spec:
                         type: object
                       type: array
                   type: object
+                metricsEnabled:
+                  description: MetricsEnabled defines whether prometheus metrics are enabled
+                  type: boolean
+                persistentSpec:
+                  description: PersistentSpec
+                  properties:
+                    enabled:
+                      type: boolean
+                    storageClassName:
+                      type: string
+                    volumeSize:
+                      type: string
+                  type: object
                 roles:
                   description: Roles defines list of extra RBAC roles for the Jenkins Master pod service account
                   items:
@@ -3435,6 +3471,9 @@ spec:
                       description: 'The port that are exposed by this service. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies'
                       format: int32
                       type: integer
+                    portName:
+                      description: 'The PortName that are exposed by this service. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies'
+                      type: string
                     type:
                       description: 'Type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. "ExternalName" maps to the specified externalName. "ClusterIP" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object. If clusterIP is "None", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a stable IP. "NodePort" builds on ClusterIP and allocates a port on every node which routes to the clusterIP. "LoadBalancer" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the clusterIP. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services---service-types'
                       type: string

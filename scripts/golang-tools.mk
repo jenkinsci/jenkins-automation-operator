@@ -1,7 +1,8 @@
 ## Targets to install golang tools (golangci, goimports, etc...)
 
-# find or download controller-gen
-controller-gen: 
+all: help
+
+controller-gen: # find or download controller-gen
 ifeq (, $(shell which controller-gen))
 	@{ \
 	set -e ;\
@@ -48,7 +49,7 @@ ifeq (, $(shell which kubebuilder))
 endif
 
 # find or download ginkgo
-install-ginkgo: 
+install-ginkgo:
 ifeq (, $(shell which ginkgo))
 	@{ \
 	set -e ;\
@@ -80,7 +81,7 @@ GOLANGCI=$(shell which golangci-lint)
 endif
 
 # find or download golangci
-install-goimports:
+install-goimports: 
 ifeq (, $(shell which goimports))
 	@{ \
 	set -e ;\

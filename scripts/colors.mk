@@ -1,9 +1,3 @@
-## This makefile is self documented: To set comment, add ## after the target
-help: ## Display this help message
-	@echo "    ${BLACK}:: ${YELLOW}make${RESET} ${BLACK}::${RESET}"
-	@echo "${YELLOW}-------------------------------------------------------------------------------------------------------${RESET}"
-	@grep -E '^[a-zA-Z_0-9%-]+:.*?## .*$$' $(word 1,$(MAKEFILE_LIST)) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "${TARGET_COLOR}%-30s${RESET} %s\n", $$1, $$2}'
-
 # define standard colors
 BLACK        := $(shell tput -Txterm setaf 0)
 RED          := $(shell tput -Txterm setaf 1)
