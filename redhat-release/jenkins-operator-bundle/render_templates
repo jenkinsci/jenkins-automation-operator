@@ -1,0 +1,13 @@
+#!/bin/bash
+
+set -euxo pipefail
+
+# access the env var to exit early if undefined (set -u)
+echo "${JENKINS_OPERATOR_CONTAINER_BUILD_INFO_JSON}" > /dev/null
+
+PULL_URL=$(echo ${JENKINS_OPERATOR_CONTAINER_BUILD_INFO_JSON} | python3 -c 'import json,sys;obj=json.load(sys.stdin);print(obj["extra"]["image"]["index"]["pull"][0])')
+REDHAT_IO_PULL_URL=$(echo $PULL_URL | sed "s|registry-proxy.engineering.redhat.com/rh-osbs/redhat-developer-jenkins-operator|registry.redhat.io/ocp-tools-4-tech-preview/jenkins-rhel8-operator|g")
+
+MANIFEST_DIR="manifests"
+sed -i "s|REPLACE_IMAGE|${REDHAT_IO_PULL_URL}|g" $MANIFEST_DIR/jenkins-operator.clusterserviceversion.yaml
+

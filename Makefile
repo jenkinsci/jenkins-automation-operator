@@ -20,6 +20,10 @@ test: kubebuilder generate manifests ## Run tests
 	@echo "${BLUE}Running unit tests and computing coverage${RESET}"
 	@go test ./... -coverprofile cover.out
 
+smoke: FORCE ## Runs smoke tests to verify the bundle install
+	@echo "${BLUE}Testing the new operator bundle install${RESET}"
+	@./scripts/smoke.sh
+
 operator: goimports fmt vet generate test bin ## Builds operator binary
 
 bin: # Builds operator binary only 
@@ -64,6 +68,14 @@ remote-setup: manifests kustomize ## Deploy controller in the configured Kuberne
 remote-teardown: manifests kustomize ## Teardown deployed controller in the configured Kubernetes cluster in ~/.kube/config
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${OPERATOR_IMG}
 	$(KUSTOMIZE) build config/default | kubectl delete -f -
+
+
+## Red Hat release targets
+redhat-release: FORCE ## Prepare and perform Red Hat release by copying required artifacts in pkgs.devel.redhat.com
+	@echo "${BLUE}Preparing Red Hat release${RESET}"
+	@./scripts/release-prepare.sh
+	@echo "${BLUE}Performing Red Hat release${RESET}"
+	@./scripts/release-perform.sh
 
 manifests: controller-gen # Generate manifests e.g. CRD, RBAC etc.
 	@echo "${BLUE}Generating bundle's manifest and associated files (CRD, samples, RBAC)${RESET}"

@@ -241,7 +241,7 @@ spec:
                 - --enable-leader-election
                 command:
                 - /jenkins-operator
-                image: quay.io/redhat-developer/openshift-jenkins-operator:0.7.3-006fed20
+                image: quay.io/redhat-developer/openshift-jenkins-operator:0.7.3-a23bfcdc
                 imagePullPolicy: Always
                 name: manager
                 resources: {}
@@ -294,7 +294,7 @@ spec:
   - developer tools
   links:
   - name: Jenkins Operator
-    url: https://jenkins-operator.domain
+    url: https://github.com/redhat-developer/jenkins-operator
   maintainers:
   - email: abenaiss@redhat.com
     name: Akram Ben Aissi

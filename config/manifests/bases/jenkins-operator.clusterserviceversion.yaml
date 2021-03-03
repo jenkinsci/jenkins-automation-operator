@@ -155,24 +155,25 @@ spec:
   install:
     spec:
       deployments: null
-    strategy: ""
+    strategy: deployment
   installModes:
-  - supported: true
-    type: OwnNamespace
-  - supported: true
-    type: SingleNamespace
-  - supported: false
-    type: MultiNamespace
-  - supported: true
-    type: AllNamespaces
+  - type: OwnNamespace
+    supported: true
+  - type: SingleNamespace
+    supported: true
+  - type: MultiNamespace
+    supported: false
+  - type: AllNamespaces
+    supported: true
   keywords:
   - Jenkins
   - ci-cd
-  - continuous integration
-  - developer tools
+  - CI/CD
+  - Continuous Integration
+  - Developer Tools
   links:
   - name: Jenkins Operator
-    url: https://jenkins-operator.domain
+    url: https://github.com/redhat-developer/jenkins-operator
   maintainers:
   - email: abenaiss@redhat.com
     name: Akram Ben Aissi

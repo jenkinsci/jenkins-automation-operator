@@ -1,0 +1,13 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  name: jenkins-operator
+  namespace: openshift-marketplace
+spec:
+  displayName: Jenkins Operator
+  image: quay.io/redhat-developer/openshift-jenkins-operator-index:0.0.0
+  publisher: "Jenkins Community"
+  sourceType: grpc
+  updateStrategy:
+    registryPoll:
+      interval: 15m

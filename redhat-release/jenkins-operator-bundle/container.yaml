@@ -1,0 +1,14 @@
+---
+image_build_method: imagebuilder
+remote_source:
+  repo: @JENKINS_OPERATOR_REPO
+  ref: @JENKINS_OPERATOR_COMMIT
+operator_manifests:
+  manifests_dir: manifests
+  enable_digest_pinning: false
+  enable_repo_replacements: false
+  enable_registry_replacements: false
+platforms:
+  only:
+  - x86_64
+
