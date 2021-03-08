@@ -49,6 +49,7 @@ import (
 	"github.com/jenkinsci/jenkins-automation-operator/pkg/notifications"
 	e "github.com/jenkinsci/jenkins-automation-operator/pkg/notifications/event"
 	"github.com/jenkinsci/jenkins-automation-operator/version"
+	apiconfigv1 "github.com/openshift/api/config/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 
 	// sdkVersion "github.com/operator-framework/operator-sdk/version"
@@ -73,6 +74,7 @@ func init() {
 	utilruntime.Must(corev1.AddToScheme(scheme))
 	utilruntime.Must(monitoringv1.AddToScheme(scheme))
 	utilruntime.Must(apiextensionsv1.AddToScheme(scheme))
+	utilruntime.Must(apiconfigv1.AddToScheme(scheme))
 
 	// +kubebuilder:scaffold:scheme
 }
@@ -100,6 +102,7 @@ func main() {
 	}
 	checkRouteAPIAvailable(clientSet)
 	checkPrometheusAPIAvailable(clientSet)
+	checkProxyAPIAvailable(manager, clientSet)
 	notificationsChannel := make(chan e.Event)
 	go notifications.Listen(notificationsChannel, eventsRecorder, client)
 
@@ -130,6 +133,16 @@ func checkRouteAPIAvailable(clientSet *kubernetes.Clientset) {
 func checkPrometheusAPIAvailable(clientSet *kubernetes.Clientset) {
 	if base.IsPrometheusAPIAvailable(clientSet) {
 		setupLog.Info("Prometheus API found: ServiceMonitor creation will be performed")
+	}
+}
+
+func checkProxyAPIAvailable(manager manager.Manager, clientSet *kubernetes.Clientset) {
+	if resources.IsOpenshiftProxyAPIAvailable(clientSet) {
+		setupLog.Info("Proxy API found")
+		err := resources.QueryProxyConfig(manager)
+		if err != nil {
+			setupLog.Info("failed to query cluster proxy configuration")
+		}
 	}
 }
 

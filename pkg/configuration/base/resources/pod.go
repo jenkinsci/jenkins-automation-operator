@@ -232,6 +232,11 @@ func NewJenkinsMasterContainer(jenkins *v1alpha2.Jenkins) corev1.Container {
 		envs = append(envs, jenkinsHomeEnvVar)
 	}
 
+	if !IsProxyOverridden(envs) {
+		ProxyEnvVars = dropEmptyProxyEnv(ProxyEnvVars)
+		envs = append(envs, ProxyEnvVars...)
+	}
+
 	return GetJenkinsContainer(jenkins, jenkinsContainer, envs)
 }
 
