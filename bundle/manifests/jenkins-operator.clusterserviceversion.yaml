@@ -73,9 +73,14 @@ metadata:
         }
       ]
     capabilities: Basic Install
+    categories: Developer Tools
+    certified: "true"
+    description: Easily manage your Jenkins instances on OpenShift.
+    operators.openshift.io/infrastructure-features: '["Disconnected"]'
     operators.operatorframework.io/builder: operator-sdk-v1.0.1
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v2
-  name: jenkins-operator.v0.7.3
+    repository: https://github.com/redhat-developer/jenkins-operator
+  name: jenkins-operator.v0.7.2
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -241,7 +246,7 @@ spec:
                 - --enable-leader-election
                 command:
                 - /jenkins-operator
-                image: quay.io/redhat-developer/openshift-jenkins-operator:0.7.3-a23bfcdc
+                image: quay.io/redhat-developer/openshift-jenkins-operator:0.7.2-95cb6c5c
                 imagePullPolicy: Always
                 name: manager
                 resources: {}
@@ -290,8 +295,9 @@ spec:
   keywords:
   - Jenkins
   - ci-cd
-  - continuous integration
-  - developer tools
+  - CI/CD
+  - Continuous Integration
+  - Developer Tools
   links:
   - name: Jenkins Operator
     url: https://github.com/redhat-developer/jenkins-operator
@@ -305,4 +311,5 @@ spec:
   maturity: alpha
   provider:
     name: Red Hat
-  version: 0.7.3
+  replaces: jenkins-operator.v0.7.3
+  version: 0.7.2

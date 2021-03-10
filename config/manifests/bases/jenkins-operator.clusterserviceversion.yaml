@@ -4,8 +4,13 @@ metadata:
   annotations:
     alm-examples: '[]'
     capabilities: Basic Install
+    categories: Developer Tools
+    certified: "true"
+    description: Easily manage your Jenkins instances on OpenShift.
+    operators.openshift.io/infrastructure-features: '["Disconnected"]'
     operators.operatorframework.io/builder: operator-sdk-v1.0.1
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v2
+    repository: https://github.com/redhat-developer/jenkins-operator
   name: jenkins-operator.v0.0.0
   namespace: placeholder
 spec:
@@ -157,14 +162,14 @@ spec:
       deployments: null
     strategy: deployment
   installModes:
-  - type: OwnNamespace
-    supported: true
-  - type: SingleNamespace
-    supported: true
-  - type: MultiNamespace
-    supported: false
-  - type: AllNamespaces
-    supported: true
+  - supported: true
+    type: OwnNamespace
+  - supported: true
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespaces
   keywords:
   - Jenkins
   - ci-cd

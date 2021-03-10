@@ -56,7 +56,7 @@ import (
 )
 
 const (
-	DefaultJenkinsImageEnvVar = "DEFAULT_JENKINS_IMAGE"
+	DefaultJenkinsImageEnvVar = "JENKINS_SERVER_IMAGE"
 
 	containerProbeURI      = "login"
 	containerProbePortName = "http"

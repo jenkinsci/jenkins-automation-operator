@@ -1,3 +1,4 @@
+*.backup*
 out
 login.sh
 .DS_Store

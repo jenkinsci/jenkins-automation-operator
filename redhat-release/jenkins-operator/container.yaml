@@ -1,8 +1,8 @@
 ---
 image_build_method: imagebuilder
 remote_source:
-  repo: @JENKINS_OPERATOR_REPO
-  ref: @JENKINS_OPERATOR_COMMIT
+  repo: @@OPERATOR_REPO@@
+  ref: @@OPERATOR_COMMIT@@
 platforms:
   only:
   - x86_64

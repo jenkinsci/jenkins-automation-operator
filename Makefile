@@ -5,7 +5,7 @@ include scripts/golang-tools.mk
 
 # Current Operator version
 OPERATOR_NAME ?= jenkins-operator
-OPERATOR_VERSION ?= 0.7.3
+OPERATOR_VERSION ?= 0.7.2
 
 ## This makefile is self documented: To set comment, add ## after the target
 help: ## Display this help message

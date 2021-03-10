@@ -74,7 +74,7 @@ func getBuilderPod(name string, cr *jenkinsv1alpha2.JenkinsImage, builderPodArgs
 	}
 }
 
-const JenkinsImageBuilderEnv = "JENKINS_IMAGE_BUILDER_NAME"
+const JenkinsImageBuilderEnv = "JENKINS_BUILDER_IMAGE"
 
 func getJenkinsImageBuilderImage() string {
 	image := os.Getenv(JenkinsImageBuilderEnv)

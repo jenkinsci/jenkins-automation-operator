@@ -4,8 +4,8 @@ ENV BUILD_VERSION=v4.6.0
 ENV OS_GIT_MAJOR=4
 ENV OS_GIT_MINOR=6
 ENV OS_GIT_PATCH=0
-ENV SOURCE_GIT_URL=@JENKINS_OPERATOR_REPO
-ENV SOURCE_GIT_COMMIT=@JENKINS_OPERATOR_COMMIT
+ENV SOURCE_GIT_URL=@@OPERATOR_REPO@@
+ENV SOURCE_GIT_COMMIT=@@OPERATOR_COMMIT@@
 
 # Basics
 ENV GIT_COMMITTER_NAME="OpenShift Developer Sevices"
@@ -27,12 +27,12 @@ LABEL io.k8s.display-name="Jenkins Operator" \
       name="redhat-developer/jenkins-operator" \
       com.redhat.component="jenkins-operator-container" \
       io.openshift.maintainer.product="Jenkins for OpenShift" \
-      version="JENKINS_OPERATOR_VERSION" \
+      version="@@OPERATOR_VERSION@@" \
       summary="Jenkins Operator to deploy Jenkins continuous integration server"
 LABEL A=B
 ENV LANG=en_US.utf8 \
-    OPERATOR_NAME=@OPERATOR_NAME \
-    OPERATOR=/usr/local/bin/@OPERATOR_NAME 
+    OPERATOR_NAME=@@OPERATOR_NAME@@ \
+    OPERATOR=/usr/local/bin/@@OPERATOR_NAME@@
 
 COPY --from=builder /go/src/github.com/jenkinsci/jenkins-automation-operator/build/_output/bin/${OPERATOR_NAME} /jenkins-operator
 
