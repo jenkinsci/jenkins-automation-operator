@@ -65,6 +65,41 @@ type UserConfigurationComplete struct {
 	Undefined
 }
 
+// ReconcileLoopFailed defines the reason why the reconcile loop failed.
+type JenkinsInstanceCreated struct {
+	Undefined
+}
+
+// BackupInProgress defines the reason what part of backup is in progress and how it went
+type BackupInProgress struct {
+	Undefined
+}
+
+// BackupCompleted marks the completion of a backup
+type BackupCompleted struct {
+	Undefined
+}
+
+// RestoreInProgress defines the reason what part of restore is in progress and how it went
+type RestoreInProgress struct {
+	Undefined
+}
+
+// RestoreCompleted marks the completion of a restore
+type RestoreCompleted struct {
+	Undefined
+}
+
+// RestoreCompleted marks the completion of a restore
+type ImageBuildCompleted struct {
+	Undefined
+}
+
+// RestoreCompleted marks the completion of a restore
+type ImageBuildFailed struct {
+	Undefined
+}
+
 // NewUndefined returns new instance of Undefined.
 func NewUndefined(source Source, short []string, verbose ...string) *Undefined {
 	return &Undefined{source: source, short: short, verbose: checkIfVerboseEmpty(short, verbose)}
@@ -116,17 +151,6 @@ func NewReconcileLoopFailed(source Source, short []string, verbose ...string) *R
 	}
 }
 
-// NewGroovyScriptExecutionFailed returns new instance of GroovyScriptExecutionFailed.
-func NewGroovyScriptExecutionFailed(source Source, short []string, verbose ...string) *GroovyScriptExecutionFailed {
-	return &GroovyScriptExecutionFailed{
-		Undefined{
-			source:  source,
-			short:   short,
-			verbose: checkIfVerboseEmpty(short, verbose),
-		},
-	}
-}
-
 // NewBaseConfigurationFailed returns new instance of BaseConfigurationFailed.
 func NewBaseConfigurationFailed(source Source, short []string, verbose ...string) *BaseConfigurationFailed {
 	return &BaseConfigurationFailed{
@@ -163,6 +187,83 @@ func NewUserConfigurationFailed(source Source, short []string, verbose ...string
 // NewUserConfigurationComplete returns new instance of UserConfigurationComplete.
 func NewUserConfigurationComplete(source Source, short []string, verbose ...string) *UserConfigurationComplete {
 	return &UserConfigurationComplete{
+		Undefined{
+			source:  source,
+			short:   short,
+			verbose: checkIfVerboseEmpty(short, verbose),
+		},
+	}
+}
+
+// NewJenkinsInstanceCreated returns new instance of JenkinsInstanceCreated.
+func NewJenkinsInstanceCreated(source Source, short []string, verbose ...string) *JenkinsInstanceCreated {
+	return &JenkinsInstanceCreated{
+		Undefined{
+			source:  source,
+			short:   short,
+			verbose: checkIfVerboseEmpty(short, verbose),
+		},
+	}
+}
+
+// NewBackupCompleted returns new instance of BackupCompleted.
+func NewBackupCompleted(source Source, short []string, verbose ...string) *BackupCompleted {
+	return &BackupCompleted{
+		Undefined{
+			source:  source,
+			short:   short,
+			verbose: checkIfVerboseEmpty(short, verbose),
+		},
+	}
+}
+
+// NewBackupInProgress returns new instance of BackupInProgress.
+func NewBackupInProgress(source Source, short []string, verbose ...string) *BackupInProgress {
+	return &BackupInProgress{
+		Undefined{
+			source:  source,
+			short:   short,
+			verbose: checkIfVerboseEmpty(short, verbose),
+		},
+	}
+}
+
+// NewBackupCompleted returns new instance of BackupCompleted.
+func NewRestoreCompleted(source Source, short []string, verbose ...string) *RestoreCompleted {
+	return &RestoreCompleted{
+		Undefined{
+			source:  source,
+			short:   short,
+			verbose: checkIfVerboseEmpty(short, verbose),
+		},
+	}
+}
+
+// NewBackupInProgress returns new instance of BackupInProgress.
+func NewRestoreInProgress(source Source, short []string, verbose ...string) *RestoreInProgress {
+	return &RestoreInProgress{
+		Undefined{
+			source:  source,
+			short:   short,
+			verbose: checkIfVerboseEmpty(short, verbose),
+		},
+	}
+}
+
+// NewBackupInProgress returns new instance of BackupInProgress.
+func NewImageBuildCompleted(source Source, short []string, verbose ...string) *ImageBuildCompleted {
+	return &ImageBuildCompleted{
+		Undefined{
+			source:  source,
+			short:   short,
+			verbose: checkIfVerboseEmpty(short, verbose),
+		},
+	}
+}
+
+// NewBackupInProgress returns new instance of BackupInProgress.
+func NewImageBuildFailed(source Source, short []string, verbose ...string) *ImageBuildFailed {
+	return &ImageBuildFailed{
 		Undefined{
 			source:  source,
 			short:   short,

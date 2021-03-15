@@ -78,18 +78,18 @@ func (r *JenkinsBaseConfigurationReconciler) ensureJenkinsDeploymentIsPresent(me
 func (r *JenkinsBaseConfigurationReconciler) sendSuccessfulDeploymentCreationNotification(deploymentName string) {
 	shortMessage := fmt.Sprintf("Deployment %s successfully created", deploymentName)
 	*r.Notifications <- event.Event{
-		Jenkins: *r.Jenkins,
-		Phase:   event.PhaseBase,
-		Level:   v1alpha2.NotificationLevelInfo,
-		Reason:  reason.NewDeploymentEvent(reason.OperatorSource, []string{shortMessage}),
+		Jenkins:    *r.Jenkins,
+		Controller: event.JenkinsController,
+		Level:      v1alpha2.NotificationLevelInfo,
+		Reason:     reason.NewDeploymentEvent(reason.OperatorSource, []string{shortMessage}),
 	}
 }
 
 func (r *JenkinsBaseConfigurationReconciler) sendDeploymentCreationNotification() {
 	*r.Notifications <- event.Event{
-		Jenkins: *r.Jenkins,
-		Phase:   event.PhaseBase,
-		Level:   v1alpha2.NotificationLevelInfo,
-		Reason:  reason.NewDeploymentEvent(reason.OperatorSource, []string{"Creating a Jenkins Deployment"}),
+		Jenkins:    *r.Jenkins,
+		Controller: event.JenkinsController,
+		Level:      v1alpha2.NotificationLevelInfo,
+		Reason:     reason.NewDeploymentEvent(reason.OperatorSource, []string{"Creating a Jenkins Deployment"}),
 	}
 }

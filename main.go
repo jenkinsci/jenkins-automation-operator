@@ -109,8 +109,8 @@ func main() {
 	// setup Jenkins controller
 	setupJenkinsRenconciler(manager, notificationsChannel)
 	setupJenkinsImageRenconciler(manager)
-	setupJenkinsBackupRenconciler(manager)
-	setupJenkinsRestoreRenconciler(manager)
+	setupJenkinsBackupRenconciler(manager, notificationsChannel)
+	setupJenkinsRestoreRenconciler(manager, notificationsChannel)
 	// start the Cmd
 	setupLog.Info("Starting the Cmd.")
 	runMananger(manager)
@@ -221,8 +221,8 @@ func getWatchNamespace() string {
 	return ns
 }
 
-func setupJenkinsRenconciler(mgr manager.Manager, channel chan e.Event) {
-	if err := newJenkinsReconciler(mgr, channel).SetupWithManager(mgr); err != nil {
+func setupJenkinsRenconciler(mgr manager.Manager, eventChan chan e.Event) {
+	if err := newJenkinsReconciler(mgr, eventChan).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Jenkins")
 		os.Exit(1)
 	}
@@ -252,33 +252,35 @@ func newJenkinsImageRenconciler(mgr manager.Manager) *controllers.JenkinsImageRe
 	}
 }
 
-func setupJenkinsBackupRenconciler(mgr manager.Manager) {
-	if err := newJenkinsBackupRenconciler(mgr).SetupWithManager(mgr); err != nil {
+func setupJenkinsBackupRenconciler(mgr manager.Manager, eventChan chan e.Event) {
+	if err := newJenkinsBackupRenconciler(mgr, eventChan).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Backup")
 		os.Exit(1)
 	}
 }
 
-func newJenkinsBackupRenconciler(mgr manager.Manager) *controllers.BackupReconciler {
+func newJenkinsBackupRenconciler(mgr manager.Manager, eventChan chan e.Event) *controllers.BackupReconciler {
 	return &controllers.BackupReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("Backup"),
-		Scheme: mgr.GetScheme(),
+		Client:             mgr.GetClient(),
+		Log:                ctrl.Log.WithName("controllers").WithName("Backup"),
+		Scheme:             mgr.GetScheme(),
+		NotificationEvents: eventChan,
 	}
 }
 
-func setupJenkinsRestoreRenconciler(mgr manager.Manager) {
-	if err := newJenkinsRestoreRenconciler(mgr).SetupWithManager(mgr); err != nil {
+func setupJenkinsRestoreRenconciler(mgr manager.Manager, eventChan chan e.Event) {
+	if err := newJenkinsRestoreRenconciler(mgr, eventChan).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Restore")
 		os.Exit(1)
 	}
 }
 
-func newJenkinsRestoreRenconciler(mgr manager.Manager) *controllers.RestoreReconciler {
+func newJenkinsRestoreRenconciler(mgr manager.Manager, eventChan chan e.Event) *controllers.RestoreReconciler {
 	return &controllers.RestoreReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("Restore"),
-		Scheme: mgr.GetScheme(),
+		Client:             mgr.GetClient(),
+		Log:                ctrl.Log.WithName("controllers").WithName("Restore"),
+		Scheme:             mgr.GetScheme(),
+		NotificationEvents: eventChan,
 	}
 }
 

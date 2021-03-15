@@ -20,6 +20,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/jenkinsci/jenkins-automation-operator/pkg/notifications/event"
+	"github.com/jenkinsci/jenkins-automation-operator/pkg/notifications/reason"
+
 	"github.com/operator-framework/operator-lib/status"
 
 	"github.com/jenkinsci/jenkins-automation-operator/pkg/exec"
@@ -40,15 +43,16 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	jenkinsv1alpha2 "github.com/jenkinsci/jenkins-automation-operator/api/v1alpha2"
+	v1alpha2 "github.com/jenkinsci/jenkins-automation-operator/api/v1alpha2"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 // RestoreReconciler reconciles a Restore object
 type RestoreReconciler struct {
 	client.Client
-	Log    logr.Logger
-	Scheme *runtime.Scheme
+	Log                logr.Logger
+	Scheme             *runtime.Scheme
+	NotificationEvents chan event.Event
 }
 
 var (
@@ -68,7 +72,7 @@ func (r *RestoreReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	execClient := exec.NewKubeExecClient()
 
 	// Fetch the Restore instance
-	restoreInstance := &jenkinsv1alpha2.Restore{}
+	restoreInstance := &v1alpha2.Restore{}
 	err := r.Client.Get(ctx, req.NamespacedName, restoreInstance)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -86,7 +90,7 @@ func (r *RestoreReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	restoreLogger.Info("Jenkins Restore with name " + restoreInstance.Name + " has been created")
 
 	// Fetch the Backup instance
-	backupInstance := &jenkinsv1alpha2.Backup{}
+	backupInstance := &v1alpha2.Backup{}
 	backupNamespacedName := types.NamespacedName{
 		Name:      restoreInstance.Spec.BackupRef,
 		Namespace: req.Namespace,
@@ -104,8 +108,8 @@ func (r *RestoreReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 
 	// Fetch the Jenkins instance
-	jenkinsInstance := &jenkinsv1alpha2.Jenkins{}
-	backupConfig := &jenkinsv1alpha2.BackupConfig{}
+	jenkinsInstance := &v1alpha2.Jenkins{}
+	backupConfig := &v1alpha2.BackupConfig{}
 	backupSpec := backupInstance.Spec
 	// Use default BackupConfig if configRef not provided
 	backupConfigName := DefaultBackupConfigName
@@ -175,6 +179,7 @@ func (r *RestoreReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 	// Restore
 	err = r.performJenkinsRestore(ctx, execClient, jenkinsPod, backupInstance, backupConfig, restoreInstance)
+	r.sendNewRestoreInProgressNotification(jenkinsInstance, restoreInstance, "restore", err)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -182,15 +187,18 @@ func (r *RestoreReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	// Restart
 	if backupConfig.Spec.RestartAfterRestore.Enabled && backupConfig.Spec.RestartAfterRestore.Safe {
 		err := r.performJenkinsSafeRestart(ctx, jenkinsPod, restoreInstance, execClient)
+		r.sendNewRestoreInProgressNotification(jenkinsInstance, restoreInstance, "safeRestartAfterRestore", err)
 		if err != nil {
 			return ctrl.Result{}, err
 		}
 	} else if backupConfig.Spec.RestartAfterRestore.Enabled {
 		err := r.performJenkinsRestart(ctx, execClient, jenkinsPod, restoreInstance)
+		r.sendNewRestoreInProgressNotification(jenkinsInstance, restoreInstance, "restartAfterRestore", err)
 		if err != nil {
 			return ctrl.Result{}, err
 		}
 	}
+	r.sendNewRestoreCompletedNotification(jenkinsInstance, restoreInstance, err)
 	err = r.Client.Status().Update(ctx, restoreInstance)
 	if err != nil {
 		return ctrl.Result{}, err
@@ -199,7 +207,7 @@ func (r *RestoreReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	return ctrl.Result{}, nil
 }
 
-func (r *RestoreReconciler) performJenkinsRestart(ctx context.Context, execClient exec.KubeExecClient, jenkinsPod *corev1.Pod, restoreInstance *jenkinsv1alpha2.Restore) error {
+func (r *RestoreReconciler) performJenkinsRestart(ctx context.Context, execClient exec.KubeExecClient, jenkinsPod *corev1.Pod, restoreInstance *v1alpha2.Restore) error {
 	execRestart := strings.Join([]string{"sh", resources.RestartScriptPath}, " ")
 	err := execClient.MakeRequest(jenkinsPod, restoreInstance.Name, execRestart)
 	if err != nil {
@@ -221,7 +229,7 @@ func (r *RestoreReconciler) performJenkinsRestart(ctx context.Context, execClien
 	return nil
 }
 
-func (r *RestoreReconciler) performJenkinsSafeRestart(ctx context.Context, jenkinsPod *corev1.Pod, restoreInstance *jenkinsv1alpha2.Restore, execClient exec.KubeExecClient) error {
+func (r *RestoreReconciler) performJenkinsSafeRestart(ctx context.Context, jenkinsPod *corev1.Pod, restoreInstance *v1alpha2.Restore, execClient exec.KubeExecClient) error {
 	execSafeRestart := strings.Join([]string{"sh", resources.SafeRestartScriptPath}, " ")
 	err := execClient.MakeRequest(jenkinsPod, restoreInstance.Name, execSafeRestart)
 	if err != nil {
@@ -243,7 +251,7 @@ func (r *RestoreReconciler) performJenkinsSafeRestart(ctx context.Context, jenki
 	return nil
 }
 
-func (r *RestoreReconciler) performJenkinsRestore(ctx context.Context, execClient exec.KubeExecClient, jenkinsPod *corev1.Pod, backupInstance *jenkinsv1alpha2.Backup, backupConfig *jenkinsv1alpha2.BackupConfig, restoreInstance *jenkinsv1alpha2.Restore) error {
+func (r *RestoreReconciler) performJenkinsRestore(ctx context.Context, execClient exec.KubeExecClient, jenkinsPod *corev1.Pod, backupInstance *v1alpha2.Backup, backupConfig *v1alpha2.BackupConfig, restoreInstance *v1alpha2.Restore) error {
 	restoreFromLocation := resources.JenkinsBackupVolumePath + "/" + backupInstance.Name
 	restoreToLocation := defaultJenkinsHome
 	restoreToSubLocations := []string{}
@@ -297,11 +305,11 @@ func (r *RestoreReconciler) performJenkinsRestore(ctx context.Context, execClien
 
 func (r *RestoreReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&jenkinsv1alpha2.Restore{}).
+		For(&v1alpha2.Restore{}).
 		Complete(r)
 }
 
-func (r *RestoreReconciler) GetPodByDeployment(jenkins *jenkinsv1alpha2.Jenkins) (*corev1.Pod, error) {
+func (r *RestoreReconciler) GetPodByDeployment(jenkins *v1alpha2.Jenkins) (*corev1.Pod, error) {
 	replicaSet, err := r.GetReplicaSetByDeployment(jenkins)
 	if err != nil {
 		return nil, err
@@ -322,7 +330,7 @@ func (r *RestoreReconciler) GetPodByDeployment(jenkins *jenkinsv1alpha2.Jenkins)
 }
 
 // GetJenkinsDeployment gets the jenkins master deployment.
-func (r *RestoreReconciler) GetJenkinsDeployment(jenkins *jenkinsv1alpha2.Jenkins) (*appsv1.Deployment, error) {
+func (r *RestoreReconciler) GetJenkinsDeployment(jenkins *v1alpha2.Jenkins) (*appsv1.Deployment, error) {
 	deploymentName := resources.GetJenkinsDeploymentName(jenkins)
 	restoreLogger.V(log.VDebug).Info(fmt.Sprintf("Getting JenkinsDeploymentName for : %+v, querying deployment named: %s", jenkins.Name, deploymentName))
 	jenkinsDeployment := &appsv1.Deployment{}
@@ -335,7 +343,7 @@ func (r *RestoreReconciler) GetJenkinsDeployment(jenkins *jenkinsv1alpha2.Jenkin
 	return jenkinsDeployment, nil
 }
 
-func (r *RestoreReconciler) GetReplicaSetByDeployment(jenkins *jenkinsv1alpha2.Jenkins) (*appsv1.ReplicaSet, error) {
+func (r *RestoreReconciler) GetReplicaSetByDeployment(jenkins *v1alpha2.Jenkins) (*appsv1.ReplicaSet, error) {
 	deployment, _ := r.GetJenkinsDeployment(jenkins)
 	selector, err := metav1.LabelSelectorAsSelector(deployment.Spec.Selector)
 	replicasSetList := appsv1.ReplicaSetList{}
@@ -351,4 +359,24 @@ func (r *RestoreReconciler) GetReplicaSetByDeployment(jenkins *jenkinsv1alpha2.J
 	replicaSet := replicasSetList.Items[0]
 	restoreLogger.V(log.VDebug).Info(fmt.Sprintf("Successfully got the ReplicaSet: %s", replicaSet.Name))
 	return &replicaSet, nil
+}
+
+func (r *RestoreReconciler) sendNewRestoreCompletedNotification(jenkins *v1alpha2.Jenkins, restore *v1alpha2.Restore, err error) {
+	r.NotificationEvents <- event.Event{
+		Jenkins:    *jenkins,
+		Controller: event.BackupController,
+		Level:      v1alpha2.NotificationLevelInfo,
+		Reason: reason.NewRestoreCompleted(reason.OperatorSource,
+			[]string{fmt.Sprintf("Restore of backup %s completed for Jenkins '%s' in namespace '%s' with err %s", jenkins.Name, restore.Spec.BackupRef, jenkins.Namespace, err.Error())}),
+	}
+}
+
+func (r *RestoreReconciler) sendNewRestoreInProgressNotification(jenkins *v1alpha2.Jenkins, restore *v1alpha2.Restore, message string, err error) {
+	r.NotificationEvents <- event.Event{
+		Jenkins:    *jenkins,
+		Controller: event.BackupController,
+		Level:      v1alpha2.NotificationLevelInfo,
+		Reason: reason.NewRestoreInProgress(reason.OperatorSource,
+			[]string{fmt.Sprintf("Restore of backup %s in progress for Jenkins '%s' in namespace '%s' with message '%s' err %s", jenkins.Name, restore.Spec.BackupRef, jenkins.Namespace, message, err.Error())}),
+	}
 }

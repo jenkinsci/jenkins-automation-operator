@@ -86,7 +86,11 @@ type reconcileError struct {
 	counter uint64
 }
 
-var reconcileErrors = map[string]reconcileError{}
+var (
+	reconcileErrors = map[string]reconcileError{}
+)
+
+const reconcileFailLimit = uint64(10)
 
 func (r *JenkinsReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
@@ -97,7 +101,6 @@ func (r *JenkinsReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&v1.RoleBinding{}).
 		WithEventFilter(predicate.GenerationChangedPredicate{}).
 		Complete(r)
-	// Owns(&routev1.Route{}).Complete(r)
 }
 
 // +kubebuilder:rbac:groups=apps;batch;core;extensionsnetworking.k8s.io;packages.operators.coreos.com;policy;rbac.authorization.k8s.io,resources=*,verbs=*
@@ -109,7 +112,7 @@ func (r *JenkinsReconciler) Reconcile(request ctrl.Request) (ctrl.Result, error)
 	ctx := context.Background()
 	jenkinsName := request.NamespacedName
 	logger := r.Log.WithValues("jenkins", jenkinsName)
-	reconcileFailLimit := uint64(10)
+
 	logger.V(log.VDebug).Info(fmt.Sprintf("Got a reconcialition request at: %+v for Jenkins: %s in namespace: %s", time.Now(), request.Name, request.Namespace))
 
 	// Fetch the Jenkins jenkins
@@ -124,10 +127,11 @@ func (r *JenkinsReconciler) Reconcile(request ctrl.Request) (ctrl.Result, error)
 			return ctrl.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
-		logger.Info(fmt.Sprintf("Error while trying to get jenkins named:  %s : %s", jenkinsName, err))
+		logger.Info(fmt.Sprintf("Error while trying to get Jenkins named:  %s : %s", jenkinsName, err))
 		return ctrl.Result{}, err
 	}
-	logger.Info(fmt.Sprintf("Jenkins instance correctly found: %s", jenkins.UID))
+	logger.Info(fmt.Sprintf("Jenkins instance found. Name: %s, UID: %s", jenkins.Name, jenkins.UID))
+
 	if jenkins.Status == nil {
 		jenkins.Status = &v1alpha2.JenkinsStatus{}
 	}
@@ -141,17 +145,9 @@ func (r *JenkinsReconciler) Reconcile(request ctrl.Request) (ctrl.Result, error)
 		}
 	}
 
-	result, err := r.reconcile(ctx, request, jenkins)
-	if err != nil {
-		reconciliationFailed := conditionsv1.Condition{
-			Type:    conditionsv1.ConditionDegraded,
-			Status:  corev1.ConditionTrue,
-			Reason:  reconcileFailed,
-			Message: fmt.Sprintf("Failed reconciliation %v", err),
-		}
-		conditionsv1.SetStatusCondition(&jenkins.Status.Conditions, reconciliationFailed)
-		err = r.Status().Update(ctx, jenkins)
-		if err != nil {
+	if result, err := r.reconcile(ctx, request, jenkins); err != nil {
+		r.setReconcileFailedStatus(jenkins, err)
+		if err = r.Status().Update(ctx, jenkins); err != nil {
 			logger.V(log.VWarn).Info(fmt.Sprintf("Failed to add conditions to status: %s", err))
 		}
 		return result, err
@@ -180,7 +176,7 @@ func (r *JenkinsReconciler) Reconcile(request ctrl.Request) (ctrl.Result, error)
 		reconcileErrors[request.Name] = lastErrors
 		if lastErrors.counter >= reconcileFailLimit {
 			logger.V(log.VWarn).Info(fmt.Sprintf("Reconcile loop failed %d times with the same error, giving up: %+v", reconcileFailLimit, err))
-			r.sendNewReconcileLoopFailedNotification(jenkins, reconcileFailLimit, err)
+			r.sendReconcileLoopFailedNotification(jenkins, reconcileFailLimit, err)
 			return ctrl.Result{}, nil
 		}
 
@@ -190,10 +186,6 @@ func (r *JenkinsReconciler) Reconcile(request ctrl.Request) (ctrl.Result, error)
 			logger.V(log.VWarn).Info(fmt.Sprintf("Reconcile loop failed: %s", err))
 		}
 
-		if groovyErr, ok := err.(*jenkinsclient.GroovyScriptExecutionFailed); ok {
-			r.sendNewGroovyScriptExecutionFailedNotification(jenkins, groovyErr)
-			return ctrl.Result{}, nil
-		}
 		logger.V(log.VWarn).Info(fmt.Sprintf("Requeing: !!! Reconcile loop failed: %+v", err))
 		return ctrl.Result{Requeue: false}, nil
 	}
@@ -205,6 +197,16 @@ func (r *JenkinsReconciler) Reconcile(request ctrl.Request) (ctrl.Result, error)
 	}
 	logger.Info("Reconcile loop success !!!")
 	return ctrl.Result{}, nil
+}
+
+func (r *JenkinsReconciler) setReconcileFailedStatus(jenkins *v1alpha2.Jenkins, err error) {
+	reconciliationFailed := conditionsv1.Condition{
+		Type:    conditionsv1.ConditionDegraded,
+		Status:  corev1.ConditionTrue,
+		Reason:  reconcileFailed,
+		Message: fmt.Sprintf("Failed reconciliation %v", err),
+	}
+	conditionsv1.SetStatusCondition(&jenkins.Status.Conditions, reconciliationFailed)
 }
 
 func (r *JenkinsReconciler) updateJenkinsStatus(jenkins *v1alpha2.Jenkins, jenkinsName types.NamespacedName) error {
@@ -396,7 +398,7 @@ func (r *JenkinsReconciler) reconcile(ctx context.Context, request ctrl.Request,
 	}
 	if len(baseConfigurationValidationMessages) > 0 {
 		message := "Validation of base configuration failed, please correct Jenkins CR."
-		r.sendNewBaseConfigurationFailedNotification(jenkins, message, baseConfigurationValidationMessages)
+		r.sendNewConfigurationFailedNotification(jenkins, message, baseConfigurationValidationMessages)
 		logger.V(log.VWarn).Info(message)
 		for _, msg := range baseConfigurationValidationMessages {
 			logger.V(log.VWarn).Info(msg)
@@ -419,6 +421,7 @@ func (r *JenkinsReconciler) reconcile(ctx context.Context, request ctrl.Request,
 	// Re-reading Jenkins
 	jenkins = &v1alpha2.Jenkins{}
 	err = r.Client.Get(context.TODO(), request.NamespacedName, jenkins)
+	r.sendNewJenkinsUpdateNotification(jenkins, err)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			r.Log.V(log.VWarn).Info(fmt.Sprintf("Object not found: %s: %+v", request, jenkins))
@@ -431,16 +434,15 @@ func (r *JenkinsReconciler) reconcile(ctx context.Context, request ctrl.Request,
 		r.Log.V(log.VWarn).Info(fmt.Sprintf("Error reading object not found: %s: %+v", request, jenkins))
 		return ctrl.Result{}, errors.WithStack(err)
 	}
-
 	return ctrl.Result{}, nil
 }
 
-func (r *JenkinsReconciler) sendNewBaseConfigurationFailedNotification(jenkins *v1alpha2.Jenkins, message string, baseMessages []string) {
+func (r *JenkinsReconciler) sendNewConfigurationFailedNotification(jenkins *v1alpha2.Jenkins, message string, baseMessages []string) {
 	r.NotificationEvents <- event.Event{
-		Jenkins: *jenkins,
-		Phase:   event.PhaseBase,
-		Level:   v1alpha2.NotificationLevelWarning,
-		Reason:  reason.NewBaseConfigurationFailed(reason.HumanSource, []string{message}, append([]string{message}, baseMessages...)...),
+		Jenkins:    *jenkins,
+		Controller: event.JenkinsController,
+		Level:      v1alpha2.NotificationLevelWarning,
+		Reason:     reason.NewBaseConfigurationFailed(reason.HumanSource, []string{message}, append([]string{message}, baseMessages...)...),
 	}
 }
 
@@ -455,14 +457,26 @@ func (r *JenkinsReconciler) newReconcilerConfiguration(jenkins *v1alpha2.Jenkins
 	return config
 }
 
-func (r *JenkinsReconciler) sendNewReconcileLoopFailedNotification(jenkins *v1alpha2.Jenkins, reconcileFailLimit uint64, err error) {
+func (r *JenkinsReconciler) sendReconcileLoopFailedNotification(jenkins *v1alpha2.Jenkins, reconcileFailLimit uint64, err error) {
 	r.NotificationEvents <- event.Event{
-		Jenkins: *jenkins,
-		Phase:   event.PhaseBase,
-		Level:   v1alpha2.NotificationLevelWarning,
+		Jenkins:    *jenkins,
+		Controller: event.JenkinsController,
+		Level:      v1alpha2.NotificationLevelWarning,
 		Reason: reason.NewReconcileLoopFailed(
 			reason.OperatorSource,
 			[]string{fmt.Sprintf("Reconcile loop failed %d times with the same error, giving up: %s", reconcileFailLimit, err)},
+		),
+	}
+}
+
+func (r *JenkinsReconciler) sendNewJenkinsUpdateNotification(jenkins *v1alpha2.Jenkins, err error) {
+	r.NotificationEvents <- event.Event{
+		Jenkins:    *jenkins,
+		Controller: event.JenkinsController,
+		Level:      v1alpha2.NotificationLevelInfo,
+		Reason: reason.NewJenkinsInstanceCreated(
+			reason.OperatorSource,
+			[]string{fmt.Sprintf("Jenkins instance updated : %s in namespace %s with err %s", jenkins.Name, jenkins.Namespace, err)},
 		),
 	}
 }
@@ -541,6 +555,7 @@ func (r *JenkinsReconciler) getCalculatedSpec(ctx context.Context, jenkins *v1al
 		jenkinsContainer.LivenessProbe = resources.NewProbe(containerProbeURI, containerProbePortName, corev1.URISchemeHTTP, 80, 5, 12)
 	}
 
+	logger.Info(fmt.Sprintf("Checking if default env vars are set for Jenkins instance %s", jenkinsName))
 	setEnvVarIfNotSet(&jenkinsContainer, constants.JavaOptsVariableName, constants.JavaOptsDefaultValue)
 	setEnvVarIfNotSet(&jenkinsContainer, constants.KubernetesTrustCertsVariableName, constants.KubernetesTrustCertsDefaultValue)
 
@@ -615,7 +630,6 @@ func (r *JenkinsReconciler) getCalculatedSpec(ctx context.Context, jenkins *v1al
 
 func setEnvVarIfNotSet(jenkinsContainer *v1alpha2.Container, envVarName string, envVarValue string) {
 	if isEnvVarNotSet(jenkinsContainer, envVarName) {
-		logger.Info(fmt.Sprintf("Setting default Jenkins container %s environment variable", envVarName))
 		javaOptsEnvVar := corev1.EnvVar{
 			Name:  envVarName,
 			Value: envVarValue,
@@ -647,25 +661,12 @@ func (r *JenkinsReconciler) getJenkinsMasterContainer(spec *v1alpha2.JenkinsSpec
 		}
 	} else {
 		if spec.Master.Containers[0].Name != resources.JenkinsMasterContainerName {
-			error := errors.Errorf("first container in spec.master.containers must be Jenkins container with name '%s', please correct CR", resources.JenkinsMasterContainerName)
-			return v1alpha2.Container{}, error
+			err := errors.Errorf("first container in spec.master.containers must be Jenkins container with name '%s', please correct CR", resources.JenkinsMasterContainerName)
+			return v1alpha2.Container{}, err
 		}
 		jenkinsContainer = spec.Master.Containers[0]
 	}
 	return jenkinsContainer, nil
-}
-
-func (r *JenkinsReconciler) sendNewGroovyScriptExecutionFailedNotification(jenkins *v1alpha2.Jenkins, groovyErr *jenkinsclient.GroovyScriptExecutionFailed) {
-	r.NotificationEvents <- event.Event{
-		Jenkins: *jenkins,
-		Phase:   event.PhaseBase,
-		Level:   v1alpha2.NotificationLevelWarning,
-		Reason: reason.NewGroovyScriptExecutionFailed(
-			reason.OperatorSource,
-			[]string{fmt.Sprintf("%s Source '%s' Name '%s' groovy script execution failed", groovyErr.ConfigurationType, groovyErr.Source, groovyErr.Name)},
-			[]string{fmt.Sprintf("%s Source '%s' Name '%s' groovy script execution failed, logs: %+v", groovyErr.ConfigurationType, groovyErr.Source, groovyErr.Name, groovyErr.Logs)}...,
-		),
-	}
 }
 
 func isEnvVarNotSet(container *v1alpha2.Container, envVarName string) bool {
@@ -705,7 +706,6 @@ func (r *JenkinsReconciler) GetDefaultRoleBinding(jenkins *v1alpha2.Jenkins) *v1
 	editRole := &v1.ClusterRole{}
 	err := r.Client.Get(context.TODO(), types.NamespacedName{Name: base.EditClusterRole}, editRole)
 	if err != nil {
-		logger.Info("edit ClusterRole not found. Default rolebinding will not be created")
 		return nil
 	}
 	roleRef := v1.RoleRef{
@@ -714,7 +714,6 @@ func (r *JenkinsReconciler) GetDefaultRoleBinding(jenkins *v1alpha2.Jenkins) *v1
 		APIGroup: base.AuthorizationAPIGroup,
 	}
 	roleBinding := resources.NewRoleBinding(jenkins, roleRef)
-	logger.Info(fmt.Sprintf("Default RoleBinding to add %s", roleBinding))
 
 	return roleBinding
 }

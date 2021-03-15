@@ -22,8 +22,11 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/jenkinsci/jenkins-automation-operator/pkg/notifications/event"
+	"github.com/jenkinsci/jenkins-automation-operator/pkg/notifications/reason"
+
 	"github.com/go-logr/logr"
-	jenkinsv1alpha2 "github.com/jenkinsci/jenkins-automation-operator/api/v1alpha2"
+	v1alpha2 "github.com/jenkinsci/jenkins-automation-operator/api/v1alpha2"
 	"github.com/jenkinsci/jenkins-automation-operator/pkg/configuration/base/resources"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -39,13 +42,14 @@ const YamlMultilineDataFieldCutSet = "|\n "
 // JenkinsImageReconciler reconciles a JenkinsImage object
 type JenkinsImageReconciler struct {
 	client.Client
-	Log    logr.Logger
-	Scheme *runtime.Scheme
+	Log                logr.Logger
+	Scheme             *runtime.Scheme
+	NotificationEvents chan event.Event
 }
 
 func (r *JenkinsImageReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&jenkinsv1alpha2.JenkinsImage{}).
+		For(&v1alpha2.JenkinsImage{}).
 		Owns(&corev1.Pod{}).
 		Owns(&corev1.ConfigMap{}).
 		Owns(&corev1.Secret{}).
@@ -59,7 +63,7 @@ func (r *JenkinsImageReconciler) Reconcile(request ctrl.Request) (ctrl.Result, e
 	reqLogger := r.Log.WithValues("jenkinsimage", request.NamespacedName)
 
 	// Fetch the JenkinsImage instance
-	instance := &jenkinsv1alpha2.JenkinsImage{}
+	instance := &v1alpha2.JenkinsImage{}
 	err := r.Client.Get(context.TODO(), request.NamespacedName, instance)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -124,7 +128,7 @@ func (r *JenkinsImageReconciler) Reconcile(request ctrl.Request) (ctrl.Result, e
 	return ctrl.Result{}, nil
 }
 
-func (r *JenkinsImageReconciler) updateJenkinsImageStatusWhenPodIsCompleted(ctx context.Context, pod *corev1.Pod, instance *jenkinsv1alpha2.JenkinsImage) {
+func (r *JenkinsImageReconciler) updateJenkinsImageStatusWhenPodIsCompleted(ctx context.Context, pod *corev1.Pod, instance *v1alpha2.JenkinsImage) {
 	err := resources.WaitForPodIsCompleted(r.Client, pod.Name, pod.Namespace)
 	if err == nil && len(pod.Status.ContainerStatuses) == 1 {
 		status := pod.Status.ContainerStatuses[0]
@@ -134,15 +138,16 @@ func (r *JenkinsImageReconciler) updateJenkinsImageStatusWhenPodIsCompleted(ctx 
 			dockerfileContent, _ := r.getDockerfileContent(instance)
 			dockerfileMD5 := strings.Trim(fmt.Sprintf("%x", md5.Sum([]byte(dockerfileContent))), YamlMultilineDataFieldCutSet)
 			r.Log.Info(fmt.Sprintf("Found image checksum (trimed): %s", dockerfileMD5))
-			build := jenkinsv1alpha2.JenkinsImageBuild{
+			build := v1alpha2.JenkinsImageBuild{
 				MD5Sum: dockerfileMD5,
 				Image:  builtImage,
 			}
 			if !contains(instance.Status.Builds, build) {
 				instance.Status.Builds = append(instance.Status.Builds, build)
 				r.Log.Info("Updating JenkinsImage with containerStatus from Pod")
-				instance.Status.Phase = jenkinsv1alpha2.ImageBuildSuccessful
+				instance.Status.Phase = v1alpha2.ImageBuildSuccessful
 				err = r.Status().Update(ctx, instance)
+				r.sendNewJenkinsImageBuildCompleteNotification(instance, err)
 				if err != nil {
 					// FIXME We may need go routine error handling using a dedicated channel here
 					r.Log.Error(err, "Failed to update JenkinsImage status")
@@ -151,10 +156,11 @@ func (r *JenkinsImageReconciler) updateJenkinsImageStatusWhenPodIsCompleted(ctx 
 		}
 	} else {
 		r.Log.Info(fmt.Sprintf("Error while waiting for pod to complete: %+v, containerStatus: %+v", err, pod.Status.ContainerStatuses))
+		r.sendNewJenkinsImageBuildFailedNotification(instance, err)
 	}
 }
 
-func (r *JenkinsImageReconciler) getDockerfileContent(instance *jenkinsv1alpha2.JenkinsImage) (string, error) {
+func (r *JenkinsImageReconciler) getDockerfileContent(instance *v1alpha2.JenkinsImage) (string, error) {
 	configMapName := resources.GetDockerfileConfigMapName(instance)
 	configMap := &corev1.ConfigMap{}
 	// Fetch the ConfigMap instance
@@ -166,11 +172,29 @@ func (r *JenkinsImageReconciler) getDockerfileContent(instance *jenkinsv1alpha2.
 	return imageSHA256, nil
 }
 
-func contains(s []jenkinsv1alpha2.JenkinsImageBuild, e jenkinsv1alpha2.JenkinsImageBuild) bool {
+func contains(s []v1alpha2.JenkinsImageBuild, e v1alpha2.JenkinsImageBuild) bool {
 	for _, a := range s {
 		if a == e {
 			return true
 		}
 	}
 	return false
+}
+
+func (r *JenkinsImageReconciler) sendNewJenkinsImageBuildCompleteNotification(jenkinsImage *v1alpha2.JenkinsImage, err error) {
+	r.NotificationEvents <- event.Event{
+		Controller: event.BackupController,
+		Level:      v1alpha2.NotificationLevelInfo,
+		Reason: reason.NewImageBuildCompleted(reason.OperatorSource,
+			[]string{fmt.Sprintf("JenkinsImage %s build completed in namespace '%s' with err %s", jenkinsImage.Name, jenkinsImage.Namespace, err.Error())}),
+	}
+}
+
+func (r *JenkinsImageReconciler) sendNewJenkinsImageBuildFailedNotification(jenkinsImage *v1alpha2.JenkinsImage, err error) {
+	r.NotificationEvents <- event.Event{
+		Controller: event.BackupController,
+		Level:      v1alpha2.NotificationLevelInfo,
+		Reason: reason.NewImageBuildFailed(reason.OperatorSource,
+			[]string{fmt.Sprintf("JenkinsImage %s build failed in namespace '%s' with err %s", jenkinsImage.Name, jenkinsImage.Namespace, err.Error())}),
+	}
 }

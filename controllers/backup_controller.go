@@ -21,8 +21,11 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/jenkinsci/jenkins-automation-operator/pkg/notifications/event"
+	"github.com/jenkinsci/jenkins-automation-operator/pkg/notifications/reason"
+
 	"github.com/go-logr/logr"
-	jenkinsv1alpha2 "github.com/jenkinsci/jenkins-automation-operator/api/v1alpha2"
+	v1alpha2 "github.com/jenkinsci/jenkins-automation-operator/api/v1alpha2"
 	"github.com/jenkinsci/jenkins-automation-operator/pkg/configuration/base/resources"
 	"github.com/jenkinsci/jenkins-automation-operator/pkg/exec"
 	"github.com/jenkinsci/jenkins-automation-operator/pkg/log"
@@ -41,15 +44,15 @@ import (
 // BackupReconciler reconciles a Backup object
 type BackupReconciler struct {
 	client.Client
-	Log    logr.Logger
-	Scheme *runtime.Scheme
+	Log                logr.Logger
+	Scheme             *runtime.Scheme
+	NotificationEvents chan event.Event
 }
 
 // +kubebuilder:rbac:groups=jenkins.io,resources=backups;backups/status;backupconfigs;backupconfigs/status,verbs=*
 
 var (
-	logx               = log.Log
-	logger             = logx.WithName("backup")
+	logger             = log.Log.WithName("backup")
 	defaultJenkinsHome = "/var/lib/jenkins"
 	// BackupInitialized and other Condition Types
 	BackupInitialized  status.ConditionType = "BackupInitialized"
@@ -60,7 +63,7 @@ var (
 
 func (r *BackupReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&jenkinsv1alpha2.Backup{}).
+		For(&v1alpha2.Backup{}).
 		Complete(r)
 }
 
@@ -70,7 +73,7 @@ func (r *BackupReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	execClient := exec.NewKubeExecClient()
 
 	// Fetch the Backup instance
-	backupInstance := &jenkinsv1alpha2.Backup{}
+	backupInstance := &v1alpha2.Backup{}
 	err := r.Client.Get(ctx, req.NamespacedName, backupInstance)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -88,7 +91,7 @@ func (r *BackupReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	backupLogger.Info("Jenkins Backup with name " + backupInstance.Name + " has been created")
 
 	backupSpec := backupInstance.Spec
-	backupConfig := &jenkinsv1alpha2.BackupConfig{}
+	backupConfig := &v1alpha2.BackupConfig{}
 	// Use default BackupConfig if configRef not provided
 	backupConfigName := DefaultBackupConfigName
 	if backupSpec.ConfigRef != "" {
@@ -111,7 +114,7 @@ func (r *BackupReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 
 	// Fetch the Jenkins instance
-	jenkinsInstance := &jenkinsv1alpha2.Jenkins{}
+	jenkinsInstance := &v1alpha2.Jenkins{}
 	jenkinsNamespacedName := types.NamespacedName{
 		Name:      backupConfig.Spec.JenkinsRef,
 		Namespace: req.Namespace,
@@ -158,6 +161,7 @@ func (r *BackupReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	// QuietDown
 	if backupConfig.Spec.QuietDownDuringBackup {
 		err := r.performJenkinsQuietDown(ctx, execClient, jenkinsPod, backupInstance)
+		r.sendNewBackupInProgressNotification(jenkinsInstance, backupInstance, "quietDown", err)
 		if err != nil {
 			return ctrl.Result{}, err
 		}
@@ -165,6 +169,7 @@ func (r *BackupReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 	// Backup
 	err = r.performJenkinsBackup(ctx, execClient, jenkinsPod, backupInstance, backupConfig)
+	r.sendNewBackupInProgressNotification(jenkinsInstance, backupInstance, "backup", err)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -172,10 +177,12 @@ func (r *BackupReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	// CancelQuietDown
 	if backupConfig.Spec.QuietDownDuringBackup {
 		err = r.performJenkinsCancelQuietDown(ctx, execClient, jenkinsPod, backupInstance)
+		r.sendNewBackupInProgressNotification(jenkinsInstance, backupInstance, "cancelQuietDown", err)
 		if err != nil {
 			return ctrl.Result{}, err
 		}
 	}
+	r.sendNewBackupCompletedNotification(jenkinsInstance, backupInstance, err)
 	backupInstance.Status.Conditions.SetCondition(status.Condition{
 		Type:   BackupCompleted,
 		Status: corev1.ConditionTrue,
@@ -188,7 +195,7 @@ func (r *BackupReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	return ctrl.Result{}, nil
 }
 
-func (r *BackupReconciler) performJenkinsCancelQuietDown(ctx context.Context, execClient exec.KubeExecClient, jenkinsPod *corev1.Pod, backupInstance *jenkinsv1alpha2.Backup) error {
+func (r *BackupReconciler) performJenkinsCancelQuietDown(ctx context.Context, execClient exec.KubeExecClient, jenkinsPod *corev1.Pod, backupInstance *v1alpha2.Backup) error {
 	execCancelQuietDown := strings.Join([]string{"sh", resources.CancelQuietDownScriptPath}, " ")
 	err := execClient.MakeRequest(jenkinsPod, backupInstance.Name, execCancelQuietDown)
 	if err != nil {
@@ -214,7 +221,7 @@ func (r *BackupReconciler) performJenkinsCancelQuietDown(ctx context.Context, ex
 	return nil
 }
 
-func (r *BackupReconciler) performJenkinsBackup(ctx context.Context, execClient exec.KubeExecClient, jenkinsPod *corev1.Pod, backupInstance *jenkinsv1alpha2.Backup, backupConfig *jenkinsv1alpha2.BackupConfig) error {
+func (r *BackupReconciler) performJenkinsBackup(ctx context.Context, execClient exec.KubeExecClient, jenkinsPod *corev1.Pod, backupInstance *v1alpha2.Backup, backupConfig *v1alpha2.BackupConfig) error {
 	backupToLocation := resources.JenkinsBackupVolumePath + "/" + backupInstance.Name + "/"
 	execCreateBackupDir := strings.Join([]string{"mkdir", backupToLocation}, " ")
 	err := execClient.MakeRequest(jenkinsPod, backupInstance.Name, execCreateBackupDir)
@@ -269,7 +276,7 @@ func (r *BackupReconciler) performJenkinsBackup(ctx context.Context, execClient 
 	return nil
 }
 
-func (r *BackupReconciler) performJenkinsQuietDown(ctx context.Context, execClient exec.KubeExecClient, jenkinsPod *corev1.Pod, backupInstance *jenkinsv1alpha2.Backup) error {
+func (r *BackupReconciler) performJenkinsQuietDown(ctx context.Context, execClient exec.KubeExecClient, jenkinsPod *corev1.Pod, backupInstance *v1alpha2.Backup) error {
 	execQuietDown := strings.Join([]string{"sh", resources.QuietDownScriptPath}, " ")
 	err := execClient.MakeRequest(jenkinsPod, backupInstance.Name, execQuietDown)
 	if err != nil {
@@ -295,7 +302,7 @@ func (r *BackupReconciler) performJenkinsQuietDown(ctx context.Context, execClie
 	return nil
 }
 
-func (r *BackupReconciler) GetPodByDeployment(jenkins *jenkinsv1alpha2.Jenkins) (*corev1.Pod, error) {
+func (r *BackupReconciler) GetPodByDeployment(jenkins *v1alpha2.Jenkins) (*corev1.Pod, error) {
 	replicaSet, err := r.GetReplicaSetByDeployment(jenkins)
 	if err != nil {
 		return nil, err
@@ -316,7 +323,7 @@ func (r *BackupReconciler) GetPodByDeployment(jenkins *jenkinsv1alpha2.Jenkins) 
 }
 
 // GetJenkinsDeployment gets the jenkins master deployment.
-func (r *BackupReconciler) GetJenkinsDeployment(jenkins *jenkinsv1alpha2.Jenkins) (*appsv1.Deployment, error) {
+func (r *BackupReconciler) GetJenkinsDeployment(jenkins *v1alpha2.Jenkins) (*appsv1.Deployment, error) {
 	deploymentName := resources.GetJenkinsDeploymentName(jenkins)
 	logger.V(log.VDebug).Info(fmt.Sprintf("Getting JenkinsDeploymentName for : %+v, querying deployment named: %s", jenkins.Name, deploymentName))
 	jenkinsDeployment := &appsv1.Deployment{}
@@ -329,7 +336,7 @@ func (r *BackupReconciler) GetJenkinsDeployment(jenkins *jenkinsv1alpha2.Jenkins
 	return jenkinsDeployment, nil
 }
 
-func (r *BackupReconciler) GetReplicaSetByDeployment(jenkins *jenkinsv1alpha2.Jenkins) (*appsv1.ReplicaSet, error) {
+func (r *BackupReconciler) GetReplicaSetByDeployment(jenkins *v1alpha2.Jenkins) (*appsv1.ReplicaSet, error) {
 	deployment, _ := r.GetJenkinsDeployment(jenkins)
 	selector, err := metav1.LabelSelectorAsSelector(deployment.Spec.Selector)
 	replicasSetList := appsv1.ReplicaSetList{}
@@ -345,4 +352,24 @@ func (r *BackupReconciler) GetReplicaSetByDeployment(jenkins *jenkinsv1alpha2.Je
 	replicaSet := replicasSetList.Items[0]
 	logger.V(log.VDebug).Info(fmt.Sprintf("Successfully got the ReplicaSet: %s", replicaSet.Name))
 	return &replicaSet, nil
+}
+
+func (r *BackupReconciler) sendNewBackupCompletedNotification(jenkins *v1alpha2.Jenkins, backup *v1alpha2.Backup, err error) {
+	r.NotificationEvents <- event.Event{
+		Jenkins:    *jenkins,
+		Controller: event.BackupController,
+		Level:      v1alpha2.NotificationLevelInfo,
+		Reason: reason.NewBackupCompleted(reason.OperatorSource,
+			[]string{fmt.Sprintf("Backup %s completed for Jenkins '%s' in namespace '%s' with err %s", jenkins.Name, backup.Name, jenkins.Namespace, err.Error())}),
+	}
+}
+
+func (r *BackupReconciler) sendNewBackupInProgressNotification(jenkins *v1alpha2.Jenkins, backup *v1alpha2.Backup, message string, err error) {
+	r.NotificationEvents <- event.Event{
+		Jenkins:    *jenkins,
+		Controller: event.BackupController,
+		Level:      v1alpha2.NotificationLevelInfo,
+		Reason: reason.NewBackupInProgress(reason.OperatorSource,
+			[]string{fmt.Sprintf("Backup %s in progress for Jenkins '%s' in namespace '%s' with message '%s' err %s", jenkins.Name, backup.Name, jenkins.Namespace, message, err.Error())}),
+	}
 }
