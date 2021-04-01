@@ -1,10 +1,12 @@
 package base
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"regexp"
 	"strings"
+	"text/template"
 
 	docker "github.com/docker/distribution/reference"
 	"github.com/jenkinsci/jenkins-automation-operator/api/v1alpha2"
@@ -14,7 +16,12 @@ import (
 	stackerr "github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+)
+
+const (
+	JenkinsProxyConfigMapName = "jenkins-proxy-configuration"
 )
 
 var dockerImageRegexp = regexp.MustCompile(`^` + docker.TagRegexp.String() + `$`)
@@ -151,6 +158,16 @@ groovy:
     GlobalConfiguration.all().get(GlobalJobDslSecurityConfiguration.class).save();`,
 	},
 }
+
+var globalProxyTemplate = template.Must(template.New("globalProxy").Parse(`
+jenkins:
+  proxy:
+    name: "{{ .ProxyName }}"
+    port: {{ .ProxyPort }}
+    userName: "{{ .ProxyUser }}"
+    secretPassword: "{{ .ProxyPassword }}"
+    noProxyHost: "{{ .NoProxy }}"
+`))
 
 // Validate validates Jenkins CR Spec.master section
 func (r *JenkinsBaseConfigurationReconciler) Validate(jenkins *v1alpha2.Jenkins) ([]string, error) {
@@ -486,6 +503,63 @@ func (r *JenkinsBaseConfigurationReconciler) verifyBasePlugins(requiredBasePlugi
 	return messages
 }
 
+// Render executes a parsed template (go-template) with configuration from data.
+func ExecuteTextTemplate(template *template.Template, data interface{}) (string, error) {
+	var buffer bytes.Buffer
+	if err := template.Execute(&buffer, data); err != nil {
+		return "", stackerr.WithStack(err)
+	}
+
+	return buffer.String(), nil
+}
+
+func (r *JenkinsBaseConfigurationReconciler) CreateJenkinsProxyConfigMap(namespace string) {
+	configMap := &corev1.ConfigMap{}
+	err := r.Client.Get(context.TODO(), types.NamespacedName{Name: JenkinsProxyConfigMapName, Namespace: namespace}, configMap)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			r.logger.Info(fmt.Sprintf("global proxy detected, but jenkins proxy ConfigMap '%s' is not found, creating jenkins proxy ConfigMap ", JenkinsProxyConfigMapName))
+			regex := regexp.MustCompile(`^http?://([^:@]+):([^:@]+)?@([0-9a-zA-Z.-]+):(\d+)?/?$`)
+			matches := regex.FindAllStringSubmatch(resources.GlobalProxy.Status.HTTPProxy, -1)
+			data := struct {
+				ProxyName     string
+				ProxyPort     string
+				ProxyUser     string
+				ProxyPassword string
+				NoProxy       string
+			}{
+				ProxyName:     matches[0][3],
+				ProxyPort:     matches[0][4],
+				ProxyUser:     matches[0][1],
+				ProxyPassword: matches[0][2],
+				NoProxy:       resources.GlobalProxy.Status.NoProxy,
+			}
+			output, err := ExecuteTextTemplate(globalProxyTemplate, data)
+			if err != nil {
+				r.logger.Info("error while rendering template for global proxy configmap")
+			}
+
+			jenkinsProxyConfigMap := &corev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      JenkinsProxyConfigMapName,
+					Namespace: namespace,
+					Labels: map[string]string{
+						"type": fmt.Sprintf(resources.JenkinsSCConfigLabelValue, r.Configuration.Jenkins.ObjectMeta.Name),
+					},
+				},
+				Data: map[string]string{
+					"01-global-proxy.yaml": output,
+				},
+			}
+
+			err = r.Client.Create(context.TODO(), jenkinsProxyConfigMap)
+			if err != nil {
+				r.logger.Info("error while creating global proxy configmap")
+			}
+		}
+	}
+}
+
 func (r *JenkinsBaseConfigurationReconciler) validateConfiguration(configuration *v1alpha2.Configuration, name string) ([]string, error) {
 	var messages []string
 	if configuration == nil {
@@ -534,5 +608,9 @@ func (r *JenkinsBaseConfigurationReconciler) validateConfiguration(configuration
 			return messages, stackerr.WithStack(err)
 		}
 	}
+	if resources.GlobalProxy.Status.HTTPProxy != "" {
+		r.CreateJenkinsProxyConfigMap(jenkinsInstanceNamespace)
+	}
+
 	return messages, nil
 }

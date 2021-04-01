@@ -14,9 +14,9 @@ import (
 
 const (
 	openshiftGlobalProxy = "cluster"
-	envHTTPProxyName     = "HTTP_PROXY"
-	envHTTPSProxyName    = "HTTPS_PROXY"
-	envNoProxyName       = "NO_PROXY"
+	envHTTPProxyName     = "http_proxy"
+	envHTTPSProxyName    = "https_proxy"
+	envNoProxyName       = "no_proxy"
 )
 
 var (
@@ -28,6 +28,7 @@ var (
 		envNoProxyName,
 	}
 	ProxyEnvVars = []corev1.EnvVar{}
+	GlobalProxy  = &apiconfigv1.Proxy{}
 )
 
 func IsOpenshiftProxyAPIAvailable(clientSet *kubernetes.Clientset) bool {
@@ -51,15 +52,15 @@ func IsOpenshiftProxyAPIAvailable(clientSet *kubernetes.Clientset) bool {
 }
 
 func QueryProxyConfig(manager manager.Manager) error {
-	global := &apiconfigv1.Proxy{}
-	err := manager.GetAPIReader().Get(context.TODO(), client.ObjectKey{Name: openshiftGlobalProxy}, global)
+	err := manager.GetAPIReader().Get(context.TODO(), client.ObjectKey{Name: openshiftGlobalProxy}, GlobalProxy)
 	if err != nil {
 		logger.Info("openshift global proxy not found")
 		return err
 	}
 
 	// We have found the global proxy configuration object!
-	ProxyEnvVars = ToEnvVar(global)
+	ProxyEnvVars = ToEnvVar(GlobalProxy)
+
 	return nil
 }
 

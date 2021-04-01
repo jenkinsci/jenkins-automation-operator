@@ -315,7 +315,7 @@ func NewJenkinsConfigContainer(jenkins *v1alpha2.Jenkins) corev1.Container {
 	}
 
 	volumeMounts := []corev1.VolumeMount{
-		getVolumeMount(ConfigurationAsCodeVolumeName, ConfigurationAsCodeSecretVolumePath, false),
+		getVolumeMount(ConfigurationAsCodeVolumeName, ConfigurationAsCodeVolumePath, false),
 		getVolumeMount(JenkinsHomeVolumeName, getJenkinsHomePath(jenkins), true),
 		getVolumeMount(jenkinsScriptsVolumeName, JenkinsScriptsVolumePath, true),
 	}
