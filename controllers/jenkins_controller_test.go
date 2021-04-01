@@ -99,6 +99,11 @@ var _ = Describe("Jenkins controller", func() {
 		//	ByCheckingThatServiceMonitorIsCreated(ctx, jenkinsName+"-monitored", JenkinsTestNamespace)
 		// })
 
+		It(fmt.Sprintf("Deployment Is Ready (%s)", jenkinsName), func() {
+			// Check if Deployment is ready
+			ByCheckingThatTheDeploymentIsReady(ctx, jenkins)
+		})
+
 		It(fmt.Sprintf("Namespace should be deleted (%s)", jenkinsName), func() {
 			// Cleanup
 			DeleteNamespaceIfPresent(ctx, JenkinsTestNamespace)
@@ -286,7 +291,7 @@ func ByCheckingThatDefaultRoleBindingIsCreated(ctx context.Context, jenkins *v1a
 }
 
 func ByCheckingThatTheDeploymentExists(ctx context.Context, jenkins *v1alpha2.Jenkins) {
-	By("By checking that the Pod exists")
+	By("By checking that the Deployment exists")
 	expected := &appsv1.Deployment{}
 	expectedName := resources.GetJenkinsDeploymentName(jenkins)
 	key := types.NamespacedName{Namespace: jenkins.Namespace, Name: expectedName}
@@ -299,6 +304,21 @@ func ByCheckingThatTheDeploymentExists(ctx context.Context, jenkins *v1alpha2.Je
 	}
 	Eventually(actual, timeout, interval).ShouldNot(BeNil())
 	Eventually(actual, timeout, interval).Should(Equal(expected))
+}
+
+func ByCheckingThatTheDeploymentIsReady(ctx context.Context, jenkins *v1alpha2.Jenkins) {
+	By("By checking that the Deployment has enough replicas")
+	expected := &appsv1.Deployment{}
+	expectedName := resources.GetJenkinsDeploymentName(jenkins)
+	key := types.NamespacedName{Namespace: jenkins.Namespace, Name: expectedName}
+	actualReadyReplicas := func() (int32, error) {
+		err := k8sClient.Get(ctx, key, expected)
+		if err != nil {
+			return 0, err
+		}
+		return expected.Status.ReadyReplicas, nil
+	}
+	Eventually(actualReadyReplicas, timeout, interval).Should(Equal(int32(1)))
 }
 
 func ByCreatingJenkinsSuccesfully(ctx context.Context, jenkins *v1alpha2.Jenkins) {
