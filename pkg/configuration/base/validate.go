@@ -608,7 +608,8 @@ func (r *JenkinsBaseConfigurationReconciler) validateConfiguration(configuration
 			return messages, stackerr.WithStack(err)
 		}
 	}
-	if resources.GlobalProxy.Status.HTTPProxy != "" {
+	if r.Configuration.Jenkins.Spec.ProxyConfigurationEnabled &&
+		resources.GlobalProxy.Status.HTTPProxy != "" {
 		r.CreateJenkinsProxyConfigMap(jenkinsInstanceNamespace)
 	}
 

@@ -231,8 +231,8 @@ func NewJenkinsMasterContainer(jenkins *v1alpha2.Jenkins) corev1.Container {
 	if !jenkinsHomeEnvVarExists {
 		envs = append(envs, jenkinsHomeEnvVar)
 	}
-
-	if !IsProxyOverridden(envs) {
+	if jenkins.Spec.ProxyConfigurationEnabled &&
+		!IsProxyOverridden(envs) {
 		ProxyEnvVars = dropEmptyProxyEnv(ProxyEnvVars)
 		envs = append(envs, ProxyEnvVars...)
 	}

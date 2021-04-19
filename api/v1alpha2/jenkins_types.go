@@ -67,6 +67,11 @@ type JenkinsSpec struct {
 	// MetricsEnabled defines whether prometheus metrics are enabled
 	MetricsEnabled bool `json:"metricsEnabled,omitempty"`
 
+	// ProxyConfigurationEnabled defines whether openshift global proxy configuration is enabled
+	// if enabled, and if a global proxy is set in openshift, the operator will automatically
+	// configure the jenkins proxy
+	ProxyConfigurationEnabled bool `json:"proxyConfigurationEnabled,omitempty"`
+
 	// PersistentSpec
 	PersistentSpec JenkinsPersistentSpec `json:"persistentSpec,omitempty"`
 }

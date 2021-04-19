@@ -2536,6 +2536,12 @@ spec:
                 volumeSize:
                   type: string
               type: object
+            proxyConfigurationEnabled:
+              description: ProxyConfigurationEnabled defines whether openshift global
+                proxy configuration is enabled if enabled, and if a global proxy is
+                set in openshift, the operator will automatically configure the jenkins
+                proxy
+              type: boolean
             roles:
               description: Roles defines list of extra RBAC roles for the Jenkins
                 Master pod service account
@@ -5272,6 +5278,12 @@ spec:
                     volumeSize:
                       type: string
                   type: object
+                proxyConfigurationEnabled:
+                  description: ProxyConfigurationEnabled defines whether openshift
+                    global proxy configuration is enabled if enabled, and if a global
+                    proxy is set in openshift, the operator will automatically configure
+                    the jenkins proxy
+                  type: boolean
                 roles:
                   description: Roles defines list of extra RBAC roles for the Jenkins
                     Master pod service account
