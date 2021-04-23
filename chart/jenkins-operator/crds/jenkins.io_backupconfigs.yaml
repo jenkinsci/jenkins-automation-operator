@@ -10,8 +10,8 @@ metadata:
 spec:
   group: jenkins.io
   names:
-    kind: BackupConfig
-    listKind: BackupConfigList
+    kind: BackupStrategy
+    listKind: BackupStrategyList
     plural: backupconfigs
     singular: backupconfig
   scope: Namespaced
@@ -19,7 +19,7 @@ spec:
     status: {}
   validation:
     openAPIV3Schema:
-      description: BackupConfig is the Schema for the backupconfigs API
+      description: BackupStrategy is the Schema for the backupconfigs API
       properties:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation
@@ -34,11 +34,11 @@ spec:
         metadata:
           type: object
         spec:
-          description: BackupConfigSpec defines the desired state of BackupConfig
+          description: BackupStrategySpec defines the desired state of BackupStrategy
           properties:
             backupOptions:
               description: Options specifies the options provided to user to backup
-                between. default BackupConfig sets all to true
+                between. default BackupStrategy sets all to true
               properties:
                 config:
                   type: boolean
@@ -76,7 +76,7 @@ spec:
           - restartAfterRestore
           type: object
         status:
-          description: BackupConfigStatus defines the observed state of BackupConfig
+          description: BackupStrategyStatus defines the observed state of BackupStrategy
           type: object
       type: object
   version: v1alpha2

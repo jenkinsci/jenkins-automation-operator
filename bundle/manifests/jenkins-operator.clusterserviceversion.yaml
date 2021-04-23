@@ -11,12 +11,12 @@ metadata:
             "name": "backup-sample"
           },
           "spec": {
-            "configRef": "default"
+            "strategyRef": "default"
           }
         },
         {
           "apiVersion": "jenkins.io/v1alpha2",
-          "kind": "BackupConfig",
+          "kind": "BackupStrategy",
           "metadata": {
             "name": "backupconfig-sample"
           },
@@ -86,7 +86,7 @@ spec:
   apiservicedefinitions: {}
   customresourcedefinitions:
     owned:
-    - kind: BackupConfig
+    - kind: BackupStrategy
       name: backupconfigs.jenkins.io
       version: v1alpha2
     - kind: Backup
