@@ -23,21 +23,19 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// BackupConfigSpec defines the desired state of BackupConfig
-type BackupConfigSpec struct {
-	// JenkinsRef points to the Jenkins restore on which Backup or Restore will be performed
-	JenkinsRef string `json:"jenkinsRef"`
+// BackupStrategySpec defines the desired state of BackupStrategy
+type BackupStrategySpec struct {
 	// QuietDownDuringBackup will put the Jenkins instance in a QuietDown mode which prevents any new builds from taking place
 	QuietDownDuringBackup bool `json:"quietDownDuringBackup,omitempty"`
-	// Options specifies the options provided to user to backup between. default BackupConfig sets all to true
+	// Options specifies the options provided to user to backup between. default BackupStrategy sets all to true
 	Options BackupOptions `json:"backupOptions"`
 	// RestartAfterRestore will restart the Jenkins instance after a Restore
 	RestartAfterRestore RestartConfig `json:"restartAfterRestore"`
 	// Mount Configmap containing script
-	// Scheduling Backup using the BackupConfig, will create CronJob
+	// Scheduling Backup using the BackupStrategy, will create CronJob
 }
 
-// BackupOptions specifies the options provided to user to backup between. default BackupConfig sets all to true
+// BackupOptions specifies the options provided to user to backup between. default BackupStrategy sets all to true
 type BackupOptions struct {
 	Jobs    bool `json:"jobs"`
 	Plugins bool `json:"plugins"`
@@ -50,31 +48,32 @@ type RestartConfig struct {
 	Safe    bool `json:"safe,omitempty"`
 }
 
-// BackupConfigStatus defines the observed state of BackupConfig
-type BackupConfigStatus struct {
+// BackupStrategyStatus defines the observed state of BackupStrategy
+type BackupStrategyStatus struct {
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 
-// BackupConfig is the Schema for the backupconfigs API
-type BackupConfig struct {
+// BackupStrategy is a reusable and referencable strategy used for backing up
+// Jenkins instances and information available inside
+type BackupStrategy struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   BackupConfigSpec   `json:"spec,omitempty"`
-	Status BackupConfigStatus `json:"status,omitempty"`
+	Spec   BackupStrategySpec   `json:"spec,omitempty"`
+	Status BackupStrategyStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 
-// BackupConfigList contains a list of BackupConfig
-type BackupConfigList struct {
+// BackupStrategyList contains a list of BackupStrategy
+type BackupStrategyList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []BackupConfig `json:"items"`
+	Items           []BackupStrategy `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&BackupConfig{}, &BackupConfigList{})
+	SchemeBuilder.Register(&BackupStrategy{}, &BackupStrategyList{})
 }
