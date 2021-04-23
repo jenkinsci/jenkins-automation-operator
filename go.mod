@@ -5,47 +5,46 @@ go 1.13
 require (
 	github.com/bndr/gojenkins v0.0.0-20181125150310-de43c03cf849
 	github.com/coreos/prometheus-operator v0.0.0-00010101000000-000000000000
-	github.com/daixiang0/gci v0.2.4 // indirect
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/elazarl/goproxy v0.0.0-20190711103511-473e67f1d7d2 // indirect
 	github.com/elazarl/goproxy/ext v0.0.0-20190711103511-473e67f1d7d2 // indirect
-	github.com/emersion/go-sasl v0.0.0-20190817083125-240c8404624e // indirect
-	github.com/emersion/go-smtp v0.11.2 // indirect
 	github.com/go-logr/logr v0.1.0
 	github.com/go-logr/zapr v0.1.1
+	github.com/gogo/protobuf v1.3.1 // indirect
+	github.com/golang/groupcache v0.0.0-20190129154638-5b532d6fd5ef // indirect
 	github.com/golang/mock v1.3.1
-	github.com/golangci/golangci-lint v1.26.0 // indirect
 	github.com/google/go-cmp v0.5.2 // indirect
-	github.com/mailgun/mailgun-go/v3 v3.6.0 // indirect
+	github.com/imdario/mergo v0.3.8 // indirect
+	github.com/kr/text v0.2.0 // indirect
+	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/onsi/ginkgo v1.14.1
 	github.com/onsi/gomega v1.10.2
 	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible
 	github.com/openshift/custom-resource-status v0.0.0-20200602122900-c002fd1547ca
-	github.com/operator-framework/api v0.3.13 // indirect
 	github.com/operator-framework/operator-lib v0.1.0
-	github.com/operator-framework/operator-sdk v1.0.1 // indirect
 	github.com/pkg/errors v0.9.1
-	github.com/robfig/cron v1.2.0 // indirect
-	github.com/sonatard/noctx v0.0.1 // indirect
+	github.com/prometheus/client_golang v1.5.1 // indirect
 	github.com/spf13/pflag v1.0.5
-	github.com/ssgreg/nlreturn v1.0.5 // indirect
 	github.com/stretchr/testify v1.5.1
 	go.uber.org/zap v1.14.1
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
-	golang.org/x/net v0.0.0-20200822124328-c89045814202 // indirect
+	golang.org/x/sys v0.0.0-20200625212154-ddb9806d33ae // indirect
+	golang.org/x/text v0.3.3 // indirect
+	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4 // indirect
 	golang.org/x/tools v0.0.0-20201002184944-ecd9fd270d5d // indirect
-	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
-	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df // indirect
+	google.golang.org/appengine v1.6.5 // indirect
+	google.golang.org/protobuf v1.25.0 // indirect
+	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
 	k8s.io/api v0.18.6
 	k8s.io/apiextensions-apiserver v0.18.6
 	k8s.io/apimachinery v0.18.6
-	k8s.io/cli-runtime v0.18.2 // indirect
 	k8s.io/client-go v12.0.0+incompatible
+	k8s.io/klog v1.0.0 // indirect
 	k8s.io/kubectl v0.18.2
 	k8s.io/kubernetes v1.13.0
 	k8s.io/utils v0.0.0-20190801114015-581e00157fb1
-	mvdan.cc/gofumpt v0.0.0-20200927160801-5bfeb2e70dd6 // indirect
 	sigs.k8s.io/controller-runtime v0.6.2
+	sigs.k8s.io/yaml v1.2.0 // indirect
 )
 
 // Pinned to kubernetes-1.16.2

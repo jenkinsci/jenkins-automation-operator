@@ -93,15 +93,15 @@ spec:
         displayName: Tag
         path: to.tag
       version: v1alpha2
-    - description: BackupConfig is the Schema for the backupconfigs API
+    - description: BackupStrategy is the Schema for the backupconfigs API
       displayName: Backup Config
-      kind: BackupConfig
-      name: backupconfigs.jenkins.jenkins.io
+      kind: BackupStrategy
+      name: backupconfigs.jenkins.io
       version: v1alpha2
     - description: Jenkins is the Schema for the jenkins API
       displayName: Jenkins
       kind: Jenkins
-      name: jenkins.jenkins.jenkins.io
+      name: jenkins.jenkins.io
       specDescriptors:
       - displayName: Enable this configuration
         path: configurationAsCode.enabled
@@ -116,7 +116,7 @@ spec:
     - description: JenkinsImage is the Schema for the jenkinsimages API
       displayName: Jenkins Image
       kind: JenkinsImage
-      name: jenkinsimages.jenkins.jenkins.io
+      name: jenkinsimages.jenkins.io
       specDescriptors:
       - description: The Image name
         displayName: Name
@@ -137,20 +137,15 @@ spec:
         displayName: Tag
         path: to.tag
       version: v1alpha2
-    - description: BackupWorker is the Schema for the backupworkers API
-      displayName: Backup Worker
-      kind: BackupWorker
-      name: backupworkers.jenkins.jenkins.io
-      version: v1alpha2
     - description: Backup is the Schema for the backups API
       displayName: Backup
       kind: Backup
-      name: backups.jenkins.jenkins.io
+      name: backups.jenkins.io
       version: v1alpha2
     - description: Restore is the Schema for the restores API
       displayName: Restore
       kind: Restore
-      name: restores.jenkins.jenkins.io
+      name: restores.jenkins.io
       version: v1alpha2
   description: Manage your Jenkins instances in kubernetes
   displayName: jenkins-operator

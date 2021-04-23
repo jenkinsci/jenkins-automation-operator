@@ -1,0 +1,24 @@
+# permissions for end users to edit backupvolumes.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: backupvolume-editor-role
+rules:
+- apiGroups:
+  - jenkins.io
+  resources:
+  - backupvolumes
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - jenkins.io
+  resources:
+  - backupvolumes/status
+  verbs:
+  - get

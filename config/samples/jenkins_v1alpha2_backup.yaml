@@ -3,4 +3,4 @@ kind: Backup
 metadata:
   name: backup-sample
 spec:
-  configRef: default
+  strategyRef: default

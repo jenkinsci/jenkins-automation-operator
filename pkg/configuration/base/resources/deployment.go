@@ -47,7 +47,7 @@ func NewJenkinsDeployment(objectMeta metav1.ObjectMeta, jenkins *v1alpha2.Jenkin
 func getJenkinsVolumes(jenkins *v1alpha2.Jenkins, jenkinsSpec *v1alpha2.JenkinsSpec) []corev1.Volume {
 	volumes := append(GetJenkinsMasterPodBaseVolumes(jenkins), jenkinsSpec.Master.Volumes...)
 
-	if jenkins.Spec.BackupEnabled {
+	if len(jenkins.Spec.BackupVolumes) > 0 {
 		backupVolume := corev1.Volume{
 			Name: JenkinsBackupVolumeMountName,
 			VolumeSource: corev1.VolumeSource{

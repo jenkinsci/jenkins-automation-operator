@@ -109,18 +109,18 @@ func (r *RestoreReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 	// Fetch the Jenkins instance
 	jenkinsInstance := &v1alpha2.Jenkins{}
-	backupConfig := &v1alpha2.BackupConfig{}
+	backupStrategy := &v1alpha2.BackupStrategy{}
 	backupSpec := backupInstance.Spec
-	// Use default BackupConfig if configRef not provided
-	backupConfigName := DefaultBackupConfigName
-	if backupSpec.ConfigRef != "" {
-		backupConfigName = backupSpec.ConfigRef
+	// Use default BackupStrategy if strategyRef not provided
+	backupStrategyName := DefaultBackupStrategyName
+	if backupSpec.StrategyRef != "" {
+		backupStrategyName = backupSpec.StrategyRef
 	}
-	backupConfigNamespacedName := types.NamespacedName{
+	backupStrategyNamespacedName := types.NamespacedName{
 		Namespace: req.Namespace,
-		Name:      backupConfigName,
+		Name:      backupStrategyName,
 	}
-	err = r.Client.Get(ctx, backupConfigNamespacedName, backupConfig)
+	err = r.Client.Get(ctx, backupStrategyNamespacedName, backupStrategy)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
@@ -133,7 +133,7 @@ func (r *RestoreReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 
 	jenkinsNamespacedName := types.NamespacedName{
-		Name:      backupConfig.Spec.JenkinsRef,
+		Name:      backupSpec.JenkinsRef,
 		Namespace: req.Namespace,
 	}
 	err = r.Client.Get(ctx, jenkinsNamespacedName, jenkinsInstance)
@@ -178,20 +178,20 @@ func (r *RestoreReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 
 	// Restore
-	err = r.performJenkinsRestore(ctx, execClient, jenkinsPod, backupInstance, backupConfig, restoreInstance)
+	err = r.performJenkinsRestore(ctx, execClient, jenkinsPod, backupInstance, backupStrategy, restoreInstance)
 	r.sendNewRestoreInProgressNotification(jenkinsInstance, restoreInstance, "restore", err)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
 	// Restart
-	if backupConfig.Spec.RestartAfterRestore.Enabled && backupConfig.Spec.RestartAfterRestore.Safe {
+	if backupStrategy.Spec.RestartAfterRestore.Enabled && backupStrategy.Spec.RestartAfterRestore.Safe {
 		err := r.performJenkinsSafeRestart(ctx, jenkinsPod, restoreInstance, execClient)
 		r.sendNewRestoreInProgressNotification(jenkinsInstance, restoreInstance, "safeRestartAfterRestore", err)
 		if err != nil {
 			return ctrl.Result{}, err
 		}
-	} else if backupConfig.Spec.RestartAfterRestore.Enabled {
+	} else if backupStrategy.Spec.RestartAfterRestore.Enabled {
 		err := r.performJenkinsRestart(ctx, execClient, jenkinsPod, restoreInstance)
 		r.sendNewRestoreInProgressNotification(jenkinsInstance, restoreInstance, "restartAfterRestore", err)
 		if err != nil {
@@ -251,17 +251,17 @@ func (r *RestoreReconciler) performJenkinsSafeRestart(ctx context.Context, jenki
 	return nil
 }
 
-func (r *RestoreReconciler) performJenkinsRestore(ctx context.Context, execClient exec.KubeExecClient, jenkinsPod *corev1.Pod, backupInstance *v1alpha2.Backup, backupConfig *v1alpha2.BackupConfig, restoreInstance *v1alpha2.Restore) error {
+func (r *RestoreReconciler) performJenkinsRestore(ctx context.Context, execClient exec.KubeExecClient, jenkinsPod *corev1.Pod, backupInstance *v1alpha2.Backup, backupStrategy *v1alpha2.BackupStrategy, restoreInstance *v1alpha2.Restore) error {
 	restoreFromLocation := resources.JenkinsBackupVolumePath + "/" + backupInstance.Name
 	restoreToLocation := defaultJenkinsHome
 	restoreToSubLocations := []string{}
-	if backupConfig.Spec.Options.Config {
+	if backupStrategy.Spec.Options.Config {
 		restoreToSubLocations = append(restoreToSubLocations, "*.xml")
 	}
-	if backupConfig.Spec.Options.Jobs {
+	if backupStrategy.Spec.Options.Jobs {
 		restoreToSubLocations = append(restoreToSubLocations, "jobs")
 	}
-	if backupConfig.Spec.Options.Plugins {
+	if backupStrategy.Spec.Options.Plugins {
 		restoreToSubLocations = append(restoreToSubLocations, "plugins")
 	}
 	if len(restoreToSubLocations) > 0 {

@@ -91,17 +91,17 @@ func (r *BackupReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	backupLogger.Info("Jenkins Backup with name " + backupInstance.Name + " has been created")
 
 	backupSpec := backupInstance.Spec
-	backupConfig := &v1alpha2.BackupConfig{}
-	// Use default BackupConfig if configRef not provided
-	backupConfigName := DefaultBackupConfigName
-	if backupSpec.ConfigRef != "" {
-		backupConfigName = backupSpec.ConfigRef
+	backupStrategy := &v1alpha2.BackupStrategy{}
+	// Use default BackupStrategy if strategyRef not provided
+	backupStrategyName := DefaultBackupStrategyName
+	if backupSpec.StrategyRef != "" {
+		backupStrategyName = backupSpec.StrategyRef
 	}
-	backupConfigNamespacedName := types.NamespacedName{
+	backupStrategyNamespacedName := types.NamespacedName{
 		Namespace: req.Namespace,
-		Name:      backupConfigName,
+		Name:      backupStrategyName,
 	}
-	err = r.Client.Get(ctx, backupConfigNamespacedName, backupConfig)
+	err = r.Client.Get(ctx, backupStrategyNamespacedName, backupStrategy)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
@@ -116,7 +116,7 @@ func (r *BackupReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	// Fetch the Jenkins instance
 	jenkinsInstance := &v1alpha2.Jenkins{}
 	jenkinsNamespacedName := types.NamespacedName{
-		Name:      backupConfig.Spec.JenkinsRef,
+		Name:      backupInstance.Spec.JenkinsRef,
 		Namespace: req.Namespace,
 	}
 	err = r.Client.Get(ctx, jenkinsNamespacedName, jenkinsInstance)
@@ -159,7 +159,7 @@ func (r *BackupReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 
 	// QuietDown
-	if backupConfig.Spec.QuietDownDuringBackup {
+	if backupStrategy.Spec.QuietDownDuringBackup {
 		err := r.performJenkinsQuietDown(ctx, execClient, jenkinsPod, backupInstance)
 		r.sendNewBackupInProgressNotification(jenkinsInstance, backupInstance, "quietDown", err)
 		if err != nil {
@@ -168,14 +168,14 @@ func (r *BackupReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 
 	// Backup
-	err = r.performJenkinsBackup(ctx, execClient, jenkinsPod, backupInstance, backupConfig)
+	err = r.performJenkinsBackup(ctx, execClient, jenkinsPod, backupInstance, backupStrategy)
 	r.sendNewBackupInProgressNotification(jenkinsInstance, backupInstance, "backup", err)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
 	// CancelQuietDown
-	if backupConfig.Spec.QuietDownDuringBackup {
+	if backupStrategy.Spec.QuietDownDuringBackup {
 		err = r.performJenkinsCancelQuietDown(ctx, execClient, jenkinsPod, backupInstance)
 		r.sendNewBackupInProgressNotification(jenkinsInstance, backupInstance, "cancelQuietDown", err)
 		if err != nil {
@@ -221,7 +221,7 @@ func (r *BackupReconciler) performJenkinsCancelQuietDown(ctx context.Context, ex
 	return nil
 }
 
-func (r *BackupReconciler) performJenkinsBackup(ctx context.Context, execClient exec.KubeExecClient, jenkinsPod *corev1.Pod, backupInstance *v1alpha2.Backup, backupConfig *v1alpha2.BackupConfig) error {
+func (r *BackupReconciler) performJenkinsBackup(ctx context.Context, execClient exec.KubeExecClient, jenkinsPod *corev1.Pod, backupInstance *v1alpha2.Backup, backupStrategy *v1alpha2.BackupStrategy) error {
 	backupToLocation := resources.JenkinsBackupVolumePath + "/" + backupInstance.Name + "/"
 	execCreateBackupDir := strings.Join([]string{"mkdir", backupToLocation}, " ")
 	err := execClient.MakeRequest(jenkinsPod, backupInstance.Name, execCreateBackupDir)
@@ -240,13 +240,13 @@ func (r *BackupReconciler) performJenkinsBackup(ctx context.Context, execClient 
 	// Create Backup based on Spec
 	backupFromLocation := defaultJenkinsHome
 	backupFromSubLocations := []string{}
-	if backupConfig.Spec.Options.Config {
+	if backupStrategy.Spec.Options.Config {
 		backupFromSubLocations = append(backupFromSubLocations, "*.xml")
 	}
-	if backupConfig.Spec.Options.Jobs {
+	if backupStrategy.Spec.Options.Jobs {
 		backupFromSubLocations = append(backupFromSubLocations, "jobs")
 	}
-	if backupConfig.Spec.Options.Plugins {
+	if backupStrategy.Spec.Options.Plugins {
 		backupFromSubLocations = append(backupFromSubLocations, "plugins")
 	}
 	if len(backupFromSubLocations) > 0 {

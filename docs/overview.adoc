@@ -27,7 +27,7 @@ If any of these resources are deleted or modified, the `Jenkins controller` will
 - `jenkinsimage controller`: Watches `JenkinsImage` resource definitions and is in charge of creating `kaniko` `pod` to build a Jenkins image 
 with the specified set of jenkins `Plugins`. When running on `OpenShift` this controller tries to detect the `OpenShift Internal Registry` in order to push 
 built images in it. If a user specifies an alternate destination, the `JenkinsImage Controller` will push to another registry.
-- `backup controller`: Watches `BackupConfig` resource definition and enable backup of the associated Jenkins instance. The backup is performed using a 
+- `backup controller`: Watches `BackupStrategy` resource definition and enable backup of the associated Jenkins instance. The backup is performed using a
 sidecar container containing required tools to perform the backup triggered using a `kubeExecClient`  and by gracefully stopping Jenkins before backup. The backup is then stored under the `JENKINS_HOME` directory and a `Backup` custom resource is created.
 - `restore controller`: Watches `Restore` resource definition and perform restoration of the specified `Backup` object to the specified `Jenkins` instance.
 The following image illustrate the interactions between these controllers.
@@ -40,7 +40,7 @@ See the following docs referencing each of the Kubernetes resources currently su
 
 - [`Jenkins`](jenkins.md)
 - [`JenkinsImage`](jenkinsimage.md)
-- [`BackupConfig`](backup.md)
+- [`BackupStrategy`](backup.md)
 - [`Restore`](restore.md)
 
 ## Controllers Flow

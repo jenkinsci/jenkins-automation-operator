@@ -36,9 +36,11 @@ spec:
         spec:
           description: Spec defines the desired state of the Jenkins
           properties:
-            backupEnabled:
+            backupVolumes:
               description: BackupEnabled defines whether backup feature is enabled
-              type: boolean
+              items:
+                type: string
+              type: array
             configurationAsCode:
               description: ConfigurationAsCode defines configuration of Jenkins configuration
                 via Configuration as Code Jenkins plugin
@@ -2690,9 +2692,11 @@ spec:
             spec:
               description: Spec defines the effective state of the Jenkins
               properties:
-                backupEnabled:
+                backupVolumes:
                   description: BackupEnabled defines whether backup feature is enabled
-                  type: boolean
+                  items:
+                    type: string
+                  type: array
                 configurationAsCode:
                   description: ConfigurationAsCode defines configuration of Jenkins
                     configuration via Configuration as Code Jenkins plugin

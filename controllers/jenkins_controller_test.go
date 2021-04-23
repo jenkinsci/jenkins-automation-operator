@@ -39,11 +39,16 @@ var _ = Describe("Jenkins controller", func() {
 		jenkinsName := "jenkins-with-all"
 		jenkins := GetJenkinsTestInstance(jenkinsName, JenkinsTestNamespace)
 
-		It(fmt.Sprintf("Jenkins Should Be Created (%s)", jenkinsName), func() {
+		It(fmt.Sprintf("Check Prerequisites (%s)", jenkinsName), func() {
 			// Create Namespace for testing if not present
 			CreateNamespaceIfNotPresent(ctx, JenkinsTestNamespace)
 			// Create Edit Cluster Role if not in Openshift
 			CreateEditClusterRoleIfNotPresent(ctx)
+		})
+
+		It(fmt.Sprintf("Create Test BackupVolume (%s)", jenkinsName), func() {
+			// Create BackupVolume
+			CreateBackupVolume(ctx, "test")
 		})
 
 		It(fmt.Sprintf("Jenkins Should Be Created (%s)", jenkinsName), func() {
@@ -76,6 +81,11 @@ var _ = Describe("Jenkins controller", func() {
 		It(fmt.Sprintf(" Default CasC ConfigMap Should Be Created (%s)", jenkinsName), func() {
 			// Check if Default CasC configuration is present for Jenkins
 			ByCheckingThatConfigMapIsCreated(ctx, resources.JenkinsDefaultConfigMapName, JenkinsTestNamespace)
+		})
+
+		It(fmt.Sprintf("Jenkins PVC for persistence Should Be Created (%s)", jenkinsName), func() {
+			// Check if PVC is present for Jenkins
+			ByCheckingThatPVCIsCreated(ctx, jenkinsName, JenkinsTestNamespace)
 		})
 
 		It(fmt.Sprintf("Jenkins PVC for persistence Should Be Created (%s)", jenkinsName), func() {
@@ -124,6 +134,22 @@ func CreateNamespaceIfNotPresent(ctx context.Context, namespaceName string) {
 			},
 		}
 		Expect(k8sClient.Create(ctx, ns)).Should(Succeed())
+	}
+}
+
+func CreateBackupVolume(ctx context.Context, namespaceName string) {
+	By("Creating BackupVolume")
+	jenkinsControllerTestNamespace = &corev1.Namespace{}
+	key := types.NamespacedName{Name: namespaceName}
+	err := k8sClient.Get(ctx, key, jenkinsControllerTestNamespace)
+	if err != nil {
+		By("Create BackupVolume")
+		bv := &v1alpha2.BackupVolume{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: namespaceName,
+			},
+		}
+		Expect(k8sClient.Create(ctx, bv)).Should(Succeed())
 	}
 }
 
@@ -262,7 +288,7 @@ func GetJenkinsTestInstance(name string, namespace string) *v1alpha2.Jenkins {
 			PersistentSpec: v1alpha2.JenkinsPersistentSpec{
 				Enabled: true,
 			},
-			BackupEnabled: true,
+			BackupVolumes: []string{"test"},
 			// MetricsEnabled: true,
 		},
 	}

@@ -40,6 +40,9 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 
+	apiconfigv1 "github.com/openshift/api/config/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+
 	jenkinsv1alpha2 "github.com/jenkinsci/jenkins-automation-operator/api/v1alpha2"
 	"github.com/jenkinsci/jenkins-automation-operator/controllers"
 	"github.com/jenkinsci/jenkins-automation-operator/pkg/configuration/base"
@@ -49,8 +52,6 @@ import (
 	"github.com/jenkinsci/jenkins-automation-operator/pkg/notifications"
 	e "github.com/jenkinsci/jenkins-automation-operator/pkg/notifications/event"
 	"github.com/jenkinsci/jenkins-automation-operator/version"
-	apiconfigv1 "github.com/openshift/api/config/v1"
-	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 
 	// sdkVersion "github.com/operator-framework/operator-sdk/version"
 	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
@@ -277,6 +278,22 @@ func setupJenkinsRestoreRenconciler(mgr manager.Manager, eventChan chan e.Event)
 
 func newJenkinsRestoreRenconciler(mgr manager.Manager, eventChan chan e.Event) *controllers.RestoreReconciler {
 	return &controllers.RestoreReconciler{
+		Client:             mgr.GetClient(),
+		Log:                ctrl.Log.WithName("controllers").WithName("Restore"),
+		Scheme:             mgr.GetScheme(),
+		NotificationEvents: eventChan,
+	}
+}
+
+func setupBackupVolumeRenconciler(mgr manager.Manager, eventChan chan e.Event) {
+	if err := newBackupVolumeRenconciler(mgr, eventChan).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "BackupVolume")
+		os.Exit(1)
+	}
+}
+
+func newBackupVolumeRenconciler(mgr manager.Manager, eventChan chan e.Event) *controllers.BackupVolumeReconciler {
+	return &controllers.BackupVolumeReconciler{
 		Client:             mgr.GetClient(),
 		Log:                ctrl.Log.WithName("controllers").WithName("Restore"),
 		Scheme:             mgr.GetScheme(),

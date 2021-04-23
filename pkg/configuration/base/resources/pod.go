@@ -499,7 +499,7 @@ func newContainers(jenkins *v1alpha2.Jenkins, spec *v1alpha2.JenkinsSpec) (conta
 			containers = append(containers, convertJenkinsContainerToKubernetesContainer(container))
 		}
 	}
-	if spec.BackupEnabled {
+	if len(spec.BackupVolumes) > 0 {
 		containers = append(containers, NewJenkinsBackupContainer(jenkins))
 	}
 
@@ -511,7 +511,7 @@ func newInitContainers(jenkinsSpec *v1alpha2.JenkinsSpec) (containers []corev1.C
 	if jenkinsSpec.ConfigurationAsCode == nil || jenkinsSpec.ConfigurationAsCode.Enabled {
 		containers = append(containers, NewJenkinsConfigInitContainer(jenkinsSpec))
 	}
-	if jenkinsSpec.BackupEnabled {
+	if len(jenkinsSpec.BackupVolumes) > 0 {
 		containers = append(containers, NewJenkinsBackupInitContainer(jenkinsSpec))
 	}
 	return containers

@@ -23,7 +23,9 @@ import (
 
 // BackupSpec defines the desired state of Backup
 type BackupSpec struct {
-	ConfigRef string `json:"configRef,omitempty"`
+	JenkinsRef      string `json:"jenkinsRef,omitempty"`
+	StrategyRef     string `json:"strategyRef,omitempty"`
+	BackupVolumeRef string `json:"backupVolumeRef,omitempty"`
 }
 
 // BackupStatus defines the observed state of Backup

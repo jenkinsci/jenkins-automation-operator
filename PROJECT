@@ -1,23 +1,47 @@
 domain: jenkins.io
-layout: go.kubebuilder.io/v2
+layout:
+- go.kubebuilder.io/v2
+plugins:
+  go.sdk.operatorframework.io/v2-alpha: {}
 projectName: jenkins-operator
 repo: github.com/jenkinsci/jenkins-automation-operator
 resources:
-- group: jenkins
+- controller: true
+  domain: jenkins.io
+  group: jenkins
   kind: Jenkins
+  path: github.com/jenkinsci/jenkins-automation-operator/api/v1alpha2
   version: v1alpha2
-- group: jenkins
+- controller: true
+  domain: jenkins.io
+  group: jenkins
   kind: JenkinsImage
+  path: github.com/jenkinsci/jenkins-automation-operator/api/v1alpha2
   version: v1alpha2
-- group: jenkins
+- controller: true
+  domain: jenkins.io
+  group: jenkins
   kind: Backup
+  path: github.com/jenkinsci/jenkins-automation-operator/api/v1alpha2
   version: v1alpha2
-- group: jenkins
+- controller: true
+  domain: jenkins.io
+  group: jenkins
   kind: Restore
+  path: github.com/jenkinsci/jenkins-automation-operator/api/v1alpha2
   version: v1alpha2
-- group: jenkins
-  kind: BackupConfig
+- domain: jenkins.io
+  group: jenkins
+  kind: BackupStrategy
+  path: github.com/jenkinsci/jenkins-automation-operator/api/v1alpha2
   version: v1alpha2
-version: 3-alpha
-plugins:
-  go.sdk.operatorframework.io/v2-alpha: {}
+- api:
+    crdVersion: v1beta1
+    namespaced: true
+  controller: true
+  domain: jenkins.io
+  group: jenkins
+  kind: BackupVolume
+  path: github.com/jenkinsci/jenkins-automation-operator/api/v1alpha2
+  version: v1alpha2
+version: "3"

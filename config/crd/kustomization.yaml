@@ -6,7 +6,8 @@ resources:
 - bases/jenkins.io_jenkinsimages.yaml
 - bases/jenkins.io_backups.yaml
 - bases/jenkins.io_restores.yaml
-- bases/jenkins.io_backupconfigs.yaml
+- bases/jenkins.io_backupstrategies.yaml
+- bases/jenkins.io_backupvolumes.yaml
 # +kubebuilder:scaffold:crdkustomizeresource
 
 patchesStrategicMerge:
@@ -16,6 +17,7 @@ patchesStrategicMerge:
 #- patches/webhook_in_jenkinsimages.yaml
 #- patches/webhook_in_backups.yaml
 #- patches/webhook_in_backupconfigs.yaml
+#- patches/webhook_in_backupvolumes.yaml
 # +kubebuilder:scaffold:crdkustomizewebhookpatch
 
 # [CERTMANAGER] To enable webhook, uncomment all the sections with [CERTMANAGER] prefix.
@@ -24,6 +26,7 @@ patchesStrategicMerge:
 #- patches/cainjection_in_jenkinsimages.yaml
 #- patches/cainjection_in_backups.yaml
 #- patches/cainjection_in_backupconfigs.yaml
+#- patches/cainjection_in_backupvolumes.yaml
 # +kubebuilder:scaffold:crdkustomizecainjectionpatch
 
 # the following config is for teaching kustomize how to do kustomization for CRDs.

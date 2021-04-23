@@ -62,7 +62,7 @@ type JenkinsSpec struct {
 	ConfigurationAsCode *Configuration `json:"configurationAsCode,omitempty"`
 
 	// BackupEnabled defines whether backup feature is enabled
-	BackupEnabled bool `json:"backupEnabled,omitempty"`
+	BackupVolumes []string `json:"backupVolumes,omitempty"`
 
 	// MetricsEnabled defines whether prometheus metrics are enabled
 	MetricsEnabled bool `json:"metricsEnabled,omitempty"`
