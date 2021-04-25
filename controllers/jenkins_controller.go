@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	storagev1 "k8s.io/api/storage/v1"
 	"os"
 	"reflect"
 	"strings"
@@ -70,6 +71,7 @@ const (
 	ConditionReconcileComplete conditionsv1.ConditionType = "ReconciliationComplete"
 
 	DefaultBackupStrategyName = "default"
+	DefaultStorageClassLabel = "storageclass.kubernetes.io/is-default-class"
 )
 
 // JenkinsReconciler reconciles a Jenkins object
@@ -276,9 +278,23 @@ func (r *JenkinsReconciler) reconcile(ctx context.Context, request ctrl.Request,
 
 	}
 
+	defaultStorageClassName := ""
+	storageClassList := &storagev1.StorageClassList{}
+	storageClassListNamespacedName := types.NamespacedName{Name:"",Namespace:request.Namespace}
+	err = r.Client.Get(context.TODO(), storageClassListNamespacedName, storageClassList)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
+	for _, sc := range storageClassList.Items {
+		if value, ok := sc.Annotations[DefaultStorageClassLabel]; ok && value == "true"{
+			defaultStorageClassName = sc.Name
+		}
+	}
+
 	persistentSpec := jenkins.Status.Spec.PersistentSpec
 	if persistentSpec.Enabled {
-		storageClassName := "standard"
+		storageClassName := defaultStorageClassName
 		volumeSize := "1Gi"
 
 		if len(persistentSpec.StorageClassName) > 0 {
@@ -714,3 +730,4 @@ func (r *JenkinsReconciler) getDefaultJenkinsImage() string {
 	}
 	return jenkinsImage
 }
+

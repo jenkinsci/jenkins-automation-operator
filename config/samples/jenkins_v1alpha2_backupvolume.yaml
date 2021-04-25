@@ -3,5 +3,5 @@ kind: BackupVolume
 metadata:
   name: backupvolume-sample
 spec:
-  # Add fields here
-  foo: bar
+  storageClassName: "default"
+  size: "1Gi"
