@@ -19,11 +19,12 @@ package controllers
 import (
 	"context"
 	"fmt"
-	storagev1 "k8s.io/api/storage/v1"
 	"os"
 	"reflect"
 	"strings"
 	"time"
+
+	storagev1 "k8s.io/api/storage/v1"
 
 	//	"math/rand"
 
@@ -71,7 +72,7 @@ const (
 	ConditionReconcileComplete conditionsv1.ConditionType = "ReconciliationComplete"
 
 	DefaultBackupStrategyName = "default"
-	DefaultStorageClassLabel = "storageclass.kubernetes.io/is-default-class"
+	DefaultStorageClassLabel  = "storageclass.kubernetes.io/is-default-class"
 )
 
 // JenkinsReconciler reconciles a Jenkins object
@@ -274,20 +275,16 @@ func (r *JenkinsReconciler) reconcile(ctx context.Context, request ctrl.Request,
 		return reconcile.Result{}, err
 	}
 
-	if len(jenkins.Status.Spec.BackupVolumes) > 0 {
-
-	}
-
 	defaultStorageClassName := ""
 	storageClassList := &storagev1.StorageClassList{}
-	storageClassListNamespacedName := types.NamespacedName{Name:"",Namespace:request.Namespace}
+	storageClassListNamespacedName := types.NamespacedName{Name: "", Namespace: request.Namespace}
 	err = r.Client.Get(context.TODO(), storageClassListNamespacedName, storageClassList)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
 
 	for _, sc := range storageClassList.Items {
-		if value, ok := sc.Annotations[DefaultStorageClassLabel]; ok && value == "true"{
+		if value, ok := sc.Annotations[DefaultStorageClassLabel]; ok && value == "true" {
 			defaultStorageClassName = sc.Name
 		}
 	}
@@ -314,7 +311,7 @@ func (r *JenkinsReconciler) reconcile(ctx context.Context, request ctrl.Request,
 		err = r.Client.Get(context.TODO(), request.NamespacedName, jenkinsPVC)
 		if err != nil {
 			if apierrors.IsNotFound(err) {
-				logger.Info(fmt.Sprintf("Creating BackupStrategy %s in Namespace %s for Jenkins instance %s",
+				logger.Info(fmt.Sprintf("Creating Jenkins PVC %s in Namespace %s for Jenkins instance %s",
 					pvcNamespacedName.Name,
 					pvcNamespacedName.Namespace,
 					request.Name))
@@ -730,4 +727,3 @@ func (r *JenkinsReconciler) getDefaultJenkinsImage() string {
 	}
 	return jenkinsImage
 }
-

@@ -21,20 +21,16 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // BackupVolumeSpec defines the desired state of BackupVolume
 type BackupVolumeSpec struct {
-	StorageClassName string `json:"storageClassName,omitempty"`
-	Size             string `json:"size,omitempty"`
+	PersistentVolumeClaimName string `json:"persistentVolumeClaimName,omitempty"`
+	StorageClassName          string `json:"storageClassName,omitempty"`
+	Size                      string `json:"size,omitempty"`
 }
 
 // BackupVolumeStatus defines the observed state of BackupVolume
 type BackupVolumeStatus struct {
-	Conditions                status.Conditions `json:"conditions,omitempty"`
-	PersistentVolumeClaimName string            `json:"persistentVolumeClaimName,omitempty"`
-	BoundPersistentVolumeName string            `json:"boundPersistentVolumeName,omitempty"`
+	Conditions status.Conditions `json:"conditions,omitempty"`
 }
 
 //+kubebuilder:object:root=true

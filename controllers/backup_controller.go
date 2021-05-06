@@ -92,11 +92,8 @@ func (r *BackupReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 	backupSpec := backupInstance.Spec
 	backupStrategy := &v1alpha2.BackupStrategy{}
-	// Use default BackupStrategy if strategyRef not provided
-	backupStrategyName := DefaultBackupStrategyName
-	if backupSpec.StrategyRef != "" {
-		backupStrategyName = backupSpec.StrategyRef
-	}
+	backupStrategyName := backupSpec.StrategyRef
+
 	backupStrategyNamespacedName := types.NamespacedName{
 		Namespace: req.Namespace,
 		Name:      backupStrategyName,

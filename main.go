@@ -112,6 +112,7 @@ func main() {
 	setupJenkinsImageRenconciler(manager)
 	setupJenkinsBackupRenconciler(manager, notificationsChannel)
 	setupJenkinsRestoreRenconciler(manager, notificationsChannel)
+	setupBackupVolumeRenconciler(manager, notificationsChannel)
 	// start the Cmd
 	setupLog.Info("Starting the Cmd.")
 	runMananger(manager)

@@ -163,6 +163,13 @@ func GetJenkinsMasterPodBaseVolumes(jenkins *v1alpha2.Jenkins) []corev1.Volume {
 		volumes = append(volumes, getEmptyDirVolume(JenkinsHomeVolumeName))
 	}
 
+	// Add Volumes for Backup
+	if backupVolumes := jenkins.Spec.BackupVolumes; len(backupVolumes) > 0 {
+		for _, bvName := range backupVolumes {
+			volumes = append(volumes, getPVCVolume(JenkinsHomeVolumeName, bvName+"-jenkins-backup"))
+		}
+	}
+
 	if jenkins.Status != nil && jenkins.Status.Spec != nil && jenkins.Status.Spec.ConfigurationAsCode != nil {
 		spec := jenkins.Status.Spec
 		configurationAsCode := spec.ConfigurationAsCode
