@@ -49,7 +49,7 @@ type BackupReconciler struct {
 	NotificationEvents chan event.Event
 }
 
-// +kubebuilder:rbac:groups=jenkins.io,resources=backups;backups/status;backupconfigs;backupconfigs/status,verbs=*
+// +kubebuilder:rbac:groups=jenkins.io,resources=backups;backups/status;backupstrategies;backupstrategies/status,verbs=*
 
 var (
 	logger             = log.Log.WithName("backup")

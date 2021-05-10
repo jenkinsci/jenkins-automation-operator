@@ -16,7 +16,7 @@ patchesStrategicMerge:
 #- patches/webhook_in_jenkins.yaml
 #- patches/webhook_in_jenkinsimages.yaml
 #- patches/webhook_in_backups.yaml
-#- patches/webhook_in_backupconfigs.yaml
+#- patches/webhook_in_backupstrategies.yaml
 #- patches/webhook_in_backupvolumes.yaml
 # +kubebuilder:scaffold:crdkustomizewebhookpatch
 
@@ -25,7 +25,7 @@ patchesStrategicMerge:
 #- patches/cainjection_in_jenkins.yaml
 #- patches/cainjection_in_jenkinsimages.yaml
 #- patches/cainjection_in_backups.yaml
-#- patches/cainjection_in_backupconfigs.yaml
+#- patches/cainjection_in_backupstrategies.yaml
 #- patches/cainjection_in_backupvolumes.yaml
 # +kubebuilder:scaffold:crdkustomizecainjectionpatch
 

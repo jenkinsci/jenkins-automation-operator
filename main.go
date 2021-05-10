@@ -296,7 +296,7 @@ func setupBackupVolumeRenconciler(mgr manager.Manager, eventChan chan e.Event) {
 func newBackupVolumeRenconciler(mgr manager.Manager, eventChan chan e.Event) *controllers.BackupVolumeReconciler {
 	return &controllers.BackupVolumeReconciler{
 		Client:             mgr.GetClient(),
-		Log:                ctrl.Log.WithName("controllers").WithName("Restore"),
+		Log:                ctrl.Log.WithName("controllers").WithName("BackupVolume"),
 		Scheme:             mgr.GetScheme(),
 		NotificationEvents: eventChan,
 	}

@@ -32,10 +32,10 @@ rules:
 - apiGroups:
   - jenkins.io
   resources:
-  - backupconfigs
-  - backupconfigs/status
   - backups
   - backups/status
+  - backupstrategies
+  - backupstrategies/status
   verbs:
   - '*'
 - apiGroups:

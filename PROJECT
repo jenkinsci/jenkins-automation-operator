@@ -35,11 +35,7 @@ resources:
   kind: BackupStrategy
   path: github.com/jenkinsci/jenkins-automation-operator/api/v1alpha2
   version: v1alpha2
-- api:
-    crdVersion: v1beta1
-    namespaced: true
-  controller: true
-  domain: jenkins.io
+- domain: jenkins.io
   group: jenkins
   kind: BackupVolume
   path: github.com/jenkinsci/jenkins-automation-operator/api/v1alpha2

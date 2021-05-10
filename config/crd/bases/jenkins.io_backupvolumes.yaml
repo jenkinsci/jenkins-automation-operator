@@ -36,18 +36,16 @@ spec:
         spec:
           description: BackupVolumeSpec defines the desired state of BackupVolume
           properties:
+            persistentVolumeClaimName:
+              type: string
             size:
               type: string
             storageClassName:
-              description: Foo is an example field of BackupVolume. Edit backupvolume_types.go
-                to remove/update
               type: string
           type: object
         status:
           description: BackupVolumeStatus defines the observed state of BackupVolume
           properties:
-            boundPersistentVolumeName:
-              type: string
             conditions:
               description: Conditions is a set of Condition instances.
               items:
@@ -88,8 +86,6 @@ spec:
                 - type
                 type: object
               type: array
-            persistentVolumeClaimName:
-              type: string
           type: object
       type: object
   version: v1alpha2

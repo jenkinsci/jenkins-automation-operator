@@ -93,10 +93,10 @@ spec:
         displayName: Tag
         path: to.tag
       version: v1alpha2
-    - description: BackupStrategy is the Schema for the backupconfigs API
-      displayName: Backup Config
+    - description: BackupStrategy is the Schema for the backupstrategies API
+      displayName: Backup Strategy
       kind: BackupStrategy
-      name: backupconfigs.jenkins.io
+      name: backupstrategies.jenkins.io
       version: v1alpha2
     - description: Jenkins is the Schema for the jenkins API
       displayName: Jenkins

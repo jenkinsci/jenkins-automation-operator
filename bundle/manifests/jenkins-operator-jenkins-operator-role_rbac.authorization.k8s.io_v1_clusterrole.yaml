@@ -114,7 +114,7 @@ rules:
 - apiGroups:
   - jenkins.io
   resources:
-  - backupconfigs
+  - backupstrategies
   verbs:
   - create
   - delete
@@ -126,7 +126,7 @@ rules:
 - apiGroups:
   - jenkins.io
   resources:
-  - backupconfigs/status
+  - backupstrategies/status
   verbs:
   - get
   - patch

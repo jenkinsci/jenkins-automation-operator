@@ -19,7 +19,7 @@ package controllers
 import (
 	"context"
 	"fmt"
-
+	"github.com/go-logr/logr"
 	"github.com/jenkinsci/jenkins-automation-operator/api/v1alpha2"
 	"github.com/jenkinsci/jenkins-automation-operator/pkg/notifications/event"
 	"github.com/operator-framework/operator-lib/status"
@@ -27,13 +27,11 @@ import (
 	storagev1 "k8s.io/api/storage/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
-	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-
-	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 var (
@@ -51,6 +49,7 @@ type BackupVolumeReconciler struct {
 // SetupWithManager sets up the controller with the Manager.
 func (r *BackupVolumeReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
+		For(&v1alpha2.BackupVolume{}).
 		Owns(&corev1.PersistentVolumeClaim{}).
 		Complete(r)
 }
