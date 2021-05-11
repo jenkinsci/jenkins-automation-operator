@@ -23,7 +23,7 @@ def before_feature(_context,_feature):
     These run before and after each feature is run.
     '''
     print(colored.red(f.renderText('Jenkins Operator')))
-    print(colored.yellow("\nChecking cluster environment for {} scenario".format(_feature)))
+    print(colored.yellow("checking cluster environment for {} scenario".format(_feature)))
 
 def before_scenario(_context, _scenario):
     '''
@@ -31,7 +31,7 @@ def before_scenario(_context, _scenario):
     These run before and after each scenario is run.
     The scenario passed in is an instance of Scenario.
 '''
-    print(colored.yellow("\nChecking cluster environment for {} scenario".format(_scenario)))
+    print(colored.yellow("Checking cluster environment for {} scenario".format(_scenario)))
     code, output = subprocess.getstatusoutput('oc get project default')
     print(colored.yellow("[CODE] {}".format(code)))
     print(colored.yellow("[CMD] {}".format(output)))

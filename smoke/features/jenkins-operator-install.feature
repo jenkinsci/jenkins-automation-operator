@@ -9,8 +9,8 @@ Feature: Install jenkins operator
 
   Scenario: Install jenkins instance
     Given Jenkins operator is installed
-    When we create the jenkins instance using jenkins.yaml
-    Then We check for the jenkins-example pod status
+    When we create the jenkins instance using jenkins_with_backup_enabled.yaml
+    Then We check for the jenkins-simple pod status
     And We check for the route
 
   Scenario: Deploy sample application on openshift

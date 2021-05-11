@@ -8,3 +8,4 @@ spec:
     containers:
       - name: jenkins
         image: 'quay.io/redhat-developer/origin-jenkins:4.7-stable'
+  backupEnabled: true

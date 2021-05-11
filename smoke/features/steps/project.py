@@ -32,4 +32,3 @@ class Project():
         else:
             print(f"Unexpected project creating output: '{create_project_output}'")
         return False
-        
