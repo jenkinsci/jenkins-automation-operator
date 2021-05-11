@@ -13,7 +13,7 @@ const (
 	// DefaultJenkinsMasterImage is the default Jenkins master docker image
 	DefaultJenkinsMasterImage = "jenkins/jenkins:lts"
 	// DefaultJenkinsMasterImage is the default Jenkins master docker image
-	DefaultOpenShiftJenkinsMasterImage = "registry.redhat.io/openshift4/ose-jenkins:v4.5"
+	DefaultOpenShiftJenkinsMasterImage = "registry.redhat.io/openshift4/ose-jenkins:v4.7"
 	// DefaultHTTPPortInt32 is the default Jenkins HTTP port
 	DefaultHTTPPortInt32 = int32(8080)
 	// DefaultJNLPPortInt32 is the default Jenkins port for slaves
