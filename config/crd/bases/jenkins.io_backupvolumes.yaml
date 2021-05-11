@@ -36,7 +36,7 @@ spec:
         spec:
           description: BackupVolumeSpec defines the desired state of BackupVolume
           properties:
-            persistentVolumeClaimName:
+            pvcName:
               type: string
             size:
               type: string

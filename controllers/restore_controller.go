@@ -252,7 +252,7 @@ func (r *RestoreReconciler) performJenkinsSafeRestart(ctx context.Context, jenki
 }
 
 func (r *RestoreReconciler) performJenkinsRestore(ctx context.Context, execClient exec.KubeExecClient, jenkinsPod *corev1.Pod, backupInstance *v1alpha2.Backup, backupStrategy *v1alpha2.BackupStrategy, restoreInstance *v1alpha2.Restore) error {
-	restoreFromLocation := resources.JenkinsBackupVolumePath + "/" + backupInstance.Name
+	restoreFromLocation := resources.JenkinsBackupVolumePath + "/" + backupInstance.Spec.BackupVolumeRef + "/" + backupInstance.Name
 	restoreToLocation := defaultJenkinsHome
 	restoreToSubLocations := []string{}
 	if backupStrategy.Spec.Options.Config {
@@ -367,7 +367,7 @@ func (r *RestoreReconciler) sendNewRestoreCompletedNotification(jenkins *v1alpha
 		Controller: event.BackupController,
 		Level:      v1alpha2.NotificationLevelInfo,
 		Reason: reason.NewRestoreCompleted(reason.OperatorSource,
-			[]string{fmt.Sprintf("Restore of backup %s completed for Jenkins '%s' in namespace '%s' with err %s", jenkins.Name, restore.Spec.BackupRef, jenkins.Namespace, err.Error())}),
+			[]string{fmt.Sprintf("Restore of backup %s completed for Jenkins '%s' in namespace '%s' with err %s", jenkins.Name, restore.Spec.BackupRef, jenkins.Namespace, err)}),
 	}
 }
 
@@ -377,6 +377,6 @@ func (r *RestoreReconciler) sendNewRestoreInProgressNotification(jenkins *v1alph
 		Controller: event.BackupController,
 		Level:      v1alpha2.NotificationLevelInfo,
 		Reason: reason.NewRestoreInProgress(reason.OperatorSource,
-			[]string{fmt.Sprintf("Restore of backup %s in progress for Jenkins '%s' in namespace '%s' with message '%s' err %s", jenkins.Name, restore.Spec.BackupRef, jenkins.Namespace, message, err.Error())}),
+			[]string{fmt.Sprintf("Restore of backup %s in progress for Jenkins '%s' in namespace '%s' with message '%s' err %s", jenkins.Name, restore.Spec.BackupRef, jenkins.Namespace, message, err)}),
 	}
 }

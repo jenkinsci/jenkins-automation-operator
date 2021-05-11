@@ -277,8 +277,7 @@ func (r *JenkinsReconciler) reconcile(ctx context.Context, request ctrl.Request,
 
 	defaultStorageClassName := ""
 	storageClassList := &storagev1.StorageClassList{}
-	storageClassListNamespacedName := types.NamespacedName{Name: "", Namespace: request.Namespace}
-	err = r.Client.Get(context.TODO(), storageClassListNamespacedName, storageClassList)
+	err = r.Client.List(context.TODO(), storageClassList)
 	if err != nil {
 		return reconcile.Result{}, err
 	}

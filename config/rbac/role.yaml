@@ -34,8 +34,6 @@ rules:
   resources:
   - backups
   - backups/status
-  - backupstrategies
-  - backupstrategies/status
   verbs:
   - '*'
 - apiGroups:

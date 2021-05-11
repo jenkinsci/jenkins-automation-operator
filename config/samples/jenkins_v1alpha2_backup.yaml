@@ -1,6 +1,8 @@
 apiVersion: jenkins.io/v1alpha2
 kind: Backup
 metadata:
-  name: backup-sample
+  generateName: backup-sample-
 spec:
-  strategyRef: default
+  strategyRef: backupstrategy-sample
+  jenkinsRef: jenkins-with-backup-sample
+  backupVolumeRef: backupvolume-sample

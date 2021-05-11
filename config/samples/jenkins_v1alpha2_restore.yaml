@@ -3,5 +3,5 @@ kind: Restore
 metadata:
   name: restore-sample
 spec:
-  backupRef: backup-sample
+  backupRef: backup-sample-tknjj
 

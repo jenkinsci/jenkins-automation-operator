@@ -47,14 +47,17 @@ func NewJenkinsDeployment(objectMeta metav1.ObjectMeta, jenkins *v1alpha2.Jenkin
 func getJenkinsVolumes(jenkins *v1alpha2.Jenkins, jenkinsSpec *v1alpha2.JenkinsSpec) []corev1.Volume {
 	volumes := append(GetJenkinsMasterPodBaseVolumes(jenkins), jenkinsSpec.Master.Volumes...)
 
-	if len(jenkins.Spec.BackupVolumes) > 0 {
-		backupVolume := corev1.Volume{
-			Name: JenkinsBackupVolumeMountName,
-			VolumeSource: corev1.VolumeSource{
-				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-					ClaimName: GetJenkinsBackupPVCName(jenkins),
+	if backupVolumeNames := jenkins.Spec.BackupVolumes; len(backupVolumeNames) > 0 {
+		for _, bvn := range backupVolumeNames {
+			backupVolume := corev1.Volume{
+				Name: GetJenkinsBackupPoolName(bvn),
+				VolumeSource: corev1.VolumeSource{
+					PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+						ClaimName: GetJenkinsBackupPVCName(bvn),
+					},
 				},
-			},
+			}
+			volumes = append(volumes, backupVolume)
 		}
 		backupScriptsVolume := corev1.Volume{
 			Name: ScriptsVolumeMountName,
@@ -62,7 +65,7 @@ func getJenkinsVolumes(jenkins *v1alpha2.Jenkins, jenkinsSpec *v1alpha2.JenkinsS
 				EmptyDir: &corev1.EmptyDirVolumeSource{},
 			},
 		}
-		volumes = append(volumes, backupVolume, backupScriptsVolume)
+		volumes = append(volumes, backupScriptsVolume)
 	}
 
 	return volumes
@@ -71,4 +74,9 @@ func getJenkinsVolumes(jenkins *v1alpha2.Jenkins, jenkinsSpec *v1alpha2.JenkinsS
 // GetJenkinsDeploymentName returns Jenkins deployment name for given CR
 func GetJenkinsDeploymentName(jenkins *v1alpha2.Jenkins) string {
 	return fmt.Sprintf("jenkins-%s", jenkins.Name)
+}
+
+// GetJenkinsDeploymentName returns Jenkins deployment name for given CR
+func GetJenkinsBackupPoolName(backupVolumeName string) string {
+	return fmt.Sprintf("%s-%s", backupVolumeName, JenkinsBackupVolumeMountName)
 }

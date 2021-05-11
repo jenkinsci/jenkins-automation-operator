@@ -71,12 +71,11 @@ func (r *BackupVolumeReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 		// Error reading the object - requeue the request.
 		return ctrl.Result{}, err
 	}
-	backupLogger.Info("Jenkins Backup with name " + backupVolumeInstance.Name + " has been created")
+	backupLogger.Info("BackupVolume with name " + backupVolumeInstance.Name + " has been created")
 
 	defaultStorageClassName := ""
 	storageClassList := &storagev1.StorageClassList{}
-	storageClassListNamespacedName := types.NamespacedName{Name: "", Namespace: req.Namespace}
-	err = r.Client.Get(context.TODO(), storageClassListNamespacedName, storageClassList)
+	err = r.Client.List(context.TODO(), storageClassList)
 	if err != nil {
 		return reconcile.Result{}, err
 	}

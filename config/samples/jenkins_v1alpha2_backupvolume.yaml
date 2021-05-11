@@ -1,7 +1,7 @@
-apiVersion: jenkins.jenkins.io/v1alpha2
+apiVersion: jenkins.io/v1alpha2
 kind: BackupVolume
 metadata:
   name: backupvolume-sample
 spec:
-  storageClassName: "default"
   size: "1Gi"
+

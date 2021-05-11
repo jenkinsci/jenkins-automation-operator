@@ -3,7 +3,7 @@ kind: Jenkins
 metadata:
   name: jenkins-with-backup-sample
 spec:
-  backupEnabled: true
+  backupVolumes: ["backupvolume-sample"]
   configurationAsCode:
     configurations: []
     enabled: true

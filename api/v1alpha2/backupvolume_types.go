@@ -23,7 +23,7 @@ import (
 
 // BackupVolumeSpec defines the desired state of BackupVolume
 type BackupVolumeSpec struct {
-	PersistentVolumeClaimName string `json:"persistentVolumeClaimName,omitempty"`
+	PersistentVolumeClaimName string `json:"pvcName,omitempty"`
 	StorageClassName          string `json:"storageClassName,omitempty"`
 	Size                      string `json:"size,omitempty"`
 }

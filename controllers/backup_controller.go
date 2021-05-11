@@ -49,7 +49,7 @@ type BackupReconciler struct {
 	NotificationEvents chan event.Event
 }
 
-// +kubebuilder:rbac:groups=jenkins.io,resources=backups;backups/status;backupstrategies;backupstrategies/status,verbs=*
+// +kubebuilder:rbac:groups=jenkins.io,resources=backups;backups/status,verbs=*
 
 var (
 	logger             = log.Log.WithName("backup")
@@ -219,7 +219,7 @@ func (r *BackupReconciler) performJenkinsCancelQuietDown(ctx context.Context, ex
 }
 
 func (r *BackupReconciler) performJenkinsBackup(ctx context.Context, execClient exec.KubeExecClient, jenkinsPod *corev1.Pod, backupInstance *v1alpha2.Backup, backupStrategy *v1alpha2.BackupStrategy) error {
-	backupToLocation := resources.JenkinsBackupVolumePath + "/" + backupInstance.Name + "/"
+	backupToLocation := resources.JenkinsBackupVolumePath + "/" + backupInstance.Spec.BackupVolumeRef + "/" + backupInstance.Name + "/"
 	execCreateBackupDir := strings.Join([]string{"mkdir", backupToLocation}, " ")
 	err := execClient.MakeRequest(jenkinsPod, backupInstance.Name, execCreateBackupDir)
 	if err != nil {
@@ -256,13 +256,12 @@ func (r *BackupReconciler) performJenkinsBackup(ctx context.Context, execClient 
 				backupInstance.Status.Conditions.SetCondition(status.Condition{
 					Type:   BackupCompleted,
 					Status: corev1.ConditionFalse,
-					Reason: (status.ConditionReason)(fmt.Sprintf("Failed to backup from %s %s", backupFromSubLocation, err.Error())),
+					Reason: (status.ConditionReason)(fmt.Sprintf("Failed to backup from %s %s", backupFromSubLocation, err)),
 				})
 				err = r.Client.Status().Update(ctx, backupInstance)
 				if err != nil {
 					return err
 				}
-				return nil
 			}
 		}
 		err = r.Client.Status().Update(ctx, backupInstance)
@@ -357,7 +356,7 @@ func (r *BackupReconciler) sendNewBackupCompletedNotification(jenkins *v1alpha2.
 		Controller: event.BackupController,
 		Level:      v1alpha2.NotificationLevelInfo,
 		Reason: reason.NewBackupCompleted(reason.OperatorSource,
-			[]string{fmt.Sprintf("Backup %s completed for Jenkins '%s' in namespace '%s' with err %s", jenkins.Name, backup.Name, jenkins.Namespace, err.Error())}),
+			[]string{fmt.Sprintf("Backup %s completed for Jenkins '%s' in namespace '%s' with err %s", jenkins.Name, backup.Name, jenkins.Namespace, err)}),
 	}
 }
 
@@ -367,6 +366,6 @@ func (r *BackupReconciler) sendNewBackupInProgressNotification(jenkins *v1alpha2
 		Controller: event.BackupController,
 		Level:      v1alpha2.NotificationLevelInfo,
 		Reason: reason.NewBackupInProgress(reason.OperatorSource,
-			[]string{fmt.Sprintf("Backup %s in progress for Jenkins '%s' in namespace '%s' with message '%s' err %s", jenkins.Name, backup.Name, jenkins.Namespace, message, err.Error())}),
+			[]string{fmt.Sprintf("Backup %s in progress for Jenkins '%s' in namespace '%s' with message '%s' err %s", jenkins.Name, backup.Name, jenkins.Namespace, message, err)}),
 	}
 }

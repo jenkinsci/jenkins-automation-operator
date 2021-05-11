@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path"
 	"time"
 
 	"github.com/jenkinsci/jenkins-automation-operator/api/v1alpha2"
@@ -80,6 +81,8 @@ const (
 	SidecarMEMLimit   = "100Mi"
 	SidecarCPURequest = "50m"
 	SidecarMEMRequest = "50Mi"
+
+	backupVolumeSuffix = "-jenkins-backup"
 )
 
 // GetJenkinsMasterContainerBaseEnvs returns Jenkins master pod envs required by operator
@@ -166,6 +169,7 @@ func GetJenkinsMasterPodBaseVolumes(jenkins *v1alpha2.Jenkins) []corev1.Volume {
 	// Add Volumes for Backup
 	if backupVolumes := jenkins.Spec.BackupVolumes; len(backupVolumes) > 0 {
 		for _, bvName := range backupVolumes {
+			// TODO: use existing PVCs / be able to pass custom claimName
 			volumes = append(volumes, getPVCVolume(bvName, bvName+"-jenkins-backup"))
 		}
 	}
@@ -352,19 +356,28 @@ func GetResourceList(cpu string, mem string) corev1.ResourceList {
 }
 
 func NewJenkinsBackupContainer(jenkins *v1alpha2.Jenkins) corev1.Container {
+	volumeMounts := []corev1.VolumeMount{
+		getVolumeMount(ScriptsVolumeMountName, ScriptsVolumePath, false),
+		getVolumeMount(JenkinsHomeVolumeName, getJenkinsHomePath(jenkins), false),
+	}
+
+	if backupVolumeNames := jenkins.Spec.BackupVolumes; len(backupVolumeNames) > 0 {
+		for _, bvn := range backupVolumeNames {
+			volumeMounts = append(volumeMounts,
+				getVolumeMount(GetJenkinsBackupPoolName(bvn), getJenkinsBackupVolumePath(bvn), false),
+			)
+		}
+	}
+
 	backupContainer := corev1.Container{
 		Name:            BackupSidecarName,
 		Image:           getJenkinsBackupImage(),
 		ImagePullPolicy: corev1.PullIfNotPresent,
 		Command:         []string{"/bin/sh", "-c", "--"},
 		Args:            []string{"while true; do sleep 30; done;"},
-		VolumeMounts: []corev1.VolumeMount{
-			getVolumeMount(JenkinsBackupVolumeMountName, JenkinsBackupVolumePath, false),
-			getVolumeMount(ScriptsVolumeMountName, ScriptsVolumePath, false),
-			getVolumeMount(JenkinsHomeVolumeName, getJenkinsHomePath(jenkins), false),
-		},
-		Stdin: true,
-		TTY:   true,
+		VolumeMounts:    volumeMounts,
+		Stdin:           true,
+		TTY:             true,
 	}
 
 	return backupContainer
@@ -431,8 +444,15 @@ func NewJenkinsConfigInitContainer(spec *v1alpha2.JenkinsSpec) corev1.Container 
 func NewJenkinsBackupInitContainer(spec *v1alpha2.JenkinsSpec) corev1.Container {
 	jenkinsContainer := spec.Master.Containers[0]
 	volumeMounts := []corev1.VolumeMount{
-		getVolumeMount(JenkinsBackupVolumeMountName, JenkinsBackupVolumePath, false),
 		getVolumeMount(ScriptsVolumeMountName, ScriptsVolumePath, false),
+	}
+
+	if backupVolumeNames := spec.BackupVolumes; len(backupVolumeNames) > 0 {
+		for _, bvn := range backupVolumeNames {
+			volumeMounts = append(volumeMounts,
+				getVolumeMount(GetJenkinsBackupPoolName(bvn), getJenkinsBackupVolumePath(bvn), false),
+			)
+		}
 	}
 
 	scriptTemplate := `cat > %s << %s
@@ -524,8 +544,8 @@ func newInitContainers(jenkinsSpec *v1alpha2.JenkinsSpec) (containers []corev1.C
 	return containers
 }
 
-func GetJenkinsBackupPVCName(jenkins *v1alpha2.Jenkins) string {
-	return jenkins.Name + "-jenkins-backup"
+func GetJenkinsBackupPVCName(backupVolumeName string) string {
+	return backupVolumeName + backupVolumeSuffix
 }
 
 // return a condition function that indicates whether the given pod is
@@ -664,4 +684,8 @@ func getJenkinsBackupImage() string {
 		jenkinsBackupImage = constants.DefaultJenkinsBackupImage
 	}
 	return jenkinsBackupImage
+}
+
+func getJenkinsBackupVolumePath(backupVolumeName string) string {
+	return path.Join(JenkinsBackupVolumePath, backupVolumeName)
 }

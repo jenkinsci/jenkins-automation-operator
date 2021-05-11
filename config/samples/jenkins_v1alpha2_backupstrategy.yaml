@@ -7,6 +7,5 @@ spec:
     config: true
     jobs: true
     plugins: true
-  jenkinsRef: jenkins-with-backup-sample
   restartAfterRestore:
     enabled: true
