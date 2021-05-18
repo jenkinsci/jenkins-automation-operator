@@ -34,7 +34,7 @@ var _ = Describe("Jenkins controller", func() {
 	Logf("Starting test for Jenkins Controller")
 
 	// Test creation of Jenkins with simple casc configuration
-	Context("When Creating a Jenkins Instance with Default CASC Config", func() {
+	Context("When Creating a Jenkins Instance with Default CASC and Backup Configured", func() {
 		ctx := context.Background()
 		jenkinsName := "jenkins-with-all"
 		jenkins := GetJenkinsTestInstance(jenkinsName, JenkinsTestNamespace)
@@ -47,6 +47,16 @@ var _ = Describe("Jenkins controller", func() {
 		})
 
 		It(fmt.Sprintf("Create Test BackupVolume (%s)", jenkinsName), func() {
+			// Create BackupVolume
+			CreateBackupVolume(ctx, "test")
+		})
+
+		It(fmt.Sprintf("Backup PVC Should Be Created (%s)", jenkinsName), func() {
+			// Check if PVC is present for Jenkins
+			ByCheckingThatPVCIsCreated(ctx, jenkinsName+"-jenkins-backup", JenkinsTestNamespace)
+		})
+
+		It(fmt.Sprintf("Create Test BackupStrategy (%s)", jenkinsName), func() {
 			// Create BackupVolume
 			CreateBackupVolume(ctx, "test")
 		})
@@ -150,6 +160,22 @@ func CreateBackupVolume(ctx context.Context, namespaceName string) {
 			},
 		}
 		Expect(k8sClient.Create(ctx, bv)).Should(Succeed())
+	}
+}
+
+func CreateBackupStrategy(ctx context.Context, namespaceName string) {
+	By("Creating BackupStrategy")
+	jenkinsControllerTestNamespace = &corev1.Namespace{}
+	key := types.NamespacedName{Name: namespaceName}
+	err := k8sClient.Get(ctx, key, jenkinsControllerTestNamespace)
+	if err != nil {
+		By("Create BackupStrategy")
+		bs := &v1alpha2.BackupStrategy{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: namespaceName,
+			},
+		}
+		Expect(k8sClient.Create(ctx, bs)).Should(Succeed())
 	}
 }
 
