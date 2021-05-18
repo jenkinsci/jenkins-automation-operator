@@ -26,10 +26,6 @@ const (
 	interval             = time.Millisecond * 250
 )
 
-var (
-	jenkinsControllerTestNamespace *corev1.Namespace
-)
-
 var _ = Describe("Jenkins controller", func() {
 	Logf("Starting test for Jenkins Controller")
 
@@ -48,17 +44,12 @@ var _ = Describe("Jenkins controller", func() {
 
 		It(fmt.Sprintf("Create Test BackupVolume (%s)", jenkinsName), func() {
 			// Create BackupVolume
-			CreateBackupVolume(ctx, "test")
-		})
-
-		It(fmt.Sprintf("Backup PVC Should Be Created (%s)", jenkinsName), func() {
-			// Check if PVC is present for Jenkins
-			ByCheckingThatPVCIsCreated(ctx, jenkinsName+"-jenkins-backup", JenkinsTestNamespace)
+			CreateBackupVolume(ctx, "test", JenkinsTestNamespace)
 		})
 
 		It(fmt.Sprintf("Create Test BackupStrategy (%s)", jenkinsName), func() {
-			// Create BackupVolume
-			CreateBackupVolume(ctx, "test")
+			// Create BackupStrategy
+			CreateBackupStrategy(ctx, "test", JenkinsTestNamespace)
 		})
 
 		It(fmt.Sprintf("Jenkins Should Be Created (%s)", jenkinsName), func() {
@@ -98,9 +89,9 @@ var _ = Describe("Jenkins controller", func() {
 			ByCheckingThatPVCIsCreated(ctx, jenkinsName, JenkinsTestNamespace)
 		})
 
-		It(fmt.Sprintf("Jenkins PVC for persistence Should Be Created (%s)", jenkinsName), func() {
+		It(fmt.Sprintf("BackupVolume PVC Should Be Created (%s)", jenkinsName), func() {
 			// Check if PVC is present for Jenkins
-			ByCheckingThatPVCIsCreated(ctx, jenkinsName, JenkinsTestNamespace)
+			ByCheckingThatPVCIsCreated(ctx, "test-jenkins-backup", JenkinsTestNamespace)
 		})
 
 		// It(fmt.Sprintf("ServiceMonitor Should Be Created (%s)", jenkinsName), func() {
@@ -133,9 +124,9 @@ func CreateEditClusterRoleIfNotPresent(ctx context.Context) {
 
 func CreateNamespaceIfNotPresent(ctx context.Context, namespaceName string) {
 	By("Creating Namespace if it does not exist")
-	jenkinsControllerTestNamespace = &corev1.Namespace{}
+	actual := &corev1.Namespace{}
 	key := types.NamespacedName{Name: namespaceName}
-	err := k8sClient.Get(ctx, key, jenkinsControllerTestNamespace)
+	err := k8sClient.Get(ctx, key, actual)
 	if err != nil {
 		By("Create Namespace")
 		ns := &corev1.Namespace{
@@ -147,32 +138,48 @@ func CreateNamespaceIfNotPresent(ctx context.Context, namespaceName string) {
 	}
 }
 
-func CreateBackupVolume(ctx context.Context, namespaceName string) {
+func CreateBackupVolume(ctx context.Context, name, namespace string) {
 	By("Creating BackupVolume")
-	jenkinsControllerTestNamespace = &corev1.Namespace{}
-	key := types.NamespacedName{Name: namespaceName}
-	err := k8sClient.Get(ctx, key, jenkinsControllerTestNamespace)
+	actual := &v1alpha2.BackupVolume{}
+	key := types.NamespacedName{Name: name, Namespace: namespace}
+	err := k8sClient.Get(ctx, key, actual)
 	if err != nil {
 		By("Create BackupVolume")
 		bv := &v1alpha2.BackupVolume{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: namespaceName,
+				Name:      name,
+				Namespace: namespace,
+			},
+			Spec: v1alpha2.BackupVolumeSpec{
+				Size: "1Gi",
 			},
 		}
 		Expect(k8sClient.Create(ctx, bv)).Should(Succeed())
 	}
 }
 
-func CreateBackupStrategy(ctx context.Context, namespaceName string) {
+func CreateBackupStrategy(ctx context.Context, name, namespace string) {
 	By("Creating BackupStrategy")
-	jenkinsControllerTestNamespace = &corev1.Namespace{}
-	key := types.NamespacedName{Name: namespaceName}
-	err := k8sClient.Get(ctx, key, jenkinsControllerTestNamespace)
+	actual := &v1alpha2.BackupStrategy{}
+	key := types.NamespacedName{Name: name}
+	err := k8sClient.Get(ctx, key, actual)
 	if err != nil {
 		By("Create BackupStrategy")
 		bs := &v1alpha2.BackupStrategy{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: namespaceName,
+				Name:      name,
+				Namespace: namespace,
+			},
+			Spec: v1alpha2.BackupStrategySpec{
+				Options: v1alpha2.BackupOptions{
+					Jobs:    true,
+					Plugins: true,
+					Config:  true,
+				},
+				RestartAfterRestore: v1alpha2.RestartConfig{
+					Enabled: true,
+				},
+				QuietDownDuringBackup: true,
 			},
 		}
 		Expect(k8sClient.Create(ctx, bs)).Should(Succeed())
@@ -181,13 +188,13 @@ func CreateBackupStrategy(ctx context.Context, namespaceName string) {
 
 func DeleteNamespaceIfPresent(ctx context.Context, namespaceName string) {
 	By("Deleting Namespace if it is present")
-	jenkinsControllerTestNamespace = &corev1.Namespace{}
+	actual := &corev1.Namespace{}
 	key := types.NamespacedName{Name: namespaceName}
-	err := k8sClient.Get(ctx, key, jenkinsControllerTestNamespace)
+	err := k8sClient.Get(ctx, key, actual)
 	if err != nil {
 		Fail(fmt.Sprintf("Error while deleting Namespace %s", namespaceName))
 	}
-	Expect(k8sClient.Delete(ctx, jenkinsControllerTestNamespace)).Should(Succeed())
+	Expect(k8sClient.Delete(ctx, actual)).Should(Succeed())
 }
 
 func ByCheckingThatJenkinsExists(ctx context.Context, jenkins *v1alpha2.Jenkins) {

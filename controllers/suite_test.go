@@ -92,6 +92,7 @@ var _ = BeforeSuite(func(done Done) {
 
 	registerJenkinsRestoreController(manager)
 	registerJenkinsBackupController(manager)
+	registerJenkinsBackupVolumeController(manager)
 	registerJenkinsImageController(manager)
 	registerJenkinsController(manager, restConfig)
 
@@ -124,6 +125,16 @@ func registerJenkinsBackupController(manager manager.Manager) {
 	controller := &BackupReconciler{
 		Client: manager.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("Backup"),
+		Scheme: manager.GetScheme(),
+	}
+	err := controller.SetupWithManager(manager)
+	Expect(err).ToNot(HaveOccurred())
+}
+
+func registerJenkinsBackupVolumeController(manager manager.Manager) {
+	controller := &BackupVolumeReconciler{
+		Client: manager.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("BackupVolume"),
 		Scheme: manager.GetScheme(),
 	}
 	err := controller.SetupWithManager(manager)
