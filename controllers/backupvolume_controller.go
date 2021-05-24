@@ -82,7 +82,7 @@ func (r *BackupVolumeReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 	}
 
 	for _, sc := range storageClassList.Items {
-		if value, ok := sc.Annotations[DefaultStorageClassLabel]; ok && value == "true" {
+		if value, ok := sc.Annotations[DefaultStorageClassLabel]; ok && value == trueStr {
 			defaultStorageClassName = sc.Name
 		}
 	}

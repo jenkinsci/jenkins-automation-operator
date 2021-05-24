@@ -93,7 +93,10 @@ var (
 	reconcileErrors = map[string]reconcileError{}
 )
 
-const reconcileFailLimit = uint64(10)
+const (
+	reconcileFailLimit = uint64(10)
+	trueStr            = "true"
+)
 
 func (r *JenkinsReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
@@ -283,7 +286,7 @@ func (r *JenkinsReconciler) reconcile(ctx context.Context, request ctrl.Request,
 	}
 
 	for _, sc := range storageClassList.Items {
-		if value, ok := sc.Annotations[DefaultStorageClassLabel]; ok && value == "true" {
+		if value, ok := sc.Annotations[DefaultStorageClassLabel]; ok && value == trueStr {
 			defaultStorageClassName = sc.Name
 		}
 	}

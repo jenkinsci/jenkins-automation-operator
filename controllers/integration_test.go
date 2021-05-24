@@ -103,7 +103,7 @@ var _ = Describe("Jenkins controller", func() {
 		//	// Check if ServiceMonitor is present for Jenkins
 		//	ByCheckingThatServiceMonitorIsCreated(ctx, jenkinsName+"-monitored", JenkinsTestNamespace)
 		// })
-		if os.Getenv("USE_EXISTING_CLUSTER") == "true" {
+		if os.Getenv("USE_EXISTING_CLUSTER") == trueStr {
 			It(fmt.Sprintf("Deployment Is Ready (%s)", jenkinsName), func() {
 				// Check if Deployment is ready
 				ByCheckingThatTheDeploymentIsReady(ctx, jenkins)
