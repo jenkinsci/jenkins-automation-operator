@@ -24,15 +24,15 @@ import (
 const (
 	JenkinsTestNamespace = "jenkins-operator-test"
 	// Jenkins instance can take upto 5 mins to come up
-	timeout              = time.Second * 300
-	interval             = time.Millisecond * 250
+	timeout  = time.Second * 300
+	interval = time.Millisecond * 250
 )
 
 var _ = Describe("Jenkins controller", func() {
 	Logf("Starting test for Jenkins Controller")
 
 	// For testing on minikube as ubi8 image is only available via openshift
-	_ = os.Setenv("JENKINS_BACKUP_IMAGE","fedora:28")
+	_ = os.Setenv("JENKINS_BACKUP_IMAGE", "fedora:28")
 
 	// Test creation of Jenkins with simple casc configuration
 	Context("When Creating a Jenkins Instance with Default CASC and Backup Configured", func() {
@@ -103,11 +103,12 @@ var _ = Describe("Jenkins controller", func() {
 		//	// Check if ServiceMonitor is present for Jenkins
 		//	ByCheckingThatServiceMonitorIsCreated(ctx, jenkinsName+"-monitored", JenkinsTestNamespace)
 		// })
-
-		It(fmt.Sprintf("Deployment Is Ready (%s)", jenkinsName), func() {
-			// Check if Deployment is ready
-			ByCheckingThatTheDeploymentIsReady(ctx, jenkins)
-		})
+		if os.Getenv("USE_EXISTING_CLUSTER") == "true" {
+			It(fmt.Sprintf("Deployment Is Ready (%s)", jenkinsName), func() {
+				// Check if Deployment is ready
+				ByCheckingThatTheDeploymentIsReady(ctx, jenkins)
+			})
+		}
 
 		It(fmt.Sprintf("Namespace should be deleted (%s)", jenkinsName), func() {
 			// Cleanup
