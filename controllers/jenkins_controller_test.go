@@ -23,7 +23,8 @@ import (
 
 const (
 	JenkinsTestNamespace = "jenkins-operator-test"
-	timeout              = time.Second * 30
+	// Jenkins instance can take upto 5 mins to come up
+	timeout              = time.Second * 300
 	interval             = time.Millisecond * 250
 )
 
