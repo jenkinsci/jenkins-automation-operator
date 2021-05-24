@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/jenkinsci/jenkins-automation-operator/api/v1alpha2"
@@ -28,6 +29,9 @@ const (
 
 var _ = Describe("Jenkins controller", func() {
 	Logf("Starting test for Jenkins Controller")
+
+	// For testing on minikube as ubi8 image is only available via openshift
+	_ = os.Setenv("JENKINS_BACKUP_IMAGE","fedora:28")
 
 	// Test creation of Jenkins with simple casc configuration
 	Context("When Creating a Jenkins Instance with Default CASC and Backup Configured", func() {
