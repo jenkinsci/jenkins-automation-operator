@@ -1,0 +1,18 @@
+apiVersion: jenkins.io/v1alpha2
+kind: Jenkins
+metadata:
+  name: jenkins-sample
+spec:
+  master:
+    securityContext:
+      fsGroup: 1001
+      runAsNonRoot: true
+      runAsUser: 1001
+  persistentSpec:
+    enabled: true
+    volumeSize: "1Gi"
+  configurationAsCode:
+    configurations: []
+    enabled: true
+    defaultConfig: true
+    enableAutoReload: true

@@ -467,6 +467,11 @@ func (r *JenkinsReconciler) getCalculatedSpec(ctx context.Context, jenkins *v1al
 	}
 	jenkinsMaster := r.getCalculatedJenkinsMaster(calculatedSpec, jenkinsContainer)
 	calculatedSpec.Master = jenkinsMaster
+	if len(calculatedSpec.Master.Containers) == 0 {
+		calculatedSpec.Master.Containers = []v1alpha2.Container{jenkinsContainer}
+	} else {
+		calculatedSpec.Master.Containers[0] = jenkinsContainer
+	}
 	jenkinsMasterImage := jenkinsMaster.Containers[0].Image
 	if len(jenkinsMasterImage) == 0 {
 		jenkinsMasterImage = r.getDefaultJenkinsImage()
@@ -598,7 +603,11 @@ func (r *JenkinsReconciler) getCalculatedJenkinsMaster(calculatedSpec *v1alpha2.
 		}
 	} else {
 		master = calculatedSpec.Master.DeepCopy()
-		calculatedSpec.Master.Containers[0] = jenkinsContainer
+		if len(calculatedSpec.Master.Containers) == 0 {
+			calculatedSpec.Master.Containers = []v1alpha2.Container{jenkinsContainer}
+		} else {
+			calculatedSpec.Master.Containers[0] = jenkinsContainer
+		}
 	}
 	return master
 }
