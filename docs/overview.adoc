@@ -4,14 +4,14 @@ Copyright The Jenkins Automation Operator Contributors
 SPDX-License-Identifier: Apache-2.0
 -->
 
-# Jenkins Operator Overview
-
+Jenkins Operator Overview
+--------------------------
 The Jenkins Operator is a software extension to Kubernetes that make use of custom resources to manage Jenkins instances and their components. Operators follow Kubernetes principles, notably the control loop.
 
-![Jenkins Operator Control Loop](assets/control_loop.png)
+image::assets/control_loop.png[]
 
-
-# Jenkins Operator Controllers
+Jenkins Operator Controllers
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Jenkins Operator provides the following controllers:
 - `jenkins controller`: Watches `Jenkins` resource definition and instantiates a Jenkins instance relying on the 
@@ -32,9 +32,8 @@ sidecar container containing required tools to perform the backup triggered usin
 - `restore controller`: Watches `Restore` resource definition and perform restoration of the specified `Backup` object to the specified `Jenkins` instance.
 The following image illustrate the interactions between these controllers.
 
-![controllers flow](controllers_flow.png)
-
-## Learn more
+Learn more
+^^^^^^^^^^
 
 See the following docs referencing each of the Kubernetes resources currently supported:
 
@@ -43,7 +42,8 @@ See the following docs referencing each of the Kubernetes resources currently su
 - [`BackupStrategy`](backup.md)
 - [`Restore`](restore.md)
 
-## Controllers Flow
+Controllers Flow
+^^^^^^^^^^^^^^^^
 
 The following image illustrate the interactions between the `Jenkins`, `JenkinsImage` `Backup` and `Restore` controllers.
 
