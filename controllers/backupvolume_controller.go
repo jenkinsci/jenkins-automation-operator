@@ -87,18 +87,22 @@ func (r *BackupVolumeReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 		}
 	}
 
-	persistentSpec := backupVolumeInstance.Spec
+	backupVolumeSpec := backupVolumeInstance.Spec
 	storageClassName := defaultStorageClassName
 	volumeSize := "1Gi"
 
-	if len(persistentSpec.StorageClassName) > 0 {
-		storageClassName = persistentSpec.StorageClassName
+	if len(backupVolumeSpec.StorageClassName) > 0 {
+		storageClassName = backupVolumeSpec.StorageClassName
 	}
-	if len(persistentSpec.Size) > 0 {
-		volumeSize = persistentSpec.Size
+	if len(backupVolumeSpec.Size) > 0 {
+		volumeSize = backupVolumeSpec.Size
 	}
 
 	backupVolumePVCName := req.Name + "-jenkins-backup"
+	if len(backupVolumeSpec.PersistentVolumeClaimName) > 0 {
+		backupVolumePVCName = backupVolumeSpec.PersistentVolumeClaimName
+	}
+
 	backupPVCNamespacedName := types.NamespacedName{
 		Namespace: req.Namespace,
 		Name:      backupVolumePVCName,

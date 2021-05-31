@@ -4,7 +4,8 @@ Backup and Restore
 You can backup and restore your Jenkins data related to jobs, plugins or configurations with the Backup and Restore
 feature provided by the Operator.
 
-For this, you need to first create `BackupVolume` s which you would like to use where your backups would be stored. These custom resources are backed by `PersistentVolumeClaims`.
+For this, you need to first create `BackupVolume` s which you would like to use where your backups would be stored.
+These custom resources are backed by `PersistentVolumeClaims`.
 
 Create `BackupVolume`
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -20,6 +21,9 @@ spec:
 
 The default storageclassname would be used if it isn't provided in the spec.
 
+`pvcName` can be provided in the spec if there is an already existing `PersistentVolumeClaim` which is already being used
+for backups. If a PVC with the given name does not exist then a new one will be created with the provided name instead of
+creating a PVC with the `<backupvolume-name>-jenkins-backup` naming formula.
 
 To use a particular `BackupVolume` in a Jenkins instance, you would have 
 
@@ -84,7 +88,8 @@ spec:
     safe: true
 ```
 
-A *BackupStrategy* can be created by the user and then used by any `Backup` instance, this way backupStrategies can be used across multiple Jenkins instances and multiple backup volumes.
+A *BackupStrategy* can be created by the user and then used by any `Backup` instance, this way backupStrategies can be
+used across multiple Jenkins instances and multiple backup volumes.
 
 backupOptions
 ^^^^^^^^^^^^^
@@ -125,9 +130,12 @@ spec:
   backupVolumeRef: backup-volume-1
 ```
 
-A *Backup* is created with a *BackupStrategy* in mind (noted in `.spec.strategyRef`) which contains information on the what to backup exactly. It also contianer the jenkinsRef which let's the operator know what jenkins instance needs to be backed up and the backupVolumeRef, noting where the backup needs to end up. 
+A *Backup* is created with a *BackupStrategy* in mind (noted in `.spec.strategyRef`) which contains information on the
+what to backup exactly. It also contianer the jenkinsRef which let's the operator know what jenkins instance needs to be
+backed up and the backupVolumeRef, noting where the backup needs to end up.
 
-Once the backup is complete we should be able to see the backup in the `/jenkins-backups/<backup-volume-name>/<backup-name>` directory.
+Once the backup is complete we should be able to see the backup in the `/jenkins-backups/<backup-volume-name>/<backup-name>`
+directory.
 
 [NOTE]
 ====
@@ -139,7 +147,7 @@ jenkinsRef
 This spec reflects which *Jenkins* instance is a particular *BackupStrategy* meant for.
 
 strategyRef
-^^^^^^^^^
+^^^^^^^^^^^
 This spec reflects the *BackupStrategy* which has to be used for performing the backup.
 
 Restore
@@ -177,4 +185,5 @@ Only `.spec.restoreAfterRestart` from the *BackupStrategy* are used for the *Res
 
 backupRef
 ^^^^^^^^^
-This spec reflects the *Backup* which would be used figure out the *Jenkins*, *BackupStrategy* and *BackupVolume* used for the restore.
+This spec reflects the *Backup* which would be used figure out the *Jenkins*, *BackupStrategy* and *BackupVolume* used
+for the restore.
