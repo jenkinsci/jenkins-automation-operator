@@ -134,10 +134,10 @@ func (r *JenkinsImageReconciler) updateJenkinsImageStatusWhenPodIsCompleted(ctx 
 		status := pod.Status.ContainerStatuses[0]
 		if status.State.Terminated != nil {
 			builtImage := strings.Trim(status.State.Terminated.Message, YamlMultilineDataFieldCutSet)
-			r.Log.Info(fmt.Sprintf("Found built image (trimed): %s", builtImage))
+			r.Log.Info(fmt.Sprintf("Found built image (trimmed): %s", builtImage))
 			dockerfileContent, _ := r.getDockerfileContent(instance)
 			dockerfileMD5 := strings.Trim(fmt.Sprintf("%x", md5.Sum([]byte(dockerfileContent))), YamlMultilineDataFieldCutSet)
-			r.Log.Info(fmt.Sprintf("Found image checksum (trimed): %s", dockerfileMD5))
+			r.Log.Info(fmt.Sprintf("Found image checksum (trimmed): %s", dockerfileMD5))
 			build := v1alpha2.JenkinsImageBuild{
 				MD5Sum: dockerfileMD5,
 				Image:  builtImage,
