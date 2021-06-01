@@ -210,7 +210,7 @@ func getVolumesMounts(cr *jenkinsv1alpha2.JenkinsImage, client client.Client) []
 		MountPath: mountPath,
 	}
 	volumeMounts = append(volumeMounts, storage)
-	logger.Info(fmt.Sprintf("Volument mount for %s and mountPath : %s created", name, mountPath))
+	logger.Info(fmt.Sprintf("Volume mount for %s and mountPath : %s created", name, mountPath))
 
 	name = fmt.Sprintf(NameWithSuffixFormat, cr.Name, DockerfileNameSuffix)
 	mountPath = "/dockerfile"
@@ -219,7 +219,7 @@ func getVolumesMounts(cr *jenkinsv1alpha2.JenkinsImage, client client.Client) []
 		MountPath: mountPath,
 	}
 	volumeMounts = append(volumeMounts, config)
-	logger.Info(fmt.Sprintf("Volument mount for %s and mountPath : %s created", name, mountPath))
+	logger.Info(fmt.Sprintf("Volume mount for %s and mountPath : %s created", name, mountPath))
 
 	pushSecretName, err := getPushSecretName(cr, client)
 	if len(pushSecretName) != 0 && err == nil {
@@ -230,7 +230,7 @@ func getVolumesMounts(cr *jenkinsv1alpha2.JenkinsImage, client client.Client) []
 			MountPath: mountPath,
 		}
 		volumeMounts = append(volumeMounts, secret)
-		logger.Info(fmt.Sprintf("Volument mount for %s and mountPath : %s created", name, mountPath))
+		logger.Info(fmt.Sprintf("Volume mount for %s and mountPath : %s created", name, mountPath))
 	}
 	return volumeMounts
 }
