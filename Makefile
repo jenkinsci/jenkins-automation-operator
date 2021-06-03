@@ -28,7 +28,7 @@ operator: goimports fmt vet generate test bin ## Builds operator binary
 
 bin: # Builds operator binary only 
 	@echo "${BLUE}Building ${OPERATOR_NAME} ${YELLOW}binary${BLUE}${RESET}"
-	@go build -o build/_output/bin/manager main.go
+	@go build -o build/_output/bin/${OPERATOR_NAME} main.go
 
 ## Bundle and image related targets
 operator-image: operator## Build the operator container image
