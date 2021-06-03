@@ -285,7 +285,7 @@ type JenkinsMaster struct {
 	// Defaults to:
 	// runAsUser: 1000
 	// fsGroup: 1000
-	SecurityContext *corev1.SecurityContext `json:"securityContext,omitempty"`
+	SecurityContext *corev1.PodSecurityContext `json:"securityContext,omitempty"`
 
 	// List of containers belonging to the pod.
 	// Containers cannot currently be added or removed.

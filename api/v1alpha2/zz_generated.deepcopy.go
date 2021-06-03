@@ -676,7 +676,7 @@ func (in *JenkinsMaster) DeepCopyInto(out *JenkinsMaster) {
 	}
 	if in.SecurityContext != nil {
 		in, out := &in.SecurityContext, &out.SecurityContext
-		*out = new(corev1.SecurityContext)
+		*out = new(corev1.PodSecurityContext)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.Containers != nil {

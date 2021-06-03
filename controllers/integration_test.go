@@ -333,6 +333,7 @@ func ByCreatingJenkinsSuccesfully(ctx context.Context, jenkins *v1alpha2.Jenkins
 }
 
 func GetJenkinsTestInstance(name string, namespace string) *v1alpha2.Jenkins {
+	runAsNonRoot := false
 	jenkins := &v1alpha2.Jenkins{
 		TypeMeta: v1alpha2.JenkinsTypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{
@@ -348,6 +349,11 @@ func GetJenkinsTestInstance(name string, namespace string) *v1alpha2.Jenkins {
 				Enabled: true,
 			},
 			BackupVolumes: []string{"test"},
+			Master: &v1alpha2.JenkinsMaster{
+				SecurityContext: &corev1.PodSecurityContext{
+					RunAsNonRoot: &runAsNonRoot,
+				},
+			},
 			// MetricsEnabled: true,
 		},
 	}
